@@ -1,33 +1,33 @@
-package customer.api;
+package com.rez.user.api;
 
+import com.rez.user.domain.Address;
+import com.rez.user.domain.User;
 import kalix.javasdk.valueentity.ValueEntity;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import org.springframework.web.bind.annotation.*;
 import io.grpc.Status;
-import customer.domain.Address;
-import customer.domain.Customer;
 
-@EntityType("customer")
-@EntityKey("customer_id")
-@RequestMapping("/customer/{customer_id}")
-public class CustomerEntity extends ValueEntity<Customer> {
+@EntityType("user")
+@EntityKey("user_id")
+@RequestMapping("/user/{user_id}")
+public class UserEntity extends ValueEntity<User> {
 
     @PostMapping("/create")
-    public ValueEntity.Effect<String> create(@RequestBody Customer customer) {
+    public ValueEntity.Effect<String> create(@RequestBody User user) {
         if (currentState() == null)
             return effects()
-                    .updateState(customer)
+                    .updateState(user)
                     .thenReply("OK");
         else
             return effects().error("Facility exists already");
     }
 
     @GetMapping()
-    public ValueEntity.Effect<Customer> getCustomer() {
+    public ValueEntity.Effect<User> getUser() {
         if (currentState() == null)
             return effects().error(
-                    "No customer found for id '" + commandContext().entityId() + "'",
+                    "No user found for id '" + commandContext().entityId() + "'",
                     Status.Code.NOT_FOUND
             );
         else
@@ -36,16 +36,16 @@ public class CustomerEntity extends ValueEntity<Customer> {
 
     @PostMapping("/changeName/{newName}")
     public Effect<String> changeName(@PathVariable String newName) {
-        Customer updatedCustomer = currentState().withName(newName);
+        User updatedUser = currentState().withName(newName);
         return effects()
-                .updateState(updatedCustomer)
+                .updateState(updatedUser)
                 .thenReply("OK");
     }
 
     @PostMapping("/changeAddress")
     public Effect<String> changeAddress(@RequestBody Address newAddress) {
-        Customer updatedCustomer = currentState().withAddress(newAddress);
-        return effects().updateState(updatedCustomer).thenReply("OK");
+        User updatedUser = currentState().withAddress(newAddress);
+        return effects().updateState(updatedUser).thenReply("OK");
     }
 
 }

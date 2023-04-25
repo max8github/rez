@@ -7,19 +7,19 @@
     <version>3.0.4</version>
     <relativePath/> 
   </parent>
-  <groupId>facility</groupId>
-  <artifactId>facility</artifactId>
+  <groupId>com.rez</groupId>
+  <artifactId>user</artifactId>
   <version>1.0-SNAPSHOT</version>
   <packaging>jar</packaging>
 
-  <name>facility</name>
+  <name>user</name>
   <properties>
 
     <!-- TODO Update to your own Docker repository or Docker Hub scope -->
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${build.timestamp}</dockerTag>
     <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
-    <mainClass>facility.Main</mainClass>
+    <mainClass>com.rez.user.Main</mainClass>
 
     <jdk.target>17</jdk.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>

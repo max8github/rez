@@ -8,7 +8,7 @@
 	},
 	"item": [
 		{
-			"name": "Create Customer",
+			"name": "Create User",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -25,8 +25,8 @@
 							"    return uuid;",
 							"}",
 							"",
-							"var customer_id = create_UUID();",
-							"postman.setEnvironmentVariable(\"customer_id\", customer_id);",
+							"var user_id = create_UUID();",
+							"postman.setEnvironmentVariable(\"user_id\", user_id);",
 							"",
 							"",
 							"var firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
@@ -43,7 +43,7 @@
 							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
 							"var city = pm.variables.replaceIn('{{$randomCity}}');",
 							"",
-							"console.info(\"Entity id is: \"+ customer_id);",
+							"console.info(\"Entity id is: \"+ user_id);",
 							"console.info(\"First Name is: \"+ firstName);",
 							"console.info(\"Last Name is: \"+ lastName);",
 							"console.info(\"Username is: \"+ username);",
@@ -67,7 +67,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"//pm.environment.set(\"customer_id\", pm.response.text());"
+							"//pm.environment.set(\"user_id\", pm.response.text());"
 						],
 						"type": "text/javascript"
 					}
@@ -87,15 +87,15 @@
 					"raw": "{\n    \"email\": \"{{email}}\",\n    \"name\": \"{{username}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }"
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/customer/{{customer_id}}/create",
+					"raw": "http://{{host}}:{{port}}/user/{{user_id}}/create",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}",
 					"path": [
-						"customer",
-						"{{customer_id}}",
+						"user",
+						"{{user_id}}",
 						"create"
 					]
 				},
@@ -104,7 +104,7 @@
 			"response": []
 		},
 		{
-			"name": "Change customer address",
+			"name": "Change user address",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -146,15 +146,15 @@
 					"raw": "{\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n\n}"
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/customer/{{customer_id}}/changeAddress",
+					"raw": "http://{{host}}:{{port}}/user/{{user_id}}/changeAddress",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}",
 					"path": [
-						"customer",
-						"{{customer_id}}",
+						"user",
+						"{{user_id}}",
 						"changeAddress"
 					]
 				},
@@ -163,7 +163,7 @@
 			"response": []
 		},
 		{
-			"name": "Change customer name",
+			"name": "Change user name",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -178,7 +178,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"//pm.environment.set(\"customer_id\", pm.response.text());"
+							"//pm.environment.set(\"user_id\", pm.response.text());"
 						],
 						"type": "text/javascript"
 					}
@@ -194,15 +194,15 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{host}}:{{port}}/customer/{{customer_id}}/changeName/{{newName}}",
+					"raw": "http://{{host}}:{{port}}/user/{{user_id}}/changeName/{{newName}}",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}",
 					"path": [
-						"customer",
-						"{{customer_id}}",
+						"user",
+						"{{user_id}}",
 						"changeName",
 						"{{newName}}"
 					]
@@ -212,7 +212,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Customer",
+			"name": "Get User",
 			"event": [
 				{
 					"listen": "test",
@@ -250,15 +250,15 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/customer/{{customer_id}}",
+					"raw": "http://{{host}}:{{port}}/user/{{user_id}}",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}",
 					"path": [
-						"customer",
-						"{{customer_id}}"
+						"user",
+						"{{user_id}}"
 					]
 				}
 			},

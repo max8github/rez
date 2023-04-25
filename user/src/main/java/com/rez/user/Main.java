@@ -1,4 +1,4 @@
-package customer;
+package com.rez.user;
 
 import kalix.javasdk.annotations.Acl;
 import org.slf4j.Logger;
