@@ -1,58 +1,98 @@
 package com.rez.facility.api;
 
-import com.rez.facility.domain.Address;
 import com.rez.facility.domain.Facility;
+import com.rez.facility.domain.FacilityEvent;
 import com.rez.facility.domain.Resource;
-import io.grpc.Status;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
+import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
-import kalix.javasdk.valueentity.ValueEntity;
+import kalix.javasdk.annotations.EventHandler;
 import org.springframework.web.bind.annotation.*;
 
-@EntityType("facility")
-@EntityKey("facility_id")
-@RequestMapping("/facility/{facility_id}")
-public class FacilityEntity extends ValueEntity<Facility> {
+import java.util.Collections;
+
+// tag::class[]
+@EntityKey("facilityId")
+@EntityType("shopping-facility")
+@RequestMapping("/facility/{facilityId}")
+public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> {
+
+    private final String entityId;
+
+    public FacilityEntity(EventSourcedEntityContext context) {
+        this.entityId = context.entityId();
+    }
+
+    @Override
+    public Facility emptyState() {
+        return new Facility(entityId, Collections.emptyList(), false);
+    }
 
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody Facility facility) {
-        if (currentState() == null)
-            return effects()
-                    .updateState(facility)
-                    .thenReply("OK");
-        else
-            return effects().error("Facility exists already");
+    public Effect<String> create() {
+        return effects().reply("OK");
+    }
+
+    @PostMapping("/add")
+    public Effect<String> addResource(@RequestBody Resource resource) {
+        if (currentState().booked())
+            return effects().error("Cart is already checked out.");
+        if (resource.size() <= 0) {
+            return effects().error("Quantity for resource " + resource.resourceId() + " must be greater than zero.");
+        }
+
+        var event = new FacilityEvent.ResourceAdded(resource);
+
+        return effects()
+                .emitEvent(event)
+                .thenReply(newState -> "OK");
+    }
+
+
+    @PostMapping("/resources/{resourceId}/remove")
+    public Effect<String> removeResource(@PathVariable String resourceId) {
+        if (currentState().booked())
+            return effects().error("Facility is already booked.");
+        if (currentState().findResourceById(resourceId).isEmpty()) {
+            return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
+        }
+
+        var event = new FacilityEvent.ResourceRemoved(resourceId);
+
+        return effects()
+                .emitEvent(event)
+                .thenReply(newState -> "OK");
     }
 
     @GetMapping()
-    public Effect<Facility> getFacility() {
-        if (currentState() == null)
-            return effects().error(
-                    "No facility found for id '" + commandContext().entityId() + "'",
-                    Status.Code.NOT_FOUND
-            );
-        else
-            return effects().reply(currentState());
+    public Effect<Facility> getCart() {
+        return effects().reply(currentState());
     }
 
-    @PostMapping("/changeName/{newName}")
-    public Effect<String> changeName(@PathVariable String newName) {
-        Facility updatedFacility = currentState().withName(newName);
+    @PostMapping("/book")
+    public Effect<String> book() {
+        if (currentState().booked())
+            return effects().error("Cart is already checked out.");
+
         return effects()
-                .updateState(updatedFacility)
-                .thenReply("OK");
+                .emitEvent(new FacilityEvent.Booked())
+                .deleteEntity()
+                .thenReply(newState -> "OK");
     }
 
-    @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody Address newAddress) {
-        Facility updatedFacility = currentState().withAddress(newAddress);
-        return effects().updateState(updatedFacility).thenReply("OK");
+    @EventHandler
+    public Facility resourceAdded(FacilityEvent.ResourceAdded resourceAdded) {
+        return currentState().onResourceAdded(resourceAdded);
     }
 
-    @PostMapping("/changeResource")
-    public Effect<String> changeResource(@RequestBody Resource newResource) {
-        Facility updatedFacility = currentState().withResource(newResource);
-        return effects().updateState(updatedFacility).thenReply("OK");
+    @EventHandler
+    public Facility resourceRemoved(FacilityEvent.ResourceRemoved resourceRemoved) {
+        return currentState().onResourceRemoved(resourceRemoved);
     }
 
+    @EventHandler
+    public Facility booked(FacilityEvent.Booked booked) {
+        return currentState().onBooked();
+    }
 }
