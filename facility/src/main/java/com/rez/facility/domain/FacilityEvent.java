@@ -13,5 +13,8 @@ public sealed interface FacilityEvent {
 
     @TypeName("created")
     record Created(String entityId, Dto.FacilityDTO facilityDTO) implements FacilityEvent {}
+
+    @TypeName("renamed")
+    record Renamed(String newName) implements FacilityEvent {}
 }
 // end::events[]

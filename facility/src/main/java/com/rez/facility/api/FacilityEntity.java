@@ -35,6 +35,13 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @PostMapping("/rename/{newName}")
+    public Effect<String> rename(@PathVariable String newName) {
+        return effects()
+                .emitEvent(new FacilityEvent.Renamed(newName))
+                .thenReply(newState -> "OK");
+    }
+
     @PostMapping("/add")
     public Effect<String> addResource(@RequestBody Dto.ResourceDTO resourceDetails) {
         if (resourceDetails.size() <= 0) {
@@ -64,6 +71,11 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @EventHandler
     public Facility created(FacilityEvent.Created created) {
         return currentState().onCreated(created);
+    }
+
+    @EventHandler
+    public Facility renamed(FacilityEvent.Renamed renamed) {
+        return currentState().onRenamed(renamed);
     }
 
     @EventHandler
