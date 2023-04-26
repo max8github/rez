@@ -17,6 +17,10 @@ public record Facility(String facilityId, String name, Address address, List<Res
         return new Facility(facilityId, renamed.newName(), address, resources);
     }
 
+    public Facility onChangeAddress(FacilityEvent.AddressChanged addressChanged) {
+        return new Facility(facilityId, name, addressChanged.addressDTO().toAddress(), resources);
+    }
+
     public Facility onResourceAdded(FacilityEvent.ResourceAdded resourceAdded) {
         var resourceDTO = resourceAdded.resource();
         if(findResourceById(resourceDTO.resourceId()).isEmpty()) {

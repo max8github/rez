@@ -42,6 +42,13 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @PostMapping("/changeAddress")
+    public Effect<String> changeAddress(@RequestBody Dto.AddressDTO addressDTO) {
+        return effects()
+                .emitEvent(new FacilityEvent.AddressChanged(addressDTO))
+                .thenReply(newState -> "OK");
+    }
+
     @PostMapping("/add")
     public Effect<String> addResource(@RequestBody Dto.ResourceDTO resourceDetails) {
         if (resourceDetails.size() <= 0) {
@@ -76,6 +83,11 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @EventHandler
     public Facility renamed(FacilityEvent.Renamed renamed) {
         return currentState().onRenamed(renamed);
+    }
+
+    @EventHandler
+    public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
+        return currentState().onChangeAddress(addressChanged);
     }
 
     @EventHandler
