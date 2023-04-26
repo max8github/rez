@@ -88,8 +88,7 @@
 						"{{facility_id}}",
 						"create"
 					]
-				},
-				"description": "This is to kick an entity actor that got stuck in its initial state. It is like a regular 'Create new', a POST: it needs a blueprint payload."
+				}
 			},
 			"response": []
 		},
@@ -147,8 +146,7 @@
 						"{{facility_id}}",
 						"changeAddress"
 					]
-				},
-				"description": "This is to kick an entity actor that got stuck in its initial state. It is like a regular 'Create new', a POST: it needs a blueprint payload."
+				}
 			},
 			"response": []
 		},
@@ -159,6 +157,9 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
+							"var newFacilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"console.info(\"New facilityName is: \"+ newFacilityName);",
+							"pm.variables.set(\"newFacilityName\", newFacilityName);",
 							""
 						],
 						"type": "text/javascript"
@@ -184,7 +185,7 @@
 					}
 				],
 				"url": {
-					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/changeName/{{newName}}",
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/rename/{{newFacilityName}}",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -193,11 +194,68 @@
 					"path": [
 						"facility",
 						"{{facility_id}}",
-						"changeName",
-						"{{newName}}"
+						"rename",
+						"{{newFacilityName}}"
 					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Add Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var timeSlotsSize = pm.variables.replaceIn('{{$randomInt}}');",
+							"",
+							"console.info(\"Resource is: \"+ resourceName);",
+							"console.info(\"Resource size is: \"+ timeSlotsSize);",
+							"",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
+						],
+						"type": "text/javascript"
+					}
 				},
-				"description": "This is to kick an entity actor that got stuck in its initial state. It is like a regular 'Create new', a POST: it needs a blueprint payload."
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceId\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/add",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"add"
+					]
+				}
 			},
 			"response": []
 		},
@@ -249,6 +307,133 @@
 					"path": [
 						"facility",
 						"{{facility_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function create_UUID(){",
+							"    var dt = new Date().getTime();",
+							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+							"        var r = (dt + Math.random()*16)%16 | 0;",
+							"        dt = Math.floor(dt/16);",
+							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
+							"    });",
+							"    uuid = uuid.substring(0, 8);",
+							"    return uuid;",
+							"}",
+							"",
+							"var resource_id = create_UUID();",
+							"postman.setEnvironmentVariable(\"resource_id\", resource_id);",
+							"",
+							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var timeSlotsSize = pm.variables.replaceIn('{{$randomInt}}');",
+							"",
+							"console.info(\"Resource id is: \"+ resource_id);",
+							"console.info(\"Resource is: \"+ resourceName);",
+							"console.info(\"Resource size is: \"+ timeSlotsSize);",
+							"",
+							"pm.variables.set(\"resource_id\", resource_id);",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n            \"resourceId\": \"{{resourceName}}\",\n            \"timeWindow\": [\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null\n            ],\n            \"size\": {{timeSlotsSize}},\n            \"nowPointer\": 0\n        }"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/resource/{{resource_id}}/create",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"{{resource_id}}",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/resource/{{resource_id}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"{{resource_id}}"
 					]
 				}
 			},
