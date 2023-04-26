@@ -1,7 +1,7 @@
 {
 	"info": {
-		"_postman_id": "e0e24913-febf-4587-ac38-f6ab1db14ac7",
-		"name": "Kalix",
+		"_postman_id": "a6bf1339-9838-4b06-a325-f076961a984d",
+		"name": "Kalix Facility",
 		"description": "curl commands from [tutorial](https://docs.kalix.io/java/quickstart/cr-value-entity-java.html)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "1644939"
@@ -29,36 +29,26 @@
 							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
 							"",
 							"",
-							"var firstName = pm.variables.replaceIn('{{$randomFirstName}}');",
-							"var lastName = pm.variables.replaceIn('{{$randomLastName}}');",
-							"var facilityName = firstName+\".\"+lastName;",
+							"var facilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"",
-							"var firstNewName = pm.variables.replaceIn('{{$randomFirstName}}');",
-							"var lastNewName = pm.variables.replaceIn('{{$randomLastName}}');",
-							"var newName = firstNewName+\".\"+lastNewName;",
-							"",
-							"var domainName = pm.variables.replaceIn('{{$randomDomainName}}');",
-							"var email = facilityName+\"@\"+domainName;",
+							"var newFacilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"",
 							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
 							"var city = pm.variables.replaceIn('{{$randomCity}}');",
 							"",
 							"console.info(\"Entity id is: \"+ facility_id);",
-							"console.info(\"First Name is: \"+ firstName);",
-							"console.info(\"Last Name is: \"+ lastName);",
 							"console.info(\"Facilityname is: \"+ facilityName);",
-							"console.info(\"New facilityName is: \"+ newName);",
-							"console.info(\"Email is: \"+ email);",
+							"console.info(\"New facilityName is: \"+ newFacilityName);",
 							"console.info(\"Street is: \"+ street);",
 							"console.info(\"City is: \"+ city);",
+							"console.info(\"Resource is: \"+ resourceName);",
 							"",
-							"pm.variables.set(\"firstName\", firstName);",
-							"pm.variables.set(\"lastName\", lastName);",
-							"pm.variables.set(\"email\", email);",
+							"pm.variables.set(\"newFacilityName\", newFacilityName);",
 							"pm.variables.set(\"facilityName\", facilityName);",
-							"postman.setEnvironmentVariable(\"newName\", newName);",
 							"pm.variables.set(\"street\", street);",
-							"pm.variables.set(\"city\", city);"
+							"pm.variables.set(\"city\", city);",
+							"pm.variables.set(\"resourceName\", resourceName);"
 						],
 						"type": "text/javascript"
 					}
@@ -84,7 +74,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"email\": \"{{email}}\",\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }"
+					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    },\n    \"resources\": [\n      {\n          \"resourceId\": \"{{resourceName}}\",\n          \"size\": 24\n      }\n    ]\n  }"
 				},
 				"url": {
 					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/create",
