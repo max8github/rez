@@ -5,11 +5,11 @@ import kalix.javasdk.annotations.TypeName;
 
 public sealed interface FacilityEvent {
 
-    @TypeName("resource-added")
-    record ResourceAdded(Dto.ResourceDTO resource) implements FacilityEvent {}
+    @TypeName("resource-id-added")
+    record ResourceIdAdded(String resourceEntityId) implements FacilityEvent {}
 
-    @TypeName("resource-removed")
-    record ResourceRemoved(String resourceId) implements FacilityEvent {}
+    @TypeName("resource-id-removed")
+    record ResourceIdRemoved(String resourceEntityId) implements FacilityEvent {}
 
     @TypeName("created")
     record Created(String entityId, Dto.FacilityDTO facilityDTO) implements FacilityEvent {}
@@ -20,4 +20,3 @@ public sealed interface FacilityEvent {
     @TypeName("addressChanged")
     record AddressChanged(Dto.AddressDTO addressDTO) implements FacilityEvent {}
 }
-// end::events[]

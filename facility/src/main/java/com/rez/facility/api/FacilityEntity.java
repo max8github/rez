@@ -25,7 +25,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Override
     public Facility emptyState() {
-        return new Facility(entityId, "noname", new Address("nostreet", "nocity"), Collections.emptyList());
+        return new Facility(entityId, "noname", new Address("nostreet", "nocity"), Collections.emptySet());
     }
 
     @PostMapping("/create")
@@ -49,24 +49,20 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
-    @PostMapping("/add")
-    public Effect<String> addResource(@RequestBody Dto.ResourceDTO resourceDetails) {
-        if (resourceDetails.size() <= 0) {
-            return effects().error("Time slots for resource " + resourceDetails.resourceId() + " must be more than zero.");
-        }
+    @PostMapping("/resource/{resourceId}")
+    public Effect<String> addResourceId(@PathVariable String resourceId) {
         return effects()
-                .emitEvent(new FacilityEvent.ResourceAdded(resourceDetails))
+                .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
                 .thenReply(newState -> "OK");
     }
 
-
-    @PostMapping("/resources/{resourceId}/remove")
-    public Effect<String> removeResource(@PathVariable String resourceId) {
-        if (currentState().findResourceById(resourceId).isEmpty()) {
+    @DeleteMapping("/resource/{resourceId}")
+    public Effect<String> removeResourceId(@PathVariable String resourceId) {
+        if (!currentState().resourceIds().contains(resourceId)) {
             return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
         }
         return effects()
-                .emitEvent(new FacilityEvent.ResourceRemoved(resourceId))
+                .emitEvent(new FacilityEvent.ResourceIdRemoved(resourceId))
                 .thenReply(newState -> "OK");
     }
 
@@ -91,12 +87,12 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility resourceAdded(FacilityEvent.ResourceAdded resourceAdded) {
-        return currentState().onResourceAdded(resourceAdded);
+    public Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
+        return currentState().onResourceIdAdded(event);
     }
 
     @EventHandler
-    public Facility resourceRemoved(FacilityEvent.ResourceRemoved resourceRemoved) {
-        return currentState().onResourceRemoved(resourceRemoved);
+    public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
+        return currentState().onResourceIdRemoved(event);
     }
 }

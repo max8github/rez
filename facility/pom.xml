@@ -9,15 +9,14 @@
   </parent>
   <groupId>com.rez</groupId>
   <artifactId>facility</artifactId>
-  <version>0.2.3</version>
+  <version>0.3</version>
   <packaging>jar</packaging>
 
   <name>facility</name>
   <properties>
 
-    <!-- TODO Update to your own Docker repository or Docker Hub scope -->
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
-    <dockerTag>${project.version}</dockerTag>
+    <dockerTag>${project.version}-${build.timestamp}</dockerTag>
     <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
     <mainClass>com.rez.facility.Main</mainClass>
 

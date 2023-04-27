@@ -368,7 +368,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n            \"resourceId\": \"{{resourceName}}\",\n            \"timeWindow\": [\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null,\n                null\n            ],\n            \"size\": {{timeSlotsSize}},\n            \"nowPointer\": 0\n        }"
+					"raw": "{\n    \"resourceId\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}"
 				},
 				"url": {
 					"raw": "http://{{host}}:{{port}}/resource/{{resource_id}}/create",

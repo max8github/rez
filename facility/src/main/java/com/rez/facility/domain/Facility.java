@@ -1,12 +1,8 @@
 package com.rez.facility.domain;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Optional;
-import java.util.function.Predicate;
-import java.util.stream.Collectors;
+import java.util.Set;
 
-public record Facility(String facilityId, String name, Address address, List<Resource> resources) {
+public record Facility(String facilityId, String name, Address address, Set<String> resourceIds) {
 
     public Facility onCreated(FacilityEvent.Created created) {
         var dto = created.facilityDTO();
@@ -14,37 +10,20 @@ public record Facility(String facilityId, String name, Address address, List<Res
     }
 
     public Facility onRenamed(FacilityEvent.Renamed renamed) {
-        return new Facility(facilityId, renamed.newName(), address, resources);
+        return new Facility(facilityId, renamed.newName(), address, resourceIds);
     }
 
     public Facility onChangeAddress(FacilityEvent.AddressChanged addressChanged) {
-        return new Facility(facilityId, name, addressChanged.addressDTO().toAddress(), resources);
+        return new Facility(facilityId, name, addressChanged.addressDTO().toAddress(), resourceIds);
     }
 
-    public Facility onResourceAdded(FacilityEvent.ResourceAdded resourceAdded) {
-        var resourceDTO = resourceAdded.resource();
-        if(findResourceById(resourceDTO.resourceId()).isEmpty()) {
-            resources.add(resourceDTO.toResource());
-            resources.sort(Comparator.comparing(Resource::resourceId));
-        }
-        return new Facility(facilityId, name, address, resources);
+    public Facility onResourceIdAdded(FacilityEvent.ResourceIdAdded event) {
+        resourceIds.add(event.resourceEntityId());
+        return new Facility(facilityId, name, address, resourceIds);
     }
 
-    public Facility onResourceRemoved(FacilityEvent.ResourceRemoved resourceRemoved) {
-        List<Resource> updatedResources = removeResourceById(this, resourceRemoved.resourceId());
-        updatedResources.sort(Comparator.comparing(Resource::resourceId));
-        return new Facility(facilityId, name, address, updatedResources);
-    }
-
-    private static List<Resource> removeResourceById(Facility facility, String resourceId) {
-        return facility.resources().stream()
-                .filter(resource -> !resource.resourceId().equals(resourceId))
-                .collect(Collectors.toList());
-    }
-
-    public Optional<Resource> findResourceById(String resourceId) {
-        Predicate<Resource> resourceExists =
-                resource -> resource.resourceId().equals(resourceId);
-        return resources.stream().filter(resourceExists).findFirst();
+    public Facility onResourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
+        resourceIds.remove(event.resourceEntityId());
+        return new Facility(facilityId, name, address, resourceIds);
     }
 }
