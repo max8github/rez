@@ -32,19 +32,15 @@
 							"var facilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"",
-							"var newFacilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"",
 							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
 							"var city = pm.variables.replaceIn('{{$randomCity}}');",
 							"",
 							"console.info(\"Entity id is: \"+ facility_id);",
 							"console.info(\"Facilityname is: \"+ facilityName);",
-							"console.info(\"New facilityName is: \"+ newFacilityName);",
 							"console.info(\"Street is: \"+ street);",
 							"console.info(\"City is: \"+ city);",
 							"console.info(\"Resource is: \"+ resourceName);",
 							"",
-							"pm.variables.set(\"newFacilityName\", newFacilityName);",
 							"pm.variables.set(\"facilityName\", facilityName);",
 							"pm.variables.set(\"street\", street);",
 							"pm.variables.set(\"city\", city);",
@@ -74,7 +70,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    },\n    \"resources\": [\n      {\n          \"resourceId\": \"{{resourceName}}\",\n          \"size\": 24\n      }\n    ]\n  }"
+					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    },\n    \"resourceIds\": [\n    ]\n  }"
 				},
 				"url": {
 					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/create",

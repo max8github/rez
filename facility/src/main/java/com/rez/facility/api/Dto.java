@@ -9,10 +9,10 @@ import java.util.Set;
 public final class Dto {
     private Dto(){}
 
-    public record FacilityDTO(String name, AddressDTO address, Set<String> resources) {
+    public record FacilityDTO(String name, AddressDTO address, Set<String> resourceIds) {
 
         public Facility toFacility(String entityId) {
-            return new Facility(entityId, name, address.toAddress(), resources);
+            return new Facility(entityId, name, address.toAddress(), resourceIds);
         }
     }
 
