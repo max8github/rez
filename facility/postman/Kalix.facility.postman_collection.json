@@ -202,7 +202,7 @@
 			"response": []
 		},
 		{
-			"name": "Add Resource",
+			"name": "Create&register resource",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -241,10 +241,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+					"raw": "{\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/add",
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/createAndRegisterResource",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -253,9 +253,10 @@
 					"path": [
 						"facility",
 						"{{facility_id}}",
-						"add"
+						"createAndRegisterResource"
 					]
-				}
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
 			},
 			"response": []
 		},
@@ -309,6 +310,72 @@
 						"{{facility_id}}"
 					]
 				}
+			},
+			"response": []
+		},
+		{
+			"name": "Register resource id",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function create_UUID(){",
+							"    var dt = new Date().getTime();",
+							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+							"        var r = (dt + Math.random()*16)%16 | 0;",
+							"        dt = Math.floor(dt/16);",
+							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
+							"    });",
+							"    uuid = uuid.substring(0, 8);",
+							"    return uuid;",
+							"}",
+							"",
+							"var resourceId = create_UUID();",
+							"var facility_id = pm.variables.get(\"facility_id\");",
+							"",
+							"console.info(\"Resource id is: \"+ resourceId);",
+							"console.info(\"Facility id is: \"+ facility_id);",
+							"",
+							"pm.variables.set(\"resource_id\", resourceId);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"{{resource_id}}"
+					]
+				},
+				"description": "Registers resource id with Facility.\n\nNote: this is not API. Registration should be only done through the aggregate root, which is \\`Facility\\`."
 			},
 			"response": []
 		},
@@ -368,7 +435,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}"
+					"raw": "{\n    \"facilityId\": {{facility_id}},\n    \"resourceDTO\": {\n        \"resourceName\": \"{{resourceName}}\",\n        \"size\": {{timeSlotsSize}}\n    }\n}"
 				},
 				"url": {
 					"raw": "http://{{host}}:{{port}}/resource/{{resource_id}}/create",

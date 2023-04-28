@@ -13,7 +13,7 @@ public class ResourceToFacilityAction extends Action {
         this.kalixClient = kalixClient;
     }
 
-    public Effect<String> on(ResourceEvent.Created event) {
+    public Effect<String> on(ResourceEvent.ResourceCreated event) {
         var path = "/facility/%s/resource/%s".formatted(event.facilityId(), event.entityId());
         var deferredCall = kalixClient.post(path, String.class);
         return effects().forward(deferredCall);

@@ -25,7 +25,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     @PostMapping("/create")
     public Effect<String> create(@RequestBody FacilityAction.CreateResourceCommand resCommand) {
         return effects()
-                .emitEvent(new ResourceEvent.Created(entityId, resCommand.resourceDTO(), resCommand.facilityId()))
+                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resCommand.resourceDTO(), resCommand.facilityId()))
                 .thenReply(newState -> "OK");
     }
 
@@ -41,7 +41,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     }
 
     @EventHandler
-    public Resource created(ResourceEvent.Created created) {
-        return currentState().onCreated(created);
+    public Resource created(ResourceEvent.ResourceCreated resourceCreated) {
+        return currentState().onCreated(resourceCreated);
     }
 }

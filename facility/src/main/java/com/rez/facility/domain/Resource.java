@@ -11,8 +11,8 @@ package com.rez.facility.domain;
  */
 public record Resource(String name, String[] timeWindow, int size, int nowPointer) {
 
-    public Resource onCreated(ResourceEvent.Created created) {
-        var dto = created.resourceDTO();
+    public Resource onCreated(ResourceEvent.ResourceCreated resourceCreated) {
+        var dto = resourceCreated.resourceDTO();
         return dto.toResource();
     }
 }
