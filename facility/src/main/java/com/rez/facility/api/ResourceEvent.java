@@ -1,6 +1,5 @@
-package com.rez.facility.domain;
+package com.rez.facility.api;
 
-import com.rez.facility.api.Dto;
 import kalix.javasdk.annotations.TypeName;
 
 public sealed interface ResourceEvent {

@@ -9,10 +9,4 @@ package com.rez.facility.domain;
  * @param size size of the time window
  * @param nowPointer array index that points to the slot we are in right now.
  */
-public record Resource(String name, String[] timeWindow, int size, int nowPointer) {
-
-    public Resource onCreated(ResourceEvent.ResourceCreated resourceCreated) {
-        var dto = resourceCreated.resourceDTO();
-        return dto.toResource();
-    }
-}
+public record Resource(String name, String[] timeWindow, int size, int nowPointer) {}

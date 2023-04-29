@@ -1,29 +1,27 @@
 package com.rez.facility.domain;
 
+import java.util.HashSet;
 import java.util.Set;
 
 public record Facility(String facilityId, String name, Address address, Set<String> resourceIds) {
 
-    public Facility onCreated(FacilityEvent.Created created) {
-        var dto = created.facilityDTO();
-        return dto.toFacility(created.entityId());
+    public Facility withResourceId(String resourceId) {
+        Set<String> ids = new HashSet<>(resourceIds);
+        ids.add(resourceId);
+        return new Facility(facilityId, name, address, ids);
     }
 
-    public Facility onRenamed(FacilityEvent.Renamed renamed) {
-        return new Facility(facilityId, renamed.newName(), address, resourceIds);
+    public Facility withoutResourceId(String resourceId) {
+        Set<String> ids = new HashSet<>(resourceIds);
+        ids.remove(resourceId);
+        return new Facility(facilityId, name, address, ids);
     }
 
-    public Facility onChangeAddress(FacilityEvent.AddressChanged addressChanged) {
-        return new Facility(facilityId, name, addressChanged.addressDTO().toAddress(), resourceIds);
+    public Facility withName(String newName) {
+        return new Facility(facilityId, newName, address, resourceIds);
     }
 
-    public Facility onResourceIdAdded(FacilityEvent.ResourceIdAdded event) {
-        resourceIds.add(event.resourceEntityId());
-        return new Facility(facilityId, name, address, resourceIds);
-    }
-
-    public Facility onResourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
-        resourceIds.remove(event.resourceEntityId());
-        return new Facility(facilityId, name, address, resourceIds);
+    public Facility withAddress(Address newAddress) {
+        return new Facility(facilityId, name, newAddress, resourceIds);
     }
 }

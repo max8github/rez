@@ -1,6 +1,5 @@
 package com.rez.facility.api;
 
-import com.rez.facility.domain.ResourceEvent;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.KalixClient;

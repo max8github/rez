@@ -42,6 +42,6 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @EventHandler
     public Resource created(ResourceEvent.ResourceCreated resourceCreated) {
-        return currentState().onCreated(resourceCreated);
+        return resourceCreated.resourceDTO().toResource();
     }
 }

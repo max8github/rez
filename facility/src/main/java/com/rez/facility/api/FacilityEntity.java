@@ -2,7 +2,6 @@ package com.rez.facility.api;
 
 import com.rez.facility.domain.Address;
 import com.rez.facility.domain.Facility;
-import com.rez.facility.domain.FacilityEvent;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.javasdk.annotations.EntityKey;
@@ -73,26 +72,27 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @EventHandler
     public Facility created(FacilityEvent.Created created) {
-        return currentState().onCreated(created);
+        var dto = created.facilityDTO();
+        return dto.toFacility(created.entityId());
     }
 
     @EventHandler
     public Facility renamed(FacilityEvent.Renamed renamed) {
-        return currentState().onRenamed(renamed);
+        return currentState().withName(renamed.newName());
     }
 
     @EventHandler
     public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        return currentState().onChangeAddress(addressChanged);
+        return currentState().withAddress(addressChanged.addressDTO().toAddress());
     }
 
     @EventHandler
     public Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
-        return currentState().onResourceIdAdded(event);
+        return currentState().withResourceId(event.resourceEntityId());
     }
 
     @EventHandler
     public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
-        return currentState().onResourceIdRemoved(event);
+        return currentState().withoutResourceId(event.resourceEntityId());
     }
 }
