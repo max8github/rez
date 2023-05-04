@@ -1,15 +1,12 @@
 package com.rez.facility.api;
 
 import kalix.javasdk.action.Action;
+import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.KalixClient;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.util.UUID;
 
-@RequestMapping("/facility/{facilityId}")
+@Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
     private final KalixClient kalixClient;
 
@@ -17,13 +14,11 @@ public class FacilityAction extends Action {
         this.kalixClient = kalixClient;
     }
 
-    @PostMapping("/createAndRegisterResource")
-    public Effect<String> createAndRegisterResource(@RequestBody Dto.ResourceDTO resourceDTO,
-                                                    @PathVariable String facilityId) {
+    public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
         var resourceEntityId = UUID.randomUUID().toString();
-        var command = new CreateResourceCommand(facilityId, resourceDTO);
-        var deferredCall =
-                kalixClient.post("/resource/" + resourceEntityId + "/create", command, String.class);
+        var path = "/resource/%s/create".formatted(resourceEntityId);
+        var command = new CreateResourceCommand(event.facilityId(), event.resourceDTO());
+        var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
 

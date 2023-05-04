@@ -240,7 +240,7 @@
 					"raw": "{\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
 				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/createAndRegisterResource",
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -249,7 +249,8 @@
 					"path": [
 						"facility",
 						"{{facility_id}}",
-						"createAndRegisterResource"
+						"resource",
+						"submit"
 					]
 				},
 				"description": "Creates a new Resource entity and adds its entity id into Facility"
@@ -257,17 +258,8 @@
 			"response": []
 		},
 		{
-			"name": "Get Facility",
+			"name": "Get resource",
 			"event": [
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
 				{
 					"listen": "prerequest",
 					"script": {
@@ -276,11 +268,17 @@
 						],
 						"type": "text/javascript"
 					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
 				}
 			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
 				"method": "GET",
 				"header": [
@@ -290,12 +288,8 @@
 						"value": "application/json"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
-					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}",
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
 					"protocol": "http",
 					"host": [
 						"{{host}}"
@@ -303,14 +297,17 @@
 					"port": "{{port}}",
 					"path": [
 						"facility",
-						"{{facility_id}}"
+						"{{facility_id}}",
+						"resource",
+						"{{resource_id}}"
 					]
-				}
+				},
+				"description": "Registers resource id with Facility.\n\nNote: this is not API. Registration should be only done through the aggregate root, which is \\`Facility\\`."
 			},
 			"response": []
 		},
 		{
-			"name": "Register resource id",
+			"name": "Register resource id (INTERNAL)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -376,7 +373,60 @@
 			"response": []
 		},
 		{
-			"name": "Create Resource",
+			"name": "Get Facility",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create Resource (INTERNAL)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -450,7 +500,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Resource",
+			"name": "Get Resource (INTERNAL)",
 			"event": [
 				{
 					"listen": "prerequest",

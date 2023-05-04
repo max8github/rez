@@ -48,11 +48,18 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @PostMapping("/resource/submit")
+    public Effect<String> submitResource(@RequestBody Dto.ResourceDTO resourceDTO) {
+        return effects()
+                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDTO))
+                .thenReply(newState -> "OK");
+    }
+
     @PostMapping("/resource/{resourceId}")
     public Effect<String> addResourceId(@PathVariable String resourceId) {
         return effects()
                 .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
-                .thenReply(newState -> "OK");
+                .thenReply(newState -> resourceId);
     }
 
     @DeleteMapping("/resource/{resourceId}")
@@ -84,6 +91,12 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @EventHandler
     public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
         return currentState().withAddress(addressChanged.addressDTO().toAddress());
+    }
+
+    //needed?
+    @EventHandler
+    public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
+        return currentState();
     }
 
     @EventHandler
