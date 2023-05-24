@@ -5,6 +5,7 @@ import com.rez.facility.domain.Facility;
 import com.rez.facility.domain.Reservation;
 import com.rez.facility.domain.Resource;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -27,7 +28,9 @@ public final class Dto {
     public record ResourceDTO(String resourceName, int size) {
 
         public Resource toResource() {
-            return new Resource(resourceName, new String[size], size, 0);
+            String[] a = new String[size];
+            Arrays.fill(a, "");
+            return new Resource(resourceName, a, size, 0);
         }
     }
 

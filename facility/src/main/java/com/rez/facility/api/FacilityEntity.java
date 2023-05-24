@@ -36,15 +36,6 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
-    @PostMapping("/createReservation")
-    public Effect<String> createReservation(@RequestBody Dto.ReservationDTO dto) {
-        var id = UUID.randomUUID().toString();
-        return effects()
-                .emitEvent(new FacilityEvent.ReservationCreated(id, dto, commandContext().entityId(),
-                        new ArrayList<>(currentState().resourceIds())))
-                .thenReply(newState -> id);
-    }
-
     @PostMapping("/rename/{newName}")
     public Effect<String> rename(@PathVariable String newName) {
         return effects()
@@ -86,6 +77,15 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @GetMapping()
     public Effect<Facility> getFacility() {
         return effects().reply(currentState());
+    }
+
+    @PostMapping("/reservation/create")
+    public Effect<String> createReservation(@RequestBody Dto.ReservationDTO dto) {
+        var id = UUID.randomUUID().toString();
+        return effects()
+                .emitEvent(new FacilityEvent.ReservationCreated(id, dto, commandContext().entityId(),
+                        new ArrayList<>(currentState().resourceIds())))
+                .thenReply(newState -> id);
     }
 
     @EventHandler
