@@ -9,7 +9,9 @@ import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.ArrayList;
 import java.util.Collections;
+import java.util.UUID;
 
 @EntityKey("facilityId")
 @EntityType("facility")
@@ -32,6 +34,15 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facilityDTO))
                 .thenReply(newState -> "OK");
+    }
+
+    @PostMapping("/createReservation")
+    public Effect<String> createReservation(@RequestBody Dto.ReservationDTO dto) {
+        var id = UUID.randomUUID().toString();
+        return effects()
+                .emitEvent(new FacilityEvent.ReservationCreated(id, dto, commandContext().entityId(),
+                        new ArrayList<>(currentState().resourceIds())))
+                .thenReply(newState -> id);
     }
 
     @PostMapping("/rename/{newName}")
@@ -107,5 +118,10 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @EventHandler
     public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
         return currentState().withoutResourceId(event.resourceEntityId());
+    }
+
+    @EventHandler
+    public Facility reservationCreated(FacilityEvent.ReservationCreated event) {
+        return currentState();
     }
 }

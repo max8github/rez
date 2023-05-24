@@ -2,6 +2,8 @@ package com.rez.facility.api;
 
 import kalix.javasdk.annotations.TypeName;
 
+import java.util.List;
+
 public sealed interface FacilityEvent {
 
     @TypeName("resource-submitted")
@@ -21,4 +23,9 @@ public sealed interface FacilityEvent {
 
     @TypeName("addressChanged")
     record AddressChanged(Dto.AddressDTO addressDTO) implements FacilityEvent {}
+
+    @TypeName("reservation-created")
+    record ReservationCreated(String reservationId, Dto.ReservationDTO reservationDTO, String facilityId,
+                              List<String> resources) implements FacilityEvent {}
+
 }

@@ -1,0 +1,13 @@
+@startuml
+skinparam monochrome reverse
+skinparam actorStyle hollow
+
+title ReservationEntity Lifecycle
+KickoffBooking -up-> (INIT): emptyState()
+(INIT) --> (CONFIRMSTATE): ResourceSelected
+(CONFIRMSTATE) --> (CONFIRMSTATE): ResourceSelected
+(DONE) <-down- (INIT): Rejected
+(DONE) <-- (CONFIRMSTATE): Rejected
+(FULLFILLED) <-up- (CONFIRMSTATE): Booked
+(FULLFILLED) --> (DONE): Published
+@enduml
