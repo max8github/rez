@@ -113,12 +113,12 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/reservation/create")
-    public Effect<String> createReservation(@RequestBody Api.Reservation dto) {
-        var id = UUID.randomUUID().toString();
+    public Effect<String> createReservation(@RequestBody Api.Reservation reservation) {
+        var reservationId = UUID.randomUUID().toString();
         return effects()
-                .emitEvent(new FacilityEvent.ReservationCreated(id, dto, commandContext().entityId(),
+                .emitEvent(new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
                         new ArrayList<>(currentState().resourceIds())))
-                .thenReply(newState -> id);
+                .thenReply(newState -> reservationId);
     }
 
     @EventHandler

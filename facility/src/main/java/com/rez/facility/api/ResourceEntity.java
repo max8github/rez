@@ -40,13 +40,13 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     public Effect<String> select(@RequestBody ReservationAction.SelectBooking command) {
         if(currentState().hasAvailable(command.reservation())) {
             return effects()
-                    .emitEvent(new ResourceEvent.BookingAccepted(command.reservationId(),
-                            command.reservation(), command.resourceId()))
+                    .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
+                            command.facilityId(), command.reservation()))
                     .thenReply(newState -> "OK");
         } else {
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.reservationId(), command.reservation(),
-                            command.resourceId(), command.facilityId()))
+                    .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(), command.facilityId(), command.reservation()
+                    ))
                     .thenReply(newState -> "UNAVAILABLE");
 
         }

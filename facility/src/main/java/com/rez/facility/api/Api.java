@@ -33,7 +33,7 @@ public final class Api {
 
     public record Reservation(String username, int timeSlot) {
         public ReservationState toReservationState(String reservationId, String facilityId, List<String> resources) {
-            return new ReservationState(INIT, reservationId, username, facilityId, timeSlot,
+            return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
                     0, resources);
         }
     }

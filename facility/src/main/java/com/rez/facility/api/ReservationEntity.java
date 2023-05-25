@@ -24,7 +24,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "",  "", 0, 0, Collections.emptyList());
+        return new ReservationState(INIT, entityId, "", "", 0, 0, Collections.emptyList());
     }
 
     @PostMapping("/init")
@@ -33,7 +33,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case INIT:
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
-                                    command.reservation(), command.facilityId(), command.resources()))
+                                    command.facilityId(), command.reservation(), command.resources()))
                             .thenReply(newState -> "OK");
             default:
                 return effects().error("reservation entity " + command.reservationId() + " already initiated");
@@ -57,13 +57,14 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 if (i < resources.size()) {
                     var resourceId = currentState().resources().get(i);
                     return effects()
-                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservation(),
-                                    command.reservationId(), command.facilityId()))
+                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId,
+                                    command.reservationId(), command.facilityId(), command.reservation()
+                            ))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                                    command.reservation(), command.facilityId()))
+                                    command.facilityId(), command.reservation()))
                             .thenReply(newState -> "Not Available");
                 }
             default:
@@ -85,7 +86,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> book(@RequestBody ReservationAction.Book command) {
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                            command.reservation(), command.reservationId()))
+                            command.reservationId(), command.reservation()))
                     .thenReply(newState -> "OK");
     }
 
@@ -109,7 +110,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 //        }
             return effects()
                     .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                            command.reservation(), command.facilityId()))
+                            command.facilityId(), command.reservation()))
                     .thenReply(newState -> "Not Available");
     }
 
