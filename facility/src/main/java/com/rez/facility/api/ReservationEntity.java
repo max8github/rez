@@ -126,8 +126,6 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     public record KickoffBooking(String reservationId, String facilityId, Api.Reservation reservation) {}
 
-    public record SelectBooking(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
-
     public record Book(String resourceId, String reservationId, Api.Reservation reservation) {}
 
     public record Reject(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}

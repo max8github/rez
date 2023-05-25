@@ -21,7 +21,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @Override
     public Resource emptyState() {
-        return new Resource(entityId, new String[24], 24, 0);
+        return Resource.initialize(entityId, 24);
     }
 
     @PostMapping("/create")
@@ -37,15 +37,16 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     }
 
     @PostMapping("/select")
-    public Effect<String> select(@RequestBody ReservationEntity.SelectBooking command) {
-        if(currentState().hasAvailable(command.reservation())) {
+    public Effect<String> select(@RequestBody SelectBooking command) {
+        if(command.reservation().fitsInto(currentState())) {
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
                             command.facilityId(), command.reservation()))
                     .thenReply(newState -> "OK");
         } else {
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(), command.facilityId(), command.reservation()
+                    .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(),
+                            command.facilityId(), command.reservation()
                     ))
                     .thenReply(newState -> "UNAVAILABLE");
 
@@ -54,7 +55,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @EventHandler
     public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return currentState().fill(event.reservation());
+        return event.reservation().setInto(currentState());
     }
 
     @EventHandler
@@ -74,4 +75,6 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     }
 
     public record CreateResourceCommand(String facilityId, Api.Resource resource) {}
+
+    public record SelectBooking(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
 }

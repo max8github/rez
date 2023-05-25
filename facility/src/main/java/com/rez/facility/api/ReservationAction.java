@@ -23,7 +23,7 @@ public class ReservationAction extends Action {
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
         var resourceId = event.resourceId();
         var path = "/resource/%s/select".formatted(resourceId);
-        var command = new ReservationEntity.SelectBooking(resourceId, event.reservationId(), event.facilityId(), event.reservation());
+        var command = new ResourceEntity.SelectBooking(resourceId, event.reservationId(), event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }

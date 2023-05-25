@@ -1,7 +1,5 @@
 package com.rez.facility.domain;
 
-import com.rez.facility.api.Api;
-
 import java.util.Arrays;
 
 /**
@@ -15,21 +13,14 @@ import java.util.Arrays;
  * @param nowPointer array index that points to the slot we are in right now.
  */
 public record Resource(String name, String[] timeWindow, int size, int nowPointer) {
-    public static Resource initialize() {
-        String[] a = new String[1];
-        Arrays.fill(a, "");
-        return new Resource("", a, 1, 0);
+    public static Resource initialize(String name, int size) {
+        String[] tw = new String[size];
+        Arrays.fill(tw, "");
+        return new Resource(name, tw, size, 0);
     }
-
-    public boolean hasAvailable(Api.Reservation dto) {
-        if (dto.timeSlot() < timeWindow.length)
-            return timeWindow[dto.timeSlot()].isEmpty();
-        else return false;
-    }
-
-    public Resource fill(Api.Reservation dto) {
-        if (dto.timeSlot() < timeWindow.length)
-            timeWindow[dto.timeSlot()] = dto.username();
+    public Resource withTimeWindow(int timeSlot, String username) {
+        if (timeSlot < timeWindow.length)
+            this.timeWindow[timeSlot] = username;
         return this;
     }
 }

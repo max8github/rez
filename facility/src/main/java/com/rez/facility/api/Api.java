@@ -2,7 +2,6 @@ package com.rez.facility.api;
 
 import com.rez.facility.domain.ReservationState;
 
-import java.util.Arrays;
 import java.util.List;
 import java.util.Set;
 
@@ -25,9 +24,7 @@ public final class Api {
     public record Resource(String resourceName, int size) {
 
         public com.rez.facility.domain.Resource toResourceState() {
-            String[] a = new String[size];
-            Arrays.fill(a, "");
-            return new com.rez.facility.domain.Resource(resourceName, a, size, 0);
+            return com.rez.facility.domain.Resource.initialize(resourceName, size);
         }
     }
 
@@ -35,6 +32,17 @@ public final class Api {
         public ReservationState toReservationState(String reservationId, String facilityId, List<String> resources) {
             return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
                     0, resources);
+        }
+
+
+        public boolean fitsInto(com.rez.facility.domain.Resource r) {
+            if (timeSlot < r.timeWindow().length)
+                return r.timeWindow()[timeSlot].isEmpty();
+            else return false;
+        }
+
+        public com.rez.facility.domain.Resource setInto(com.rez.facility.domain.Resource r) {
+            return r.withTimeWindow(timeSlot, username);
         }
     }
 }
