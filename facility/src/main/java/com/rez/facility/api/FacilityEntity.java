@@ -52,9 +52,10 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @PostMapping("/resource/submit")
     public Effect<String> submitResource(@RequestBody Dto.ResourceDTO resourceDTO) {
+        var id = UUID.randomUUID().toString();
         return effects()
-                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDTO))
-                .thenReply(newState -> "OK");
+                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDTO, id))
+                .thenReply(newState -> id);
     }
 
     @PostMapping("/resource/{resourceId}")

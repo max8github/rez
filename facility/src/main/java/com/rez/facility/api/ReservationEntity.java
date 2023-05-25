@@ -48,7 +48,7 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
                             command.reservationDTO(), command.facilityId()))
                     .thenReply(newState -> "Not Available");
         } else {
-            var resourceId = currentState().resources().get(0);
+            var resourceId = currentState().resources().get(0);//TODO: 0?
             return effects()
                     .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservationDTO(),
                             command.reservationId()))

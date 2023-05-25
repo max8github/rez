@@ -16,7 +16,7 @@ public class FacilityAction extends Action {
     }
 
     public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
-        var resourceEntityId = UUID.randomUUID().toString();
+        var resourceEntityId = event.resourceId();
         var path = "/resource/%s/create".formatted(resourceEntityId);
         var command = new CreateResourceCommand(event.facilityId(), event.resourceDTO());
         var deferredCall = kalixClient.post(path, command, String.class);
