@@ -51,7 +51,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/runBooking")
-    public Effect<String> run(@RequestBody RunBooking command) {
+    public Effect<String> runBooking(@RequestBody RunBooking command) {
         switch (currentState().state()) {
             case INIT:
             case SELECTING:
