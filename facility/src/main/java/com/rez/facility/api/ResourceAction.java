@@ -5,10 +5,10 @@ import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.KalixClient;
 
 @Subscribe.EventSourcedEntity(value = ResourceEntity.class, ignoreUnknown = true)
-public class ResourceToFacilityAction extends Action {
+public class ResourceAction extends Action {
     private final KalixClient kalixClient;
 
-    public ResourceToFacilityAction(KalixClient kalixClient) {
+    public ResourceAction(KalixClient kalixClient) {
         this.kalixClient = kalixClient;
     }
 
