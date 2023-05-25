@@ -93,12 +93,12 @@ public class DelegatingServiceAction extends Action {
     }
 
     @PostMapping("/calendar/save")
-    public Action.Effect<String> addAndReturn(@RequestBody ResourceEntity.SelectBooking command) {
+    public Action.Effect<String> addAndReturn(@RequestBody ResourceEntity.InquireBooking command) {
         var result = saveToGoogle(command);
         return effects().reply(result);
     }
 
-    private String saveToGoogle(ResourceEntity.SelectBooking command) {
+    private String saveToGoogle(ResourceEntity.InquireBooking command) {
 
         Event event = new Event()
                 .setSummary("Resource Reserved")

@@ -14,8 +14,8 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ReservationInitiated event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/kickoff".formatted(reservationId);
-        var command = new ReservationEntity.KickoffBooking(reservationId, event.facilityId(), event.reservation());
+        var path = "/reservation/%s/runBooking".formatted(reservationId);
+        var command = new ReservationEntity.RunBooking(reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
@@ -23,7 +23,7 @@ public class ReservationAction extends Action {
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
         var resourceId = event.resourceId();
         var path = "/resource/%s/select".formatted(resourceId);
-        var command = new ResourceEntity.SelectBooking(resourceId, event.reservationId(), event.facilityId(), event.reservation());
+        var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
@@ -31,7 +31,7 @@ public class ReservationAction extends Action {
 //    public Effect<String> on(ReservationEvent.Booked event) {
 //        var resourceId = event.resourceId();
 //        var path = "/calendar/save";
-//        var command = new SelectBooking(resourceId, event.reservation(), event.reservationId());
+//        var command = new InquireBooking(resourceId, event.reservation(), event.reservationId());
 //        var deferredCall = kalixClient.post(path, command, String.class);
 //        return effects().forward(deferredCall);
 //    }
@@ -46,7 +46,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/kickoff".formatted(reservationId);
+        var path = "/reservation/%s/runBooking".formatted(reservationId);
         var command = new ReservationEntity.Reject(event.resourceId(), reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);

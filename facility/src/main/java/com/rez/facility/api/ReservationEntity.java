@@ -49,8 +49,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 .withState(SELECTING);
     }
 
-    @PostMapping("/kickoff")
-    public Effect<String> kickoff(@RequestBody KickoffBooking command) {
+    @PostMapping("/runBooking")
+    public Effect<String> run(@RequestBody RunBooking command) {
         switch (currentState().state()) {
             case INIT:
             case SELECTING:
@@ -109,7 +109,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public record InitiateReservation(String reservationId, String facilityId, Mod.Reservation reservation,
                                       List<String> resources) {}
 
-    public record KickoffBooking(String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record RunBooking(String reservationId, String facilityId, Mod.Reservation reservation) {}
 
     public record Book(String resourceId, String reservationId, Mod.Reservation reservation) {}
 

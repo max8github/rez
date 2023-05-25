@@ -36,8 +36,8 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         return resourceCreated.resource().toResourceState();
     }
 
-    @PostMapping("/select")
-    public Effect<String> select(@RequestBody SelectBooking command) {
+    @PostMapping("/inquireBooking")
+    public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
         if(command.reservation().fitsInto(currentState())) {
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
@@ -76,5 +76,5 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
 
-    public record SelectBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }
