@@ -12,9 +12,7 @@ public sealed interface ReservationEvent {
     record ReservationRejected(String reservationId, Dto.ReservationDTO reservationDTO, String facilityId) implements ReservationEvent {}
 
     @TypeName("reservation-selected")
-    record ResourceSelected(String resourceId, Dto.ReservationDTO reservationDTO, String reservationId) implements ReservationEvent {}
+    record ResourceSelected(String resourceId, Dto.ReservationDTO reservationDTO, String reservationId, String facilityId) implements ReservationEvent {}
     @TypeName("booked")
     record Booked(String resourceId, Dto.ReservationDTO reservationDTO, String reservationId) implements ReservationEvent {}
-    @TypeName("rejected")
-    record Rejected(String reservationId) implements ReservationEvent {}
 }

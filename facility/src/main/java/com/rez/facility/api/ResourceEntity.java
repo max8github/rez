@@ -40,7 +40,8 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
                     .thenReply(newState -> "OK");
         } else {
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.reservationId()))
+                    .emitEvent(new ResourceEvent.BookingRejected(command.reservationId(), command.reservationDTO(),
+                            command.resourceId(), command.facilityId()))
                     .thenReply(newState -> "UNAVAILABLE");
 
         }

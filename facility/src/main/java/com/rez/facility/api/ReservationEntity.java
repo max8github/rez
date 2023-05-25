@@ -42,17 +42,25 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
 
     @PostMapping("/kickoff")
     public Effect<String> kickoff(@RequestBody ReservationAction.KickoffBooking command) {
-        if(currentState().resources().isEmpty()) {
-            return effects()
-                    .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                            command.reservationDTO(), command.facilityId()))
-                    .thenReply(newState -> "Not Available");
-        } else {
-            var resourceId = currentState().resources().get(0);//TODO: 0?
-            return effects()
-                    .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservationDTO(),
-                            command.reservationId()))
-                    .thenReply(newState -> "OK");
+        switch (currentState().state()) {
+            case INIT:
+            case SELECTING:
+                var i = currentState().numOfResponses();
+                var resources = currentState().resources();
+                if (i < resources.size()) {
+                    var resourceId = currentState().resources().get(i);
+                    return effects()
+                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservationDTO(),
+                                    command.reservationId(), command.facilityId()))
+                            .thenReply(newState -> "OK");
+                } else {
+                    return effects()
+                            .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
+                                    command.reservationDTO(), command.facilityId()))
+                            .thenReply(newState -> "Not Available");
+                }
+            default:
+                return effects().error("reservation entity " + command.reservationId() + " already kicked off");
         }
     }
 
@@ -66,8 +74,20 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
 
     @PostMapping("/reject")
     public Effect<String> reject(@RequestBody ReservationAction.Reject command) {
+//        var i = currentState().numOfResponses();
+//        var who = command.reservationId();
+//        var nextResourceId = "somehow next resource id here";
+//        if(currentState().resources().size() - i > 1) {
+//            return effects()
+//                    .emitEvent(new ReservationEvent.ResourceSelected(nextResourceId, command.reservationDTO(),
+//                            command.reservationId()))
+//                    .thenReply(newState -> "OK");
+//        } else {
+//            //we are unavailable, finito
+//        }
             return effects()
-                    .emitEvent(new ReservationEvent.Rejected(command.reservationId()))
+                    .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
+                            command.reservationDTO(), command.facilityId()))
                     .thenReply(newState -> "Not Available");
     }
 
@@ -94,7 +114,7 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
     }
 
     @EventHandler
-    public Reservation rejected(ReservationEvent.Rejected event) {
+    public Reservation rejected(ReservationEvent.ReservationRejected event) {
         return currentState().withState(UNAVAILABLE);
     }
 
