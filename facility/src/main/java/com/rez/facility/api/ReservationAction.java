@@ -52,9 +52,9 @@ public class ReservationAction extends Action {
         return effects().forward(deferredCall);
     }
 
-    public record KickoffBooking(String reservationId, String facilityId, Dto.Reservation reservation) {}
-    public record SelectBooking(String resourceId, Dto.Reservation reservation, String reservationId, String facilityId) {}
+    public record KickoffBooking(String reservationId, String facilityId, Api.Reservation reservation) {}
+    public record SelectBooking(String resourceId, Api.Reservation reservation, String reservationId, String facilityId) {}
 
-    public record Book(String resourceId, Dto.Reservation reservation, String reservationId) {}
-    public record Reject(String resourceId, Dto.Reservation reservation, String reservationId, String facilityId) {}
+    public record Book(String resourceId, Api.Reservation reservation, String reservationId) {}
+    public record Reject(String resourceId, Api.Reservation reservation, String reservationId, String facilityId) {}
 }

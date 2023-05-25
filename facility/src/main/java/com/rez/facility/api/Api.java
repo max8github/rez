@@ -8,8 +8,8 @@ import java.util.Set;
 
 import static com.rez.facility.domain.ReservationState.State.INIT;
 
-public final class Dto {
-    private Dto(){}
+public final class Api {
+    private Api(){}
 
     public record Facility(String name, Address address, Set<String> resourceIds) {
 

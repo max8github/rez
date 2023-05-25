@@ -1,6 +1,6 @@
 package com.rez.facility.domain;
 
-import com.rez.facility.api.Dto;
+import com.rez.facility.api.Api;
 
 import java.util.Arrays;
 
@@ -21,13 +21,13 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
         return new Resource("", a, 1, 0);
     }
 
-    public boolean hasAvailable(Dto.Reservation dto) {
+    public boolean hasAvailable(Api.Reservation dto) {
         if (dto.timeSlot() < timeWindow.length)
             return timeWindow[dto.timeSlot()].isEmpty();
         else return false;
     }
 
-    public Resource fill(Dto.Reservation dto) {
+    public Resource fill(Api.Reservation dto) {
         if (dto.timeSlot() < timeWindow.length)
             timeWindow[dto.timeSlot()] = dto.username();
         return this;

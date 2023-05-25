@@ -30,6 +30,6 @@ public class FacilityAction extends Action {
         return effects().forward(deferredCall);
     }
 
-    public record CreateResourceCommand(String facilityId, Dto.Resource resource) {}
-    public record InitiateReservation(String reservationId, String facilityId, Dto.Reservation reservation,
+    public record CreateResourceCommand(String facilityId, Api.Resource resource) {}
+    public record InitiateReservation(String reservationId, String facilityId, Api.Reservation reservation,
                                       List<String> resources) {}}
