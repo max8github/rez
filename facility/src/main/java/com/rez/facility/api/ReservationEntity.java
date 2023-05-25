@@ -1,6 +1,6 @@
 package com.rez.facility.api;
 
-import com.rez.facility.domain.Reservation;
+import com.rez.facility.domain.ReservationState;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
@@ -9,12 +9,12 @@ import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
-import static com.rez.facility.domain.Reservation.State.*;
+import static com.rez.facility.domain.ReservationState.State.*;
 
 @EntityKey("reservationId")
 @EntityType("reservation")
 @RequestMapping("/reservation/{reservationId}")
-public class ReservationEntity extends EventSourcedEntity<Reservation, ReservationEvent> {
+public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
 
     private final String entityId;
 
@@ -23,8 +23,8 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
     }
 
     @Override
-    public Reservation emptyState() {
-        return new Reservation(INIT, entityId, "",  "", 0, 0, Collections.emptyList());
+    public ReservationState emptyState() {
+        return new ReservationState(INIT, entityId, "",  "", 0, 0, Collections.emptyList());
     }
 
     @PostMapping("/init")
@@ -33,7 +33,7 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
             case INIT:
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
-                                    command.reservationDTO(), command.facilityId(), command.resources()))
+                                    command.reservation(), command.facilityId(), command.resources()))
                             .thenReply(newState -> "OK");
             default:
                 return effects().error("reservation entity " + command.reservationId() + " already initiated");
@@ -50,13 +50,13 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
                 if (i < resources.size()) {
                     var resourceId = currentState().resources().get(i);
                     return effects()
-                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservationDTO(),
+                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId, command.reservation(),
                                     command.reservationId(), command.facilityId()))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                                    command.reservationDTO(), command.facilityId()))
+                                    command.reservation(), command.facilityId()))
                             .thenReply(newState -> "Not Available");
                 }
             default:
@@ -68,7 +68,7 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
     public Effect<String> book(@RequestBody ReservationAction.Book command) {
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                            command.reservationDTO(), command.reservationId()))
+                            command.reservation(), command.reservationId()))
                     .thenReply(newState -> "OK");
     }
 
@@ -79,7 +79,7 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
 //        var nextResourceId = "somehow next resource id here";
 //        if(currentState().resources().size() - i > 1) {
 //            return effects()
-//                    .emitEvent(new ReservationEvent.ResourceSelected(nextResourceId, command.reservationDTO(),
+//                    .emitEvent(new ReservationEvent.ResourceSelected(nextResourceId, command.reservation(),
 //                            command.reservationId()))
 //                    .thenReply(newState -> "OK");
 //        } else {
@@ -87,39 +87,39 @@ public class ReservationEntity extends EventSourcedEntity<Reservation, Reservati
 //        }
             return effects()
                     .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                            command.reservationDTO(), command.facilityId()))
+                            command.reservation(), command.facilityId()))
                     .thenReply(newState -> "Not Available");
     }
 
     @GetMapping()
-    public Effect<Reservation> getReservation() {
+    public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());
     }
 
     @EventHandler
-    public Reservation initiated(ReservationEvent.ReservationInitiated event) {
-        return event.reservationDTO()
-                .toReservation(event.reservationId(), event.facilityId(), event.resources())
+    public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
+        return event.reservation()
+                .toReservationState(event.reservationId(), event.facilityId(), event.resources())
                 .withState(SELECTING);
     }
 
     @EventHandler
-    public Reservation resourceSelected(ReservationEvent.ResourceSelected event) {
+    public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
         return currentState().withState(SELECTING);
     }
 
     @EventHandler
-    public Reservation booked(ReservationEvent.Booked event) {
+    public ReservationState booked(ReservationEvent.Booked event) {
         return currentState().withState(DONE);
     }
 
     @EventHandler
-    public Reservation rejected(ReservationEvent.ReservationRejected event) {
+    public ReservationState rejected(ReservationEvent.ReservationRejected event) {
         return currentState().withState(UNAVAILABLE);
     }
 
     @EventHandler
-    public Reservation reservationRejected(ReservationEvent.ReservationRejected event) {
+    public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
         return currentState().withState(UNAVAILABLE);
     }
 }

@@ -25,7 +25,7 @@ public sealed interface FacilityEvent {
     record AddressChanged(Dto.AddressDTO addressDTO) implements FacilityEvent {}
 
     @TypeName("reservation-created")
-    record ReservationCreated(String reservationId, Dto.ReservationDTO reservationDTO, String facilityId,
+    record ReservationCreated(String reservationId, Dto.Reservation reservation, String facilityId,
                               List<String> resources) implements FacilityEvent {}
 
 }

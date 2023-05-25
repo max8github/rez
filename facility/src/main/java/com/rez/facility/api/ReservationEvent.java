@@ -6,13 +6,13 @@ import java.util.List;
 
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
-    record ReservationInitiated(String reservationId, Dto.ReservationDTO reservationDTO, String facilityId,
-                               List<String> resources) implements ReservationEvent {}
+    record ReservationInitiated(String reservationId, Dto.Reservation reservation, String facilityId,
+                                List<String> resources) implements ReservationEvent {}
     @TypeName("reservation-rejected")
-    record ReservationRejected(String reservationId, Dto.ReservationDTO reservationDTO, String facilityId) implements ReservationEvent {}
+    record ReservationRejected(String reservationId, Dto.Reservation reservation, String facilityId) implements ReservationEvent {}
 
     @TypeName("reservation-selected")
-    record ResourceSelected(String resourceId, Dto.ReservationDTO reservationDTO, String reservationId, String facilityId) implements ReservationEvent {}
+    record ResourceSelected(String resourceId, Dto.Reservation reservation, String reservationId, String facilityId) implements ReservationEvent {}
     @TypeName("booked")
-    record Booked(String resourceId, Dto.ReservationDTO reservationDTO, String reservationId) implements ReservationEvent {}
+    record Booked(String resourceId, Dto.Reservation reservation, String reservationId) implements ReservationEvent {}
 }

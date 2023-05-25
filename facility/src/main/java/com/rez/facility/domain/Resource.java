@@ -21,13 +21,13 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
         return new Resource("", a, 1, 0);
     }
 
-    public boolean hasAvailable(Dto.ReservationDTO dto) {
+    public boolean hasAvailable(Dto.Reservation dto) {
         if (dto.timeSlot() < timeWindow.length)
             return timeWindow[dto.timeSlot()].isEmpty();
         else return false;
     }
 
-    public Resource fill(Dto.ReservationDTO dto) {
+    public Resource fill(Dto.Reservation dto) {
         if (dto.timeSlot() < timeWindow.length)
             timeWindow[dto.timeSlot()] = dto.username();
         return this;

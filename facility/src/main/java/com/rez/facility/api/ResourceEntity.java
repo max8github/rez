@@ -33,14 +33,14 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @PostMapping("/select")
     public Effect<String> select(@RequestBody ReservationAction.SelectBooking command) {
-        if(currentState().hasAvailable(command.reservationDTO())) {
+        if(currentState().hasAvailable(command.reservation())) {
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.reservationId(),
-                            command.reservationDTO(), command.resourceId()))
+                            command.reservation(), command.resourceId()))
                     .thenReply(newState -> "OK");
         } else {
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.reservationId(), command.reservationDTO(),
+                    .emitEvent(new ResourceEvent.BookingRejected(command.reservationId(), command.reservation(),
                             command.resourceId(), command.facilityId()))
                     .thenReply(newState -> "UNAVAILABLE");
 
@@ -65,7 +65,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @EventHandler
     public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return currentState().fill(event.reservationDTO());
+        return currentState().fill(event.reservation());
     }
 
     @EventHandler
