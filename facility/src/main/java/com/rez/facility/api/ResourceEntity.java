@@ -74,7 +74,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
             return effects().reply(currentState());
     }
 
-    public record CreateResourceCommand(String facilityId, Api.Resource resource) {}
+    public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
 
-    public record SelectBooking(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
+    public record SelectBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }

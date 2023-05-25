@@ -7,8 +7,8 @@ import java.util.Set;
 
 import static com.rez.facility.domain.ReservationState.State.INIT;
 
-public final class Api {
-    private Api(){}
+public final class Mod {
+    private Mod(){}
 
     public record Facility(String name, Address address, Set<String> resourceIds) {
 

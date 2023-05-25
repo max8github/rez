@@ -30,7 +30,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody Api.Facility facility) {
+    public Effect<String> create(@RequestBody Mod.Facility facility) {
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
                 .thenReply(newState -> "OK");
@@ -55,7 +55,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody Api.Address address) {
+    public Effect<String> changeAddress(@RequestBody Mod.Address address) {
         return effects()
                 .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
@@ -67,7 +67,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/resource/submit")
-    public Effect<String> submitResource(@RequestBody Api.Resource resource) {
+    public Effect<String> submitResource(@RequestBody Mod.Resource resource) {
         var id = UUID.randomUUID().toString();
         return effects()
                 .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resource, id))
@@ -113,7 +113,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/reservation/create")
-    public Effect<String> createReservation(@RequestBody Api.Reservation reservation) {
+    public Effect<String> createReservation(@RequestBody Mod.Reservation reservation) {
         var reservationId = UUID.randomUUID().toString();
         return effects()
                 .emitEvent(new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,

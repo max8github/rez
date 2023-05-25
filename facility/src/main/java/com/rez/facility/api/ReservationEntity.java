@@ -121,12 +121,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return effects().reply(currentState());
     }
 
-    public record InitiateReservation(String reservationId, String facilityId, Api.Reservation reservation,
+    public record InitiateReservation(String reservationId, String facilityId, Mod.Reservation reservation,
                                       List<String> resources) {}
 
-    public record KickoffBooking(String reservationId, String facilityId, Api.Reservation reservation) {}
+    public record KickoffBooking(String reservationId, String facilityId, Mod.Reservation reservation) {}
 
-    public record Book(String resourceId, String reservationId, Api.Reservation reservation) {}
+    public record Book(String resourceId, String reservationId, Mod.Reservation reservation) {}
 
-    public record Reject(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
+    public record Reject(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }
