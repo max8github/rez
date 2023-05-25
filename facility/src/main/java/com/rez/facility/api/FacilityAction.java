@@ -17,7 +17,7 @@ public class FacilityAction extends Action {
     public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
         var resourceEntityId = event.resourceId();
         var path = "/resource/%s/create".formatted(resourceEntityId);
-        var command = new CreateResourceCommand(event.facilityId(), event.resourceDTO());
+        var command = new CreateResourceCommand(event.facilityId(), event.resource());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
@@ -30,6 +30,6 @@ public class FacilityAction extends Action {
         return effects().forward(deferredCall);
     }
 
-    public record CreateResourceCommand(String facilityId, Dto.ResourceDTO resourceDTO) {}
+    public record CreateResourceCommand(String facilityId, Dto.Resource resource) {}
     public record InitiateReservation(String reservationId, String facilityId, Dto.Reservation reservation,
                                       List<String> resources) {}}

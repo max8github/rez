@@ -30,9 +30,9 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody Dto.FacilityDTO facilityDTO) {
+    public Effect<String> create(@RequestBody Dto.Facility facility) {
         return effects()
-                .emitEvent(new FacilityEvent.Created(entityId, facilityDTO))
+                .emitEvent(new FacilityEvent.Created(entityId, facility))
                 .thenReply(newState -> "OK");
     }
 
@@ -44,17 +44,17 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody Dto.AddressDTO addressDTO) {
+    public Effect<String> changeAddress(@RequestBody Dto.Address address) {
         return effects()
-                .emitEvent(new FacilityEvent.AddressChanged(addressDTO))
+                .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
     }
 
     @PostMapping("/resource/submit")
-    public Effect<String> submitResource(@RequestBody Dto.ResourceDTO resourceDTO) {
+    public Effect<String> submitResource(@RequestBody Dto.Resource resource) {
         var id = UUID.randomUUID().toString();
         return effects()
-                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDTO, id))
+                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resource, id))
                 .thenReply(newState -> id);
     }
 
@@ -91,8 +91,8 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @EventHandler
     public Facility created(FacilityEvent.Created created) {
-        var dto = created.facilityDTO();
-        return dto.toFacility(created.entityId());
+        var dto = created.facility();
+        return dto.toFacilityState(created.entityId());
     }
 
     @EventHandler
@@ -102,7 +102,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @EventHandler
     public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        return currentState().withAddress(addressChanged.addressDTO().toAddress());
+        return currentState().withAddress(addressChanged.address().toAddressState());
     }
 
     //needed?

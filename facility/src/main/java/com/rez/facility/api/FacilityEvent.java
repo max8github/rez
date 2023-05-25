@@ -7,7 +7,7 @@ import java.util.List;
 public sealed interface FacilityEvent {
 
     @TypeName("resource-submitted")
-    record ResourceSubmitted(String facilityId, Dto.ResourceDTO resourceDTO, String resourceId) implements FacilityEvent {}
+    record ResourceSubmitted(String facilityId, Dto.Resource resource, String resourceId) implements FacilityEvent {}
 
     @TypeName("resource-id-added")
     record ResourceIdAdded(String resourceEntityId) implements FacilityEvent {}
@@ -16,13 +16,13 @@ public sealed interface FacilityEvent {
     record ResourceIdRemoved(String resourceEntityId) implements FacilityEvent {}
 
     @TypeName("created")
-    record Created(String entityId, Dto.FacilityDTO facilityDTO) implements FacilityEvent {}
+    record Created(String entityId, Dto.Facility facility) implements FacilityEvent {}
 
     @TypeName("renamed")
     record Renamed(String newName) implements FacilityEvent {}
 
     @TypeName("addressChanged")
-    record AddressChanged(Dto.AddressDTO addressDTO) implements FacilityEvent {}
+    record AddressChanged(Dto.Address address) implements FacilityEvent {}
 
     @TypeName("reservation-created")
     record ReservationCreated(String reservationId, Dto.Reservation reservation, String facilityId,

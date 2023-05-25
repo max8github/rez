@@ -1,9 +1,6 @@
 package com.rez.facility.api;
 
-import com.rez.facility.domain.Address;
-import com.rez.facility.domain.Facility;
 import com.rez.facility.domain.ReservationState;
-import com.rez.facility.domain.Resource;
 
 import java.util.Arrays;
 import java.util.List;
@@ -14,23 +11,23 @@ import static com.rez.facility.domain.ReservationState.State.INIT;
 public final class Dto {
     private Dto(){}
 
-    public record FacilityDTO(String name, AddressDTO address, Set<String> resourceIds) {
+    public record Facility(String name, Address address, Set<String> resourceIds) {
 
-        public Facility toFacility(String entityId) {
-            return new Facility(entityId, name, address.toAddress(), resourceIds);
+        public com.rez.facility.domain.Facility toFacilityState(String entityId) {
+            return new com.rez.facility.domain.Facility(entityId, name, address.toAddressState(), resourceIds);
         }
     }
 
-    public record AddressDTO(String street, String city) {
-        public Address toAddress() { return new Address(street, city); }
+    public record Address(String street, String city) {
+        public com.rez.facility.domain.Address toAddressState() { return new com.rez.facility.domain.Address(street, city); }
     }
 
-    public record ResourceDTO(String resourceName, int size) {
+    public record Resource(String resourceName, int size) {
 
-        public Resource toResource() {
+        public com.rez.facility.domain.Resource toResourceState() {
             String[] a = new String[size];
             Arrays.fill(a, "");
-            return new Resource(resourceName, a, size, 0);
+            return new com.rez.facility.domain.Resource(resourceName, a, size, 0);
         }
     }
 
