@@ -4,8 +4,6 @@ import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.KalixClient;
 
-import java.util.List;
-
 @Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
     private final KalixClient kalixClient;
@@ -17,7 +15,7 @@ public class FacilityAction extends Action {
     public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
         var resourceEntityId = event.resourceId();
         var path = "/resource/%s/create".formatted(resourceEntityId);
-        var command = new CreateResourceCommand(event.facilityId(), event.resource());
+        var command = new ResourceEntity.CreateResourceCommand(event.facilityId(), event.resource());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
@@ -25,11 +23,8 @@ public class FacilityAction extends Action {
     public Effect<String> on(FacilityEvent.ReservationCreated event) {
         var reservationId = event.reservationId();
         var path = "/reservation/%s/init".formatted(reservationId);
-        var command = new InitiateReservation(reservationId, event.facilityId(), event.reservation(), event.resources());
+        var command = new ReservationEntity.InitiateReservation(reservationId, event.facilityId(), event.reservation(), event.resources());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
-
-    public record CreateResourceCommand(String facilityId, Api.Resource resource) {}
-    public record InitiateReservation(String reservationId, String facilityId, Api.Reservation reservation,
-                                      List<String> resources) {}}
+}

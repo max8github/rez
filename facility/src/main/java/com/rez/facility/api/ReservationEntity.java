@@ -9,6 +9,8 @@ import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.Collections;
+import java.util.List;
+
 import static com.rez.facility.domain.ReservationState.State.*;
 
 @EntityKey("reservationId")
@@ -28,7 +30,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/init")
-    public Effect<String> create(@RequestBody FacilityAction.InitiateReservation command) {
+    public Effect<String> create(@RequestBody InitiateReservation command) {
         switch (currentState().state()) {
             case INIT:
                     return effects()
@@ -48,7 +50,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/kickoff")
-    public Effect<String> kickoff(@RequestBody ReservationAction.KickoffBooking command) {
+    public Effect<String> kickoff(@RequestBody KickoffBooking command) {
         switch (currentState().state()) {
             case INIT:
             case SELECTING:
@@ -83,7 +85,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/book")
-    public Effect<String> book(@RequestBody ReservationAction.Book command) {
+    public Effect<String> book(@RequestBody Book command) {
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
                             command.reservationId(), command.reservation()))
@@ -96,7 +98,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/reject")
-    public Effect<String> reject(@RequestBody ReservationAction.Reject command) {
+    public Effect<String> reject(@RequestBody Reject command) {
 //        var i = currentState().numOfResponses();
 //        var who = command.reservationId();
 //        var nextResourceId = "somehow next resource id here";
@@ -118,4 +120,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());
     }
+
+    public record InitiateReservation(String reservationId, String facilityId, Api.Reservation reservation,
+                                      List<String> resources) {}
+
+    public record KickoffBooking(String reservationId, String facilityId, Api.Reservation reservation) {}
+
+    public record SelectBooking(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
+
+    public record Book(String resourceId, String reservationId, Api.Reservation reservation) {}
+
+    public record Reject(String resourceId, String reservationId, String facilityId, Api.Reservation reservation) {}
 }
