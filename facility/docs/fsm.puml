@@ -4,10 +4,9 @@ skinparam actorStyle hollow
 
 title ReservationEntity Lifecycle
 KickoffBooking -up-> (INIT): emptyState()
-(INIT) --> (CONFIRMSTATE): ResourceSelected
-(CONFIRMSTATE) --> (CONFIRMSTATE): ResourceSelected
+(INIT) --> (SELECTING): ResourceSelected
+(SELECTING) --> (SELECTING): ResourceSelected
 (DONE) <-down- (INIT): Rejected
-(DONE) <-- (CONFIRMSTATE): Rejected
-(FULLFILLED) <-up- (CONFIRMSTATE): Booked
-(FULLFILLED) --> (DONE): Published
+(DONE) <-- (SELECTING): Booked
+(UNAVAILABLE) <-up- (SELECTING): Rejected
 @enduml

@@ -26,7 +26,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "", "", 0, 0, Collections.emptyList());
+        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList());
     }
 
     @PostMapping("/init")
@@ -54,14 +54,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         switch (currentState().state()) {
             case INIT:
             case SELECTING:
-                var i = currentState().numOfResponses();
-                var resources = currentState().resources();
-                if (i < resources.size()) {
-                    var resourceId = currentState().resources().get(i);
+                var nextIndex = currentState().currentResourceIndex() + 1;
+                if(currentState().resources().size() > nextIndex) {
+                    var nextResourceId = currentState().resources().get(nextIndex);
                     return effects()
-                            .emitEvent(new ReservationEvent.ResourceSelected(resourceId,
-                                    command.reservationId(), command.facilityId(), command.reservation()
-                            ))
+                            .emitEvent(new ReservationEvent.ResourceSelected(nextIndex, nextResourceId,
+                                    command.reservationId(), command.facilityId(), command.reservation))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
@@ -69,8 +67,14 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                                     command.facilityId(), command.reservation()))
                             .thenReply(newState -> "Not Available");
                 }
+            case DONE:
+            case UNAVAILABLE:
+                return effects().error("Reservation " + command.reservationId()
+                        + "is completed for facility id " + command.facilityId());
             default:
-                return effects().error("reservation entity " + command.reservationId() + " already kicked off");
+                return effects().error("This should never happen for reservation entity " + command.reservationId()
+                        + "facility id " + command.facilityId());
+
         }
     }
 
@@ -89,31 +93,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
                             command.reservationId(), command.reservation()))
-                    .thenReply(newState -> "OK");
+                    .thenReply(newState -> "OK, picked resource " + command.resourceId());
     }
 
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
         return currentState().withState(DONE);
-    }
-
-    @PostMapping("/reject")
-    public Effect<String> reject(@RequestBody Reject command) {
-//        var i = currentState().numOfResponses();
-//        var who = command.reservationId();
-//        var nextResourceId = "somehow next resource id here";
-//        if(currentState().resources().size() - i > 1) {
-//            return effects()
-//                    .emitEvent(new ReservationEvent.ResourceSelected(nextResourceId, command.reservation(),
-//                            command.reservationId()))
-//                    .thenReply(newState -> "OK");
-//        } else {
-//            //we are unavailable, finito
-//        }
-            return effects()
-                    .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
-                            command.facilityId(), command.reservation()))
-                    .thenReply(newState -> "Not Available");
     }
 
     @GetMapping()

@@ -46,7 +46,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/reject".formatted(reservationId);
+        var path = "/reservation/%s/kickoff".formatted(reservationId);
         var command = new ReservationEntity.Reject(event.resourceId(), reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
