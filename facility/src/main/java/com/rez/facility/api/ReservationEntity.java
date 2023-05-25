@@ -40,6 +40,13 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
+    @EventHandler
+    public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
+        return event.reservation()
+                .toReservationState(event.reservationId(), event.facilityId(), event.resources())
+                .withState(SELECTING);
+    }
+
     @PostMapping("/kickoff")
     public Effect<String> kickoff(@RequestBody ReservationAction.KickoffBooking command) {
         switch (currentState().state()) {
@@ -64,12 +71,27 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
+    @EventHandler
+    public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
+        return currentState().withState(SELECTING);
+    }
+
+    @EventHandler
+    public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
+        return currentState().withState(UNAVAILABLE);
+    }
+
     @PostMapping("/book")
     public Effect<String> book(@RequestBody ReservationAction.Book command) {
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
                             command.reservation(), command.reservationId()))
                     .thenReply(newState -> "OK");
+    }
+
+    @EventHandler
+    public ReservationState booked(ReservationEvent.Booked event) {
+        return currentState().withState(DONE);
     }
 
     @PostMapping("/reject")
@@ -94,32 +116,5 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @GetMapping()
     public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());
-    }
-
-    @EventHandler
-    public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
-        return event.reservation()
-                .toReservationState(event.reservationId(), event.facilityId(), event.resources())
-                .withState(SELECTING);
-    }
-
-    @EventHandler
-    public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
-        return currentState().withState(SELECTING);
-    }
-
-    @EventHandler
-    public ReservationState booked(ReservationEvent.Booked event) {
-        return currentState().withState(DONE);
-    }
-
-    @EventHandler
-    public ReservationState rejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withState(UNAVAILABLE);
-    }
-
-    @EventHandler
-    public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withState(UNAVAILABLE);
     }
 }

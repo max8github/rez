@@ -31,6 +31,11 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @EventHandler
+    public Resource created(ResourceEvent.ResourceCreated resourceCreated) {
+        return resourceCreated.resource().toResourceState();
+    }
+
     @PostMapping("/select")
     public Effect<String> select(@RequestBody ReservationAction.SelectBooking command) {
         if(currentState().hasAvailable(command.reservation())) {
@@ -47,6 +52,16 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         }
     }
 
+    @EventHandler
+    public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
+        return currentState().fill(event.reservation());
+    }
+
+    @EventHandler
+    public Resource bookingRejected(ResourceEvent.BookingRejected event) {
+        return currentState();
+    }
+
     @GetMapping()
     public Effect<Resource> getResource() {
         if (currentState() == null)
@@ -56,20 +71,5 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
             );
         else
             return effects().reply(currentState());
-    }
-
-    @EventHandler
-    public Resource created(ResourceEvent.ResourceCreated resourceCreated) {
-        return resourceCreated.resource().toResourceState();
-    }
-
-    @EventHandler
-    public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return currentState().fill(event.reservation());
-    }
-
-    @EventHandler
-    public Resource bookingRejected(ResourceEvent.BookingRejected event) {
-        return currentState();
     }
 }

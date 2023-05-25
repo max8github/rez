@@ -36,6 +36,12 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @EventHandler
+    public Facility created(FacilityEvent.Created created) {
+        var dto = created.facility();
+        return dto.toFacilityState(created.entityId());
+    }
+
     @PostMapping("/rename/{newName}")
     public Effect<String> rename(@PathVariable String newName) {
         return effects()
@@ -43,11 +49,21 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> "OK");
     }
 
+    @EventHandler
+    public Facility renamed(FacilityEvent.Renamed renamed) {
+        return currentState().withName(renamed.newName());
+    }
+
     @PostMapping("/changeAddress")
     public Effect<String> changeAddress(@RequestBody Api.Address address) {
         return effects()
                 .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
+    }
+
+    @EventHandler
+    public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
+        return currentState().withAddress(addressChanged.address().toAddressState());
     }
 
     @PostMapping("/resource/submit")
@@ -58,11 +74,22 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> id);
     }
 
+    //needed?
+    @EventHandler
+    public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
+        return currentState();
+    }
+
     @PostMapping("/resource/{resourceId}")
     public Effect<String> addResourceId(@PathVariable String resourceId) {
         return effects()
                 .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
                 .thenReply(newState -> resourceId);
+    }
+
+    @EventHandler
+    public Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
+        return currentState().withResourceId(event.resourceEntityId());
     }
 
     @DeleteMapping("/resource/{resourceId}")
@@ -73,6 +100,11 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
         return effects()
                 .emitEvent(new FacilityEvent.ResourceIdRemoved(resourceId))
                 .thenReply(newState -> "OK");
+    }
+
+    @EventHandler
+    public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
+        return currentState().withoutResourceId(event.resourceEntityId());
     }
 
     @GetMapping()
@@ -87,38 +119,6 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .emitEvent(new FacilityEvent.ReservationCreated(id, dto, commandContext().entityId(),
                         new ArrayList<>(currentState().resourceIds())))
                 .thenReply(newState -> id);
-    }
-
-    @EventHandler
-    public Facility created(FacilityEvent.Created created) {
-        var dto = created.facility();
-        return dto.toFacilityState(created.entityId());
-    }
-
-    @EventHandler
-    public Facility renamed(FacilityEvent.Renamed renamed) {
-        return currentState().withName(renamed.newName());
-    }
-
-    @EventHandler
-    public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        return currentState().withAddress(addressChanged.address().toAddressState());
-    }
-
-    //needed?
-    @EventHandler
-    public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
-        return currentState();
-    }
-
-    @EventHandler
-    public Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
-        return currentState().withResourceId(event.resourceEntityId());
-    }
-
-    @EventHandler
-    public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
-        return currentState().withoutResourceId(event.resourceEntityId());
     }
 
     @EventHandler
