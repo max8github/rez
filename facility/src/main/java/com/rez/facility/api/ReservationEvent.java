@@ -10,6 +10,8 @@ public sealed interface ReservationEvent {
                                 List<String> resources) implements ReservationEvent {}
     @TypeName("reservation-rejected")
     record ReservationRejected(String reservationId, String facilityId, Mod.Reservation reservation) implements ReservationEvent {}
+    @TypeName("search-exhausted")
+    record SearchExhausted(String reservationId, String facilityId, Mod.Reservation reservation) implements ReservationEvent {}
 
     @TypeName("reservation-selected")
     record ResourceSelected(int resourceIndex, String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) implements ReservationEvent {}

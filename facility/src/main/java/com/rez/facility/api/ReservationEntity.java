@@ -50,8 +50,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 .withState(SELECTING);
     }
 
-    @PostMapping("/runBooking")
-    public Effect<String> runBooking(@RequestBody RunBooking command) {
+    @PostMapping("/runSearch")
+    public Effect<String> runSearch(@RequestBody RunSearch command) {
         switch (currentState().state()) {
             case INIT:
             case SELECTING:
@@ -64,7 +64,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
-                            .emitEvent(new ReservationEvent.ReservationRejected(command.reservationId(),
+                            .emitEvent(new ReservationEvent.SearchExhausted(command.reservationId(),
                                     command.facilityId(), command.reservation()))
                             .thenReply(newState -> "Not Available");
                 }
@@ -85,8 +85,13 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @EventHandler
+    public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
+        return currentState().withState(UNAVAILABLE);
+    }
+
+    @EventHandler
     public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withIncrementedIndex().withState(UNAVAILABLE);
+        return currentState().withState(UNAVAILABLE);
     }
 
     @PostMapping("/book")
@@ -110,7 +115,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public record InitiateReservation(String reservationId, String facilityId, Mod.Reservation reservation,
                                       List<String> resources) {}
 
-    public record RunBooking(String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record RunSearch(String reservationId, String facilityId, Mod.Reservation reservation) {}
 
     public record Book(String resourceId, String reservationId, Mod.Reservation reservation) {}
 
