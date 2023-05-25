@@ -3,7 +3,7 @@ skinparam monochrome reverse
 skinparam actorStyle hollow
 
 title ReservationEntity Lifecycle
-KickoffBooking -up-> (INIT): emptyState()
+RunBooking -up-> (INIT): emptyState()
 (INIT) --> (SELECTING): ResourceSelected
 (SELECTING) --> (SELECTING): ResourceSelected
 (DONE) <-down- (INIT): Rejected

@@ -32,6 +32,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @PostMapping("/init")
     public Effect<String> create(@RequestBody InitiateReservation command) {
         switch (currentState().state()) {
+            case UNAVAILABLE:
             case INIT:
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
@@ -85,7 +86,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withState(UNAVAILABLE);
+        return currentState().withIncrementedIndex().withState(UNAVAILABLE);
     }
 
     @PostMapping("/book")
@@ -98,7 +99,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
-        return currentState().withState(DONE);
+        return currentState().withIncrementedIndex().withState(DONE);
     }
 
     @GetMapping()

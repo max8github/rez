@@ -31,9 +31,14 @@ public final class Mod {
     public record Reservation(String username, int timeSlot) {
         public ReservationState toReservationState(String reservationId, String facilityId, List<String> resources) {
             return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
-                    0, resources);
+                    -1, resources);
         }
 
+//        public static Reservation initialize(String reservationId, String facilityId,
+//                                                  String username, String timeSlot, List<String> resources) {
+//            return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
+//                    -1, resources);
+//        }
 
         public boolean fitsInto(com.rez.facility.domain.Resource r) {
             if (timeSlot < r.timeWindow().length)
