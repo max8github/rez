@@ -32,12 +32,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @PostMapping("/init")
     public Effect<String> create(@RequestBody InitiateReservation command) {
         switch (currentState().state()) {
-            case UNAVAILABLE:
+//            case UNAVAILABLE:
             case INIT:
                     return effects()
                             .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
                                     command.facilityId(), command.reservation(), command.resources()))
-                            .thenReply(newState -> "OK");
+                            .thenReply(newState -> command.reservationId());
             default:
                 return effects().error("reservation entity " + command.reservationId() + " already initiated");
         }
@@ -81,17 +81,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
-        return currentState().withState(SELECTING);
+        return currentState().withIncrementedIndex().withState(SELECTING);
     }
 
     @EventHandler
     public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
-        return currentState().withState(UNAVAILABLE);
+        return currentState().withIncrementedIndex().withState(UNAVAILABLE);
     }
 
     @EventHandler
     public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withState(UNAVAILABLE);
+        return currentState().withIncrementedIndex().withState(SELECTING);
     }
 
     @PostMapping("/book")
