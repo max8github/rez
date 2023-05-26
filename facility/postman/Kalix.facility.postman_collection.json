@@ -4,7 +4,8 @@
 		"name": "Kalix Facility",
 		"description": "curl commands from [tutorial](https://docs.kalix.io/java/quickstart/cr-value-entity-java.html)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
-		"_exporter_id": "1644939"
+		"_exporter_id": "1644939",
+		"_collection_link": "https://marketaxess.postman.co/workspace/My-Workspace~6398942d-31c2-4ffe-8d0d-5171fa41bc36/collection/1644939-a6bf1339-9838-4b06-a325-f076961a984d?action=share&creator=1644939&source=collection_link"
 	},
 	"item": [
 		{
@@ -205,7 +206,7 @@
 					"script": {
 						"exec": [
 							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = pm.variables.replaceIn('{{$randomInt}}');",
+							"var timeSlotsSize = 24;",
 							"",
 							"console.info(\"Resource is: \"+ resourceName);",
 							"console.info(\"Resource size is: \"+ timeSlotsSize);",
@@ -220,7 +221,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
 						],
 						"type": "text/javascript"
 					}
@@ -254,55 +255,6 @@
 					]
 				},
 				"description": "Creates a new Resource entity and adds its entity id into Facility"
-			},
-			"response": []
-		},
-		{
-			"name": "Get resource",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"url": {
-					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
-					"protocol": "http",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"resource",
-						"{{resource_id}}"
-					]
-				},
-				"description": "Registers resource id with Facility.\n\nNote: this is not API. Registration should be only done through the aggregate root, which is \\`Facility\\`."
 			},
 			"response": []
 		},
@@ -426,6 +378,249 @@
 			"response": []
 		},
 		{
+			"name": "Create Reservation",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var username = pm.variables.replaceIn('{{$randomUserName}}');",
+							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
+							"if(timeSlot > 100) {",
+							"    timeSlot = Math.ceil(timeSlot/100);",
+							"} else if(timeSlot > 10) {",
+							"    timeSlot = Math.ceil(timeSlot/10);",
+							"}",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"timeSlot is: \"+ timeSlot);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"timeSlot\", timeSlot);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\"\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"reservation",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get Reservation State",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/reservation/{{reservation_id}}",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reservation",
+						"{{reservation_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reserv: Search (INT)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var username = pm.variables.replaceIn('{{$randomUserName}}');",
+							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
+							"if(timeSlot > 100) {",
+							"    timeSlot = Math.ceil(timeSlot/100);",
+							"} else if(timeSlot > 10) {",
+							"    timeSlot = Math.ceil(timeSlot/10);",
+							"}",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"timeSlot is: \"+ timeSlot);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"timeSlot\", timeSlot);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\"\n    }\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/reservation/{{reservation_id}}/runSearch",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reservation",
+						"{{reservation_id}}",
+						"runSearch"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reserv: Init (INTERNAL)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var username = pm.variables.replaceIn('{{$randomUserName}}');",
+							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
+							"if(timeSlot > 100) {",
+							"    timeSlot = Math.ceil(timeSlot/100);",
+							"} else if(timeSlot > 10) {",
+							"    timeSlot = Math.ceil(timeSlot/10);",
+							"}",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"timeSlot is: \"+ timeSlot);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"timeSlot\", timeSlot);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\"\n    },\n    \"resources\": [\"79725166-7da3-4717-a046-b0e280b8e5b1\"]\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/reservation/{{reservation_id}}/init",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reservation",
+						"{{reservation_id}}",
+						"init"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create Resource (INTERNAL)",
 			"event": [
 				{
@@ -448,6 +643,7 @@
 							"",
 							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var timeSlotsSize = pm.variables.replaceIn('{{$randomInt}}');",
+							"timeSlotsSize = 24;",
 							"",
 							"console.info(\"Resource id is: \"+ resource_id);",
 							"console.info(\"Resource is: \"+ resourceName);",
@@ -494,6 +690,99 @@
 						"resource",
 						"{{resource_id}}",
 						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Inquire Resource (INTERNAL",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"function create_UUID(){",
+							"    var dt = new Date().getTime();",
+							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+							"        var r = (dt + Math.random()*16)%16 | 0;",
+							"        dt = Math.floor(dt/16);",
+							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
+							"    });",
+							"    uuid = uuid.substring(0, 8);",
+							"    return uuid;",
+							"}",
+							"",
+							"function createRandomTimeSlot(){",
+							"    var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
+							"    if(timeSlot > 100) {",
+							"        timeSlot = Math.ceil(timeSlot/40);",
+							"    } else {",
+							"        timeSlot = Math.ceil(timeSlot/4);",
+							"    }",
+							"    if(timeSlot > 23) {",
+							"        timeSlot = 23;",
+							"    }",
+							"    return timeSlot;",
+							"}",
+							"",
+							"var resource_id = create_UUID();",
+							"postman.setEnvironmentVariable(\"resource_id\", resource_id);",
+							"",
+							"var reservation_id = create_UUID();",
+							"postman.setEnvironmentVariable(\"reservation_id\", reservation_id);",
+							"",
+							"var username = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var timeSlot = createRandomTimeSlot();",
+							"",
+							"",
+							"console.info(\"Resource id is: \"+ resource_id);",
+							"console.info(\"Reservation id is: \"+ reservation_id);",
+							"console.info(\"time slot is: \"+ timeSlot);",
+							"console.info(\"username is: \"+ username);",
+							"",
+							"pm.variables.set(\"resource_id\", resource_id);",
+							"pm.variables.set(\"reservation_id\", reservation_id);",
+							"pm.variables.set(\"timeSlot\", timeSlot);",
+							"pm.variables.set(\"username\", username);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceId\": \"{{resource_id}}\",\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n        \"username\": \"{{username}}\",\n        \"timeSlot\": {{timeSlot}}\n    }\n}"
+				},
+				"url": {
+					"raw": "http://{{host}}:{{port}}/resource/{{resource_id}}/inquireBooking",
+					"protocol": "http",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"{{resource_id}}",
+						"inquireBooking"
 					]
 				}
 			},

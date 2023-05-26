@@ -33,7 +33,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     public Effect<String> create(@RequestBody Mod.Facility facility) {
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
-                .thenReply(newState -> "OK");
+                .thenReply(newState -> entityId);
     }
 
     @EventHandler

@@ -1,20 +1,23 @@
-# Facility
+# Project `Facility`
 
 
-To understand the Kalix concepts that are the basis for this example, see [Designing services](https://docs.kalix.io/services/development-process.html) in the documentation.
+For basic Kalix concepts, see [Designing services](https://docs.kalix.io/services/development-process.html).
 
+This project contains the framework to create a Kalix application by adding Kalix components.  
+To understand more about these components, see [Developing services](https://docs.kalix.io/services/) and check
+Spring-SDK [official documentation](https://docs.kalix.io/spring/index.html).  
+Examples can be found [here](https://github.com/lightbend/kalix-jvm-sdk/tree/main/samples) in the folders with "spring" in their name.
 
-This project contains the framework to create a Kalix application by adding Kalix components. To understand more about these components, see [Developing services](https://docs.kalix.io/services/) and check Spring-SDK [official documentation](https://docs.kalix.io/spring/index.html). Examples can be found [here](https://github.com/lightbend/kalix-jvm-sdk/tree/main/samples) in the folders with "spring" in their name.
-
-
+## Build
 Use Maven to build your project:
 
 ```shell
 mvn compile
 ```
 
-
-To run the example locally, you must run the Kalix proxy. The included `docker-compose` file contains the configuration required to run the proxy for a locally running application.
+## Run
+To run the example locally, you must run the Kalix proxy.  
+The included `docker-compose` file contains the configuration required to run the proxy for a locally running application.
 It also contains the configuration to start a local Google Pub/Sub emulator that the Kalix proxy will connect to.
 To start the proxy, run the following command from this directory:
 
@@ -44,3 +47,11 @@ to create a project and then deploy your service into the project either by usin
 will conveniently package, publish your docker image, and deploy your service to Kalix, or by first packaging and
 publishing the docker image through `mvn deploy` and then deploying the image
 through the `kalix` CLI.
+
+## Integration Tests
+Integration Tests are present inside `src/it/java`.  
+They are run by the maven failsafe plugin.  
+Run them with:
+```
+mvn verify -Pit
+```
