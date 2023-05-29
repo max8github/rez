@@ -74,7 +74,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> id);
     }
 
-    //needed?
+    //todo: needed?
     @EventHandler
     public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
         return currentState();
@@ -108,8 +108,8 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @GetMapping()
-    public Effect<Facility> getFacility() {
-        return effects().reply(currentState());
+    public Effect<Mod.Facility> getFacility() {
+        return effects().reply(Mod.Facility.fromFacilityState(currentState()));
     }
 
     @PostMapping("/reservation/create")

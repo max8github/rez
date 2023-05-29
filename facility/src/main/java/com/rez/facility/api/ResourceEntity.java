@@ -1,7 +1,6 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.*;
-import io.grpc.Status;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
@@ -64,14 +63,8 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     }
 
     @GetMapping()
-    public Effect<Resource> getResource() {
-        if (currentState() == null)
-            return effects().error(
-                    "No resource found for id '" + commandContext().entityId() + "'",
-                    Status.Code.NOT_FOUND
-            );
-        else
-            return effects().reply(currentState());
+    public Effect<Mod.Resource> getResource() {
+            return effects().reply(Mod.Resource.fromResourceState(currentState()));
     }
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
