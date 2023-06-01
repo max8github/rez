@@ -6,7 +6,7 @@ import java.util.Set;
 public record Facility(String facilityId, String name, Address address, Set<String> resourceIds) {
 
     public Facility withResourceId(String resourceId) {
-        Set<String> ids = new HashSet<>(resourceIds);
+        Set<String> ids = (resourceIds == null) ? new HashSet<>() : new HashSet<>(resourceIds);
         ids.add(resourceId);
         return new Facility(facilityId, name, address, ids);
     }

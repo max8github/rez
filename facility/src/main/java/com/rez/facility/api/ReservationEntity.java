@@ -1,6 +1,7 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.ReservationState;
+import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
@@ -107,6 +108,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withIncrementedIndex().withState(DONE);
     }
 
+    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());

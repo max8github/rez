@@ -23,7 +23,7 @@
     <jdk.target>17</jdk.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <kalix-sdk.version>1.2.0</kalix-sdk.version>
+    <kalix-sdk.version>1.2.1</kalix-sdk.version>
   </properties>
 
   <build>
@@ -201,6 +201,10 @@
             <!-- ignore integration test classes -->
             <exclude>**/*IntegrationTest</exclude>
           </excludes>
+          <environmentVariables>
+<!--            See Manage Secrets at https://docs.kalix.io/projects/secrets.html -->
+            <INSTALL_TOKEN>t0k3n</INSTALL_TOKEN>
+          </environmentVariables>
         </configuration>
       </plugin>
 
@@ -311,6 +315,11 @@
       <artifactId>junit-jupiter</artifactId>
       <scope>test</scope>
     </dependency>
-    
+    <dependency>
+      <groupId>com.google.auth</groupId>
+      <artifactId>google-auth-library-oauth2-http</artifactId>
+      <version>0.22.2</version>
+    </dependency>
+
   </dependencies>
 </project>

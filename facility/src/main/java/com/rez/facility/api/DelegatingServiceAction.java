@@ -1,46 +1,47 @@
 package com.rez.facility.api;
 
-import com.google.api.client.auth.oauth2.Credential;
-import com.google.api.client.extensions.java6.auth.oauth2.AuthorizationCodeInstalledApp;
-import com.google.api.client.extensions.jetty.auth.oauth2.LocalServerReceiver;
-import com.google.api.client.googleapis.auth.oauth2.GoogleAuthorizationCodeFlow;
-import com.google.api.client.googleapis.auth.oauth2.GoogleClientSecrets;
+import akka.japi.Pair;
 import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.javanet.NetHttpTransport;
+import com.google.api.client.http.HttpRequestInitializer;
+import com.google.api.client.http.HttpTransport;
 import com.google.api.client.json.JsonFactory;
 import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
-import com.google.api.client.util.store.FileDataStoreFactory;
 import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.*;
+import com.typesafe.config.Config;
+import com.typesafe.config.ConfigFactory;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
+import kalix.spring.WebClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.FileNotFoundException;
-import java.io.IOException;
-import java.io.InputStream;
-import java.io.InputStreamReader;
+import com.google.auth.http.HttpCredentialsAdapter;
+import com.google.auth.oauth2.GoogleCredentials;
+
+
+import java.io.*;
 import java.security.GeneralSecurityException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CompletionStage;
 
 @Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
+
+    final private WebClient webClient;
     private static final String APPLICATION_NAME = "Google Calendar API Java Quickstart";
     /**
      * Global instance of the JSON factory.
      */
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    /**
-     * Directory to store authorization tokens for this application.
-     */
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
     /**
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
@@ -51,8 +52,9 @@ public class DelegatingServiceAction extends Action {
 
     final private Calendar service;
 
-    public DelegatingServiceAction() {
-        service = setupService();
+    public DelegatingServiceAction(WebClientProvider webClientProvider) {
+        this.webClient = webClientProvider.webClientFor("twist");
+        this.service = setupService();
     }
 
     /**
@@ -60,64 +62,78 @@ public class DelegatingServiceAction extends Action {
      * @return the Calendar service
      */
     private Calendar setupService() {
-        final NetHttpTransport httpTransport;
+        HttpTransport httpTransport;
         try {
-            httpTransport = GoogleNetHttpTransport.newTrustedTransport();
+        httpTransport = GoogleNetHttpTransport.newTrustedTransport();
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
-        // Load client secrets.
-        Credential credentials = null;
+        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
+
+        //Build service account credential
+        HttpRequestInitializer requestInitializer;
         try (InputStream in = DelegatingServiceAction.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
             if (in == null) {
                 throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
             }
-            GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
-
-            // Build flow and trigger user authorization request.
-            GoogleAuthorizationCodeFlow flow = null;
-            flow = new GoogleAuthorizationCodeFlow.Builder(
-                    httpTransport, JSON_FACTORY, clientSecrets, SCOPES)
-                    .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
-                    .setAccessType("offline")
-                    .build();
-            LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();
-
-            credentials = new AuthorizationCodeInstalledApp(flow, receiver).authorize("user");
+            GoogleCredentials googleCredentials = GoogleCredentials.fromStream(in).createScoped(SCOPES);
+            requestInitializer = new HttpCredentialsAdapter(googleCredentials);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Calendar service = new Calendar.Builder(httpTransport, JSON_FACTORY, credentials)
+        return new Calendar.Builder(httpTransport, JSON_FACTORY, requestInitializer)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-        return service;
     }
 
-    public Effect<String> on(ReservationEvent.Booked event) throws IOException {
+    //todo on InquireBooking: i am using this class where it is semantically wrong, like in DelegatingServiceAction. Another class should be used instead.
+    public CompletableFuture<String> messageTwist(Pair<String, ResourceEntity.InquireBooking> p) {
+        String attendees = p.second().reservation().username();
+        String time = p.second().reservation().timeSlot() + "";
+
+        String messageContent = "Reservation confirmed." +
+                " Time: " + time + ", Attendees: " + attendees + ", URL: " + p.first();
+        Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
+        String url = twistConfig.getString("url");
+        String install_id = twistConfig.getString("install_id");
+        String install_token = System.getenv("INSTALL_TOKEN");
+        String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;
+        log.info(uri);
+//        return CompletableFuture.completedFuture("ciao ok");
+        return webClient
+                .post().uri(uri)
+                .bodyValue("{\n" +
+                        "    \"title\": \"Book tennis courts\",\n" +
+                        "    \"content\": \"" + messageContent + "\"\n" +
+                        "} ")
+                .retrieve()
+                .bodyToMono(String.class).toFuture();
+    }
+
+    public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
         var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), "facilityId", event.reservation());
-        var result = saveToGoogle(command);
-        return effects().reply(result);
+        // todo: unclear on how to best return the effect here, as we don't need to reply to anything here.
+        var stage = saveToGoogle(command).thenCompose(this::messageTwist);
+//        var stage = messageTwist(new Pair<>("test", command));
+        return effects().asyncReply(stage);
     }
 
-    private String saveToGoogle(ResourceEntity.InquireBooking command) throws IOException {
-
-        Event event = new Event()
-                .setSummary("Resource Reserved")
-                .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription(command.reservation().username() + ": tennis court reservation");
-
+    private CompletionStage<Pair<String, ResourceEntity.InquireBooking>>
+    saveToGoogle(ResourceEntity.InquireBooking command) throws IOException {
+        String calendarId = "primary";
+        String calEventId = command.reservationId();
+        log.info("reservationId = " + calEventId);
+        String found = isFound(service, calendarId, calEventId);
+        if(!found.isEmpty()) {
+            log.info("event '" + found + "' had already been booked: nothing to do, all good");
+            return CompletableFuture.completedStage(new Pair<>(calEventId, command));
+        }
         var interval = convertSlotIntoStartEndDate(command.reservation());
-        event.setStart(interval[0]);
-        event.setEnd(interval[1]);
-
-//        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
-//        event.setRecurrence(Arrays.asList(recurrence));
-
         EventAttendee[] attendees = new EventAttendee[]{
                 new EventAttendee().setEmail(command.reservation().username()),
         };
-        event.setAttendees(Arrays.asList(attendees));
+//        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
 
         EventReminder[] reminderOverrides = new EventReminder[]{
                 new EventReminder().setMethod("email").setMinutes(24 * 60),
@@ -126,30 +142,34 @@ public class DelegatingServiceAction extends Action {
         Event.Reminders reminders = new Event.Reminders()
                 .setUseDefault(false)
                 .setOverrides(Arrays.asList(reminderOverrides));
-        event.setReminders(reminders);
 
-        String calendarId = "primary";
-        String eventId = command.reservationId();
-        log.info("reservationId = " + eventId);
-        String found = isFound(service, calendarId, eventId);
-        if(!found.isEmpty()) {
-            log.info("event '" + found + "' had already been booked: nothing to do, all good");
-            return eventId;
-        }
-        boolean slotFree = isSlotAvailable(service, calendarId, event);
+        Event event = new Event()
+                .setSummary("Resource Reserved")
+                .setId(calEventId)
+                .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
+                .setDescription(command.reservation().username() + ": tennis court reservation")
+                .setStart(interval[0])
+                .setEnd(interval[1]);
+//            .setRecurrence(Arrays.asList(recurrence))
+//                .setAttendees(Arrays.asList(attendees))
+//                .setReminders(reminders);
 
-        if(slotFree) {
+        if(isSlotAvailable(service, calendarId, event)) {
             event = service.events().insert(calendarId, event).execute();
-            System.out.printf("Event inserted: %s\n", event.getHtmlLink());
-            return event.getHtmlLink();
-        } else {
-            log.info("Time slot was already taken: UNAVAILABLE for reservation id " + eventId);
-            return "";
+            log.info("Event inserted: {}", event.getHtmlLink());
+            return CompletableFuture.completedStage(new Pair<>(event.getHtmlLink(), command));
+        } else {//should never happen, because only Kalix writes to the Calendar.
+            var msg = "Time slot was already taken: UNAVAILABLE for reservation id " + calEventId;
+            log.error(msg);
+            throw new IOException(msg);
         }
     }
 
+    //todo: this method is not very useful, because it is never going to happen that two ids will conflict.
+    //What this method should do is determine if the event is a duplicate or not.
+    //It could determine that by checking start and end time and username.
     static String isFound(Calendar service, String calendarId, String eventId) throws IOException {
-        Event found = null;
+        Event found;
         try {
             found = service.events().get(calendarId, eventId).execute();
         } catch (GoogleJsonResponseException e) {
@@ -170,14 +190,13 @@ public class DelegatingServiceAction extends Action {
     static boolean isSlotAvailable(Calendar service, String calendarId, Event event) throws IOException {
         var start = event.getStart().getDateTime();
         var end = event.getEnd().getDateTime();
-        Events events = service.events().list(calendarId)
+        return service.events().list(calendarId)
                 .setTimeMin(start)
                 .setTimeMax(end)
-                .setOrderBy("startTime")
                 .setSingleEvents(true)
-                .execute();
-        List<Event> items = events.getItems();
-        return items.isEmpty();
+                .execute()
+                .getItems()
+                .isEmpty();
     }
 
     private static EventDateTime[] convertSlotIntoStartEndDate(Mod.Reservation reservation) {
@@ -187,10 +206,9 @@ public class DelegatingServiceAction extends Action {
 
     private static EventDateTime getEventDateTime(int slot) {
         String hour = String.format("%02d", slot);
-        DateTime dateTime = new DateTime("2023-06-03T"+ hour +":00:00-07:00");
-        EventDateTime eventDateTime = new EventDateTime()
+        DateTime dateTime = new DateTime("2023-07-28T"+ hour +":00:00-07:00");//todo
+        return new EventDateTime()
                 .setDateTime(dateTime)
                 .setTimeZone("America/Los_Angeles");
-        return eventDateTime;
     }
 }

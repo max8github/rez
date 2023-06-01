@@ -1,6 +1,7 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.*;
+import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
@@ -62,6 +63,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         return currentState();
     }
 
+    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<Mod.Resource> getResource() {
             return effects().reply(Mod.Resource.fromResourceState(currentState()));
