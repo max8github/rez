@@ -92,20 +92,16 @@ public class DelegatingServiceAction extends Action {
         String time = p.second().reservation().timeSlot() + "";
 
         String messageContent = "Reservation confirmed." +
-                " Time: " + time + ", Attendees: " + attendees + ", URL: " + p.first();
+                " Time: " + time + ", Attendees: " + attendees + "\n\tURL: " + p.first();
         Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
         String url = twistConfig.getString("url");
         String install_id = twistConfig.getString("install_id");
         String install_token = System.getenv("INSTALL_TOKEN");
         String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;
-        log.info(uri);
 //        return CompletableFuture.completedFuture("ciao ok");
         return webClient
                 .post().uri(uri)
-                .bodyValue("{\n" +
-                        "    \"title\": \"Book tennis courts\",\n" +
-                        "    \"content\": \"" + messageContent + "\"\n" +
-                        "} ")
+                .bodyValue("{\"content\": \"" + messageContent + "\"" +"} ")
                 .retrieve()
                 .bodyToMono(String.class).toFuture();
     }
