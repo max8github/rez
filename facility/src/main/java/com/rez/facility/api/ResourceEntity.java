@@ -71,5 +71,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
 
+    //todo: valu obj
     public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record ReservationResult(InquireBooking vo, String result) {}
 }

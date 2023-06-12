@@ -8,6 +8,8 @@ import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
@@ -18,7 +20,7 @@ import java.util.UUID;
 @EntityType("facility")
 @RequestMapping("/facility/{facilityId}")
 public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> {
-
+    private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
     private final String entityId;
 
     public FacilityEntity(EventSourcedEntityContext context) {
@@ -33,6 +35,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/create")
     public Effect<String> create(@RequestBody Mod.Facility facility) {
+        log.info("created facility {}", facility.name());
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
                 .thenReply(newState -> entityId);
@@ -86,6 +89,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @PostMapping("/resource/{resourceId}")
     public Effect<String> addResourceId(@PathVariable String resourceId) {
+        log.info("added resource id {}", resourceId);
         return effects()
                 .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
                 .thenReply(newState -> resourceId);

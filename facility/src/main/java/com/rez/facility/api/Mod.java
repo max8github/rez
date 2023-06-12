@@ -2,6 +2,7 @@ package com.rez.facility.api;
 
 import com.rez.facility.domain.ReservationState;
 
+import java.time.LocalDate;
 import java.util.List;
 import java.util.Set;
 
@@ -40,14 +41,14 @@ public final class Mod {
         }
     }
 
-    public record Reservation(String username, int timeSlot) {
+    public record Reservation(String username, int timeSlot, LocalDate date) {
         public static Reservation fromReservationState(ReservationState reservationState) {
-            return new Reservation(reservationState.username(), reservationState.timeSlot());
+            return new Reservation(reservationState.username(), reservationState.timeSlot(), reservationState.date());
         }
 
         ReservationState toReservationState(String reservationId, String facilityId, List<String> resources) {
             return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
-                    -1, resources);
+                    -1, resources, date);
         }
 
 //        public static Reservation initialize(String reservationId, String facilityId,

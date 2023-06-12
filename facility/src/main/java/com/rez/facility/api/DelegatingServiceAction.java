@@ -87,35 +87,70 @@ public class DelegatingServiceAction extends Action {
     }
 
     //todo on InquireBooking: i am using this class where it is semantically wrong, like in DelegatingServiceAction. Another class should be used instead.
+
+    /**
+     * This is the incoming webhook: Kalix -> Twist.<br>
+     * It is used for posting a confirmation to Twist that something happened.
+     * @param p
+     * @return
+     */
     public CompletableFuture<String> messageTwist(Pair<String, ResourceEntity.InquireBooking> p) {
+        log.info("called messageTwist for reservation id {}", p.first());
         String attendees = p.second().reservation().username();
         String time = p.second().reservation().timeSlot() + "";
 
         String messageContent = "Reservation confirmed." +
-                " Time: " + time + ", Attendees: " + attendees + "\n\tURL: " + p.first();
+                " Time: " + time + ", Attendees: " + attendees;// + "\n\t[URL](" + p.first() + ")";
         Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
         String url = twistConfig.getString("url");
         String install_id = twistConfig.getString("install_id");
         String install_token = System.getenv("INSTALL_TOKEN");
         String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;
+        String body = "{\n" +
+                "  \"content\":  \""+messageContent+"\",\n" +
+                "  \"actions\": [\n" +
+                "    {\n" +
+                "      \"action\": \"open_url\",\n" +
+                "      \"url\": \""+p.first()+"\",\n" +
+                "      \"type\": \"action\",\n" +
+                "      \"button_text\": \"Go to Calendar\"\n" +
+                "    }\n" +
+                "  ]\n" +
+                "}";
+        System.out.println("uri = " + uri);
+        System.out.println("body = " + body);
 //        return CompletableFuture.completedFuture("ciao ok");
         return webClient
                 .post().uri(uri)
-                .bodyValue("{\"content\": \"" + messageContent + "\"" +"} ")
+                .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class).toFuture();
+    }
+
+
+    public CompletableFuture<String> fakeMessageTwist(Pair<String, ResourceEntity.InquireBooking> p) {
+        log.info("called fakeMessageTwist for reservation id  {}", p.first());
+        return CompletableFuture.completedFuture("hi");
     }
 
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
         var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), "facilityId", event.reservation());
         // todo: unclear on how to best return the effect here, as we don't need to reply to anything here.
-        var stage = saveToGoogle(command).thenCompose(this::messageTwist);
-//        var stage = messageTwist(new Pair<>("test", command));
+//        var stageGoogle = saveToGoogle(command).thenCompose(this::messageTwist);
+        var stageGoogle = fakeSaveToGoogle(command);
+        var stage = stageGoogle.thenCompose(this::messageTwist);
         return effects().asyncReply(stage);
     }
 
     private CompletionStage<Pair<String, ResourceEntity.InquireBooking>>
+    fakeSaveToGoogle(ResourceEntity.InquireBooking command) throws IOException {
+        log.info("called fakeSaveToGoogle for reservation id  {}", command.reservationId());
+        String fakeUrl = "https://www.google.com/calendar/event?eid=MzQ4MzA1ZTc2NGE3NGE4Y2FmYWQyY2YwMTM5MTI2ZDEga2FsaXgtcmV6QHJlemNhbC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbQ";
+        return CompletableFuture.completedStage(new Pair<>(fakeUrl, command));
+    }
+
+    private CompletionStage<Pair<String, ResourceEntity.ReservationResult>>
     saveToGoogle(ResourceEntity.InquireBooking command) throws IOException {
         String calendarId = "primary";
         String calEventId = command.reservationId();
@@ -123,7 +158,8 @@ public class DelegatingServiceAction extends Action {
         String found = isFound(service, calendarId, calEventId);
         if(!found.isEmpty()) {
             log.info("event '" + found + "' had already been booked: nothing to do, all good");
-            return CompletableFuture.completedStage(new Pair<>(calEventId, command));
+            return CompletableFuture.completedStage(new Pair<>(calEventId,
+                    new ResourceEntity.ReservationResult(command, "ALREADY_BOOKED")));
         }
         var interval = convertSlotIntoStartEndDate(command.reservation());
         EventAttendee[] attendees = new EventAttendee[]{
@@ -153,11 +189,13 @@ public class DelegatingServiceAction extends Action {
         if(isSlotAvailable(service, calendarId, event)) {
             event = service.events().insert(calendarId, event).execute();
             log.info("Event inserted: {}", event.getHtmlLink());
-            return CompletableFuture.completedStage(new Pair<>(event.getHtmlLink(), command));
+            return CompletableFuture.completedStage(new Pair<>(event.getHtmlLink(),
+                    new ResourceEntity.ReservationResult(command, "DONE")));
         } else {//should never happen, because only Kalix writes to the Calendar.
             var msg = "Time slot was already taken: UNAVAILABLE for reservation id " + calEventId;
             log.error(msg);
-            throw new IOException(msg);
+            return CompletableFuture.completedStage(new Pair<>("http://example.com", //todo
+                    new ResourceEntity.ReservationResult(command, "UNAVAILABLE")));
         }
     }
 
@@ -202,7 +240,7 @@ public class DelegatingServiceAction extends Action {
 
     private static EventDateTime getEventDateTime(int slot) {
         String hour = String.format("%02d", slot);
-        DateTime dateTime = new DateTime("2023-07-28T"+ hour +":00:00-07:00");//todo
+        DateTime dateTime = new DateTime("2023-07-14T"+ hour +":00:00-07:00");//todo
         return new EventDateTime()
                 .setDateTime(dateTime)
                 .setTimeZone("America/Los_Angeles");

@@ -7,8 +7,11 @@ import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -18,6 +21,7 @@ import static com.rez.facility.domain.ReservationState.State.*;
 @EntityType("reservation")
 @RequestMapping("/reservation/{reservationId}")
 public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
+    private static final Logger log = LoggerFactory.getLogger(ReservationEntity.class);
 
     private final String entityId;
 
@@ -27,11 +31,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList());
+        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList(), LocalDate.now());
     }
 
     @PostMapping("/init")
     public Effect<String> create(@RequestBody InitiateReservation command) {
+        log.info("creating reservation {}", command.reservationId);
         switch (currentState().state()) {
 //            case UNAVAILABLE:
             case INIT:
