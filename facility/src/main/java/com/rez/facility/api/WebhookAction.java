@@ -7,6 +7,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
+
 @RequestMapping("/outwebhook")
 public class WebhookAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(WebhookAction.class);
@@ -28,7 +30,27 @@ public class WebhookAction extends Action {
     @PostMapping()
     public Effect<TwistContent> outwebhook(@RequestBody TwistComment comment) {
         log.info("******** " + comment.creator_name + " POSTED TO TWIST!!!!!!!!!!!!!!!!!!!\n\t" + comment);
-        return effects().reply(new TwistContent("OK"));
+        //todo: for now, i take it as if the thread_id was the same as the facility id.
+        String facilityId = comment.thread_id();
+        var path = "/facility/%s/reservation/create".formatted(facilityId);
+        Mod.Reservation body = parseComment(comment.content);
+        var deferredCall = kalixClient.post(path, body, TwistContent.class);
+        return effects().forward(deferredCall);
+    }
+
+    private Mod.Reservation parseComment(String content) {
+        //todo: the assumption for now is something like: 2023-08-02, 8, Max
+        try {
+            String[] parts = content.split(",");
+            LocalDate date = LocalDate.parse(parts[0].trim());
+            int hourOfDay = Integer.parseInt(parts[1].trim());
+            int timeSlot = (hourOfDay > 23 || hourOfDay < 0) ? 23 : hourOfDay;
+            String creator = parts[2].trim();
+            return new Mod.Reservation(creator, timeSlot, date);
+        } catch (Exception e) {
+            log.error("COULD NOT PARSE MESSAGE INTO RESERVATION DETAILS. MESSAGE: " + content);
+            return new Mod.Reservation("creator", 1, LocalDate.now());
+        }
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -57,5 +79,5 @@ public class WebhookAction extends Action {
      * @param id
      * @param posted
      */
-    record TwistComment(String channel_id, String content, String creator, String creator_name, String id, String posted) {}
+    record TwistComment(String channel_id, String thread_id, String content, String creator, String creator_name, String id, String posted) {}
 }

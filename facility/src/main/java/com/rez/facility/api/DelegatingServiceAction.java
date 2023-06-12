@@ -98,8 +98,9 @@ public class DelegatingServiceAction extends Action {
         log.info("called messageTwist for reservation id {}", p.first());
         String attendees = p.second().reservation().username();
         String time = p.second().reservation().timeSlot() + "";
+        String date = p.second().reservation().date() + "";
 
-        String messageContent = "Reservation confirmed." +
+        String messageContent = "Reservation confirmed." + " Date: " + date +
                 " Time: " + time + ", Attendees: " + attendees;// + "\n\t[URL](" + p.first() + ")";
         Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
         String url = twistConfig.getString("url");
@@ -145,8 +146,8 @@ public class DelegatingServiceAction extends Action {
 
     private CompletionStage<Pair<String, ResourceEntity.InquireBooking>>
     fakeSaveToGoogle(ResourceEntity.InquireBooking command) throws IOException {
-        log.info("called fakeSaveToGoogle for reservation id  {}", command.reservationId());
-        String fakeUrl = "https://www.google.com/calendar/event?eid=MzQ4MzA1ZTc2NGE3NGE4Y2FmYWQyY2YwMTM5MTI2ZDEga2FsaXgtcmV6QHJlemNhbC5pYW0uZ3NlcnZpY2VhY2NvdW50LmNvbQ";
+        log.info("called fakeSaveToGoogle for reservation id {}", command.reservationId());
+        String fakeUrl = "http://example.com";
         return CompletableFuture.completedStage(new Pair<>(fakeUrl, command));
     }
 
