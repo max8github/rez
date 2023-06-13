@@ -29,9 +29,10 @@ public class WebhookAction extends Action {
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
     public Effect<TwistContent> outwebhook(@RequestBody TwistComment comment) {
-        log.info("******** " + comment.creator_name + " POSTED TO TWIST!!!!!!!!!!!!!!!!!!!\n\t" + comment);
         //todo: for now, i take it as if the thread_id was the same as the facility id.
         String facilityId = comment.thread_id();
+        String content = comment.content();
+        log.info("*** " + comment.creator_name + " REQUESTED, for facility {}, content:\n\t", facilityId, content);
         var path = "/facility/%s/reservation/create".formatted(facilityId);
         Mod.Reservation body = parseComment(comment.content);
         var deferredCall = kalixClient.post(path, body, TwistContent.class);

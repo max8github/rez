@@ -26,6 +26,8 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -88,39 +90,46 @@ public class DelegatingServiceAction extends Action {
 
     //todo on InquireBooking: i am using this class where it is semantically wrong, like in DelegatingServiceAction. Another class should be used instead.
 
-    /**
-     * This is the incoming webhook: Kalix -> Twist.<br>
-     * It is used for posting a confirmation to Twist that something happened.
-     * @param p
-     * @return
-     */
-    public CompletableFuture<String> messageTwist(Pair<String, ResourceEntity.InquireBooking> p) {
-        log.info("called messageTwist for reservation id {}", p.first());
+    public CompletableFuture<String> messageTwistAccept(Pair<String, ResourceEntity.InquireBooking> p) {
+        log.info("called messageTwist for reservation id {}", p.second().reservationId());
         String attendees = p.second().reservation().username();
         String time = p.second().reservation().timeSlot() + "";
         String date = p.second().reservation().date() + "";
-
         String messageContent = "Reservation confirmed." + " Date: " + date +
-                " Time: " + time + ", Attendees: " + attendees;// + "\n\t[URL](" + p.first() + ")";
+                " Time: " + time + ", Attendees: " + attendees;
+        return messageTwist(p, messageContent);
+    }
+
+    public CompletableFuture<String> messageTwistReject(Pair<String, ResourceEntity.InquireBooking> p) {
+        log.info("messaged Twist for reservation id {} UNAVAILABLE", p.second().reservationId());
+        String time = p.second().reservation().timeSlot() + "";
+        String date = p.second().reservation().date() + "";
+        String messageContent = "Reservation rejected." + " Date: " + date +
+                " Time: " + time + " are unavailable";
+        return messageTwist(p, messageContent);
+    }
+
+    /**
+     * This is the incoming webhook: Kalix -> Twist.<br>
+     * It is used for posting a confirmation to Twist that something happened.
+     */
+    private CompletableFuture<String> messageTwist(Pair<String, ResourceEntity.InquireBooking> p, String message) {
         Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
-        String url = twistConfig.getString("url");
+        String url = twistConfig.getString("url");//todo: validate the url here or else call will fail (painful)
         String install_id = twistConfig.getString("install_id");
         String install_token = System.getenv("INSTALL_TOKEN");
         String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;
         String body = "{\n" +
-                "  \"content\":  \""+messageContent+"\",\n" +
+                "  \"content\":  \""+ message +"\",\n" +
                 "  \"actions\": [\n" +
                 "    {\n" +
                 "      \"action\": \"open_url\",\n" +
-                "      \"url\": \""+p.first()+"\",\n" +
+                "      \"url\": \""+ p.first()+"\",\n" +
                 "      \"type\": \"action\",\n" +
                 "      \"button_text\": \"Go to Calendar\"\n" +
                 "    }\n" +
                 "  ]\n" +
                 "}";
-        System.out.println("uri = " + uri);
-        System.out.println("body = " + body);
-//        return CompletableFuture.completedFuture("ciao ok");
         return webClient
                 .post().uri(uri)
                 .bodyValue(body)
@@ -140,8 +149,14 @@ public class DelegatingServiceAction extends Action {
         // todo: unclear on how to best return the effect here, as we don't need to reply to anything here.
 //        var stageGoogle = saveToGoogle(command).thenCompose(this::messageTwist);
         var stageGoogle = fakeSaveToGoogle(command);
-        var stage = stageGoogle.thenCompose(this::messageTwist);
+        var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
+    }
+
+    public Effect<String> on(ReservationEvent.SearchExhausted event) throws Exception {
+        //todo: refactor this part, it can be consolidated better, also semantically (class record names)
+        var command = new ResourceEntity.InquireBooking("111", event.reservationId(), "facilityId", event.reservation());
+        return effects().asyncReply(messageTwistReject(new Pair<>("http://example.com", command)));//todo
     }
 
     private CompletionStage<Pair<String, ResourceEntity.InquireBooking>>
@@ -235,13 +250,15 @@ public class DelegatingServiceAction extends Action {
     }
 
     private static EventDateTime[] convertSlotIntoStartEndDate(Mod.Reservation reservation) {
-        int slot = reservation.timeSlot() < 23 ? reservation.timeSlot() : 22;//todo
-        return new EventDateTime[]{getEventDateTime(slot), getEventDateTime(slot + 1)};
+        int slot = reservation.timeSlot() < 23 ? reservation.timeSlot() : 22;//todo validation, but need to use time ...
+        LocalDate date = reservation.date();
+        return new EventDateTime[]{getEventDateTime(date, slot), getEventDateTime(date,slot + 1)};
     }
 
-    private static EventDateTime getEventDateTime(int slot) {
+    private static EventDateTime getEventDateTime(LocalDate date, int slot) {
+        String dateF = date.format(DateTimeFormatter.ISO_DATE);
         String hour = String.format("%02d", slot);
-        DateTime dateTime = new DateTime("2023-07-14T"+ hour +":00:00-07:00");//todo
+        DateTime dateTime = new DateTime(dateF+"T"+ hour +":00:00-07:00");//todo
         return new EventDateTime()
                 .setDateTime(dateTime)
                 .setTimeZone("America/Los_Angeles");

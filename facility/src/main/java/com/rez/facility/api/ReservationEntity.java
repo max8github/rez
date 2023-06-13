@@ -36,7 +36,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @PostMapping("/init")
     public Effect<String> create(@RequestBody InitiateReservation command) {
-        log.info("creating reservation {}", command.reservationId);
+        log.info("Created reservation {} entity", command.reservationId);
         switch (currentState().state()) {
 //            case UNAVAILABLE:
             case INIT:
@@ -64,6 +64,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 var nextIndex = currentState().currentResourceIndex() + 1;
                 if(currentState().resources().size() > nextIndex) {
                     var nextResourceId = currentState().resources().get(nextIndex);
+                    log.info("Reservation {} searching for availability: resource {}", command.reservationId, nextResourceId);
                     return effects()
                             .emitEvent(new ReservationEvent.ResourceSelected(nextIndex, nextResourceId,
                                     command.reservationId(), command.facilityId(), command.reservation))
@@ -92,12 +93,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
+        log.info("Search exhausted for reservation {}: UNAVAILABLE ", event.reservationId());
         return currentState().withIncrementedIndex().withState(UNAVAILABLE);
-    }
-
-    @EventHandler
-    public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withIncrementedIndex().withState(SELECTING);
     }
 
     @PostMapping("/book")
@@ -110,6 +107,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
+        log.info("Reservation {} booked in resource {}", event.reservationId(), event.resourceId());
         return currentState().withIncrementedIndex().withState(DONE);
     }
 

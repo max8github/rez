@@ -7,12 +7,15 @@ import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 @EntityType("resource")
 @EntityKey("resource_id")
 @RequestMapping("/resource/{resource_id}")
 public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> {
+    private static final Logger log = LoggerFactory.getLogger(ResourceEntity.class);
     private final String entityId;
 
     public ResourceEntity(EventSourcedEntityContext context) {
@@ -39,11 +42,13 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
         if(command.reservation().fitsInto(currentState())) {
+            log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
                             command.facilityId(), command.reservation()))
                     .thenReply(newState -> "OK");
         } else {
+            log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(),
                             command.facilityId(), command.reservation()

@@ -125,6 +125,8 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @PostMapping("/reservation/create")
     public Effect<String> createReservation(@RequestBody Mod.Reservation reservation) {
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
+        int timeSlot = reservation.timeSlot();
+        log.info("Facility assigns id {} to reservation, date {}, time {}", reservationId, reservation.date(), timeSlot);
         return effects()
                 .emitEvent(new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
                         new ArrayList<>(currentState().resourceIds())))
