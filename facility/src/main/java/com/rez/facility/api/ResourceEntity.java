@@ -1,18 +1,21 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.*;
-import io.grpc.Status;
+import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 @EntityType("resource")
 @EntityKey("resource_id")
 @RequestMapping("/resource/{resource_id}")
 public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> {
+    private static final Logger log = LoggerFactory.getLogger(ResourceEntity.class);
     private final String entityId;
 
     public ResourceEntity(EventSourcedEntityContext context) {
@@ -39,11 +42,13 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
         if(command.reservation().fitsInto(currentState())) {
+            log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
                             command.facilityId(), command.reservation()))
                     .thenReply(newState -> "OK");
         } else {
+            log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(),
                             command.facilityId(), command.reservation()
@@ -63,18 +68,15 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         return currentState();
     }
 
+    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<Resource> getResource() {
-        if (currentState() == null)
-            return effects().error(
-                    "No resource found for id '" + commandContext().entityId() + "'",
-                    Status.Code.NOT_FOUND
-            );
-        else
-            return effects().reply(currentState());
+    public Effect<Mod.Resource> getResource() {
+            return effects().reply(Mod.Resource.fromResourceState(currentState()));
     }
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
 
+    //todo: valu obj
     public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record ReservationResult(InquireBooking vo, String result) {}
 }

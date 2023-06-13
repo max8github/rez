@@ -1,13 +1,17 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.ReservationState;
+import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 
@@ -17,6 +21,7 @@ import static com.rez.facility.domain.ReservationState.State.*;
 @EntityType("reservation")
 @RequestMapping("/reservation/{reservationId}")
 public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
+    private static final Logger log = LoggerFactory.getLogger(ReservationEntity.class);
 
     private final String entityId;
 
@@ -26,11 +31,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList());
+        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList(), LocalDate.now());
     }
 
     @PostMapping("/init")
     public Effect<String> create(@RequestBody InitiateReservation command) {
+        log.info("Created reservation {} entity", command.reservationId);
         switch (currentState().state()) {
 //            case UNAVAILABLE:
             case INIT:
@@ -58,6 +64,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 var nextIndex = currentState().currentResourceIndex() + 1;
                 if(currentState().resources().size() > nextIndex) {
                     var nextResourceId = currentState().resources().get(nextIndex);
+                    log.info("Reservation {} searching for availability: resource {}", command.reservationId, nextResourceId);
                     return effects()
                             .emitEvent(new ReservationEvent.ResourceSelected(nextIndex, nextResourceId,
                                     command.reservationId(), command.facilityId(), command.reservation))
@@ -86,12 +93,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
+        log.info("Search exhausted for reservation {}: UNAVAILABLE ", event.reservationId());
         return currentState().withIncrementedIndex().withState(UNAVAILABLE);
-    }
-
-    @EventHandler
-    public ReservationState reservationRejected(ReservationEvent.ReservationRejected event) {
-        return currentState().withIncrementedIndex().withState(SELECTING);
     }
 
     @PostMapping("/book")
@@ -104,9 +107,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
+        log.info("Reservation {} booked in resource {}", event.reservationId(), event.resourceId());
         return currentState().withIncrementedIndex().withState(DONE);
     }
 
+    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());

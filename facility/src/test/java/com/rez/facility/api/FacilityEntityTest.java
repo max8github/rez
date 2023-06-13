@@ -5,6 +5,7 @@ import kalix.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
 import java.util.Collections;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -62,7 +63,7 @@ public class FacilityEntityTest {
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
 
         {
-            var result = testKit.call(e -> e.createReservation(new Mod.Reservation("max", 0)));
+            var result = testKit.call(e -> e.createReservation(new Mod.Reservation("max", 0, LocalDate.of(2023, 8, 10))));
             assertTrue(result.getReply().length() > 0);
 
             var reservationCreated = result.getNextEventOfType(FacilityEvent.ReservationCreated.class);

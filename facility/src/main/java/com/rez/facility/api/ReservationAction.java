@@ -27,12 +27,4 @@ public class ReservationAction extends Action {
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
-
-//    public Effect<String> on(ReservationEvent.Booked event) {
-//        var resourceId = event.resourceId();
-//        var path = "/calendar/save";
-//        var command = new InquireBooking(resourceId, event.reservation(), event.reservationId());
-//        var deferredCall = kalixClient.post(path, command, String.class);
-//        return effects().forward(deferredCall);
-//    }
 }
