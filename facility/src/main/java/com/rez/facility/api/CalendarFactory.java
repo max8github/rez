@@ -48,8 +48,6 @@ public class CalendarFactory {
         } catch (GeneralSecurityException | IOException e) {
             throw new RuntimeException(e);
         }
-        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-
         //Build service account credential
         HttpRequestInitializer requestInitializer;
         try (InputStream in = DelegatingServiceAction.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
