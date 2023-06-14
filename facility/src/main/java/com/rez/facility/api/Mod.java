@@ -29,7 +29,6 @@ public final class Mod {
         }
     }
 
-    //todo: I need to see the time slots too, but i can also use a view instead of this class
     public record Resource(String resourceName, int size) {
 
         public static Resource fromResourceState(com.rez.facility.domain.Resource resourceState) {
