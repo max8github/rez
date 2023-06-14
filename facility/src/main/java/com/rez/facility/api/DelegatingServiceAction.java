@@ -1,15 +1,9 @@
 package com.rez.facility.api;
 
 import akka.japi.Pair;
-import com.google.api.client.googleapis.javanet.GoogleNetHttpTransport;
 import com.google.api.client.googleapis.json.GoogleJsonResponseException;
-import com.google.api.client.http.HttpRequestInitializer;
-import com.google.api.client.http.HttpTransport;
-import com.google.api.client.json.JsonFactory;
-import com.google.api.client.json.gson.GsonFactory;
 import com.google.api.client.util.DateTime;
 import com.google.api.services.calendar.Calendar;
-import com.google.api.services.calendar.CalendarScopes;
 import com.google.api.services.calendar.model.*;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -20,17 +14,10 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import com.google.auth.http.HttpCredentialsAdapter;
-import com.google.auth.oauth2.GoogleCredentials;
-
-
 import java.io.*;
-import java.security.GeneralSecurityException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -39,53 +26,12 @@ public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
     final private WebClient webClient;
-    private static final String APPLICATION_NAME = "Google Calendar API Java Quickstart";
-    /**
-     * Global instance of the JSON factory.
-     */
-    private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    /**
-     * Global instance of the scopes required by this quickstart.
-     * If modifying these scopes, delete your previously saved tokens/ folder.
-     */
-    private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
-
 
     final private Calendar service;
 
-    public DelegatingServiceAction(WebClientProvider webClientProvider) {
+    public DelegatingServiceAction(WebClientProvider webClientProvider, Calendar calendar) {
         this.webClient = webClientProvider.webClientFor("twist");
-        this.service = setupService();
-    }
-
-    /**
-     * Build a new authorized API client service.
-     * @return the Calendar service
-     */
-    private Calendar setupService() {
-        HttpTransport httpTransport;
-        try {
-        httpTransport = GoogleNetHttpTransport.newTrustedTransport();
-        } catch (GeneralSecurityException | IOException e) {
-            throw new RuntimeException(e);
-        }
-        JsonFactory jsonFactory = GsonFactory.getDefaultInstance();
-
-        //Build service account credential
-        HttpRequestInitializer requestInitializer;
-        try (InputStream in = DelegatingServiceAction.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
-            if (in == null) {
-                throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-            }
-            GoogleCredentials googleCredentials = GoogleCredentials.fromStream(in).createScoped(SCOPES);
-            requestInitializer = new HttpCredentialsAdapter(googleCredentials);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-        return new Calendar.Builder(httpTransport, JSON_FACTORY, requestInitializer)
-                .setApplicationName(APPLICATION_NAME)
-                .build();
+        this.service = calendar;
     }
 
     //todo on InquireBooking: i am using this class where it is semantically wrong, like in DelegatingServiceAction. Another class should be used instead.
