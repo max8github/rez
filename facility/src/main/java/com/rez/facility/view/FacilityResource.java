@@ -8,9 +8,8 @@ import java.time.LocalDate;
 public record FacilityResource(
     String resourceId,
     String resourceName,
-    int timeSlot,
+    int size,
     String facilityId,
-    String email,
     String name,
     Address address,
     LocalDate date) {}

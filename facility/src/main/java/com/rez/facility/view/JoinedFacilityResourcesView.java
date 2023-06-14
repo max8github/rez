@@ -1,7 +1,6 @@
 package com.rez.facility.view;
 
 import com.rez.facility.api.*;
-import com.rez.facility.domain.Facility;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.annotations.Table;
@@ -21,48 +20,11 @@ public class JoinedFacilityResourcesView {
     @Query(
             """
             SELECT *
-            FROM facilities
-            JOIN resources ON facilities.facilityId = resources.facilityId
-            WHERE facilities.facilityId = :facilityId
-            ORDER BY resources.name
+            FROM resources
+            INNER JOIN facilities_by_name ON facilities_by_name.id = resources.facilityId
             """)
     public Flux<FacilityResource> get(String facilityId) {
         return null;
-    }
-
-    @Table("facilities")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public static class Facilities extends View<Facility> {
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceSubmitted event) {
-            return effects().ignore();
-        }
-        public UpdateEffect<Facility> onEvent(FacilityEvent.Created created) {
-            String id = updateContext().eventSubject().orElse("");
-            return effects()
-                    .updateState(new Facility(id, created.facility().name(),
-                            created.facility().address().toAddressState(), created.facility().resourceIds()));
-        }
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceIdAdded event) {
-            return effects().updateState(viewState().withResourceId(event.resourceEntityId()));
-        }
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceIdRemoved event) {
-            return effects().updateState(viewState().withoutResourceId(event.resourceEntityId()));
-        }
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.Renamed event) {
-            return effects().updateState(viewState().withName(event.newName()));
-        }
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.AddressChanged event) {
-            return effects().updateState(viewState().withAddress(event.address().toAddressState()));
-        }
-
-        public UpdateEffect<Facility> onEvent(FacilityEvent.ReservationCreated event) {
-            return effects().ignore();
-        }
     }
 
     @Table("resources")
@@ -75,8 +37,9 @@ public class JoinedFacilityResourcesView {
         }
 
         public UpdateEffect<Resource> onEvent(ResourceEvent.BookingAccepted event) {
-            return effects().updateState(viewState().withTimeWindow(
-                    event.reservation().timeSlot(), event.reservation().username()));
+            return effects().ignore();
+//                    .updateState(viewState().withTimeWindow(
+//                    event.reservation().timeSlot(), event.reservation().username()));
         }
 
         public UpdateEffect<Resource> onEvent(ResourceEvent.BookingRejected notInteresting) {
