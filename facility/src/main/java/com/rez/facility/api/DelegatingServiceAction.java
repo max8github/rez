@@ -26,8 +26,6 @@ import com.google.auth.oauth2.GoogleCredentials;
 
 import java.io.*;
 import java.security.GeneralSecurityException;
-import java.time.LocalDate;
-import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -251,12 +249,11 @@ public class DelegatingServiceAction extends Action {
 
     private static EventDateTime[] convertSlotIntoStartEndDate(Mod.Reservation reservation) {
         int slot = reservation.timeSlot() < 23 ? reservation.timeSlot() : 22;//todo validation, but need to use time ...
-        LocalDate date = reservation.date();
+        String date = reservation.date();
         return new EventDateTime[]{getEventDateTime(date, slot), getEventDateTime(date,slot + 1)};
     }
 
-    private static EventDateTime getEventDateTime(LocalDate date, int slot) {
-        String dateF = date.format(DateTimeFormatter.ISO_DATE);
+    private static EventDateTime getEventDateTime(String dateF, int slot) {
         String hour = String.format("%02d", slot);
         DateTime dateTime = new DateTime(dateF+"T"+ hour +":00:00-07:00");//todo
         return new EventDateTime()

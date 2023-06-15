@@ -47,10 +47,10 @@ public class WebhookAction extends Action {
             int hourOfDay = Integer.parseInt(parts[1].trim());
             int timeSlot = (hourOfDay > 23 || hourOfDay < 0) ? 23 : hourOfDay;
             String creator = parts[2].trim();
-            return new Mod.Reservation(creator, timeSlot, date);
+            return new Mod.Reservation(creator, timeSlot, date.toString());
         } catch (Exception e) {
             log.error("COULD NOT PARSE MESSAGE INTO RESERVATION DETAILS. MESSAGE: " + content);
-            return new Mod.Reservation("creator", 1, LocalDate.now());
+            return new Mod.Reservation("creator", 1, LocalDate.now().toString());
         }
     }
 

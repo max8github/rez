@@ -31,7 +31,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList(), LocalDate.now());
+        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList(), LocalDate.now().toString());
     }
 
     @PostMapping("/init")

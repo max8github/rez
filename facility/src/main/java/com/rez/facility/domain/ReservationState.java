@@ -1,10 +1,9 @@
 package com.rez.facility.domain;
 
-import java.time.LocalDate;
 import java.util.List;
 
 public record ReservationState(State state, String reservationId, String facilityId, String username,
-                               int timeSlot, int currentResourceIndex, List<String> resources, LocalDate date) {
+                               int timeSlot, int currentResourceIndex, List<String> resources, String date) {
 
     public ReservationState withState(State state) {
         return new ReservationState(state, this.reservationId, this.facilityId, this.username, this.timeSlot,

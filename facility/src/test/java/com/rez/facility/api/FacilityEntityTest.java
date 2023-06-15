@@ -63,7 +63,7 @@ public class FacilityEntityTest {
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
 
         {
-            var result = testKit.call(e -> e.createReservation(new Mod.Reservation("max", 0, LocalDate.of(2023, 8, 10))));
+            var result = testKit.call(e -> e.createReservation(new Mod.Reservation("max", 0, LocalDate.of(2023, 8, 10).toString())));
             assertTrue(result.getReply().length() > 0);
 
             var reservationCreated = result.getNextEventOfType(FacilityEvent.ReservationCreated.class);
