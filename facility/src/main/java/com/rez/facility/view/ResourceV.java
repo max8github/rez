@@ -1,6 +1,6 @@
 package com.rez.facility.view;
 
-public record ResourceV(String facilityId, String resourceId, String name, String[] timeWindow) {
+public record ResourceV(String facilityId, String resourceId, String resourceName, String[] timeWindow) {
     public static ResourceV initialize(String facilityId, String resourceId, com.rez.facility.domain.Resource resource) {
         return new ResourceV(facilityId, resourceId, resource.name(), resource.timeWindow());
     }
