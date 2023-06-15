@@ -13,49 +13,49 @@ import org.springframework.web.bind.annotation.GetMapping;
 
 @ViewId("view_facilities_by_name")
 @Table("facilities_by_name")
-public class FacilityByNameView extends View<Facility> {
+public class FacilityByNameView extends View<FacilityV> {
 
     @GetMapping("/facility/by_name/{facility_name}")
     @Query("SELECT * FROM facilities_by_name WHERE name = :facility_name")
-    public Flux<Facility> getFacility(String name) {
+    public Flux<FacilityV> getFacility(String name) {
         return null;
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.Created created) {
-        return effects().updateState(new Facility(
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
+        return effects().updateState(new FacilityV(
                 created.facility().name(),
                 created.facility().address().toAddressState(),
                 created.entityId()));
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.Renamed event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.Renamed event) {
         return effects().updateState(viewState().withName(event.newName()));
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.AddressChanged event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
         return effects().updateState(viewState().withAddress(event.address().toAddressState()));
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceSubmitted event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceSubmitted event) {
         return effects().ignore();
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceIdAdded event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdAdded event) {
         return effects().ignore();
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.ResourceIdRemoved event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdRemoved event) {
         return effects().ignore();
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<Facility> onEvent(FacilityEvent.ReservationCreated event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ReservationCreated event) {
         return effects().ignore();
     }
 }

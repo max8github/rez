@@ -20,29 +20,65 @@ public class JoinedFacilityResourcesView {
     @Query(
             """
             SELECT *
-            FROM resources
-            INNER JOIN facilities_by_name ON facilities_by_name.id = resources.facilityId
+            FROM facilities
+            JOIN resources ON facilities.id = resources.facilityId
+            WHERE facilities.id = :facilityId
             """)
     public Flux<FacilityResource> get(String facilityId) {
         return null;
     }
 
+    @Table("facilities")
+    @Subscribe.EventSourcedEntity(FacilityEntity.class)
+    public static class Facilities extends View<FacilityV> {
+        public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
+            String id = updateContext().eventSubject().orElse("");
+            return effects()
+                    .updateState(new FacilityV(created.facility().name(),
+                            created.facility().address().toAddressState(), id));
+        }
+
+        public UpdateEffect<FacilityV> onEvent(FacilityEvent.Renamed event) {
+            return effects().updateState(viewState().withName(event.newName()));
+        }
+
+        public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
+            return effects().updateState(viewState().withAddress(event.address().toAddressState()));
+        }
+
+        public View.UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceSubmitted event) {
+            return effects().ignore();
+        }
+
+        public View.UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdAdded event) {
+            return effects().updateState(viewState());
+        }
+
+        public View.UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdRemoved event) {
+            return effects().updateState(viewState());
+        }
+
+        public View.UpdateEffect<FacilityV> onEvent(FacilityEvent.ReservationCreated event) {
+            return effects().ignore();
+        }
+    }
+
     @Table("resources")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public static class Resources extends View<Resource> {
-        public UpdateEffect<Resource> onEvent(ResourceEvent.ResourceCreated created) {
+    public static class Resources extends View<ResourceV> {
+        public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
             String id = updateContext().eventSubject().orElse("");
-            return effects().updateState(Resource.initialize(created.facilityId(),
+            return effects().updateState(ResourceV.initialize(created.facilityId(),
                     created.entityId(), created.resource().toResourceState()));
         }
 
-        public UpdateEffect<Resource> onEvent(ResourceEvent.BookingAccepted event) {
+        public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingAccepted event) {
             return effects().ignore();
 //                    .updateState(viewState().withTimeWindow(
 //                    event.reservation().timeSlot(), event.reservation().username()));
         }
 
-        public UpdateEffect<Resource> onEvent(ResourceEvent.BookingRejected notInteresting) {
+        public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingRejected notInteresting) {
             return effects().ignore();
         }
     }
