@@ -34,9 +34,7 @@ public class DelegatingServiceAction extends Action {
         this.service = calendar;
     }
 
-    //todo on InquireBooking: i am using this class where it is semantically wrong, like in DelegatingServiceAction. Another class should be used instead.
-
-    public CompletableFuture<String> messageTwistAccept(ResourceEntity.ReservationResult result) {
+    public CompletableFuture<String> messageTwistAccept(ReservationResult result) {
         log.info("called messageTwist for reservation id {}", result.vo().reservationId());
         String attendees = result.vo().reservation().username();
         String time = result.vo().reservation().timeSlot() + "";
@@ -46,7 +44,7 @@ public class DelegatingServiceAction extends Action {
         return messageTwist(result, messageContent);
     }
 
-    public CompletableFuture<String> messageTwistReject(ResourceEntity.ReservationResult result) {
+    public CompletableFuture<String> messageTwistReject(ReservationResult result) {
         log.info("messaged Twist for reservation id {} UNAVAILABLE", result.vo().reservationId());
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date() + "";
@@ -59,7 +57,7 @@ public class DelegatingServiceAction extends Action {
      * This is the incoming webhook: Kalix -> Twist.<br>
      * It is used for posting a confirmation to Twist that something happened.
      */
-    private CompletableFuture<String> messageTwist(ResourceEntity.ReservationResult p, String message) {
+    private CompletableFuture<String> messageTwist(ReservationResult p, String message) {
         Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
         String url = twistConfig.getString("url");//todo: validate the url here or else call will fail (painful)
         String install_id = twistConfig.getString("install_id");
@@ -87,37 +85,39 @@ public class DelegatingServiceAction extends Action {
     }
 
 
-    public CompletableFuture<String> fakeMessageTwist(Pair<String, ResourceEntity.InquireBooking> p) {
+    public CompletableFuture<String> fakeMessageTwist(Pair<String, EventDetails> p) {
         log.info("called fakeMessageTwist for reservation id  {}", p.first());
         return CompletableFuture.completedFuture("hi");
     }
 
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), "facilityId", event.reservation());
-        // todo: unclear on how to best return the effect here, as we don't need to reply to anything here.
-//        var stageGoogle = saveToGoogle(command);
-        var stageGoogle = fakeSaveToGoogle(command);
+        String reservationId = event.reservationId();
+        Mod.Reservation reservation = event.reservation();
+        String facilityId = "facilityId";
+        var eventDetails = new EventDetails(resourceId, reservationId, facilityId, reservation);
+//        var stageGoogle = saveToGoogle(eventDetails);
+        var stageGoogle = fakeSaveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
     }
 
     public Effect<String> on(ReservationEvent.SearchExhausted event) throws Exception {
         //todo: refactor this part, it can be consolidated better, also semantically (class record names)
-        var command = new ResourceEntity.InquireBooking("111", event.reservationId(), "facilityId", event.reservation());
-        var result = new ResourceEntity.ReservationResult(command, "UNAVAILABLE", "http://example.com");
+        var command = new EventDetails("111", event.reservationId(), "facilityId", event.reservation());
+        var result = new ReservationResult(command, "UNAVAILABLE", "http://example.com");
         return effects().asyncReply(messageTwistReject(result));//todo
     }
 
-    private CompletionStage<ResourceEntity.ReservationResult>
-    fakeSaveToGoogle(ResourceEntity.InquireBooking eventDetails) {
+    private CompletionStage<ReservationResult>
+    fakeSaveToGoogle(EventDetails eventDetails) {
         log.info("called fakeSaveToGoogle for reservation id {}", eventDetails.reservationId());
         String fakeUrl = "http://example.com";
-        return CompletableFuture.completedStage(new ResourceEntity.ReservationResult(eventDetails, "DONE", fakeUrl));
+        return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", fakeUrl));
     }
 
-    private CompletionStage<ResourceEntity.ReservationResult>
-    saveToGoogle(ResourceEntity.InquireBooking eventDetails) throws IOException {
+    private CompletionStage<ReservationResult>
+    saveToGoogle(EventDetails eventDetails) throws IOException {
         String calendarId = "primary";
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
@@ -126,7 +126,7 @@ public class DelegatingServiceAction extends Action {
             log.info("event '" + found + "' had already been booked: nothing to do, all good");
             String calendarUrl = "http://example.com";
             return CompletableFuture.completedStage(
-                    new ResourceEntity.ReservationResult(eventDetails, "ALREADY_BOOKED", calendarUrl));
+                    new ReservationResult(eventDetails, "ALREADY_BOOKED", calendarUrl));
         }
         var interval = convertSlotIntoStartEndDate(eventDetails.reservation());
         EventAttendee[] attendees = new EventAttendee[]{
@@ -157,12 +157,12 @@ public class DelegatingServiceAction extends Action {
             event = service.events().insert(calendarId, event).execute();
             log.info("Event inserted: {}", event.getHtmlLink());
             return CompletableFuture.completedStage(
-                    new ResourceEntity.ReservationResult(eventDetails, "DONE", event.getHtmlLink()));
+                    new ReservationResult(eventDetails, "DONE", event.getHtmlLink()));
         } else {//should never happen, because only Kalix writes to the Calendar.
             var msg = "Time slot was already taken: UNAVAILABLE for reservation id " + calEventId;
             log.error(msg);
             return CompletableFuture.completedStage(
-                    new ResourceEntity.ReservationResult(eventDetails, "UNAVAILABLE", "http://example.com"));
+                    new ReservationResult(eventDetails, "UNAVAILABLE", "http://example.com"));
         }
     }
 
@@ -214,4 +214,7 @@ public class DelegatingServiceAction extends Action {
                 .setDateTime(dateTime)
                 .setTimeZone("America/Los_Angeles");
     }
+
+    private record ReservationResult(EventDetails vo, String result, String url) {}
+    private record EventDetails(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }

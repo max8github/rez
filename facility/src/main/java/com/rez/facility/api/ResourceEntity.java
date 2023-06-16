@@ -78,5 +78,4 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     //todo: valu obj
     public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
-    public record ReservationResult(InquireBooking vo, String result, String url) {}
 }
