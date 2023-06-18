@@ -24,7 +24,7 @@ public class FacilityEntityTest {
         assertEquals("TCL", facilityCreated.facility().name());
     }
 
-        @Test
+    @Test
     public void testAddResourceId() {
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
         var facilityId = "testkit-entity-id";

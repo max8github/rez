@@ -96,8 +96,8 @@ public class DelegatingServiceAction extends Action {
         Mod.Reservation reservation = event.reservation();
         String facilityId = "facilityId";
         var eventDetails = new EventDetails(resourceId, reservationId, facilityId, reservation);
-//        var stageGoogle = saveToGoogle(eventDetails);
-        var stageGoogle = fakeSaveToGoogle(eventDetails);
+        var stageGoogle = saveToGoogle(eventDetails);
+//        var stageGoogle = fakeSaveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
     }
