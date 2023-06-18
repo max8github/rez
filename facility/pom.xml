@@ -32,6 +32,11 @@
         <directory>src/main/resources</directory>
       </resource>
     </resources>
+    <testResources>
+      <testResource>
+        <directory>src/test/resources</directory>
+      </testResource>
+    </testResources>
 
     <extensions>
       <extension>
@@ -289,6 +294,20 @@
   </profiles>
 
   <dependencies>
+
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-tools</artifactId>
+      <version>2.1.1</version>
+      <scope>test</scope>
+    </dependency>
+    <dependency>
+      <groupId>org.apache.opennlp</groupId>
+      <artifactId>opennlp-uima</artifactId>
+      <version>2.1.1</version>
+      <scope>test</scope>
+    </dependency>
+
     <dependency>
       <groupId>io.kalix</groupId>
       <artifactId>kalix-spring-boot-starter</artifactId>
