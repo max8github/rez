@@ -148,7 +148,7 @@ public class DelegatingServiceAction extends Action {
                 .setSummary("Resource Reserved")
                 .setId(calEventId)
                 .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription(eventDetails.reservation().emails() + ": tennis court reservation")
+                .setDescription(eventDetails.reservation().emails() + ": btoken resource reservation")
                 .setStart(interval[0])
                 .setEnd(interval[1])
                 .setAttendees(Arrays.asList(attendees));

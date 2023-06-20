@@ -3,7 +3,7 @@ package com.rez.facility.domain;
 import java.util.Arrays;
 
 /**
- * Models a resource to be booked, like a tennis court, a soccer field, or a conference or a yoga room.
+ * Models a resource to be booked.
  * A resource has a name (identifying that resource within the facility) and a circular time array of
  * available slots for people to book.
  *
