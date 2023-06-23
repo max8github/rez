@@ -39,7 +39,7 @@ public class DelegatingServiceAction extends Action {
         String attendees = result.vo().reservation().username();
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date().toString();
-        String messageContent = "Reservation confirmed. Date: %s, Time: %s, Attendees: %s"
+        String messageContent = "Reservation " + result + ". Date: %s, Time: %s, Attendees: %s" // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
                 .formatted(date, time, attendees);
         return messageTwist(result, messageContent);
     }
@@ -118,7 +118,8 @@ public class DelegatingServiceAction extends Action {
 
     private CompletionStage<ReservationResult>
     saveToGoogle(EventDetails eventDetails) throws IOException {
-        String calendarId = "primary";
+//        String calendarId = "3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com";
+        String calendarId = "63hd39cd9ppt8tajp76vglt394@group.calendar.google.com";//todo
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
         String found = isFound(service, calendarId, calEventId);
@@ -131,6 +132,7 @@ public class DelegatingServiceAction extends Action {
         var interval = convertSlotIntoStartEndDate(eventDetails.reservation());
         EventAttendee[] attendees = new EventAttendee[]{
                 new EventAttendee().setEmail(eventDetails.reservation().username()),
+                new EventAttendee().setEmail("massimo.calderoni@gmail.com"),//todo
         };
 //        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
 
@@ -209,10 +211,10 @@ public class DelegatingServiceAction extends Action {
     private static EventDateTime getEventDateTime(LocalDate date, int slot) {
         String dateF = date.format(DateTimeFormatter.ISO_DATE);
         String hour = String.format("%02d", slot);
-        DateTime dateTime = new DateTime(dateF+"T"+ hour +":00:00-07:00");//todo
+        DateTime dateTime = new DateTime(dateF+"T"+ hour +":00:00+02:00");//todo
         return new EventDateTime()
                 .setDateTime(dateTime)
-                .setTimeZone("America/Los_Angeles");
+                .setTimeZone("Europe/Zurich");//America/Los_Angeles, which is GMT -7
     }
 
     private record ReservationResult(EventDetails vo, String result, String url) {}
