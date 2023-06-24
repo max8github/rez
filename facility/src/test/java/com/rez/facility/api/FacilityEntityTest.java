@@ -7,6 +7,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -63,7 +64,8 @@ public class FacilityEntityTest {
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
 
         {
-            var result = testKit.call(e -> e.createReservation(new Mod.Reservation("max", 0, LocalDate.of(2023, 8, 10))));
+            var result = testKit.call(e -> e.createReservation(new Mod.Reservation(
+                    List.of("john.doe@example.com"), 0, LocalDate.of(2023, 8, 10))));
             assertTrue(result.getReply().length() > 0);
 
             var reservationCreated = result.getNextEventOfType(FacilityEvent.ReservationCreated.class);

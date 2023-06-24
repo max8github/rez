@@ -18,6 +18,7 @@ import java.io.*;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
@@ -36,10 +37,10 @@ public class DelegatingServiceAction extends Action {
 
     public CompletableFuture<String> messageTwistAccept(ReservationResult result) {
         log.info("called messageTwist for reservation id {}", result.vo().reservationId());
-        String attendees = result.vo().reservation().username();
+        List<String> attendees = result.vo().reservation().emails();
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date().toString();
-        String messageContent = "Reservation " + result + ". Date: %s, Time: %s, Attendees: %s" // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
+        String messageContent = "Reservation " + result.result + ". Date: %s, Time: %s, Attendees: %s" // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
                 .formatted(date, time, attendees);
         return messageTwist(result, messageContent);
     }
@@ -118,8 +119,9 @@ public class DelegatingServiceAction extends Action {
 
     private CompletionStage<ReservationResult>
     saveToGoogle(EventDetails eventDetails) throws IOException {
-//        String calendarId = "3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com";
-        String calendarId = "63hd39cd9ppt8tajp76vglt394@group.calendar.google.com";//todo
+//        String calendarId = "3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com";//court 1 calendar id = resource id
+//        String calendarId = "63hd39cd9ppt8tajp76vglt394@group.calendar.google.com";//court 2 calendar id = resource id
+        String calendarId = eventDetails.resourceId() + "@group.calendar.google.com";
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
         String found = isFound(service, calendarId, calEventId);
@@ -130,11 +132,9 @@ public class DelegatingServiceAction extends Action {
                     new ReservationResult(eventDetails, "ALREADY_BOOKED", calendarUrl));
         }
         var interval = convertSlotIntoStartEndDate(eventDetails.reservation());
-        EventAttendee[] attendees = new EventAttendee[]{
-                new EventAttendee().setEmail(eventDetails.reservation().username()),
-                new EventAttendee().setEmail("massimo.calderoni@gmail.com"),//todo
-        };
-//        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
+        EventAttendee[] attendees = getAttendees(eventDetails);
+
+        //        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
 
         EventReminder[] reminderOverrides = new EventReminder[]{
                 new EventReminder().setMethod("email").setMinutes(24 * 60),
@@ -148,11 +148,11 @@ public class DelegatingServiceAction extends Action {
                 .setSummary("Resource Reserved")
                 .setId(calEventId)
                 .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription(eventDetails.reservation().username() + ": tennis court reservation")
+                .setDescription(eventDetails.reservation().emails() + ": tennis court reservation")
                 .setStart(interval[0])
-                .setEnd(interval[1]);
+                .setEnd(interval[1])
+                .setAttendees(Arrays.asList(attendees));
 //            .setRecurrence(Arrays.asList(recurrence))
-//                .setAttendees(Arrays.asList(attendees))
 //                .setReminders(reminders);
 
         if(isSlotAvailable(service, calendarId, event)) {
@@ -166,6 +166,17 @@ public class DelegatingServiceAction extends Action {
             return CompletableFuture.completedStage(
                     new ReservationResult(eventDetails, "UNAVAILABLE", "http://example.com"));
         }
+    }
+
+    private EventAttendee[] getAttendees(EventDetails eventDetails) {
+        //todo: get domain-wide authority for enabling this
+//        EventAttendee[] attendees = eventDetails.reservation().emails() == null ?
+//                new EventAttendee[0] :
+//                eventDetails.reservation().emails().stream().map(s ->
+//                        new EventAttendee().setEmail(s)).collect(Collectors.toList()).stream().toArray(EventAttendee[]::new);
+        EventAttendee[] attendees = new EventAttendee[0];
+        return attendees;
+
     }
 
     //todo: this method is not very useful, because it is never going to happen that two ids will conflict.

@@ -18,9 +18,9 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
         Arrays.fill(tw, "");
         return new Resource(name, tw, size, 0);
     }
-    public Resource withTimeWindow(int timeSlot, String username) {
+    public Resource withTimeWindow(int timeSlot, String reservationId) {
         if (timeSlot < timeWindow.length)
-            this.timeWindow[timeSlot] = username;
+            this.timeWindow[timeSlot] = reservationId;
         return this;
     }
 }

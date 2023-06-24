@@ -60,7 +60,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @EventHandler
     public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return event.reservation().setInto(currentState());
+        return event.reservation().setInto(currentState(), event.reservationId());
     }
 
     @EventHandler
@@ -71,7 +71,7 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<Mod.Resource> getResource() {
-            return effects().reply(Mod.Resource.fromResourceState(currentState()));
+            return effects().reply(Mod.Resource.fromResourceState(currentState(), entityId));
     }
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}

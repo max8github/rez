@@ -75,7 +75,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/resource/submit")
     public Effect<String> submitResource(@RequestBody Mod.Resource resource) {
-        var id = UUID.randomUUID().toString();
+        String id = resource.resourceId();
         return effects()
                 .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resource, id))
                 .thenReply(newState -> id);
@@ -127,9 +127,11 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
         int timeSlot = reservation.timeSlot();
         log.info("Facility assigns id {} to reservation, date {}, time {}", reservationId, reservation.date(), timeSlot);
+        FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
+                new ArrayList<>(currentState().resourceIds()));
+        log.info("Emitting event: " + reservationCreated);
         return effects()
-                .emitEvent(new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
-                        new ArrayList<>(currentState().resourceIds())))
+                .emitEvent(reservationCreated)
                 .thenReply(newState -> reservationId);
     }
 

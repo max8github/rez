@@ -29,10 +29,10 @@ public final class Mod {
         }
     }
 
-    public record Resource(String resourceName, int size) {
+    public record Resource(String resourceId, String resourceName, int size) {
 
-        public static Resource fromResourceState(com.rez.facility.domain.Resource resourceState) {
-            return new Resource(resourceState.name(), resourceState.size());
+        public static Resource fromResourceState(com.rez.facility.domain.Resource resourceState, String resourceId) {
+            return new Resource(resourceId, resourceState.name(), resourceState.size());
         }
 
         public com.rez.facility.domain.Resource toResourceState() {
@@ -40,13 +40,13 @@ public final class Mod {
         }
     }
 
-    public record Reservation(String username, int timeSlot, LocalDate date) {
+    public record Reservation(List<String> emails, int timeSlot, LocalDate date) {
         public static Reservation fromReservationState(ReservationState reservationState) {
-            return new Reservation(reservationState.username(), reservationState.timeSlot(), reservationState.date());
+            return new Reservation(reservationState.emails(), reservationState.timeSlot(), reservationState.date());
         }
 
         ReservationState toReservationState(String reservationId, String facilityId, List<String> resources) {
-            return new ReservationState(INIT, reservationId, facilityId, username, timeSlot,
+            return new ReservationState(INIT, reservationId, facilityId, emails, timeSlot,
                     -1, resources, date);
         }
 
@@ -62,8 +62,8 @@ public final class Mod {
             else return false;
         }
 
-        public com.rez.facility.domain.Resource setInto(com.rez.facility.domain.Resource r) {
-            return r.withTimeWindow(timeSlot, username);
+        public com.rez.facility.domain.Resource setInto(com.rez.facility.domain.Resource r, String reservationId) {
+            return r.withTimeWindow(timeSlot, reservationId);
         }
     }
 }

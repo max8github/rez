@@ -8,6 +8,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 
 @RequestMapping("/outwebhook")
 public class WebhookAction extends Action {
@@ -20,8 +22,8 @@ public class WebhookAction extends Action {
     }
 
     /**
-     * This is the outgoing webhook: Twist -to-> Kalix.<br>
-     * It is used for initiating the entire processing. This is the input to rez.
+     * This is the input to rez. It is also called "outgoing webhook" from Twist's standpoint: Twist -to-> Kalix.<br>
+     * It is used for initiating the entire processing.
      * When someone types a message in the set-up Twist thread, Twist should trigger the creation of that message and
      * send it out to Kalix, here.
      * @return
@@ -34,23 +36,29 @@ public class WebhookAction extends Action {
         String content = comment.content();
         log.info("*** " + comment.creator_name + " REQUESTED, for facility {}, content:\n\t", facilityId, content);
         var path = "/facility/%s/reservation/create".formatted(facilityId);
-        Mod.Reservation body = parseComment(comment.content);
+        Mod.Reservation body = parseComment(comment);
         var deferredCall = kalixClient.post(path, body, TwistContent.class);
         return effects().forward(deferredCall);
     }
 
-    private Mod.Reservation parseComment(String content) {
-        //todo: the assumption for now is something like: 2023-08-02, 8, Max
+    private Mod.Reservation parseComment(TwistComment twistComment) {
+        String content = twistComment.content();
+        List<String> attendees = new ArrayList<>();
+        attendees.add(twistComment.creator_name());//todo: these are names, not emails afaik
+        //todo: i should get the emails from the users accounts
+        //todo: the assumption for now is something like: 2023-08-02, 8, john.doe@example.com
         try {
             String[] parts = content.split(",");
             LocalDate date = LocalDate.parse(parts[0].trim());
             int hourOfDay = Integer.parseInt(parts[1].trim());
             int timeSlot = (hourOfDay > 23 || hourOfDay < 0) ? 23 : hourOfDay;
-            String creator = parts[2].trim();
-            return new Mod.Reservation(creator, timeSlot, date);
+            String attendee = parts[2].trim();
+            attendees.add(attendee);
+            return new Mod.Reservation(attendees, timeSlot, date);
         } catch (Exception e) {
-            log.error("COULD NOT PARSE MESSAGE INTO RESERVATION DETAILS. MESSAGE: " + content);
-            return new Mod.Reservation("creator", 1, LocalDate.now());
+            log.error("COULD NOT PARSE MESSAGE INTO RESERVATION DETAILS. MESSAGE: '" + content + "', exception:\n"
+            + e);
+            return new Mod.Reservation(attendees, 1, LocalDate.now());
         }
     }
 
@@ -73,7 +81,7 @@ public class WebhookAction extends Action {
     record TwistContent(String content) {}
 
     /**
-     * See here for full object: https://developer.twist.com/v3/#comments
+     * See <a href="https://developer.twist.com/v3/#comments">here</a> for full object.
      * @param channel_id
      * @param content
      * @param creator
