@@ -12,29 +12,30 @@ import reactor.core.publisher.Flux;
 
 @ViewId("view_resources_by_facility_id")
 @Table("resources_by_facility_id")
-public class ResourceView extends View<Resource> {
+public class ResourceView extends View<ResourceV> {
 
     @GetMapping("/resource/by_facility/{facility_id}")
     @Query("SELECT * FROM resources_by_facility_id WHERE facilityId = :facility_id")
-    public Flux<Resource> getResource(String facility_id) {
+    public Flux<ResourceV> getResource(String facility_id) {
         return null;
     }
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<Resource> onEvent(ResourceEvent.ResourceCreated created) {
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
         String id = updateContext().eventSubject().orElse("");
         assert id.equals(created.entityId());
-        return effects().updateState(Resource.initialize(created.facilityId(),
+        return effects().updateState(ResourceV.initialize(created.facilityId(),
                 created.entityId(), created.resource().toResourceState()));
     }
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<Resource> onEvent(ResourceEvent.BookingAccepted event) {
-        return effects().updateState(viewState().withBooking(event.reservation().timeSlot(), event.reservation().username()));
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingAccepted event) {
+        String reservationId = event.reservationId();
+        return effects().updateState(viewState().withBooking(event.reservation().timeSlot(), reservationId));
     }
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<Resource> onEvent(ResourceEvent.BookingRejected notInteresting) {
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingRejected notInteresting) {
         return effects().ignore();
     }
 }

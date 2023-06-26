@@ -11,8 +11,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
-import java.util.Collections;
 import java.util.List;
 
 import static com.rez.facility.domain.ReservationState.State.*;
@@ -31,7 +29,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @Override
     public ReservationState emptyState() {
-        return new ReservationState(INIT, entityId, "", "", 0, -1, Collections.emptyList(), LocalDate.now());
+        return ReservationState.initiate(entityId);
     }
 
     @PostMapping("/init")

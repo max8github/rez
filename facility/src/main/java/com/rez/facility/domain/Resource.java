@@ -3,7 +3,7 @@ package com.rez.facility.domain;
 import java.util.Arrays;
 
 /**
- * Models a resource to be booked, like a tennis court, a soccer field, or a conference or a yoga room.
+ * Models a resource to be booked.
  * A resource has a name (identifying that resource within the facility) and a circular time array of
  * available slots for people to book.
  *
@@ -18,9 +18,9 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
         Arrays.fill(tw, "");
         return new Resource(name, tw, size, 0);
     }
-    public Resource withTimeWindow(int timeSlot, String username) {
+    public Resource withTimeWindow(int timeSlot, String reservationId) {
         if (timeSlot < timeWindow.length)
-            this.timeWindow[timeSlot] = username;
+            this.timeWindow[timeSlot] = reservationId;
         return this;
     }
 }
