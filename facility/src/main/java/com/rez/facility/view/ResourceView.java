@@ -24,8 +24,7 @@ public class ResourceView extends View<ResourceV> {
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
         String id = updateContext().eventSubject().orElse("");
         assert id.equals(created.entityId());
-        return effects().updateState(ResourceV.initialize(created.facilityId(),
-                created.entityId(), created.resource().toResourceState()));
+        return effects().updateState(ResourceV.initialize(created));
     }
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)

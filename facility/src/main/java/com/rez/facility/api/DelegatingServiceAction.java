@@ -13,8 +13,10 @@ import kalix.spring.WebClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.*;
+import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -40,8 +42,10 @@ public class DelegatingServiceAction extends Action {
         List<String> attendees = result.vo().reservation().emails();
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date().toString();
-        String messageContent = "Reservation " + result.result + ". Date: %s, Time: %s, Attendees: %s" // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
-                .formatted(date, time, attendees);
+        // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
+        String messageContent = "Reservation Confirmed. Date: %s, Time: %s, Attendees: %s"
+                .formatted(date, time, String.join(",", attendees));
+        log.debug("Message content: {}", messageContent);
         return messageTwist(result, messageContent);
     }
 
@@ -78,6 +82,7 @@ public class DelegatingServiceAction extends Action {
                        ]
                      }
                 """.formatted(message, p.url());
+        log.debug("Message body: {}", body);
         return webClient
                 .post().uri(uri)
                 .bodyValue(body)
@@ -103,17 +108,44 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(stage);
     }
 
-    public Effect<String> on(ReservationEvent.SearchExhausted event) throws Exception {
+    public Effect<String> on(ReservationEvent.SearchExhausted event) {
         //todo: refactor this part, it can be consolidated better, also semantically (class record names)
         var command = new EventDetails("111", event.reservationId(), "facilityId", event.reservation());
-        var result = new ReservationResult(command, "UNAVAILABLE", "http://example.com");
+        var result = new ReservationResult(command, "UNAVAILABLE", calendarUrl(null));
         return effects().asyncReply(messageTwistReject(result));//todo
+    }
+
+    //todo: get hold of all resource ids so to put together the facility calendar URL.
+    //This may very well be part of FacilityEntity's state: makes sense to have a facility calendar there
+    private String calendarUrl(List<String> resourceIds) {
+        String urlString =  "http://example.com";
+        if(resourceIds != null && !resourceIds.isEmpty()) {
+            Config googleConfig = ConfigFactory.defaultApplication().getConfig("google");
+            String host = googleConfig.getString("host");
+            String scheme = googleConfig.getString("scheme");
+            String path = googleConfig.getString("path");
+            String countryZone = googleConfig.getString("ctz");
+            String srcTail = googleConfig.getString("srcTail");
+            UriComponentsBuilder builder = UriComponentsBuilder.newInstance()
+                    .scheme(scheme)
+                    .host(host)
+                    .path(path)
+                    .queryParam("ctz", countryZone);
+            resourceIds.stream().forEach(e -> builder.queryParam("src", e + srcTail));
+            try {
+                urlString = builder.build().toUri().toURL().toString();
+            } catch (MalformedURLException e) {
+                log.error("Caught MalformedURLException while parsing calendar URL {} ", e);
+                return urlString;
+            }
+        }
+        return urlString;
     }
 
     private CompletionStage<ReservationResult>
     fakeSaveToGoogle(EventDetails eventDetails) {
         log.info("called fakeSaveToGoogle for reservation id {}", eventDetails.reservationId());
-        String fakeUrl = "http://example.com";
+        String fakeUrl = calendarUrl(null);
         return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", fakeUrl));
     }
 
@@ -127,7 +159,7 @@ public class DelegatingServiceAction extends Action {
         String found = isFound(service, calendarId, calEventId);
         if(!found.isEmpty()) {
             log.info("event '" + found + "' had already been booked: nothing to do, all good");
-            String calendarUrl = "http://example.com";
+            String calendarUrl = calendarUrl(null);
             return CompletableFuture.completedStage(
                     new ReservationResult(eventDetails, "ALREADY_BOOKED", calendarUrl));
         }
@@ -148,7 +180,7 @@ public class DelegatingServiceAction extends Action {
                 .setSummary("Resource Reserved")
                 .setId(calEventId)
                 .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription(eventDetails.reservation().emails() + ": btoken resource reservation")
+                .setDescription(String.join(",", eventDetails.reservation().emails()) + ": resource reservation")//todo: should give more location details, like resource name
                 .setStart(interval[0])
                 .setEnd(interval[1])
                 .setAttendees(Arrays.asList(attendees));
@@ -164,7 +196,7 @@ public class DelegatingServiceAction extends Action {
             var msg = "Time slot was already taken: UNAVAILABLE for reservation id " + calEventId;
             log.error(msg);
             return CompletableFuture.completedStage(
-                    new ReservationResult(eventDetails, "UNAVAILABLE", "http://example.com"));
+                    new ReservationResult(eventDetails, "UNAVAILABLE", calendarUrl(null)));
         }
     }
 

@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.UUID;
 
 @EntityKey("facilityId")
@@ -29,7 +28,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Override
     public Facility emptyState() {
-        return new Facility(entityId, "noname", new Address("nostreet", "nocity"), Collections.emptySet());
+        return Facility.create(entityId).withName("noname").withAddress(new Address("nostreet", "nocity"));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))

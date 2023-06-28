@@ -9,6 +9,319 @@
 	},
 	"item": [
 		{
+			"name": "Create TCL Facility",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var facility_id = \"4463962\";",
+							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
+							"",
+							"",
+							"var facilityName = \"Tennisclub Ladenburg\";",
+							"var resourceName = \"court1\";",
+							"",
+							"var street = \"Römerstadion 6\";",
+							"var city = \"Ladenburg\";",
+							"",
+							"console.info(\"Entity id is: \"+ facility_id);",
+							"console.info(\"Facilityname is: \"+ facilityName);",
+							"console.info(\"Street is: \"+ street);",
+							"console.info(\"City is: \"+ city);",
+							"console.info(\"Resource is: \"+ resourceName);",
+							"",
+							"pm.variables.set(\"facilityName\", facilityName);",
+							"pm.variables.set(\"street\", street);",
+							"pm.variables.set(\"city\", city);",
+							"pm.variables.set(\"resourceName\", resourceName);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//pm.environment.set(\"facility_id\", pm.response.text());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/create",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "register court 1",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var resourceId = \"3d228lvsdmdjmj79662t8r1fh4\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var resourceName = \"court 1\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var timeSlotsSize = 24;",
+							"",
+							"console.info(\"Resource is: \"+ resourceId);",
+							"console.info(\"Resource is: \"+ resourceName);",
+							"console.info(\"Resource size is: \"+ timeSlotsSize);",
+							"",
+							"pm.variables.set(\"resourceId\", resourceId);",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"submit"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "register court 2",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var resourceId = \"63hd39cd9ppt8tajp76vglt394\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var resourceName = \"court 2\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"var timeSlotsSize = 24;",
+							"",
+							"console.info(\"Resource is: \"+ resourceId);",
+							"console.info(\"Resource is: \"+ resourceName);",
+							"console.info(\"Resource size is: \"+ timeSlotsSize);",
+							"",
+							"pm.variables.set(\"resourceId\", resourceId);",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"submit"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "my twist command",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n  \"actions\": [],\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-02, 14, Bernhard\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-06-28 13:25:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/outwebhook",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"outwebhook"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Create 16:00 Reservation",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
+							"var username = 'max.calderoni@gmail.com';",
+							"var timeSlot = 22;",
+							"var date = \"2023-07-01\";",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"timeSlot is: \"+ timeSlot);",
+							"console.info(\"date is: \"+ date);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"timeSlot\", timeSlot);",
+							"pm.variables.set(\"date\", date);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"timeSlot\": \"{{timeSlot}}\",\n      \"date\": \"{{date}}\"\n}"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"reservation",
+						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
 			"name": "Create Facility",
 			"event": [
 				{
@@ -96,7 +409,7 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"var facility_id = \"4463962\";",
+							"var facility_id = \"5912f3c4\";",
 							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
 							"",
 							"",
@@ -275,12 +588,15 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
+							"var resourceId = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var timeSlotsSize = 24;",
 							"",
+							"console.info(\"Resource is: \"+ resourceId);",
 							"console.info(\"Resource is: \"+ resourceName);",
 							"console.info(\"Resource size is: \"+ timeSlotsSize);",
 							"",
+							"pm.variables.set(\"resourceId\", resourceId);",
 							"pm.variables.set(\"resourceName\", resourceName);",
 							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
 						],
@@ -308,7 +624,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
 				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
@@ -486,7 +802,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/by_name/STB",
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/by_name/Tennisclub%20Ladenburg",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -495,7 +811,60 @@
 					"path": [
 						"facility",
 						"by_name",
-						"STB"
+						"Tennisclub%20Ladenburg"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "View Full STB Facility",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/joined_facility_resources/4463962",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"joined_facility_resources",
+						"4463962"
 					]
 				}
 			},
@@ -564,9 +933,9 @@
 						"exec": [
 							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
 							"var username = 'max.calderoni@gmail.com';",
-							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
+							"var timeSlot = 18;//pm.variables.replaceIn('{{$randomInt}}');",
 							"var randDate = pm.variables.replaceIn('{{$randomDateFuture}}');",
-							"var date = new Date(randDate).toISOString().substr(0, 10);",
+							"var date = \"2023-06-22\";//new Date(randDate).toISOString().substr(0, 10);",
 							"",
 							"if(timeSlot > 100) {",
 							"    timeSlot = Math.ceil(timeSlot/100);",
@@ -606,7 +975,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\",\n      \"date\": \"{{date}}\"\n}"
+					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"timeSlot\": \"{{timeSlot}}\",\n      \"date\": \"{{date}}\"\n}"
 				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
@@ -795,7 +1164,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"actions\": [],\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-06-22, 16, Max\",\n  \"creator\": 717450,\n  \"creator_name\": \"Giuliano\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-06-12 20:17:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
+					"raw": "{\n  \"actions\": [],\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-06-27, 19, Max\",\n  \"creator\": 717450,\n  \"creator_name\": \"Giuliano short hair\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-06-24 12:04:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -817,7 +1186,7 @@
 			"response": []
 		},
 		{
-			"name": "twist incoming webhook doco (CONFIRMATION)",
+			"name": "twist incoming webhook (CONFIRMATION)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -849,7 +1218,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"content\":  \"Reservation confirmed. Time: 3, Attendees: max.calderoni@gmail.com\",\n  \"actions\": [\n    {\n      \"action\": \"open_url\",\n      \"url\": \"21850ec14e20443f87a707bf808c8a82\",\n      \"type\": \"action\",\n      \"button_text\": \"Go to Calendar\"\n    }\n  ]\n}",
+					"raw": "{\n  \"content\":  \"Reservation confirmed. Time: 3, Attendees: max.calderoni@gmail.com\",\n  \"actions\": [\n    {\n      \"action\": \"open_url\",\n      \"url\": \"https://www.example.com\",\n      \"type\": \"action\",\n      \"button_text\": \"Go to Calendar\"\n    }\n  ]\n}",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -933,7 +1302,7 @@
 						},
 						{
 							"key": "target_url",
-							"value": "https://muddy-frog-9741.us-east1.kalix.app:443/outwebhook",
+							"value": "https://{{host}}:443/outwebhook",
 							"type": "text"
 						}
 					]
