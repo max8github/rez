@@ -31,7 +31,7 @@ public class WebhookAction extends Action {
      * It is used for initiating the entire processing.
      * When someone types a message in the set-up Twist thread, Twist should trigger the creation of that message and
      * send it out to Kalix, here.
-     * @return
+     * @return message back to Twist, optionally
      */
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
@@ -39,9 +39,19 @@ public class WebhookAction extends Action {
         //todo: for now, i take it as if the thread_id was the same as the facility id.
         String facilityId = comment.thread_id();
         String content = comment.content();
-        log.info("*** " + comment.creator_name + " REQUESTED, for facility {}, content:\n\t", facilityId, content);
+        if(comment.system_message() != null) {//drop it
+            log.info("dropping system message {}", comment);
+            return effects().ignore();
+        }
+        log.info("*** {} REQUESTED, for facility {}, content:\n\t {}", comment.creator_name, facilityId, content);
         var path = "/facility/%s/reservation/create".formatted(facilityId);
-        Mod.Reservation body = commentToReservation(comment);
+        Mod.Reservation body;
+        try {
+            body = commentToReservation(comment);
+        } catch (Exception e) {
+            log.warn("Incoming message could not be parsed. Message:\n{}", content);
+            return effects().reply(new TwistContent("Message could not be understood: please try again. Format: 2023-01-04, 4, Names"));
+        }
         var deferredCall = kalixClient.post(path, body, TwistContent.class);
         return effects().forward(deferredCall);
     }
@@ -92,6 +102,9 @@ public class WebhookAction extends Action {
      * @param creator
      * @param id
      * @param posted
+     * @param system_message
      */
-    record TwistComment(String channel_id, String thread_id, String content, String creator, String creator_name, String id, String posted) {}
+    record TwistComment(String channel_id, String thread_id, String content, String creator, String creator_name,
+                        String id, String posted, SystemMessage system_message) {}
+    record SystemMessage(int integration_id, String url) {}
 }

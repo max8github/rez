@@ -26,7 +26,7 @@ public class ConfigTest {
         String url = twistConfig.getString("url");
         Assertions.assertEquals("https://twist.com/api/v3/integration_incoming/post_data", url);
         String install_id = twistConfig.getString("install_id");
-        Assertions.assertEquals("411374", install_id);
+        Assertions.assertEquals("412390", install_id);
         String install_token = System.getenv("INSTALL_TOKEN");
         Assertions.assertEquals("t0k3n", install_token);
         String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;

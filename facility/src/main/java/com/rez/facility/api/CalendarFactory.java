@@ -39,7 +39,7 @@ public class CalendarFactory {
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
     private static final List<String> SCOPES = Collections.singletonList(CalendarScopes.CALENDAR);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+    private static final String CREDENTIALS_FILE_PATH = "credentials.json";
     private static final String APPLICATION_NAME = "Google Calendar API Java Quickstart";
 
 
@@ -58,7 +58,7 @@ public class CalendarFactory {
         }
         //Build service account credential
         HttpRequestInitializer requestInitializer;
-        try (InputStream in = DelegatingServiceAction.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
+        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH)) {
             if (in == null) {
                 throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
             }
@@ -85,8 +85,8 @@ public class CalendarFactory {
             throw new RuntimeException(e);
         }
         // Load client secrets.
-        Credential credentials = null;
-        try (InputStream in = DelegatingServiceAction.class.getResourceAsStream(CREDENTIALS_FILE_PATH)) {
+        Credential credentials;
+        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH)) {
             if (in == null) {
                 throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
             }
@@ -104,9 +104,8 @@ public class CalendarFactory {
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
-        Calendar service = new Calendar.Builder(httpTransport, JSON_FACTORY, credentials)
+        return new Calendar.Builder(httpTransport, JSON_FACTORY, credentials)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
-        return service;
     }
 }

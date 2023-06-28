@@ -1,0 +1,16 @@
+@startuml
+skinparam actorStyle hollow
+
+title Dependencies
+(view) --> (Mod)
+(view) --> (domain)
+(view) --> (entities)
+(view) --> (modelv)
+(actions) --> (entities)
+(actions) --> (events)
+(actions) --> (Mod)
+(entities) --> (events)
+(entities) --> (Mod)
+(events) --> (Mod)
+(Mod) --> (domain)
+@enduml

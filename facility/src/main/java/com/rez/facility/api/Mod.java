@@ -14,7 +14,10 @@ public final class Mod {
     public record Facility(String name, Address address, Set<String> resourceIds) {
 
         public com.rez.facility.domain.Facility toFacilityState(String entityId) {
-            return new com.rez.facility.domain.Facility(entityId, name, address.toAddressState(), resourceIds);
+            return com.rez.facility.domain.Facility.create(entityId)
+                    .withName(name)
+                    .withAddress(address.toAddressState())
+                    .withResourceIds(resourceIds);
         }
 
         public static Facility fromFacilityState(com.rez.facility.domain.Facility facilityState) {
@@ -40,6 +43,8 @@ public final class Mod {
         }
     }
 
+    //todo: there should be just LocalDateTime here, timeSlot, *and* the location, as it will be useful when creating the cal event
+    //todo: maybe this is my value object to pass around throughout, in which case, i must also add: fac id, res id, rez id
     public record Reservation(List<String> emails, int timeSlot, LocalDate date) {
         public static Reservation fromReservationState(ReservationState reservationState) {
             return new Reservation(reservationState.emails(), reservationState.timeSlot(), reservationState.date());
