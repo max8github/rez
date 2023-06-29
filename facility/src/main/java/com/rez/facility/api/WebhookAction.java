@@ -1,6 +1,8 @@
 package com.rez.facility.api;
 
 import com.rez.facility.spi.Parser;
+import kalix.javasdk.Metadata;
+import kalix.javasdk.SideEffect;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;
 import kalix.spring.KalixClient;
@@ -36,24 +38,26 @@ public class WebhookAction extends Action {
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
     public Effect<TwistContent> outwebhook(@RequestBody TwistComment comment) {
-        //todo: for now, i take it as if the thread_id was the same as the facility id.
-        String facilityId = comment.thread_id();
+        String facilityId = comment.thread_id();//thread_id must be the same as the facility id (todo: provisioning).
         String content = comment.content();
         if(comment.system_message() != null) {//drop it
             log.info("dropping system message {}", comment);
             return effects().ignore();
         }
-        log.info("*** {} REQUESTED, for facility {}, content:\n\t {}", comment.creator_name, facilityId, content);
+        log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, comment);
         var path = "/facility/%s/reservation/create".formatted(facilityId);
         Mod.Reservation body;
         try {
             body = commentToReservation(comment);
         } catch (Exception e) {
             log.warn("Incoming message could not be parsed. Message:\n{}", content);
-            return effects().reply(new TwistContent("Message could not be understood: please try again. Format: 2023-01-04, 4, Names"));
+            return effects().reply(new TwistContent(
+                    "Message could not be understood: please try again. Format: 2023-01-04, 4, Names"),
+                    Metadata.EMPTY.add("_kalix-http-code", "204"));
         }
         var deferredCall = kalixClient.post(path, body, TwistContent.class);
-        return effects().forward(deferredCall);
+        return effects().reply(new TwistContent("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
+                .addSideEffect(SideEffect.of(deferredCall));
     }
 
     private Mod.Reservation commentToReservation(TwistComment twistComment) {
@@ -97,14 +101,16 @@ public class WebhookAction extends Action {
 
     /**
      * See <a href="https://developer.twist.com/v3/#comments">here</a> for full object.
+     *
      * @param channel_id
      * @param content
      * @param creator
      * @param id
      * @param posted
      * @param system_message
+     * @param url
      */
     record TwistComment(String channel_id, String thread_id, String content, String creator, String creator_name,
-                        String id, String posted, SystemMessage system_message) {}
+                        String id, String posted, SystemMessage system_message, String url) {}
     record SystemMessage(int integration_id, String url) {}
 }
