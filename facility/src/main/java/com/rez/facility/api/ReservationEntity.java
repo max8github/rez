@@ -70,7 +70,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 } else {
                     return effects()
                             .emitEvent(new ReservationEvent.SearchExhausted(command.reservationId(),
-                                    command.facilityId(), command.reservation()))
+                                    command.facilityId(), command.reservation(), currentState().resources()))
                             .thenReply(newState -> "Not Available");
                 }
             case DONE:
@@ -99,7 +99,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> book(@RequestBody Book command) {
             return effects()
                     .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                            command.reservationId(), command.reservation()))
+                            command.reservationId(), command.reservation(), currentState().resources()))
                     .thenReply(newState -> "OK, picked resource " + command.resourceId());
     }
 

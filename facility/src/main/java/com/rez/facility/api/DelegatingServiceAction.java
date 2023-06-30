@@ -100,8 +100,9 @@ public class DelegatingServiceAction extends Action {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
         Mod.Reservation reservation = event.reservation();
+        List<String> resourceIds = event.resourceIds();
         String facilityId = "facilityId";
-        var eventDetails = new EventDetails(resourceId, reservationId, facilityId, reservation);
+        var eventDetails = new EventDetails(resourceId, reservationId, facilityId, reservation, resourceIds);
         var stageGoogle = saveToGoogle(eventDetails);
 //        var stageGoogle = fakeSaveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
@@ -110,14 +111,14 @@ public class DelegatingServiceAction extends Action {
 
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
         //todo: refactor this part, it can be consolidated better, also semantically (class record names)
-        var command = new EventDetails("111", event.reservationId(), "facilityId", event.reservation());
-        var result = new ReservationResult(command, "UNAVAILABLE", calendarUrl(null));
+        var command = new EventDetails("111", event.reservationId(), "facilityId",
+                event.reservation(), event.resourceIds());
+        var result = new ReservationResult(command, "UNAVAILABLE", calendarUrl(event.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));//todo
     }
 
-    //todo: get hold of all resource ids so to put together the facility calendar URL.
-    //This may very well be part of FacilityEntity's state: makes sense to have a facility calendar there
-    private String calendarUrl(List<String> resourceIds) {
+    //todo: This could be part of FacilityEntity's state: makes sense to have a facility calendar there
+    static String calendarUrl(List<String> resourceIds) {
         String urlString =  "http://example.com";
         if(resourceIds != null && !resourceIds.isEmpty()) {
             Config googleConfig = ConfigFactory.defaultApplication().getConfig("google");
@@ -134,8 +135,8 @@ public class DelegatingServiceAction extends Action {
             resourceIds.stream().forEach(e -> builder.queryParam("src", e + srcTail));
             try {
                 urlString = builder.build().toUri().toURL().toString();
-            } catch (MalformedURLException e) {
-                log.error("Caught MalformedURLException while parsing calendar URL {} ", e);
+            } catch (Exception e) {
+                log.error("URL parsing failed for URL {} ", e);
                 return urlString;
             }
         }
@@ -145,23 +146,21 @@ public class DelegatingServiceAction extends Action {
     private CompletionStage<ReservationResult>
     fakeSaveToGoogle(EventDetails eventDetails) {
         log.info("called fakeSaveToGoogle for reservation id {}", eventDetails.reservationId());
-        String fakeUrl = calendarUrl(null);
-        return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", fakeUrl));
+        String facilityCalendarUrl = calendarUrl(eventDetails.resourceIds());
+        return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", facilityCalendarUrl));
     }
 
     private CompletionStage<ReservationResult>
     saveToGoogle(EventDetails eventDetails) throws IOException {
-//        String calendarId = "3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com";//court 1 calendar id = resource id
-//        String calendarId = "63hd39cd9ppt8tajp76vglt394@group.calendar.google.com";//court 2 calendar id = resource id
+        String facilityCalendarUrl = calendarUrl(eventDetails.resourceIds());
         String calendarId = eventDetails.resourceId() + "@group.calendar.google.com";
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
         String found = isFound(service, calendarId, calEventId);
         if(!found.isEmpty()) {
             log.info("event '" + found + "' had already been booked: nothing to do, all good");
-            String calendarUrl = calendarUrl(null);
             return CompletableFuture.completedStage(
-                    new ReservationResult(eventDetails, "ALREADY_BOOKED", calendarUrl));
+                    new ReservationResult(eventDetails, "ALREADY_BOOKED", facilityCalendarUrl));
         }
         var interval = convertSlotIntoStartEndDate(eventDetails.reservation());
         EventAttendee[] attendees = getAttendees(eventDetails);
@@ -189,14 +188,14 @@ public class DelegatingServiceAction extends Action {
 
         if(isSlotAvailable(service, calendarId, event)) {
             event = service.events().insert(calendarId, event).execute();
-            log.info("Event inserted: {}", event.getHtmlLink());
+            log.info("Event {} inserted in calendars {}", event.getHtmlLink(), facilityCalendarUrl);
             return CompletableFuture.completedStage(
-                    new ReservationResult(eventDetails, "DONE", event.getHtmlLink()));
+                    new ReservationResult(eventDetails, "DONE", facilityCalendarUrl));// todo: can also use event.getHtmlLink()
         } else {//should never happen, because only Kalix writes to the Calendar.
             var msg = "Time slot was already taken: UNAVAILABLE for reservation id " + calEventId;
             log.error(msg);
             return CompletableFuture.completedStage(
-                    new ReservationResult(eventDetails, "UNAVAILABLE", calendarUrl(null)));
+                    new ReservationResult(eventDetails, "UNAVAILABLE", facilityCalendarUrl));
         }
     }
 
@@ -261,5 +260,6 @@ public class DelegatingServiceAction extends Action {
     }
 
     private record ReservationResult(EventDetails vo, String result, String url) {}
-    private record EventDetails(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
+    private record EventDetails(String resourceId, String reservationId, String facilityId,
+                                Mod.Reservation reservation, List<String> resourceIds) {}
 }
