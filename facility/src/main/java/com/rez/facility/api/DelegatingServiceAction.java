@@ -16,7 +16,6 @@ import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.*;
-import java.net.MalformedURLException;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.Arrays;
@@ -102,6 +101,7 @@ public class DelegatingServiceAction extends Action {
         Mod.Reservation reservation = event.reservation();
         List<String> resourceIds = event.resourceIds();
         String facilityId = "facilityId";
+        // todo: here i need: resource name (not id) and type, facility address and name (not id),
         var eventDetails = new EventDetails(resourceId, reservationId, facilityId, reservation, resourceIds);
         var stageGoogle = saveToGoogle(eventDetails);
 //        var stageGoogle = fakeSaveToGoogle(eventDetails);
@@ -143,6 +143,7 @@ public class DelegatingServiceAction extends Action {
         return urlString;
     }
 
+    //todo: inject different implementor instead
     private CompletionStage<ReservationResult>
     fakeSaveToGoogle(EventDetails eventDetails) {
         log.info("called fakeSaveToGoogle for reservation id {}", eventDetails.reservationId());
@@ -176,10 +177,14 @@ public class DelegatingServiceAction extends Action {
                 .setOverrides(Arrays.asList(reminderOverrides));
 
         Event event = new Event()
-                .setSummary("Resource Reserved")
+//                .setSummary(eventDetails.reservationId)
+                .setSummary("") // just blank
                 .setId(calEventId)
                 .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription(String.join(",", eventDetails.reservation().emails()) + ": resource reservation")//todo: should give more location details, like resource name
+                .setDescription("Reservation " + eventDetails.reservationId
+                                + "\nfor: " + String.join(",", eventDetails.reservation().emails())
+                                + "\n"
+                                + "resource: " + eventDetails.resourceId) //todo: type of resource here instead of just 'resource'
                 .setStart(interval[0])
                 .setEnd(interval[1])
                 .setAttendees(Arrays.asList(attendees));
