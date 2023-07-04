@@ -1,5 +1,6 @@
 package com.rez.facility.api;
 
+import com.rez.facility.spi.Interpreter;
 import kalix.javasdk.Metadata;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;
@@ -17,9 +18,9 @@ public class StubAction extends Action {
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
-    public Action.Effect<Mod.TwistContent> post(@RequestBody com.fasterxml.jackson.databind.JsonNode command) {
+    public Action.Effect<Interpreter.TwistContent> post(@RequestBody com.fasterxml.jackson.databind.JsonNode command) {
         log.info("command, {}", command);
-        return effects().reply(new Mod.TwistContent(
+        return effects().reply(new Interpreter.TwistContent(
                         "Message back"), Metadata.EMPTY.add("_kalix-http-code", "202"));
     }
 

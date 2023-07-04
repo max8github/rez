@@ -1,6 +1,7 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.*;
+import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
@@ -83,12 +84,12 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<Mod.Resource> getResource() {
-            return effects().reply(Mod.Resource.fromResourceState(currentState(), entityId));
+    public Effect<com.rez.facility.dto.Resource> getResource() {
+            return effects().reply(com.rez.facility.dto.Resource.fromResourceState(currentState(), entityId));
     }
 
-    public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
+    public record CreateResourceCommand(String facilityId, com.rez.facility.dto.Resource resource) {}
 
     //todo: value obj
-    public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record InquireBooking(String resourceId, String reservationId, String facilityId, Reservation reservation) {}
 }

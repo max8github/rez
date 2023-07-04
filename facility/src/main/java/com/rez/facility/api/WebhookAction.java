@@ -31,7 +31,7 @@ public class WebhookAction extends Action {
      */
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
-    public Effect<Mod.TwistContent> outwebhook(@RequestBody Mod.TwistComment comment) {
+    public Effect<Interpreter.TwistContent> outwebhook(@RequestBody Interpreter.TwistComment comment) {
         String facilityId = comment.thread_id();//thread_id must be the same as the facility id (todo: provisioning).
         if(comment.system_message() != null) {//drop it
             log.info("dropping system message {}", comment);
@@ -39,7 +39,7 @@ public class WebhookAction extends Action {
         }
         log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, comment);
         var deferredCall = interpreter.interpret(kalixClient, facilityId, comment);
-        return effects().reply(new Mod.TwistContent("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
+        return effects().reply(new Interpreter.TwistContent("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
                 .addSideEffect(SideEffect.of(deferredCall));
     }
 

@@ -1,6 +1,8 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.Facility;
+import com.rez.facility.dto.Address;
+import com.rez.facility.dto.Reservation;
 import kalix.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -16,8 +18,8 @@ public class FacilityEntityTest {
 
     @Test
     public void testCreateFacility() {
-        Mod.Address address = new Mod.Address("street", "city");
-        Mod.Facility facility = new Mod.Facility("TCL", address, Collections.emptySet());
+        Address address = new Address("street", "city");
+        com.rez.facility.dto.Facility facility = new com.rez.facility.dto.Facility("TCL", address, Collections.emptySet());
 
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
         var facilityResult = testKit.call(e -> e.create(facility));
@@ -64,7 +66,7 @@ public class FacilityEntityTest {
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
 
         {
-            var result = testKit.call(e -> e.createReservation(new Mod.Reservation(
+            var result = testKit.call(e -> e.createReservation(new Reservation(
                     List.of("john.doe@example.com"), 0, LocalDate.of(2023, 8, 10))));
             assertTrue(result.getReply().length() > 0);
 

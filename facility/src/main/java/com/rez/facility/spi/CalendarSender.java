@@ -1,6 +1,5 @@
 package com.rez.facility.spi;
 
-import com.rez.facility.api.Mod;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
@@ -8,6 +7,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.concurrent.CompletionStage;
 
@@ -44,10 +44,12 @@ public interface CalendarSender {
         return urlString;
     }
 
-    record ReservationResult(EventDetails vo, String result, String url) {}
+    record ReservationResult(EventDetails eventDetails, String result, String url) {}
 
     record CalendarEventDeletionResult(String calendarId, String calEventId) {}
 
     record EventDetails(String resourceId, String reservationId, String facilityId,
-                        Mod.Reservation reservation, List<String> resourceIds) {}
+                        List<String> resourceIds,
+                        List<String> emails,
+                        LocalDateTime dateTime) {}
 }

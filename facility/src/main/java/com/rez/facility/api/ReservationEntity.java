@@ -1,6 +1,7 @@
 package com.rez.facility.api;
 
 import com.rez.facility.domain.ReservationState;
+import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
@@ -152,7 +153,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                         .emitEvent(new ReservationEvent.ReservationCancelled(
                                 entityId,
                                 currentState().facilityId(),
-                                Mod.Reservation.fromReservationState(currentState()),
+                                Reservation.fromReservationState(currentState()),
                                 resourceId, currentState().resources()))
                         .thenReply(newState -> entityId);
             default:
@@ -166,11 +167,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withIncrementedIndex().withState(CANCELLED);
     }
 
-    public record InitiateReservation(String reservationId, String facilityId, Mod.Reservation reservation,
+    public record InitiateReservation(String reservationId, String facilityId, Reservation reservation,
                                       List<String> resources) {}
 
-    public record RunSearch(String reservationId, String facilityId, Mod.Reservation reservation) {}
+    public record RunSearch(String reservationId, String facilityId, Reservation reservation) {}
 
-    public record Book(String resourceId, String reservationId, Mod.Reservation reservation) {}
+    public record Book(String resourceId, String reservationId, Reservation reservation) {}
 
 }
