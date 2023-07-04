@@ -71,4 +71,21 @@ public final class Mod {
             return r.withTimeWindow(timeSlot, reservationId);
         }
     }
+
+    public record TwistContent(String content) {}
+
+    /**
+     * See <a href="https://developer.twist.com/v3/#comments">here</a> for full object.
+     *
+     * @param channel_id
+     * @param content
+     * @param creator
+     * @param id
+     * @param posted
+     * @param system_message
+     * @param url
+     */
+    public record TwistComment(String channel_id, String thread_id, String content, String creator, String creator_name,
+                        String id, String posted, SystemMessage system_message, String url) {}
+    public record SystemMessage(int integration_id, String url) {}
 }

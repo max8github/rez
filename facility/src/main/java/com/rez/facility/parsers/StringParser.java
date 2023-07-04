@@ -15,6 +15,7 @@ public class StringParser implements Parser {
 
     @Override
     public Result parse(String content) {
+        //todo: the assumption for now is something like: 2023-08-02, 8, john.doe@example.com
         try {
             String[] parts = content.split(",");
             LocalDate date = LocalDate.parse(parts[0].trim());

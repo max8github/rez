@@ -1,4 +1,4 @@
-package com.rez.facility.api;
+package com.rez.facility.parsers;
 
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class WebhookActionTest {
+class InterpreterTest {
 
     @BeforeEach
     void setUp() {

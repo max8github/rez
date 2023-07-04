@@ -48,8 +48,8 @@ public class DelegatingServiceAction extends Action {
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date().toString();
         // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
-        String messageContent = "Reservation Confirmed. Date: %s, Time: %s, Attendees: %s"
-                .formatted(date, time, String.join(",", attendees));
+        String messageContent = "Reservation Confirmed. Date: %s, Time: %s, Attendees: %s, Reservation id: %s"
+                .formatted(date, time, String.join(",", attendees), result.vo.reservationId);
         log.debug("Message content: {}", messageContent);
         String body =
                 """
