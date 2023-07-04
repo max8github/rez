@@ -83,5 +83,9 @@ public class JoinedFacilityResourcesView {
         public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingRejected notInteresting) {
             return effects().ignore();
         }
+
+        public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingCanceled cancellation) {
+            return effects().updateState(viewState().withoutBooking(cancellation.timeSlot()));
+        }
     }
 }

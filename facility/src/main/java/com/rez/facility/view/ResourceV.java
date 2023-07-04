@@ -12,9 +12,15 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
         return new ResourceV(facilityId, resourceId, resource.name(), resource.timeWindow());
     }
 
-    public ResourceV withBooking (int timeSlot, String username){
+    public ResourceV withBooking (int timeSlot, String fill){
         if (timeSlot < timeWindow.length)
-            this.timeWindow[timeSlot] = username;
+            this.timeWindow[timeSlot] = fill;
+        return this;
+    }
+
+    public ResourceV withoutBooking (int timeSlot){
+        if (timeSlot < timeWindow.length)
+            this.timeWindow[timeSlot] = "";
         return this;
     }
 }
