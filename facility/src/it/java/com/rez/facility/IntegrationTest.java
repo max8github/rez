@@ -1,6 +1,7 @@
 package com.rez.facility;
 
-import com.rez.facility.api.Mod;
+import com.rez.facility.dto.Address;
+import com.rez.facility.dto.Facility;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
 import org.junit.jupiter.api.Assertions;
@@ -37,13 +38,13 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   public void test() {
 
     String cartId = "card-abc";
-    Mod.Address address = new Mod.Address("street", "city");
-    Mod.Facility facility = new Mod.Facility("TCL", address, Collections.emptySet());
+    Address address = new Address("street", "city");
+    Facility facility = new Facility("TCL", address, Collections.emptySet());
 
     ResponseEntity<String> created =
             webClient.post()
                     .uri("/facility/" + cartId + "/create")
-                    .body(Mono.just(facility), Mod.Facility.class)
+                    .body(Mono.just(facility), Facility.class)
                     .retrieve()
                     .toEntity(String.class)
                     .block(timeout);

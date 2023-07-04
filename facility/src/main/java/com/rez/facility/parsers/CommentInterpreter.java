@@ -1,7 +1,7 @@
 package com.rez.facility.parsers;
 
 import com.google.protobuf.any.Any;
-import com.rez.facility.api.Mod;
+import com.rez.facility.dto.Reservation;
 import com.rez.facility.spi.Interpreter;
 import com.rez.facility.spi.Parser;
 import kalix.javasdk.DeferredCall;
@@ -24,21 +24,21 @@ public class CommentInterpreter implements Interpreter {
     private final Parser parser;
 
     @Override
-    public DeferredCall<Any, Mod.TwistContent> interpret(KalixClient kalixClient, String facilityId, Mod.TwistComment comment) {
+    public DeferredCall<Any, TwistContent> interpret(KalixClient kalixClient, String facilityId, TwistComment comment) {
         String content = comment.content().trim().toLowerCase();
         String path;
-        DeferredCall<Any, Mod.TwistContent> deferredCall;
+        DeferredCall<Any, TwistContent> deferredCall;
         if(content.startsWith("cancel")) {
             String replaced = content.replace("cancel", "").trim();
             var tok = new StringTokenizer(replaced);
             String reservationId = tok.nextToken();
             path = "/reservation/%s/cancelRequest".formatted(reservationId);
-            deferredCall = kalixClient.delete(path, Mod.TwistContent.class);
+            deferredCall = kalixClient.delete(path, TwistContent.class);
         } else {
             path = "/facility/%s/reservation/create".formatted(facilityId);
             try {
-                Mod.Reservation body = commentToReservation(comment);
-                deferredCall = kalixClient.post(path, body, Mod.TwistContent.class);
+                Reservation body = commentToReservation(comment);
+                deferredCall = kalixClient.post(path, body, TwistContent.class);
             } catch (Exception e) {
                 log.warn("Incoming message could not be parsed. Message:\n{}", content);
                 throw new RuntimeException(
@@ -51,7 +51,7 @@ public class CommentInterpreter implements Interpreter {
 
 
 
-    private Mod.Reservation commentToReservation(Mod.TwistComment twistComment) {
+    private Reservation commentToReservation(TwistComment twistComment) {
         List<String> attendees = new ArrayList<>();
         attendees.add(twistComment.creator_name());//todo: these are names, not emails afaik
         //todo: i should get the emails from the users accounts
@@ -64,7 +64,7 @@ public class CommentInterpreter implements Interpreter {
 
         List<String> attendeesAndCreator = new ArrayList<>(parseResult.who().stream().toList());
         attendeesAndCreator.addAll(attendees);
-        return new Mod.Reservation(attendeesAndCreator, timeSlot, localDate);
+        return new Reservation(attendeesAndCreator, timeSlot, localDate);
     }
 
 }

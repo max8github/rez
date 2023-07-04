@@ -2,6 +2,8 @@ package com.rez.facility.api;
 
 import com.rez.facility.domain.Address;
 import com.rez.facility.domain.Facility;
+import com.rez.facility.dto.Reservation;
+import com.rez.facility.dto.Resource;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import kalix.javasdk.annotations.Acl;
@@ -33,7 +35,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody Mod.Facility facility) {
+    public Effect<String> create(@RequestBody com.rez.facility.dto.Facility facility) {
         log.info("created facility {}", facility.name());
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
@@ -60,7 +62,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody Mod.Address address) {
+    public Effect<String> changeAddress(@RequestBody com.rez.facility.dto.Address address) {
         return effects()
                 .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
@@ -73,7 +75,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/resource/submit")
-    public Effect<String> submitResource(@RequestBody Mod.Resource resource) {
+    public Effect<String> submitResource(@RequestBody Resource resource) {
         String id = resource.resourceId();
         return effects()
                 .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resource, id))
@@ -115,13 +117,13 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<Mod.Facility> getFacility() {
-        return effects().reply(Mod.Facility.fromFacilityState(currentState()));
+    public Effect<com.rez.facility.dto.Facility> getFacility() {
+        return effects().reply(com.rez.facility.dto.Facility.fromFacilityState(currentState()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/reservation/create")
-    public Effect<String> createReservation(@RequestBody Mod.Reservation reservation) {
+    public Effect<String> createReservation(@RequestBody Reservation reservation) {
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
         int timeSlot = reservation.timeSlot();
         log.info("Facility assigns id {} to reservation, date {}, time {}", reservationId, reservation.date(), timeSlot);

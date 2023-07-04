@@ -1,5 +1,6 @@
 package com.rez.facility.api;
 
+import com.rez.facility.dto.Reservation;
 import com.rez.facility.spi.CalendarSender;
 import com.rez.facility.spi.NotificationSender;
 import kalix.javasdk.action.Action;
@@ -30,12 +31,11 @@ public class DelegatingServiceAction extends Action {
     }
 
     CompletableFuture<String> messageTwistAccept(CalendarSender.ReservationResult result) {
-        log.info("called messageTwist for reservation id {}", result.vo().reservationId());
-        List<String> attendees = result.vo().reservation().emails();
-        String time = result.vo().reservation().timeSlot() + "";
-        String date = result.vo().reservation().date().toString();
-        String messageContent = "Reservation Confirmed, id: %s.  Date: %s, Time: %s,  Attendees: %s"
-                .formatted(result.vo().reservationId(), date, time, String.join(",", attendees));
+        log.info("called messageTwist for reservation id {}", result.eventDetails().reservationId());
+        List<String> attendees = result.eventDetails().emails();
+        String time = result.eventDetails().dateTime().toString();
+        String messageContent = "Reservation Confirmed, id: %s. Date/Time: %s,  Attendees: %s"
+                .formatted(result.eventDetails().reservationId(), time, String.join(",", attendees));
         log.debug("Message content: {}", messageContent);
         String body =
                 """
@@ -56,11 +56,9 @@ public class DelegatingServiceAction extends Action {
     }
 
     CompletableFuture<String> messageTwistReject(CalendarSender.ReservationResult result) {
-        log.info("Messaging Twist back with UNAVAILABLE for reservation id {}", result.vo().reservationId());
-        String time = result.vo().reservation().timeSlot() + "";
-        String date = result.vo().reservation().date() + "";
-        String messageContent = "Reservation rejected." + " Date: " + date +
-                " Time: " + time + " are unavailable";
+        log.info("Messaging Twist back with UNAVAILABLE for reservation id {}", result.eventDetails().reservationId());
+        String time = result.eventDetails().dateTime().toString();
+        String messageContent = "Reservation rejected." + " Date/Time: " + time + " is unavailable";
         String body =
                 """
                     {
@@ -111,11 +109,12 @@ public class DelegatingServiceAction extends Action {
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
-        Mod.Reservation reservation = event.reservation();
+        Reservation reservation = event.reservation();
         List<String> resourceIds = event.resourceIds();
         String facilityId = "facilityId";
         // todo: here i need: resource name (not id) and type, facility address and name (not id),
-        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, reservation, resourceIds);
+        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, resourceIds,
+                reservation.emails(), reservation.toLocalDateTime());
         var stageGoogle = calendarSender.saveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
@@ -123,7 +122,8 @@ public class DelegatingServiceAction extends Action {
 
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
-                event.reservation(), event.resourceIds());
+                event.resourceIds(),
+                event.reservation().emails(), event.reservation().toLocalDateTime());
         var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));
     }
