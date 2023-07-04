@@ -30,10 +30,16 @@ public class DelegatingServiceAction extends Action {
     final private WebClient webClient;
 
     final private Calendar service;
+    private final String twistPostDataUri;
 
     public DelegatingServiceAction(WebClientProvider webClientProvider, Calendar calendar) {
         this.webClient = webClientProvider.webClientFor("twist");
         this.service = calendar;
+        Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
+        String url = twistConfig.getString("url");//todo: validate the url here or else call will fail (painful)
+        String install_id = twistConfig.getString("install_id");
+        String install_token = System.getenv("INSTALL_TOKEN");
+        twistPostDataUri = url + "?install_id=" + install_id + "&install_token=" + install_token;
     }
 
     public CompletableFuture<String> messageTwistAccept(ReservationResult result) {
@@ -45,28 +51,6 @@ public class DelegatingServiceAction extends Action {
         String messageContent = "Reservation Confirmed. Date: %s, Time: %s, Attendees: %s"
                 .formatted(date, time, String.join(",", attendees));
         log.debug("Message content: {}", messageContent);
-        return messageTwist(result, messageContent);
-    }
-
-    public CompletableFuture<String> messageTwistReject(ReservationResult result) {
-        log.info("messaged Twist for reservation id {} UNAVAILABLE", result.vo().reservationId());
-        String time = result.vo().reservation().timeSlot() + "";
-        String date = result.vo().reservation().date() + "";
-        String messageContent = "Reservation rejected." + " Date: " + date +
-                " Time: " + time + " are unavailable";
-        return messageTwist(result, messageContent);
-    }
-
-    /**
-     * This is the incoming webhook: Kalix -> Twist.<br>
-     * It is used for posting a confirmation to Twist that something happened.
-     */
-    private CompletableFuture<String> messageTwist(ReservationResult p, String message) {
-        Config twistConfig = ConfigFactory.defaultApplication().getConfig("twist");
-        String url = twistConfig.getString("url");//todo: validate the url here or else call will fail (painful)
-        String install_id = twistConfig.getString("install_id");
-        String install_token = System.getenv("INSTALL_TOKEN");
-        String uri = url + "?install_id=" + install_id + "&install_token=" + install_token;
         String body =
                 """
                     {
@@ -80,15 +64,61 @@ public class DelegatingServiceAction extends Action {
                          }
                        ]
                      }
-                """.formatted(message, p.url());
+                """.formatted(messageContent, result.url());
         log.debug("Message body: {}", body);
+        return messageTwist(messageContent);
+    }
+
+    public CompletableFuture<String> messageTwistReject(ReservationResult result) {
+        log.info("messaged Twist for reservation id {} UNAVAILABLE", result.vo().reservationId());
+        String time = result.vo().reservation().timeSlot() + "";
+        String date = result.vo().reservation().date() + "";
+        String messageContent = "Reservation rejected." + " Date: " + date +
+                " Time: " + time + " are unavailable";
+        String body =
+                """
+                    {
+                       "content":  "%s",
+                       "actions": [
+                         {
+                           "action": "open_url",
+                           "url": "%s",
+                           "type": "action",
+                           "button_text": "Go to Calendar"
+                         }
+                       ]
+                     }
+                """.formatted(messageContent, result.url());
+        log.debug("Message body: {}", body);
+        return messageTwist(messageContent);
+    }
+
+    /**
+     * This is the incoming webhook: Kalix -> Twist.<br>
+     * It is used for posting a confirmation to Twist that something happened.
+     */
+    private CompletableFuture<String> messageCancelToTwist(CalendarEventDeletionResult result) {
+//        String messageContent = "Reservation {} cancelled.".formatted(result.calEventId());
+        String message = "Reservation %s was cancelled from calendar %s".formatted(result.calEventId, result.calendarId);
+        String body =
+                """
+                {"content":  "%s"}
+                """.formatted(message);
+        log.debug("Message body: {}", body);
+        return messageTwist(body);
+    }
+
+    /**
+     * This is the incoming webhook: Kalix -> Twist.<br>
+     * It is used for posting a confirmation to Twist that something happened.
+     */
+    private CompletableFuture<String> messageTwist(String body) {
         return webClient
-                .post().uri(uri)
+                .post().uri(twistPostDataUri)
                 .bodyValue(body)
                 .retrieve()
                 .bodyToMono(String.class).toFuture();
     }
-
 
     public CompletableFuture<String> fakeMessageTwist(Pair<String, EventDetails> p) {
         log.info("called fakeMessageTwist for reservation id  {}", p.first());
@@ -117,6 +147,14 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(messageTwistReject(result));//todo
     }
 
+    public Effect<String> on(ReservationEvent.ReservationCancelled event) throws IOException {
+        String calendarId = event.resourceId() + "@group.calendar.google.com";
+        String calEventId = event.reservationId();
+        var stageGoogle = deleteFromGoogle(calendarId, calEventId);
+        var stage = stageGoogle.thenCompose(this::messageCancelToTwist);
+        return effects().asyncReply(stage);
+    }
+
     //todo: This could be part of FacilityEntity's state: makes sense to have a facility calendar there
     static String calendarUrl(List<String> resourceIds) {
         String urlString =  "http://example.com";
@@ -136,7 +174,7 @@ public class DelegatingServiceAction extends Action {
             try {
                 urlString = builder.build().toUri().toURL().toString();
             } catch (Exception e) {
-                log.error("URL parsing failed for URL {} ", e);
+                log.error("URL parsing failed", e);
                 return urlString;
             }
         }
@@ -204,6 +242,16 @@ public class DelegatingServiceAction extends Action {
         }
     }
 
+    private CompletionStage<CalendarEventDeletionResult> deleteFromGoogle(String calendarId, String calEventId) {
+        log.info("deleting reservationId {} from google calendar {}", calEventId, calendarId);
+        try {
+            service.events().delete(calendarId, calEventId).execute();
+        } catch (IOException e) {
+            log.error("Delete of calendar event {} failed for calendar {}", calEventId, calendarId);
+        }
+        return CompletableFuture.completedStage(new CalendarEventDeletionResult(calEventId, calendarId));
+    }
+
     private EventAttendee[] getAttendees(EventDetails eventDetails) {
         //todo: get domain-wide authority for enabling this
 //        EventAttendee[] attendees = eventDetails.reservation().emails() == null ?
@@ -265,6 +313,7 @@ public class DelegatingServiceAction extends Action {
     }
 
     private record ReservationResult(EventDetails vo, String result, String url) {}
+    private record CalendarEventDeletionResult(String calendarId, String calEventId) {}
     private record EventDetails(String resourceId, String reservationId, String facilityId,
                                 Mod.Reservation reservation, List<String> resourceIds) {}
 }

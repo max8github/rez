@@ -8,6 +8,11 @@ public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record ReservationInitiated(String reservationId, String facilityId, Mod.Reservation reservation,
                                 List<String> resources) implements ReservationEvent {}
+    @TypeName("reservation-cancelled")
+    record ReservationCancelled(String reservationId, String facilityId, Mod.Reservation reservation, String resourceId) implements ReservationEvent {}
+    @TypeName("cancel-requested")
+    record CancelRequested(String reservationId, String facilityId, String resourceId, int timeSlot) implements ReservationEvent {}
+
     @TypeName("search-exhausted")
     record SearchExhausted(String reservationId, String facilityId, Mod.Reservation reservation, List<String> resourceIds) implements ReservationEvent {}
 

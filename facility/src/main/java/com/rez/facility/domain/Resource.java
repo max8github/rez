@@ -1,5 +1,8 @@
 package com.rez.facility.domain;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.Arrays;
 
 /**
@@ -13,6 +16,7 @@ import java.util.Arrays;
  * @param nowPointer array index that points to the slot we are in right now.
  */
 public record Resource(String name, String[] timeWindow, int size, int nowPointer) {
+    private static final Logger log = LoggerFactory.getLogger(Resource.class);
     public static Resource initialize(String name, int size) {
         String[] tw = new String[size];
         Arrays.fill(tw, "");
@@ -21,6 +25,18 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
     public Resource withTimeWindow(int timeSlot, String reservationId) {
         if (timeSlot < timeWindow.length)
             this.timeWindow[timeSlot] = reservationId;
+        return this;
+    }
+    public Resource cancel(int timeSlot, String reservationId) {
+        if (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty()) {
+            log.warn("reservation {} was not present or it was already cancelled in time slot {}", reservationId, timeSlot);
+        } else if(!timeWindow[timeSlot].equals(reservationId)) {
+            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found on time slot {}",
+                    reservationId, timeWindow[timeSlot], timeSlot);
+            throw new IllegalStateException("Cancellation of wrong reservation");
+        } else {
+            this.timeWindow[timeSlot] = "";
+        }
         return this;
     }
 }

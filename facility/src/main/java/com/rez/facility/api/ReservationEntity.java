@@ -33,7 +33,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/init")
-    public Effect<String> create(@RequestBody InitiateReservation command) {
+    public Effect<String> init(@RequestBody InitiateReservation command) {
         log.info("Created reservation {} entity", command.reservationId);
         switch (currentState().state()) {
 //            case UNAVAILABLE:
@@ -73,7 +73,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                                     command.facilityId(), command.reservation(), currentState().resources()))
                             .thenReply(newState -> "Not Available");
                 }
-            case DONE:
+            case FULFILLED:
             case UNAVAILABLE:
                 return effects().error("Reservation " + command.reservationId()
                         + "is completed for facility id " + command.facilityId());
@@ -106,13 +106,59 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
         log.info("Reservation {} booked in resource {}", event.reservationId(), event.resourceId());
-        return currentState().withIncrementedIndex().withState(DONE);
+        return currentState().withIncrementedIndex().withState(FULFILLED);
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<ReservationState> getReservation() {
         return effects().reply(currentState());
+    }
+
+    @DeleteMapping("/cancelRequest")
+    public Effect<String> cancelRequest() {
+        log.info("Cancelling reservation {} requested", entityId);
+        switch (currentState().state()) {
+            case FULFILLED:
+                int i = currentState().currentResourceIndex();
+                String resourceId = currentState().resources().get(i);
+                return effects()
+                        .emitEvent(new ReservationEvent.CancelRequested(entityId,
+                                currentState().facilityId(), resourceId, currentState().timeSlot()))
+                        .thenReply(newState -> entityId);
+            default:
+                return effects().error("reservation entity " + entityId + " was not in fulfilled state");
+        }
+    }
+
+    @EventHandler
+    public ReservationState cancelRequested(ReservationEvent.CancelRequested event) {
+        return currentState();
+    }
+
+    @DeleteMapping("/cancel")
+    public Effect<String> cancel() {
+        log.info("Cancelling of reservation {} is confirmed", entityId);
+        switch (currentState().state()) {//todo: states here ok in the FSM workings?
+            case FULFILLED:
+                int i = currentState().currentResourceIndex();
+                String resourceId = currentState().resources().get(i);
+                return effects()
+                        .emitEvent(new ReservationEvent.ReservationCancelled(
+                                entityId,
+                                currentState().facilityId(),
+                                Mod.Reservation.fromReservationState(currentState()),
+                                resourceId))
+                        .thenReply(newState -> entityId);
+            default:
+                return effects().error("reservation entity " + entityId + " was not in fulfilled state");
+        }
+    }
+
+    @EventHandler
+    public ReservationState reservationCancelled(ReservationEvent.ReservationCancelled event) {
+        log.info("Reservation {} cancelled from resource {}", event.reservationId(), event.resourceId());
+        return currentState().withIncrementedIndex().withState(CANCELLED);
     }
 
     public record InitiateReservation(String reservationId, String facilityId, Mod.Reservation reservation,
@@ -122,5 +168,4 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     public record Book(String resourceId, String reservationId, Mod.Reservation reservation) {}
 
-    public record Reject(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }

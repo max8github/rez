@@ -58,6 +58,19 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         }
     }
 
+    @DeleteMapping("/reservation/{reservationId}/{timeSlot}")
+    public Effect<String> cancel(@PathVariable String reservationId, @PathVariable int timeSlot) {
+            log.info("Cancelling reservation {} from resource {} on timeSlot {} ", reservationId, entityId, timeSlot);
+            return effects()
+                    .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, timeSlot))
+                    .thenReply(newState -> "OK");
+    }
+
+    @EventHandler
+    public Resource bookingCanceled(ResourceEvent.BookingCanceled event) {
+        return currentState().cancel(event.timeSlot(), event.reservationId());
+    }
+
     @EventHandler
     public Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
         return event.reservation().setInto(currentState(), event.reservationId());
@@ -76,6 +89,6 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     public record CreateResourceCommand(String facilityId, Mod.Resource resource) {}
 
-    //todo: valu obj
+    //todo: value obj
     public record InquireBooking(String resourceId, String reservationId, String facilityId, Mod.Reservation reservation) {}
 }

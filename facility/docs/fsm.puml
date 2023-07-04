@@ -6,7 +6,8 @@ title ReservationEntity Lifecycle
 RunSearch -up-> (INIT): emptyState()
 (INIT) --> (SELECTING): ResourceSelected
 (SELECTING) --> (SELECTING): ResourceSelected
-(DONE) <-down- (INIT): Rejected
-(DONE) <-- (SELECTING): Booked
+(UNAVAILABLE) <-down- (INIT): Rejected
+(FULFILLED) <-- (SELECTING): Booked
 (UNAVAILABLE) <-up- (SELECTING): Rejected
+(FULFILLED) --> (CANCELLED): Booked
 @enduml

@@ -26,6 +26,6 @@ public record ReservationState(State state, String reservationId, String facilit
     }
 
     public enum State {
-        INIT, SELECTING, FULFILLED, DONE, UNAVAILABLE
+        INIT, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
     }
 }

@@ -33,4 +33,11 @@ public class ResourceAction extends Action {
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
+
+    public Effect<String> on(ResourceEvent.BookingCanceled event) {
+        var reservationId = event.reservationId();
+        var path = "/reservation/%s/cancel".formatted(reservationId);
+        var deferredCall = kalixClient.delete(path, String.class);
+        return effects().forward(deferredCall);
+    }
 }
