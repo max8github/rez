@@ -35,16 +35,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @PostMapping("/init")
     public Effect<String> init(@RequestBody InitiateReservation command) {
         log.info("Created reservation {} entity", command.reservationId);
-        switch (currentState().state()) {
-//            case UNAVAILABLE:
-            case INIT:
-                    return effects()
-                            .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
-                                    command.facilityId(), command.reservation(), command.resources()))
-                            .thenReply(newState -> command.reservationId());
-            default:
-                return effects().error("reservation entity " + command.reservationId() + " already initiated");
-        }
+        return switch (currentState().state()) {
+            case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
+            case UNAVAILABLE ->
+                    effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
+            case FULFILLED -> effects().reply("Reservation was accepted: cannot be reinitialized");
+            case SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
+            case INIT -> effects()
+                    .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
+                            command.facilityId(), command.reservation(), command.resources()))
+                    .thenReply(newState -> command.reservationId());
+        };
     }
 
     @EventHandler
@@ -74,6 +75,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                             .thenReply(newState -> "Not Available");
                 }
             case FULFILLED:
+            case CANCELLED:
             case UNAVAILABLE:
                 return effects().error("Reservation " + command.reservationId()
                         + "is completed for facility id " + command.facilityId());
@@ -120,15 +122,19 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         log.info("Cancelling reservation {} requested", entityId);
         switch (currentState().state()) {
             case FULFILLED:
-                int i = currentState().currentResourceIndex();
-                String resourceId = currentState().resources().get(i);
+                String resourceId = getResourceIdFromState();
                 return effects()
                         .emitEvent(new ReservationEvent.CancelRequested(entityId,
                                 currentState().facilityId(), resourceId, currentState().timeSlot()))
                         .thenReply(newState -> entityId);
             default:
-                return effects().error("reservation entity " + entityId + " was not in fulfilled state");
+                return effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
         }
+    }
+
+    private String getResourceIdFromState() {
+        ReservationState state = currentState();
+        return state.resources().get(state.currentResourceIndex() - 1);
     }
 
     @EventHandler
@@ -141,8 +147,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         log.info("Cancelling of reservation {} is confirmed", entityId);
         switch (currentState().state()) {//todo: states here ok in the FSM workings?
             case FULFILLED:
-                int i = currentState().currentResourceIndex();
-                String resourceId = currentState().resources().get(i);
+                String resourceId = getResourceIdFromState();
                 return effects()
                         .emitEvent(new ReservationEvent.ReservationCancelled(
                                 entityId,

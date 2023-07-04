@@ -77,7 +77,8 @@ public class JoinedFacilityResourcesView {
         }
 
         public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingAccepted event) {
-            return effects().ignore();
+            String reservationId = event.reservationId();
+            return effects().updateState(viewState().withBooking(event.reservation().timeSlot(), reservationId));
         }
 
         public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingRejected notInteresting) {

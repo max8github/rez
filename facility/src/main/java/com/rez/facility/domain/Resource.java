@@ -35,7 +35,9 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
                     reservationId, timeWindow[timeSlot], timeSlot);
             throw new IllegalStateException("Cancellation of wrong reservation");
         } else {
-            this.timeWindow[timeSlot] = "";
+            String oldRezId = timeWindow[timeSlot];
+            log.info("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
+            timeWindow[timeSlot] = "";
         }
         return this;
     }
