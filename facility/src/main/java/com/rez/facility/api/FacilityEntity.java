@@ -80,7 +80,6 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
                 .thenReply(newState -> id);
     }
 
-    //todo: needed?
     @EventHandler
     public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
         return currentState();

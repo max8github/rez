@@ -89,10 +89,4 @@ public final class Mod {
                         String id, String posted, SystemMessage system_message, String url) {}
     public record SystemMessage(int integration_id, String url) {}
 
-    public record ReservationResult(EventDetails vo, String result, String url) {}
-
-    public record CalendarEventDeletionResult(String calendarId, String calEventId) {}
-
-    public record EventDetails(String resourceId, String reservationId, String facilityId,
-                               Reservation reservation, List<String> resourceIds) {}
 }
