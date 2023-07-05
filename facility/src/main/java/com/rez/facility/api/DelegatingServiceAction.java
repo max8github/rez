@@ -87,15 +87,27 @@ public class DelegatingServiceAction extends Action {
      * This is the incoming webhook: Kalix -> Twist.<br>
      * It is used for posting a confirmation to Twist that something happened.
      */
-    CompletableFuture<String> messageCancelToTwist(Mod.CalendarEventDeletionResult result) {
-        log.info("Sending message to Twist confirming cancellation reservation id {}", result.calEventId());
+    CompletableFuture<String> messageCancelToTwist(Mod.CalendarEventDeletionResult result,
+                                                   List<String> resourceIds) {
+        log.info("Messaging Twist confirming cancellation of reservation id {} from calendar {}",
+                result.calEventId(), result.calendarId());
 //        String messageContent = "Reservation {} cancelled.".formatted(result.calEventId());
-        String messageContent = "Reservation %s was cancelled from calendar %s".formatted(result.calEventId(), result.calendarId());
+        String messageContent = "Reservation %s was cancelled.".formatted(result.calEventId());
         log.info("Message: '{}'", messageContent);
         String body =
                 """
-                {"content":  "%s"}
-                """.formatted(messageContent);
+                    {
+                       "content":  "%s",
+                       "actions": [
+                         {
+                           "action": "open_url",
+                           "url": "%s",
+                           "type": "action",
+                           "button_text": "Go to Calendar"
+                         }
+                       ]
+                     }
+                """.formatted(messageContent, CalendarSender.calendarUrl(resourceIds));
         log.debug("Message body: {}", body);
         return notificationSender.messageTwist(webClient, body);
     }
@@ -125,7 +137,7 @@ public class DelegatingServiceAction extends Action {
         String calendarId = event.resourceId() + "@group.calendar.google.com";
         String calEventId = event.reservationId();
         var stageGoogle = calendarSender.deleteFromGoogle(service, calendarId, calEventId);
-        var stage = stageGoogle.thenCompose(this::messageCancelToTwist);
+        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));
         return effects().asyncReply(stage);
     }
 }

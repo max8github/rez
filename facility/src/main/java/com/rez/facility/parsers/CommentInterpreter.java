@@ -28,12 +28,11 @@ public class CommentInterpreter implements Interpreter {
 
     @Override
     public DeferredCall<Any, Mod.TwistContent> interpret(KalixClient kalixClient, String facilityId, Mod.TwistComment comment) {
-        String content = comment.content();
+        String content = comment.content().trim().toLowerCase();
         String path;
         DeferredCall<Any, Mod.TwistContent> deferredCall;
-        if(content.trim().toLowerCase().startsWith("cancel")) {
-            String contentLow = content.toLowerCase();
-            String replaced = contentLow.replace("cancel", "");
+        if(content.startsWith("cancel")) {
+            String replaced = content.replace("cancel", "").trim();
             var tok = new StringTokenizer(replaced);
             String reservationId = tok.nextToken();
             path = "/reservation/%s/cancelRequest".formatted(reservationId);
