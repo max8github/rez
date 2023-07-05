@@ -1,6 +1,5 @@
 package com.rez.facility.api;
 
-import com.google.api.services.calendar.Calendar;
 import com.rez.facility.spi.CalendarSender;
 import com.rez.facility.spi.NotificationSender;
 import kalix.javasdk.action.Action;
@@ -20,24 +19,21 @@ public class DelegatingServiceAction extends Action {
 
     final private WebClient webClient;
 
-    final private Calendar service;
     final private CalendarSender calendarSender;
     final private NotificationSender notificationSender;
 
 
-    public DelegatingServiceAction(WebClientProvider webClientProvider, Calendar calendar, CalendarSender calendarSender, NotificationSender notificationSender) {
+    public DelegatingServiceAction(WebClientProvider webClientProvider, CalendarSender calendarSender, NotificationSender notificationSender) {
         this.webClient = webClientProvider.webClientFor("twist");
-        this.service = calendar;
         this.calendarSender = calendarSender;
         this.notificationSender = notificationSender;
     }
 
-    CompletableFuture<String> messageTwistAccept(Mod.ReservationResult result) {
+    CompletableFuture<String> messageTwistAccept(CalendarSender.ReservationResult result) {
         log.info("called messageTwist for reservation id {}", result.vo().reservationId());
         List<String> attendees = result.vo().reservation().emails();
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date().toString();
-        // todo: the flow of confirmation/rejection and messages to the user does not fully work ...
         String messageContent = "Reservation Confirmed, id: %s.  Date: %s, Time: %s,  Attendees: %s"
                 .formatted(result.vo().reservationId(), date, time, String.join(",", attendees));
         log.debug("Message content: {}", messageContent);
@@ -59,8 +55,8 @@ public class DelegatingServiceAction extends Action {
         return notificationSender.messageTwist(webClient, body);
     }
 
-    CompletableFuture<String> messageTwistReject(Mod.ReservationResult result) {
-        log.info("messaged Twist for reservation id {} UNAVAILABLE", result.vo().reservationId());
+    CompletableFuture<String> messageTwistReject(CalendarSender.ReservationResult result) {
+        log.info("Messaging Twist back with UNAVAILABLE for reservation id {}", result.vo().reservationId());
         String time = result.vo().reservation().timeSlot() + "";
         String date = result.vo().reservation().date() + "";
         String messageContent = "Reservation rejected." + " Date: " + date +
@@ -87,7 +83,7 @@ public class DelegatingServiceAction extends Action {
      * This is the incoming webhook: Kalix -> Twist.<br>
      * It is used for posting a confirmation to Twist that something happened.
      */
-    CompletableFuture<String> messageCancelToTwist(Mod.CalendarEventDeletionResult result,
+    CompletableFuture<String> messageCancelToTwist(CalendarSender.CalendarEventDeletionResult result,
                                                    List<String> resourceIds) {
         log.info("Messaging Twist confirming cancellation of reservation id {} from calendar {}",
                 result.calEventId(), result.calendarId());
@@ -119,24 +115,23 @@ public class DelegatingServiceAction extends Action {
         List<String> resourceIds = event.resourceIds();
         String facilityId = "facilityId";
         // todo: here i need: resource name (not id) and type, facility address and name (not id),
-        var eventDetails = new Mod.EventDetails(resourceId, reservationId, facilityId, reservation, resourceIds);
-        var stageGoogle = calendarSender.saveToGoogle(service, eventDetails);
+        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, reservation, resourceIds);
+        var stageGoogle = calendarSender.saveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
     }
 
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
-        //todo: refactor this part, it can be consolidated better, also semantically (class record names)
-        var command = new Mod.EventDetails("111", event.reservationId(), "facilityId",
+        var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
                 event.reservation(), event.resourceIds());
-        var result = new Mod.ReservationResult(command, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
-        return effects().asyncReply(messageTwistReject(result));//todo
+        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
+        return effects().asyncReply(messageTwistReject(result));
     }
 
     public Effect<String> on(ReservationEvent.ReservationCancelled event) throws IOException {
         String calendarId = event.resourceId() + "@group.calendar.google.com";
         String calEventId = event.reservationId();
-        var stageGoogle = calendarSender.deleteFromGoogle(service, calendarId, calEventId);
+        var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);
         var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));
         return effects().asyncReply(stage);
     }

@@ -1,6 +1,5 @@
 package com.rez.facility.spi;
 
-import com.google.api.services.calendar.Calendar;
 import com.rez.facility.api.Mod;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
@@ -15,9 +14,9 @@ import java.util.concurrent.CompletionStage;
 public interface CalendarSender {
     Logger log = LoggerFactory.getLogger(CalendarSender.class);
 
-    CompletionStage<Mod.ReservationResult> saveToGoogle(Calendar service, Mod.EventDetails eventDetails) throws IOException;
+    CompletionStage<ReservationResult> saveToGoogle(EventDetails eventDetails) throws IOException;
 
-    CompletionStage<Mod.CalendarEventDeletionResult> deleteFromGoogle(Calendar service, String calendarId, String calEventId);
+    CompletionStage<CalendarEventDeletionResult> deleteFromGoogle(String calendarId, String calEventId);
 
     //todo: This could be part of FacilityEntity's state: makes sense to have a facility calendar there
     static String calendarUrl(List<String> resourceIds) {
@@ -44,4 +43,11 @@ public interface CalendarSender {
         }
         return urlString;
     }
+
+    record ReservationResult(EventDetails vo, String result, String url) {}
+
+    record CalendarEventDeletionResult(String calendarId, String calEventId) {}
+
+    record EventDetails(String resourceId, String reservationId, String facilityId,
+                        Mod.Reservation reservation, List<String> resourceIds) {}
 }

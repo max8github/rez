@@ -6,6 +6,7 @@ import com.rez.facility.spi.Interpreter;
 import com.rez.facility.spi.Parser;
 import kalix.javasdk.DeferredCall;
 import kalix.spring.KalixClient;
+import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -16,15 +17,11 @@ import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
-
+@RequiredArgsConstructor
 @Component
 public class CommentInterpreter implements Interpreter {
     private static final Logger log = LoggerFactory.getLogger(CommentInterpreter.class);
     private final Parser parser;
-
-    public CommentInterpreter(Parser parser) {
-        this.parser = parser;
-    }
 
     @Override
     public DeferredCall<Any, Mod.TwistContent> interpret(KalixClient kalixClient, String facilityId, Mod.TwistComment comment) {
