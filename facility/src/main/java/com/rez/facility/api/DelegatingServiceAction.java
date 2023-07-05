@@ -88,8 +88,10 @@ public class DelegatingServiceAction extends Action {
      * It is used for posting a confirmation to Twist that something happened.
      */
     CompletableFuture<String> messageCancelToTwist(Mod.CalendarEventDeletionResult result) {
+        log.info("Sending message to Twist confirming cancellation reservation id {}", result.calEventId());
 //        String messageContent = "Reservation {} cancelled.".formatted(result.calEventId());
         String messageContent = "Reservation %s was cancelled from calendar %s".formatted(result.calEventId(), result.calendarId());
+        log.info("Message: '{}'", messageContent);
         String body =
                 """
                 {"content":  "%s"}
