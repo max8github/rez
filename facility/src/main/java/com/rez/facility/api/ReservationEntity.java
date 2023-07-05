@@ -153,7 +153,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                                 entityId,
                                 currentState().facilityId(),
                                 Mod.Reservation.fromReservationState(currentState()),
-                                resourceId))
+                                resourceId, currentState().resources()))
                         .thenReply(newState -> entityId);
             default:
                 return effects().error("reservation entity " + entityId + " was not in fulfilled state");
