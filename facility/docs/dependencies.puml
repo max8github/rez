@@ -2,15 +2,15 @@
 skinparam actorStyle hollow
 
 title Dependencies
-(view) --> (Mod)
-(view) --> (domain)
+(viewmodel) --> (dto)
+(viewmodel) --> (domain)
 (view) --> (entities)
-(view) --> (modelv)
+(view) --> (viewmodel)
 (actions) --> (entities)
 (actions) --> (events)
-(actions) --> (Mod)
+(actions) --> (dto)
 (entities) --> (events)
-(entities) --> (Mod)
-(events) --> (Mod)
-(Mod) --> (domain)
+(entities) --> (dto)
+(events) --> (dto)
+(dto) --> (domain)
 @enduml

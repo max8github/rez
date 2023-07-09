@@ -1,5 +1,6 @@
-package com.rez.facility.api;
+package com.rez.facility.entities;
 
+import com.rez.facility.events.ReservationEvent;
 import com.rez.facility.domain.ReservationState;
 import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.Acl;

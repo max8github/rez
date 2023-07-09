@@ -1,4 +1,4 @@
-package com.rez.facility.api;
+package com.rez.facility.events;
 
 import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.TypeName;

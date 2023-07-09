@@ -1,5 +1,6 @@
-package com.rez.facility.api;
+package com.rez.facility.entities;
 
+import com.rez.facility.events.FacilityEvent;
 import com.rez.facility.domain.Facility;
 import com.rez.facility.dto.Address;
 import com.rez.facility.dto.Reservation;
