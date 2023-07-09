@@ -9,7 +9,7 @@
   </parent>
   <groupId>com.rez</groupId>
   <artifactId>facility</artifactId>
-  <version>0.6</version>
+  <version>0.6.1</version>
   <packaging>jar</packaging>
 
   <name>facility</name>
@@ -23,7 +23,7 @@
     <jdk.target>17</jdk.target>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
-    <kalix-sdk.version>1.2.1</kalix-sdk.version>
+    <kalix-sdk.version>1.3.0</kalix-sdk.version>
   </properties>
 
   <build>
@@ -233,6 +233,12 @@
                 <logging.config>src/main/resources/logback-dev-mode.xml</logging.config>
                 <kalix.user-function-interface>0.0.0.0</kalix.user-function-interface>
             </systemPropertyVariables>
+            <excludes>
+              <exclude>
+                <groupId>org.projectlombok</groupId>
+                <artifactId>lombok</artifactId>
+              </exclude>
+            </excludes>
           </configuration>
       </plugin>
       <plugin>
@@ -241,18 +247,6 @@
         <version>3.0.0-M1</version>
         <configuration>
           <skip>true</skip>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.springframework.boot</groupId>
-        <artifactId>spring-boot-maven-plugin</artifactId>
-        <configuration>
-          <excludes>
-            <exclude>
-              <groupId>org.projectlombok</groupId>
-              <artifactId>lombok</artifactId>
-            </exclude>
-          </excludes>
         </configuration>
       </plugin>
     </plugins>

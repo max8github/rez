@@ -1,5 +1,8 @@
-package com.rez.facility.api;
+package com.rez.facility.actions;
 
+import com.rez.facility.entities.ReservationEntity;
+import com.rez.facility.entities.ResourceEntity;
+import com.rez.facility.events.ResourceEvent;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.KalixClient;

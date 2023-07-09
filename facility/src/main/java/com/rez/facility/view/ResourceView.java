@@ -1,7 +1,7 @@
 package com.rez.facility.view;
 
-import com.rez.facility.api.ResourceEntity;
-import com.rez.facility.api.ResourceEvent;
+import com.rez.facility.entities.ResourceEntity;
+import com.rez.facility.events.ResourceEvent;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.annotations.Table;

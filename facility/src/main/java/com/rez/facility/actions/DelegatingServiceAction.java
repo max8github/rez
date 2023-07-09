@@ -1,5 +1,7 @@
-package com.rez.facility.api;
+package com.rez.facility.actions;
 
+import com.rez.facility.entities.ReservationEntity;
+import com.rez.facility.events.ReservationEvent;
 import com.rez.facility.dto.Reservation;
 import com.rez.facility.spi.CalendarSender;
 import com.rez.facility.spi.NotificationSender;

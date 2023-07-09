@@ -1,6 +1,6 @@
 package com.rez.facility.view;
 
-import com.rez.facility.api.ResourceEvent;
+import com.rez.facility.events.ResourceEvent;
 
 public record ResourceV(String facilityId, String resourceId, String resourceName, String[] timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {

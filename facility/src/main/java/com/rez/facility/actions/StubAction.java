@@ -1,4 +1,4 @@
-package com.rez.facility.api;
+package com.rez.facility.actions;
 
 import com.rez.facility.spi.Interpreter;
 import kalix.javasdk.Metadata;
