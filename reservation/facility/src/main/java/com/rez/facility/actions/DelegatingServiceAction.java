@@ -1,22 +1,21 @@
 package com.rez.facility.actions;
 
+import com.rez.facility.dto.Reservation;
 import com.rez.facility.entities.ReservationEntity;
 import com.rez.facility.events.ReservationEvent;
-import com.rez.facility.dto.Reservation;
 import com.mcalder.rez.spi.CalendarSender;
 import com.mcalder.rez.spi.NotificationSender;
 import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.WebClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
-import java.io.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
+@RequestMapping("/external")
 public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
@@ -108,7 +107,8 @@ public class DelegatingServiceAction extends Action {
         return notificationSender.messageTwist(webClient, body);
     }
 
-    public Effect<String> on(ReservationEvent.Booked event) throws Exception {
+    @PostMapping("/book")
+    public Effect<String> book(@RequestBody ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
         Reservation reservation = event.reservation();
@@ -122,7 +122,8 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(stage);
     }
 
-    public Effect<String> on(ReservationEvent.SearchExhausted event) {
+    @PostMapping("/unavailable")
+    public Effect<String> unavailable(@RequestBody ReservationEvent.SearchExhausted event) {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
                 event.resourceIds(),
                 event.reservation().emails(), event.reservation().toLocalDateTime());
@@ -130,11 +131,14 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(messageTwistReject(result));
     }
 
-    public Effect<String> on(ReservationEvent.ReservationCancelled event) throws IOException {
-        String calendarId = event.resourceId() + "@group.calendar.google.com";
-        String calEventId = event.reservationId();
+    @PostMapping("/cancel/{resourceId}/{reservationId}")
+    public Effect<String> cancel(@PathVariable String resourceId, @PathVariable String reservationId, @RequestBody ReservationEntity.Resources resources) {
+        List<String> resourceIds = resources.reservationIds();
+        String calendarId = resourceId + "@group.calendar.google.com";
+        String calEventId = reservationId;
         var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);
-        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));
+        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, resourceIds));
         return effects().asyncReply(stage);
     }
+
 }

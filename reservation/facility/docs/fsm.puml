@@ -9,5 +9,8 @@ RunSearch -up-> (INIT): emptyState()
 (UNAVAILABLE) <-down- (INIT): Rejected
 (FULFILLED) <-- (SELECTING): Booked
 (UNAVAILABLE) <-up- (SELECTING): Rejected
-(FULFILLED) --> (CANCELLED): Booked
+(FULFILLED) --> (CANCELLED): Canceled
+(FULFILLED) <-- (CANCELLED): Rebooked
+(COMPLETE) <-- (CANCELLED): Timeout
+(FULFILLED) --> (COMPLETE): Timeout
 @enduml

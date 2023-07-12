@@ -25,20 +25,20 @@ public class ResourceAction extends Action {
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservation());
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::book).params(command);
+        var deferredCall = kalixClient.forWorkflow(reservationId).call(ReservationEntity::book).params(command);
         return effects().forward(deferredCall);
     }
 
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::runSearch).params(command);
+        var deferredCall = kalixClient.forWorkflow(reservationId).call(ReservationEntity::runSearch).params(command, reservationId);
         return effects().forward(deferredCall);
     }
 
     public Effect<String> on(ResourceEvent.BookingCanceled event) {
         var reservationId = event.reservationId();
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
+        var deferredCall = kalixClient.forWorkflow(reservationId)
                 .call(ReservationEntity::cancel);
         return effects().forward(deferredCall);
     }
