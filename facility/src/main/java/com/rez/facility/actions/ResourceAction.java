@@ -23,7 +23,7 @@ public class ResourceAction extends Action {
 
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/book".formatted(reservationId);
+        var path = "/rez/%s/book".formatted(reservationId);
         var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
@@ -31,7 +31,7 @@ public class ResourceAction extends Action {
 
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/runSearch".formatted(reservationId);
+        var path = "/rez/%s/runSearch".formatted(reservationId);
         var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
