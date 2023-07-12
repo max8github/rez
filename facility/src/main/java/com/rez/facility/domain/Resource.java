@@ -41,4 +41,14 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
         }
         return this;
     }
+
+    @Override
+    public String toString() {
+        return "Resource{" +
+                "name='" + name + '\'' +
+                ", timeWindow=" + Arrays.toString(timeWindow) +
+                ", size=" + size +
+                ", nowPointer=" + nowPointer +
+                '}';
+    }
 }

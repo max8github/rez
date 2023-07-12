@@ -85,8 +85,8 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rez.facility.dto.Resource> getResource() {
-            return effects().reply(com.rez.facility.dto.Resource.fromResourceState(currentState(), entityId));
+    public Effect<Resource> getResource() {
+            return effects().reply(currentState());
     }
 
     public record CreateResourceCommand(String facilityId, com.rez.facility.dto.Resource resource) {}
