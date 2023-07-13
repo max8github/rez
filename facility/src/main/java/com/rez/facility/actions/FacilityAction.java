@@ -1,8 +1,8 @@
 package com.rez.facility.actions;
 
 import com.rez.facility.entities.FacilityEntity;
+import com.rez.facility.entities.ReservationWorkflow;
 import com.rez.facility.events.FacilityEvent;
-import com.rez.facility.entities.ReservationEntity;
 import com.rez.facility.entities.ResourceEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
@@ -26,8 +26,8 @@ public class FacilityAction extends Action {
 
     public Effect<String> on(FacilityEvent.ReservationCreated event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/init".formatted(reservationId);
-        var command = new ReservationEntity.InitiateReservation(reservationId, event.facilityId(), event.reservation(), event.resources());
+        var path = "/rez/%s/init".formatted(reservationId);
+        var command = new ReservationWorkflow.InitiateReservation(reservationId, event.facilityId(), event.reservation(), event.resources());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }

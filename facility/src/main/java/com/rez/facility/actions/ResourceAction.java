@@ -1,6 +1,6 @@
 package com.rez.facility.actions;
 
-import com.rez.facility.entities.ReservationEntity;
+import com.rez.facility.entities.ReservationWorkflow;
 import com.rez.facility.entities.ResourceEntity;
 import com.rez.facility.events.ResourceEvent;
 import kalix.javasdk.action.Action;
@@ -24,7 +24,7 @@ public class ResourceAction extends Action {
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
         var path = "/rez/%s/book".formatted(reservationId);
-        var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservation());
+        var command = new ReservationWorkflow.Book(event.resourceId(), reservationId, event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }
@@ -32,7 +32,7 @@ public class ResourceAction extends Action {
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
         var path = "/rez/%s/runSearch".formatted(reservationId);
-        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
+        var command = new ReservationWorkflow.RunSearch(reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.post(path, command, String.class);
         return effects().forward(deferredCall);
     }

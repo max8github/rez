@@ -3,7 +3,7 @@ package com.rez.facility;
 import com.rez.facility.domain.ReservationState;
 import com.rez.facility.dto.Reservation;
 import com.rez.facility.dto.Resource;
-import com.rez.facility.entities.ReservationEntity;
+import com.rez.facility.entities.ReservationWorkflow;
 import com.rez.facility.entities.ResourceEntity;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 import org.jetbrains.annotations.NotNull;
@@ -110,9 +110,9 @@ public class ReservationWorkflowIntegrationTest extends KalixIntegrationTestKitS
     var reservationId = randomId();
     String facilityId = "fac1";
         Reservation reservation = new Reservation(List.of("max@example.com"), 12, LocalDate.now());
-    var command = new ReservationEntity.InitiateReservation(reservationId, facilityId, reservation, resourceIds);
+    var command = new ReservationWorkflow.InitiateReservation(reservationId, facilityId, reservation, resourceIds);
     ResponseEntity<Void> response = webClient.post().uri("/rez/" + reservationId + "/init")
-            .body(Mono.just(command), ReservationEntity.InitiateReservation.class)
+            .body(Mono.just(command), ReservationWorkflow.InitiateReservation.class)
             .retrieve()
             .toBodilessEntity()
             .block(timeout);
@@ -132,7 +132,7 @@ public class ReservationWorkflowIntegrationTest extends KalixIntegrationTestKitS
     var command = new ResourceEntity.CreateResourceCommand(facilityId, resource);
 
     ResponseEntity<Void> response = webClient.post().uri("/resource/" + resourceId + "/create")
-            .body(Mono.just(command), ReservationEntity.InitiateReservation.class)
+            .body(Mono.just(command), ReservationWorkflow.InitiateReservation.class)
       .retrieve()
       .toBodilessEntity()
       .block(timeout);
