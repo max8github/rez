@@ -1,6 +1,6 @@
 package com.mcalder.rez.stringparser;
 
-import com.rez.facility.spi.Parser;
+import com.mcalder.rez.spi.Parser;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;

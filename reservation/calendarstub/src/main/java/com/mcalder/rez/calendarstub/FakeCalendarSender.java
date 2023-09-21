@@ -1,6 +1,6 @@
 package com.mcalder.rez.calendarstub;
 
-import com.rez.facility.spi.CalendarSender;
+import com.mcalder.rez.spi.CalendarSender;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;

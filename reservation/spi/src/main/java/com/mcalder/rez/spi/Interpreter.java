@@ -1,4 +1,4 @@
-package com.rez.facility.spi;
+package com.mcalder.rez.spi;
 
 import com.google.protobuf.any.Any;
 import kalix.javasdk.DeferredCall;

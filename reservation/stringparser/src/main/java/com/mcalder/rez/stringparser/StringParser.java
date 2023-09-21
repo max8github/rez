@@ -1,6 +1,6 @@
 package com.mcalder.rez.stringparser;
 
-import com.rez.facility.spi.Parser;
+import com.mcalder.rez.spi.Parser;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;

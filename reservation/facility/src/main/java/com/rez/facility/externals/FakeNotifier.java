@@ -1,6 +1,6 @@
 package com.rez.facility.externals;
 
-import com.rez.facility.spi.NotificationSender;
+import com.mcalder.rez.spi.NotificationSender;
 import org.springframework.stereotype.Component;
 import org.springframework.web.reactive.function.client.WebClient;
 

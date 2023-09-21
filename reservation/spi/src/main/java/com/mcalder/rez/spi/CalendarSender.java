@@ -1,4 +1,4 @@
-package com.rez.facility.spi;
+package com.mcalder.rez.spi;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;

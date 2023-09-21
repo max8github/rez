@@ -1,4 +1,4 @@
-package com.rez.facility.spi;
+package com.mcalder.rez.spi;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

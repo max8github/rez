@@ -1,6 +1,6 @@
 package com.rez.facility.actions;
 
-import com.rez.facility.spi.Interpreter;
+import com.mcalder.rez.spi.Interpreter;
 import kalix.javasdk.Metadata;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;

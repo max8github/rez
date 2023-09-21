@@ -1,6 +1,6 @@
 package com.rez.facility.actions;
 
-import com.rez.facility.spi.CalendarSender;
+import com.mcalder.rez.spi.CalendarSender;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

@@ -2,8 +2,8 @@ package com.rez.facility.parsers;
 
 import com.google.protobuf.any.Any;
 import com.rez.facility.dto.Reservation;
-import com.rez.facility.spi.Interpreter;
-import com.rez.facility.spi.Parser;
+import com.mcalder.rez.spi.Interpreter;
+import com.mcalder.rez.spi.Parser;
 import kalix.javasdk.DeferredCall;
 import kalix.spring.KalixClient;
 import lombok.RequiredArgsConstructor;
