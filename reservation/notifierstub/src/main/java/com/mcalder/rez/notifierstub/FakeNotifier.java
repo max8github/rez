@@ -1,4 +1,4 @@
-package com.rez.facility.externals;
+package com.mcalder.rez.notifierstub;
 
 import com.mcalder.rez.spi.NotificationSender;
 import org.springframework.stereotype.Component;
@@ -10,7 +10,7 @@ import java.util.concurrent.CompletableFuture;
 public class FakeNotifier implements NotificationSender {
     @Override
     public CompletableFuture<String> messageTwist(WebClient webClient, String body) {
-        log.info("fake send to Twist with body:\n\t{}", body);
+        NotificationSender.log.info("fake send to Twist with body:\n\t{}", body);
         return CompletableFuture.completedFuture(body);
     }
 }
