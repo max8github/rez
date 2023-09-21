@@ -2,28 +2,20 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>org.springframework.boot</groupId>
-    <artifactId>spring-boot-starter-parent</artifactId>
-    <version>3.1.0</version>
-    <relativePath/> 
+    <groupId>com.mcalder.rez</groupId>
+    <artifactId>reservation</artifactId>
+    <version>0.2</version>
   </parent>
-  <groupId>com.rez</groupId>
+
   <artifactId>facility</artifactId>
   <version>0.6.1</version>
   <packaging>jar</packaging>
 
   <name>facility</name>
   <properties>
-
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
-    <dockerTag>${project.version}-${build.timestamp}</dockerTag>
-    <maven.build.timestamp.format>yyyyMMddHHmmss</maven.build.timestamp.format>
+    <dockerTag>${project.version}-${maven.build.timestamp}</dockerTag>
     <mainClass>com.rez.facility.Main</mainClass>
-
-    <jdk.target>17</jdk.target>
-    <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-
-    <kalix-sdk.version>1.3.3</kalix-sdk.version>
   </properties>
 
   <build>
@@ -163,6 +155,7 @@
         <!-- configure src/it/java and src/it/resources -->
         <groupId>org.codehaus.mojo</groupId>
         <artifactId>build-helper-maven-plugin</artifactId>
+        <version>${build-helper-maven-plugin.version}</version>
         <executions>
           <execution>
             <id>add-integration-test-source</id>
@@ -196,6 +189,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
+        <version>${maven-surefire-plugin.version}</version>
         <configuration>
           <excludes>
             <!-- ignore integration test classes -->
@@ -310,16 +304,6 @@
       <version>v3-rev20220715-2.0.0</version>
     </dependency>
 
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter-api</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>org.junit.jupiter</groupId>
-      <artifactId>junit-jupiter</artifactId>
-      <scope>test</scope>
-    </dependency>
     <dependency>
       <groupId>com.google.auth</groupId>
       <artifactId>google-auth-library-oauth2-http</artifactId>

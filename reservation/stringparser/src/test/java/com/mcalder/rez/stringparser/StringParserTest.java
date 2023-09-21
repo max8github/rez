@@ -1,4 +1,4 @@
-package com.rez.facility.parsers;
+package com.mcalder.rez.stringparser;
 
 import com.rez.facility.spi.Parser;
 import org.junit.jupiter.api.Test;
