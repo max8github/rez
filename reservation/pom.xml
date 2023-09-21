@@ -25,14 +25,13 @@
 
     <modules>
         <module>facility</module>
-        <!--        <module>twist</module>-->
-        <!--        <module>notifierstub</module>-->
         <module>stringparser</module>
         <module>calendarstub</module>
         <module>spi</module>
         <module>googlecalendar</module>
         <module>notifierstub</module>
         <module>twistnotifier</module>
+        <module>opennlp</module>
     </modules>
 
     <dependencies>
