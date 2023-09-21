@@ -3,12 +3,13 @@
   <modelVersion>4.0.0</modelVersion>
   <parent>
     <groupId>com.mcalder.rez</groupId>
-    <artifactId>reservation</artifactId>
-    <version>0.2</version>
+    <artifactId>rez</artifactId>
+    <version>0.3</version>
   </parent>
 
+  <groupId>com.rez</groupId>
   <artifactId>facility</artifactId>
-  <version>0.6.1</version>
+  <version>0.7</version>
   <packaging>jar</packaging>
 
   <name>facility</name>
@@ -277,6 +278,11 @@
   </profiles>
 
   <dependencies>
+    <dependency>
+      <groupId>com.mcalder.rez</groupId>
+      <artifactId>spi</artifactId>
+      <version>0.3</version>
+    </dependency>
     <dependency>
       <groupId>io.kalix</groupId>
       <artifactId>kalix-spring-boot-starter</artifactId>

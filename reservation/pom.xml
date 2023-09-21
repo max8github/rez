@@ -8,8 +8,8 @@
         <version>3.1.0</version>
     </parent>
     <groupId>com.mcalder.rez</groupId>
-    <artifactId>reservation</artifactId>
-    <version>0.2</version>
+    <artifactId>rez</artifactId>
+    <version>0.3</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -26,10 +26,11 @@
     <modules>
         <module>facility</module>
         <!--        <module>google</module>-->
-        <!--        <module>calendarstub</module>-->
         <!--        <module>twist</module>-->
         <!--        <module>notifierstub</module>-->
         <module>stringparser</module>
+        <module>calendarstub</module>
+        <module>spi</module>
     </modules>
 
     <dependencies>
