@@ -32,6 +32,7 @@
         <module>spi</module>
         <module>googlecalendar</module>
         <module>notifierstub</module>
+        <module>twistnotifier</module>
     </modules>
 
     <dependencies>
