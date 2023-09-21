@@ -31,6 +31,7 @@
         <module>stringparser</module>
         <module>calendarstub</module>
         <module>spi</module>
+        <module>googlecalendar</module>
     </modules>
 
     <dependencies>
