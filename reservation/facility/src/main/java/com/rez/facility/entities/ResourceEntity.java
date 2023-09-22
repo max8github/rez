@@ -13,6 +13,8 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDateTime;
+
 @EntityType("resource")
 @EntityKey("resource_id")
 @RequestMapping("/resource/{resource_id}")
@@ -60,17 +62,18 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
         }
     }
 
-    @DeleteMapping("/reservation/{reservationId}/{timeSlot}")
-    public Effect<String> cancel(@PathVariable String reservationId, @PathVariable int timeSlot) {
-            log.info("Cancelling reservation {} from resource {} on timeSlot {} ", reservationId, entityId, timeSlot);
-            return effects()
-                    .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, timeSlot))
-                    .thenReply(newState -> "OK");
+    @DeleteMapping("/reservation/{reservationId}/{isoTime}")
+    public Effect<String> cancel(@PathVariable String reservationId, @PathVariable String isoTime) {
+        LocalDateTime dateTime = LocalDateTime.parse(isoTime);
+        log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, isoTime);
+        return effects()
+                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, dateTime))
+                .thenReply(newState -> "OK");
     }
 
     @EventHandler
     public Resource bookingCanceled(ResourceEvent.BookingCanceled event) {
-        return currentState().cancel(event.timeSlot(), event.reservationId());
+        return currentState().cancel(event.dateTime(), event.reservationId());
     }
 
     @EventHandler
@@ -85,8 +88,8 @@ public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> 
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rez.facility.dto.Resource> getResource() {
-            return effects().reply(com.rez.facility.dto.Resource.fromResourceState(currentState(), entityId));
+    public Effect<Resource> getResource() {
+        return effects().reply(currentState());
     }
 
     public record CreateResourceCommand(String facilityId, com.rez.facility.dto.Resource resource) {}

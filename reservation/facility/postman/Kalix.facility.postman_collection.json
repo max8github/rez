@@ -205,7 +205,7 @@
 			"response": []
 		},
 		{
-			"name": "my twist command",
+			"name": "Twist: my command (INPUT)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -237,7 +237,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"actions\": [],\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-02, 14, Bernhard\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-06-28 13:25:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
+					"raw": "{\n  \"content\": \"\",\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-10, 14, Bob\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-07-10 10:22:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -254,12 +254,13 @@
 					"path": [
 						"outwebhook"
 					]
-				}
+				},
+				"description": "It represents the input to Rez, which is performed by a Twist message, sent by Twist to Rez."
 			},
 			"response": []
 		},
 		{
-			"name": "Create 16:00 Reservation",
+			"name": "Create my Reservation",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -267,16 +268,13 @@
 						"exec": [
 							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
 							"var username = 'max.calderoni@gmail.com';",
-							"var timeSlot = 22;",
-							"var date = \"2023-07-01\";",
+							"var dateTime = \"2023-07-18T11:00\";",
 							"",
 							"console.info(\"username is: \"+ username);",
-							"console.info(\"timeSlot is: \"+ timeSlot);",
-							"console.info(\"date is: \"+ date);",
+							"console.info(\"dateTime is: \"+ dateTime);",
 							"",
 							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"timeSlot\", timeSlot);",
-							"pm.variables.set(\"date\", date);"
+							"pm.variables.set(\"dateTime\", dateTime);"
 						],
 						"type": "text/javascript"
 					}
@@ -302,7 +300,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"timeSlot\": \"{{timeSlot}}\",\n      \"date\": \"{{date}}\"\n}"
+					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"dateTime\": \"{{dateTime}}\"\n}"
 				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
@@ -348,76 +346,6 @@
 							"",
 							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
 							"var city = pm.variables.replaceIn('{{$randomCity}}');",
-							"",
-							"console.info(\"Entity id is: \"+ facility_id);",
-							"console.info(\"Facilityname is: \"+ facilityName);",
-							"console.info(\"Street is: \"+ street);",
-							"console.info(\"City is: \"+ city);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"",
-							"pm.variables.set(\"facilityName\", facilityName);",
-							"pm.variables.set(\"street\", street);",
-							"pm.variables.set(\"city\", city);",
-							"pm.variables.set(\"resourceName\", resourceName);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"//pm.environment.set(\"facility_id\", pm.response.text());"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/create",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"create"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create STB Facility",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var facility_id = \"5912f3c4\";",
-							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
-							"",
-							"",
-							"var facilityName = \"STB\";",
-							"var resourceName = \"court1\";",
-							"",
-							"var street = \"via Col Fagheron\";",
-							"var city = \"Basan\";",
 							"",
 							"console.info(\"Entity id is: \"+ facility_id);",
 							"console.info(\"Facilityname is: \"+ facilityName);",
@@ -645,72 +573,6 @@
 			"response": []
 		},
 		{
-			"name": "Register resource id (INTERNAL)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"function create_UUID(){",
-							"    var dt = new Date().getTime();",
-							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
-							"        var r = (dt + Math.random()*16)%16 | 0;",
-							"        dt = Math.floor(dt/16);",
-							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
-							"    });",
-							"    uuid = uuid.substring(0, 8);",
-							"    return uuid;",
-							"}",
-							"",
-							"var resourceId = create_UUID();",
-							"var facility_id = pm.variables.get(\"facility_id\");",
-							"",
-							"console.info(\"Resource id is: \"+ resourceId);",
-							"console.info(\"Facility id is: \"+ facility_id);",
-							"",
-							"pm.variables.set(\"resource_id\", resourceId);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"resource",
-						"{{resource_id}}"
-					]
-				},
-				"description": "Registers resource id with Facility.\n\nNote: this is not API. Registration should be only done through the aggregate root, which is \\`Facility\\`."
-			},
-			"response": []
-		},
-		{
 			"name": "Get Facility",
 			"event": [
 				{
@@ -818,7 +680,7 @@
 			"response": []
 		},
 		{
-			"name": "View Full STB Facility",
+			"name": "View Full Facility",
 			"event": [
 				{
 					"listen": "test",
@@ -933,22 +795,13 @@
 						"exec": [
 							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
 							"var username = 'max.calderoni@gmail.com';",
-							"var timeSlot = 18;//pm.variables.replaceIn('{{$randomInt}}');",
 							"var randDate = pm.variables.replaceIn('{{$randomDateFuture}}');",
-							"var date = \"2023-06-22\";//new Date(randDate).toISOString().substr(0, 10);",
-							"",
-							"if(timeSlot > 100) {",
-							"    timeSlot = Math.ceil(timeSlot/100);",
-							"} else if(timeSlot > 10) {",
-							"    timeSlot = Math.ceil(timeSlot/10);",
-							"}",
+							"var dateTime = \"2023-06-22T18:00\";//new Date(randDate).toISOString().substr(0, 10);",
 							"",
 							"console.info(\"username is: \"+ username);",
-							"console.info(\"timeSlot is: \"+ timeSlot);",
 							"console.info(\"date is: \"+ date);",
 							"",
 							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"timeSlot\", timeSlot);",
 							"pm.variables.set(\"date\", date);"
 						],
 						"type": "text/javascript"
@@ -975,7 +828,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"timeSlot\": \"{{timeSlot}}\",\n      \"date\": \"{{date}}\"\n}"
+					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"dateTime\": \"{{dateTime}}\"\n}"
 				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
@@ -989,6 +842,66 @@
 						"{{facility_id}}",
 						"reservation",
 						"create"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Delete Reservation",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
+							"var username = 'max.calderoni@gmail.com';",
+							"var randDate = pm.variables.replaceIn('{{$randomDateFuture}}');",
+							"var date = \"2023-06-22T11:00\";//new Date(randDate).toISOString().substr(0, 10);",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"dateTime is: \"+ dateTime);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"dateTime\", dateTime);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}/cancelRequest",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reservation",
+						"{{reservation_id}}",
+						"cancelRequest"
 					]
 				}
 			},
@@ -1042,578 +955,6 @@
 					"path": [
 						"reservation",
 						"{{reservation_id}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "ping outwebhook",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"",
-							"var facilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
-							"var city = pm.variables.replaceIn('{{$randomCity}}');",
-							"",
-							"console.info(\"Facilityname is: \"+ facilityName);",
-							"console.info(\"Street is: \"+ street);",
-							"console.info(\"City is: \"+ city);",
-							"",
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
-			"request": {
-				"method": "GET",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/outwebhook?install_id=411133&post_data_url=https://twist.com/api/v3/integration_incoming/post_data?install_id=411133%26install_token=411133_8cd66aeef5bc7dbe51867fed7a0af656&user_id=549463&user_name=Max C",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"outwebhook"
-					],
-					"query": [
-						{
-							"key": "install_id",
-							"value": "411133"
-						},
-						{
-							"key": "post_data_url",
-							"value": "https://twist.com/api/v3/integration_incoming/post_data?install_id=411133%26install_token=411133_8cd66aeef5bc7dbe51867fed7a0af656"
-						},
-						{
-							"key": "user_id",
-							"value": "549463"
-						},
-						{
-							"key": "user_name",
-							"value": "Max C"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "send twist message (INPUT)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"actions\": [],\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-06-27, 19, Max\",\n  \"creator\": 717450,\n  \"creator_name\": \"Giuliano short hair\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-06-24 12:04:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/outwebhook",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"outwebhook"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "twist incoming webhook (CONFIRMATION)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n  \"content\":  \"Reservation confirmed. Time: 3, Attendees: max.calderoni@gmail.com\",\n  \"actions\": [\n    {\n      \"action\": \"open_url\",\n      \"url\": \"https://www.example.com\",\n      \"type\": \"action\",\n      \"button_text\": \"Go to Calendar\"\n    }\n  ]\n}",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
-				},
-				"url": {
-					"raw": "https://twist.com/api/v3/integration_incoming/post_data?install_id=411374&install_token=411374_f93820262dbe2cc1b1600d9b05f769f4",
-					"protocol": "https",
-					"host": [
-						"twist",
-						"com"
-					],
-					"path": [
-						"api",
-						"v3",
-						"integration_incoming",
-						"post_data"
-					],
-					"query": [
-						{
-							"key": "install_id",
-							"value": "411374"
-						},
-						{
-							"key": "install_token",
-							"value": "411374_f93820262dbe2cc1b1600d9b05f769f4"
-						}
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "twist subscribe doco",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"auth": {
-					"type": "bearer",
-					"bearer": [
-						{
-							"key": "token",
-							"value": "oauth2:9b61c436b85a12fe1a6ff2720e2bb7ca2210f533",
-							"type": "string"
-						}
-					]
-				},
-				"method": "POST",
-				"header": [],
-				"body": {
-					"mode": "urlencoded",
-					"urlencoded": [
-						{
-							"key": "event",
-							"value": "comment_added",
-							"type": "text"
-						},
-						{
-							"key": "thread_id",
-							"value": "4463962",
-							"type": "text"
-						},
-						{
-							"key": "target_url",
-							"value": "https://{{host}}:443/outwebhook",
-							"type": "text"
-						}
-					]
-				},
-				"url": {
-					"raw": "https://api.twist.com/api/v3/hooks/subscribe",
-					"protocol": "https",
-					"host": [
-						"api",
-						"twist",
-						"com"
-					],
-					"path": [
-						"api",
-						"v3",
-						"hooks",
-						"subscribe"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Reserv: Search (INTERNAL)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var username = pm.variables.replaceIn('{{$randomUserName}}');",
-							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
-							"if(timeSlot > 100) {",
-							"    timeSlot = Math.ceil(timeSlot/100);",
-							"} else if(timeSlot > 10) {",
-							"    timeSlot = Math.ceil(timeSlot/10);",
-							"}",
-							"",
-							"console.info(\"username is: \"+ username);",
-							"console.info(\"timeSlot is: \"+ timeSlot);",
-							"",
-							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"timeSlot\", timeSlot);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\"\n    }\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}/runSearch",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"reservation",
-						"{{reservation_id}}",
-						"runSearch"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Reserv: Init (INTERNAL)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var username = pm.variables.replaceIn('{{$randomUserName}}');",
-							"var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
-							"if(timeSlot > 100) {",
-							"    timeSlot = Math.ceil(timeSlot/100);",
-							"} else if(timeSlot > 10) {",
-							"    timeSlot = Math.ceil(timeSlot/10);",
-							"}",
-							"",
-							"console.info(\"username is: \"+ username);",
-							"console.info(\"timeSlot is: \"+ timeSlot);",
-							"",
-							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"timeSlot\", timeSlot);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n      \"username\": \"{{username}}\",\n      \"timeSlot\": \"{{timeSlot}}\"\n    },\n    \"resources\": [\"79725166-7da3-4717-a046-b0e280b8e5b1\"]\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}/init",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"reservation",
-						"{{reservation_id}}",
-						"init"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create Resource (INTERNAL)",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"function create_UUID(){",
-							"    var dt = new Date().getTime();",
-							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
-							"        var r = (dt + Math.random()*16)%16 | 0;",
-							"        dt = Math.floor(dt/16);",
-							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
-							"    });",
-							"    uuid = uuid.substring(0, 8);",
-							"    return uuid;",
-							"}",
-							"",
-							"var resource_id = create_UUID();",
-							"postman.setEnvironmentVariable(\"resource_id\", resource_id);",
-							"",
-							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = pm.variables.replaceIn('{{$randomInt}}');",
-							"timeSlotsSize = 24;",
-							"",
-							"console.info(\"Resource id is: \"+ resource_id);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"console.info(\"Resource size is: \"+ timeSlotsSize);",
-							"",
-							"pm.variables.set(\"resource_id\", resource_id);",
-							"pm.variables.set(\"resourceName\", resourceName);",
-							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"facilityId\": {{facility_id}},\n    \"resourceDTO\": {\n        \"resourceName\": \"{{resourceName}}\",\n        \"size\": {{timeSlotsSize}}\n    }\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/create",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"resource",
-						"{{resource_id}}",
-						"create"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Inquire Resource (INTERNAL",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"function create_UUID(){",
-							"    var dt = new Date().getTime();",
-							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
-							"        var r = (dt + Math.random()*16)%16 | 0;",
-							"        dt = Math.floor(dt/16);",
-							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
-							"    });",
-							"    uuid = uuid.substring(0, 8);",
-							"    return uuid;",
-							"}",
-							"",
-							"function createRandomTimeSlot(){",
-							"    var timeSlot = pm.variables.replaceIn('{{$randomInt}}');",
-							"    if(timeSlot > 100) {",
-							"        timeSlot = Math.ceil(timeSlot/40);",
-							"    } else {",
-							"        timeSlot = Math.ceil(timeSlot/4);",
-							"    }",
-							"    if(timeSlot > 23) {",
-							"        timeSlot = 23;",
-							"    }",
-							"    return timeSlot;",
-							"}",
-							"",
-							"var resource_id = create_UUID();",
-							"postman.setEnvironmentVariable(\"resource_id\", resource_id);",
-							"",
-							"var reservation_id = create_UUID();",
-							"postman.setEnvironmentVariable(\"reservation_id\", reservation_id);",
-							"",
-							"var username = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlot = createRandomTimeSlot();",
-							"",
-							"",
-							"console.info(\"Resource id is: \"+ resource_id);",
-							"console.info(\"Reservation id is: \"+ reservation_id);",
-							"console.info(\"time slot is: \"+ timeSlot);",
-							"console.info(\"username is: \"+ username);",
-							"",
-							"pm.variables.set(\"resource_id\", resource_id);",
-							"pm.variables.set(\"reservation_id\", reservation_id);",
-							"pm.variables.set(\"timeSlot\", timeSlot);",
-							"pm.variables.set(\"username\", username);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resource_id}}\",\n    \"reservationId\": \"{{reservation_id}}\",\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n        \"username\": \"{{username}}\",\n        \"timeSlot\": {{timeSlot}}\n    }\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/inquireBooking",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"resource",
-						"{{resource_id}}",
-						"inquireBooking"
 					]
 				}
 			},

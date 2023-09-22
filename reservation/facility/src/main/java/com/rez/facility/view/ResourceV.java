@@ -1,6 +1,9 @@
 package com.rez.facility.view;
 
+import com.rez.facility.domain.Resource;
 import com.rez.facility.events.ResourceEvent;
+
+import java.time.LocalDateTime;
 
 public record ResourceV(String facilityId, String resourceId, String resourceName, String[] timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
@@ -12,13 +15,15 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
         return new ResourceV(facilityId, resourceId, resource.name(), resource.timeWindow());
     }
 
-    public ResourceV withBooking (int timeSlot, String fill){
+    ResourceV withBooking (LocalDateTime dateTime, String fill){
+        int timeSlot = Resource.toTimeSlot(dateTime);
         if (timeSlot < timeWindow.length)
             this.timeWindow[timeSlot] = fill;
         return this;
     }
 
-    public ResourceV withoutBooking (int timeSlot){
+    ResourceV withoutBooking (LocalDateTime dateTime){
+        int timeSlot = Resource.toTimeSlot(dateTime);
         if (timeSlot < timeWindow.length)
             this.timeWindow[timeSlot] = "";
         return this;

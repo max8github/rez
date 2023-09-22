@@ -4,6 +4,8 @@ import com.rez.facility.dto.Reservation;
 import com.rez.facility.dto.Resource;
 import kalix.javasdk.annotations.TypeName;
 
+import java.time.LocalDateTime;
+
 public sealed interface ResourceEvent {
 
     @TypeName("resource-created")
@@ -12,5 +14,5 @@ public sealed interface ResourceEvent {
     record BookingAccepted(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
     @TypeName("booking-rejected")
     record BookingRejected(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
-    record BookingCanceled(String resourceId, String reservationId, int timeSlot) implements ResourceEvent {}
+    record BookingCanceled(String resourceId, String reservationId, LocalDateTime dateTime) implements ResourceEvent {}
 }

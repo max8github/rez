@@ -33,7 +33,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.CancelRequested event) {
         var resourceId = event.resourceId();
-        var path = "/resource/%s/reservation/%s/%s".formatted(resourceId, event.reservationId(), event.timeSlot());
+        var path = "/resource/%s/reservation/%s/%s".formatted(resourceId, event.reservationId(), event.dateTime().toString());
         var deferredCall = kalixClient.delete(path, String.class);
         return effects().forward(deferredCall);
     }

@@ -5,6 +5,7 @@ title Dependencies
 (viewmodel) --> (dto)
 (viewmodel) --> (domain)
 (view) --> (entities)
+(view) --> (dto)
 (view) --> (viewmodel)
 (actions) --> (entities)
 (actions) --> (events)

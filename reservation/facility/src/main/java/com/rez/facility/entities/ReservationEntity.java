@@ -101,10 +101,10 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @PostMapping("/book")
     public Effect<String> book(@RequestBody Book command) {
-            return effects()
-                    .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                            command.reservationId(), command.reservation(), currentState().resources()))
-                    .thenReply(newState -> "OK, picked resource " + command.resourceId());
+        return effects()
+                .emitEvent(new ReservationEvent.Booked(command.resourceId(),
+                        command.reservationId(), command.reservation(), currentState().resources()))
+                .thenReply(newState -> "OK, picked resource " + command.resourceId());
     }
 
     @EventHandler
@@ -127,7 +127,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 String resourceId = getResourceIdFromState();
                 return effects()
                         .emitEvent(new ReservationEvent.CancelRequested(entityId,
-                                currentState().facilityId(), resourceId, currentState().timeSlot()))
+                                currentState().facilityId(), resourceId, currentState().dateTime()))
                         .thenReply(newState -> entityId);
             default:
                 return effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");

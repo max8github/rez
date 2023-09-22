@@ -3,6 +3,7 @@ package com.rez.facility.events;
 import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.TypeName;
 
+import java.time.LocalDateTime;
 import java.util.List;
 
 public sealed interface ReservationEvent {
@@ -13,7 +14,7 @@ public sealed interface ReservationEvent {
     record ReservationCancelled(String reservationId, String facilityId, Reservation reservation, String resourceId,
                                 List<String> resourceIds) implements ReservationEvent {}
     @TypeName("cancel-requested")
-    record CancelRequested(String reservationId, String facilityId, String resourceId, int timeSlot) implements ReservationEvent {}
+    record CancelRequested(String reservationId, String facilityId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
 
     @TypeName("search-exhausted")
     record SearchExhausted(String reservationId, String facilityId, Reservation reservation, List<String> resourceIds) implements ReservationEvent {}

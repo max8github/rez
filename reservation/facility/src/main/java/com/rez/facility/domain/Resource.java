@@ -3,6 +3,7 @@ package com.rez.facility.domain;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.LocalDateTime;
 import java.util.Arrays;
 
 /**
@@ -27,7 +28,8 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
             this.timeWindow[timeSlot] = reservationId;
         return this;
     }
-    public Resource cancel(int timeSlot, String reservationId) {
+    public Resource cancel(LocalDateTime dateTime, String reservationId) {
+        int timeSlot = toTimeSlot(dateTime);
         if (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty()) {
             log.warn("reservation {} was not present or it was already cancelled in time slot {}", reservationId, timeSlot);
         } else if(!timeWindow[timeSlot].equals(reservationId)) {
@@ -40,5 +42,22 @@ public record Resource(String name, String[] timeWindow, int size, int nowPointe
             timeWindow[timeSlot] = "";
         }
         return this;
+    }
+
+    //todo: it is not like this in general (could be broken in half hours, quarters, etc). timeSlot is an implementation
+    //detail of Resource, it should not surface here. In the end, a Resource is probably just a list of reservations
+    //and for that, it should just print those out, when inquired about its state.
+    public static int toTimeSlot(LocalDateTime dateTime) {
+        return dateTime.getHour();
+    }
+
+    @Override
+    public String toString() {
+        return "Resource{" +
+                "name='" + name + '\'' +
+                ", timeWindow=" + Arrays.toString(timeWindow) +
+                ", size=" + size +
+                ", nowPointer=" + nowPointer +
+                '}';
     }
 }

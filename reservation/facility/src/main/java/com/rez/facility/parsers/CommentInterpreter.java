@@ -1,9 +1,9 @@
 package com.rez.facility.parsers;
 
 import com.google.protobuf.any.Any;
-import com.rez.facility.dto.Reservation;
 import com.mcalder.rez.spi.Interpreter;
 import com.mcalder.rez.spi.Parser;
+import com.rez.facility.dto.Reservation;
 import kalix.javasdk.DeferredCall;
 import kalix.spring.KalixClient;
 import lombok.RequiredArgsConstructor;
@@ -11,9 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.StringTokenizer;
@@ -58,13 +56,10 @@ public class CommentInterpreter implements Interpreter {
         Parser.Result parseResult = parser.parse(twistComment.content());
         String when = parseResult.when();
         LocalDateTime localDateTime = LocalDateTime.parse(when);
-        LocalDate localDate = localDateTime.toLocalDate();
-        LocalTime localTime = localDateTime.toLocalTime();
-        int timeSlot = localTime.getHour();
 
         List<String> attendeesAndCreator = new ArrayList<>(parseResult.who().stream().toList());
         attendeesAndCreator.addAll(attendees);
-        return new Reservation(attendeesAndCreator, timeSlot, localDate);
+        return new Reservation(attendeesAndCreator, localDateTime);
     }
 
 }
