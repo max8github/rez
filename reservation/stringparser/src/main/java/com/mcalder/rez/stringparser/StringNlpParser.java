@@ -1,6 +1,7 @@
 package com.mcalder.rez.stringparser;
 
 import com.mcalder.rez.spi.Nlp;
+import lombok.NoArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -9,6 +10,7 @@ import java.time.LocalDate;
 import java.util.HashSet;
 import java.util.Set;
 
+@NoArgsConstructor
 @Component
 public class StringNlpParser implements Nlp {
     private static final Logger log = LoggerFactory.getLogger(StringNlpParser.class);
