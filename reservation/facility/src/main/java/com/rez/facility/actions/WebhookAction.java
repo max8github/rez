@@ -1,6 +1,10 @@
 package com.rez.facility.actions;
 
-import com.mcalder.rez.spi.Interpreter;
+import com.google.protobuf.any.Any;
+import com.mcalder.rez.spi.Assembler;
+import com.mcalder.rez.spi.Parser;
+import com.rez.facility.dto.Reservation;
+import kalix.javasdk.DeferredCall;
 import kalix.javasdk.Metadata;
 import kalix.javasdk.SideEffect;
 import kalix.javasdk.action.Action;
@@ -15,30 +19,50 @@ public class WebhookAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(WebhookAction.class);
 
     private final KalixClient kalixClient;
-    private final Interpreter interpreter;
+    private final Assembler assembler;
+    private final Parser parser;
 
-    public WebhookAction(KalixClient kalixClient, Interpreter interpreter) {
+    public WebhookAction(KalixClient kalixClient, Assembler assembler, Parser parser) {
         this.kalixClient = kalixClient;
-        this.interpreter = interpreter;
+        this.assembler = assembler;
+        this.parser = parser;
     }
 
     /**
      * This is the input to rez. It is also called "outgoing webhook" from Twist's standpoint: Twist -to-> Kalix.<br>
      * It is used for initiating the entire processing.
      * Posting a message in the set-up Twist thread triggers the sending of that message to Kalix, caught here.
-     * @return message back to Twist, optionally
+     * <br>
+     * The action does two things: upon receiving a generic Json object, it first translates that into its appropriate
+     * object based on implementor (as there are different text message providers, like Twist).
+     * It then interprets what its content says by calling a parser.
+     * @return message back to the Text Message provider (Twist), optionally
      */
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
-    public Effect<Interpreter.Text> outwebhook(@RequestBody Interpreter.TextMessage comment) {
-        String facilityId = comment.thread_id();//thread_id must be the same as the facility id (todo: provisioning).
-        if(comment.system_message() != null) {//drop it
-            log.info("dropping system message {}", comment);
+    public Effect<Parser.Text> outwebhook(@RequestBody com.fasterxml.jackson.databind.JsonNode blob) {
+        Parser.TextMessage textMessage = assembler.assemble(blob);
+        String facilityId = textMessage.thread_id();//thread_id must be the same as the facility id (todo: provisioning).
+        if(textMessage.system_message() != null) {//drop it
+            log.info("dropping system message {}", textMessage);
             return effects().ignore();
         }
-        log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, comment);
-        var deferredCall = interpreter.interpret(kalixClient, facilityId, comment);
-        return effects().reply(new Interpreter.Text("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
+        log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, textMessage);
+
+        Parser.ReservationDto rDto = parser.parse(facilityId, textMessage);
+        String path;
+        DeferredCall<Any, Parser.Text> deferredCall;
+        if(rDto.command().equals("cancel")) {
+            path = "/reservation/%s/cancelRequest".formatted(rDto.reservationId());
+            deferredCall = kalixClient.delete(path, Parser.Text.class);
+        } else {
+            path = "/facility/%s/reservation/create".formatted(facilityId);
+            Reservation body = new Reservation(rDto.emails(), rDto.dateTime());
+            deferredCall = kalixClient.post(path, body, Parser.Text.class);
+
+        }
+
+        return effects().reply(new Parser.Text("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
                 .addSideEffect(SideEffect.of(deferredCall));
     }
 

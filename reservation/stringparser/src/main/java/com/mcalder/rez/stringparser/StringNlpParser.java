@@ -1,6 +1,6 @@
 package com.mcalder.rez.stringparser;
 
-import com.mcalder.rez.spi.Parser;
+import com.mcalder.rez.spi.Nlp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -10,8 +10,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 @Component
-public class StringParser implements Parser {
-    private static final Logger log = LoggerFactory.getLogger(StringParser.class);
+public class StringNlpParser implements Nlp {
+    private static final Logger log = LoggerFactory.getLogger(StringNlpParser.class);
 
     @Override
     public Result parse(String content) {

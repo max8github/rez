@@ -1,6 +1,6 @@
 package com.rez.facility.actions;
 
-import com.mcalder.rez.spi.Interpreter;
+import com.mcalder.rez.spi.Parser;
 import kalix.javasdk.Metadata;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;
@@ -18,9 +18,9 @@ public class StubAction extends Action {
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
-    public Action.Effect<Interpreter.Text> post(@RequestBody com.fasterxml.jackson.databind.JsonNode command) {
+    public Action.Effect<Parser.Text> post(@RequestBody com.fasterxml.jackson.databind.JsonNode command) {
         log.info("command, {}", command);
-        return effects().reply(new Interpreter.Text(
+        return effects().reply(new Parser.Text(
                         "Message back"), Metadata.EMPTY.add("_kalix-http-code", "202"));
     }
 

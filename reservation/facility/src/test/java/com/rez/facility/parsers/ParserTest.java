@@ -10,7 +10,7 @@ import java.time.format.DateTimeFormatter;
 
 import static org.junit.jupiter.api.Assertions.*;
 
-class InterpreterTest {
+class ParserTest {
 
     @BeforeEach
     void setUp() {
