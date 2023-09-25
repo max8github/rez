@@ -25,13 +25,12 @@ public class WebhookAction extends Action {
     /**
      * This is the input to rez. It is also called "outgoing webhook" from Twist's standpoint: Twist -to-> Kalix.<br>
      * It is used for initiating the entire processing.
-     * When someone types a message in the set-up Twist thread, Twist should trigger the creation of that message and
-     * send it out to Kalix, here.
+     * Posting a message in the set-up Twist thread triggers the sending of that message to Kalix, caught here.
      * @return message back to Twist, optionally
      */
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping()
-    public Effect<Interpreter.TwistContent> outwebhook(@RequestBody Interpreter.TwistComment comment) {
+    public Effect<Interpreter.Text> outwebhook(@RequestBody Interpreter.TextMessage comment) {
         String facilityId = comment.thread_id();//thread_id must be the same as the facility id (todo: provisioning).
         if(comment.system_message() != null) {//drop it
             log.info("dropping system message {}", comment);
@@ -39,7 +38,7 @@ public class WebhookAction extends Action {
         }
         log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, comment);
         var deferredCall = interpreter.interpret(kalixClient, facilityId, comment);
-        return effects().reply(new Interpreter.TwistContent("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
+        return effects().reply(new Interpreter.Text("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
                 .addSideEffect(SideEffect.of(deferredCall));
     }
 
