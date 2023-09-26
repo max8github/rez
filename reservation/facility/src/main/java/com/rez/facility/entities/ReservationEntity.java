@@ -1,11 +1,8 @@
 package com.rez.facility.entities;
 
 import akka.Done;
-import com.rez.facility.actions.DelegatingServiceAction;
-import com.rez.facility.actions.ReservationAction;
 import com.rez.facility.domain.ReservationState;
 import com.rez.facility.dto.Reservation;
-import com.rez.facility.events.ReservationEvent;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.client.ComponentClient;
@@ -46,7 +43,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
                 return componentClient.forEventSourcedEntity(nextResourceId).call(ResourceEntity::inquireBooking).params(command);
             } else {
                 log.info("step search, exhausted");
-                var exhausted = new ReservationEvent.SearchExhausted(c.reservationId(), c.facilityId(), c.reservation(), currentState().resources());
+                var exhausted = new DelegatingServiceAction.NotifySearchExhausted(c.reservationId(), c.facilityId(), c.reservation(), currentState().resources());
                 return componentClient.forAction().call(DelegatingServiceAction::unavailable).params(exhausted);
             }
         }).andThen(String.class, cmd -> {
@@ -84,7 +81,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
 
         Step book = step("book").call(Book.class, cmd -> {
             log.info("step book");
-            ReservationEvent.Booked booked = new ReservationEvent.Booked(cmd.resourceId(), cmd.reservationId(),
+            DelegatingServiceAction.Booked booked = new DelegatingServiceAction.Booked(cmd.resourceId(), cmd.reservationId(),
                     cmd.reservation(), currentState().resources());
             return componentClient.forAction().call(DelegatingServiceAction::book).params(booked);
         }).andThen(String.class, cmd -> effects().updateState(currentState().withState(FULFILLED)).transitionTo("set-timer"));
@@ -96,11 +93,9 @@ public class ReservationEntity extends Workflow<ReservationState> {
 
         Step cancel = step("cancel").call(String.class, rezId -> {
             log.info("step cancel");
-            String facilityId = currentState().facilityId();
-            Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
             String resourceId = getResourceIdFromState();
             List<String> resourceIds = currentState().resources();
-            Resources resources = new Resources(resourceIds);
+            DelegatingServiceAction.Resources resources = new DelegatingServiceAction.Resources(resourceIds);
             return componentClient.forAction().call(DelegatingServiceAction::cancel).params(resourceId, rezId, resources);
         }).andThen(String.class, cmd -> effects().updateState(currentState().withIncrementedIndex().withState(CANCELLED)).transitionTo("complete"));
 
@@ -134,7 +129,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
     }
 
     @PostMapping("/runSearch")
-    public Effect<String> runSearch(@RequestBody RunSearch command, @PathVariable String reservationId) {
+    public Effect<String> runSearch(@RequestBody RunSearch command) {
         return effects().transitionTo("search", command).thenReply("keeping searching ...");
     }
 
@@ -174,6 +169,5 @@ public class ReservationEntity extends Workflow<ReservationState> {
     public record RunSearch(String reservationId, String facilityId, Reservation reservation) {}
 
     public record Book(String resourceId, String reservationId, Reservation reservation) {}
-    public record Resources(List<String> reservationIds) {}
     public record CancellationDto(String reservationId, String resourceId, LocalDateTime dateTime) {}
 }

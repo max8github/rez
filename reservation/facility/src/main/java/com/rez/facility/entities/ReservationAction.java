@@ -1,6 +1,5 @@
-package com.rez.facility.actions;
+package com.rez.facility.entities;
 
-import com.rez.facility.entities.ReservationEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.client.ComponentClient;

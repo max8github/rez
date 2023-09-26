@@ -1,8 +1,6 @@
-package com.rez.facility.actions;
+package com.rez.facility.entities;
 
 import com.rez.facility.dto.Reservation;
-import com.rez.facility.entities.ReservationEntity;
-import com.rez.facility.events.ReservationEvent;
 import com.mcalder.rez.spi.CalendarSender;
 import com.mcalder.rez.spi.NotificationSender;
 import kalix.javasdk.action.Action;
@@ -108,7 +106,7 @@ public class DelegatingServiceAction extends Action {
     }
 
     @PostMapping("/book")
-    public Effect<String> book(@RequestBody ReservationEvent.Booked event) throws Exception {
+    public Effect<String> book(@RequestBody Booked event) throws Exception {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
         Reservation reservation = event.reservation();
@@ -123,16 +121,16 @@ public class DelegatingServiceAction extends Action {
     }
 
     @PostMapping("/unavailable")
-    public Effect<String> unavailable(@RequestBody ReservationEvent.SearchExhausted event) {
-        var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
-                event.resourceIds(),
-                event.reservation().emails(), event.reservation().toLocalDateTime());
-        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
+    public Effect<String> unavailable(@RequestBody NotifySearchExhausted message) {
+        var eventDetails = new CalendarSender.EventDetails("", message.reservationId(), message.facilityId(),
+                message.resourceIds(),
+                message.reservation().emails(), message.reservation().toLocalDateTime());
+        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(message.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));
     }
 
     @PostMapping("/cancel/{resourceId}/{reservationId}")
-    public Effect<String> cancel(@PathVariable String resourceId, @PathVariable String reservationId, @RequestBody ReservationEntity.Resources resources) {
+    public Effect<String> cancel(@PathVariable String resourceId, @PathVariable String reservationId, @RequestBody Resources resources) {
         List<String> resourceIds = resources.reservationIds();
         String calendarId = resourceId + "@group.calendar.google.com";
         String calEventId = reservationId;
@@ -141,4 +139,9 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(stage);
     }
 
+    public record Resources(List<String> reservationIds) {}
+
+    public record NotifySearchExhausted(String reservationId, String facilityId, Reservation reservation, List<String> resourceIds) {}
+
+    public record Booked(String resourceId, String reservationId, Reservation reservation, List<String> resourceIds) {}
 }
