@@ -14,8 +14,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 
+import static com.rez.facility.domain.ReservationState.State.FULFILLED;
+import static com.rez.facility.domain.ReservationState.State.UNAVAILABLE;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 
@@ -31,6 +35,8 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
   @Autowired
   private WebClient webClient;
+  @Autowired
+  private ReservationEntityIntegrationTest util;
 
   private final Duration timeout = Duration.of(5, SECONDS);
 
@@ -50,5 +56,35 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
                     .block(timeout);
 
     Assertions.assertEquals(HttpStatus.OK, created.getStatusCode());
+  }
+
+  @Test
+  public void shouldReserve() {
+    var resourceId1 = "c1";
+    var resourceId2 = "c2";
+    util.createResource(resourceId1);
+    util.createResource(resourceId2);
+    List<String> resourceIds = List.of(resourceId1, resourceId2);
+    LocalDateTime dateTime = LocalDateTime.now().plusHours(2);
+    dateTime = dateTime.minusMinutes(dateTime.getMinute());
+    int timeSlot = dateTime.getHour();
+    String dateTimeString = dateTime.toString();
+    System.out.println("dateTimeString to test = " + dateTimeString);
+
+    String reservationId1 = util.issueNewReservationRequest(resourceIds, dateTimeString);
+    System.out.println("reservationId1 = " + reservationId1);
+    System.out.println("reservationId1 = " + reservationId1);
+    util.assertBookedAtResource(reservationId1, resourceIds, 0, timeSlot);
+    util.assertReservationState(reservationId1, FULFILLED);
+
+    String reservationId2 = util.issueNewReservationRequest(resourceIds, dateTimeString);
+    System.out.println("reservationId2 = " + reservationId2);
+    util.assertBookedAtResource(reservationId2, resourceIds, 1, timeSlot);
+    util.assertReservationState(reservationId2, FULFILLED);
+
+    String reservationId3 = util.issueNewReservationRequest(resourceIds, dateTimeString);
+    System.out.println("reservationId3 = " + reservationId3);
+    util.assertBookedAtResource(reservationId3, resourceIds, -1, timeSlot);
+    util.assertReservationState(reservationId3, UNAVAILABLE);
   }
 }

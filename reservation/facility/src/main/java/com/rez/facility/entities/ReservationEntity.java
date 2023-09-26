@@ -69,6 +69,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
                 })
                 .andThen(Done.class, cmd -> effects().pause());
 
+        //COMPLETE is when a reservation is in the past. FULFILLED is when it is committed, but in the future (it can be cancelled)
         Step complete = step("complete")
                 .asyncCall(() -> {
                     log.info("step complete");
