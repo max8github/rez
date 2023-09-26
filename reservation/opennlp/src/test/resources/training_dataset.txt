@@ -1,0 +1,15 @@
+Dear Network User, Please be advised that the network will be unavailable from 01:00am to 05:30am on <START:maint.mdate> November 12th 2014 <END> . This period of downtime will be scheduled for necessary updates to be applied to the network servers. We apologise for the inconvenience that this may cause. Kindly inform the IT Service Desk (at ext. 1234) of any concerns that you may have about the planned outage. Kind regards, abc name Network Administrator.
+
+Due to system maintenance, Certain account related features on Net Banking would not be available till <START:maint.mdate> Monday 6th September at 17:00  <END>. Credit Card Enquiry, Demat, and Debit Card details would continue to be available. We regret the inconvenience caused
+
+The network is toast, so we have to fix it. It will be fixed by <START:maint.mdate> Tuesday June 20th 2023 at 11 am <END>
+
+Dear customer, did you think of accessing our network without password? Not so fast, you need it. So get hold of it <START:maint.mdate> today June 18th 2023 at 11:00 hrs <END> by calling number 415 324-5432
+
+You must get hold of your account credentials by <START:maint.mdate> Wednesday June 21st 2023 at 15:00 <END>
+
+Dear subscriber, the network is down now, please brace yourself and pray that we can fix it by <START:maint.mdate> the end of next week on Saturday <END>:maint.mdate
+
+Ok, folks, <START:maint.mdate> today <END> access is free, get all the files you want!
+
+You'd better check all your stuff and do the kitchen by <START:maint.mdate> midnight today <END>

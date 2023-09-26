@@ -1,0 +1,17 @@
+@startuml
+skinparam actorStyle hollow
+
+title Dependencies
+(viewmodel) --> (dto)
+(viewmodel) --> (domain)
+(view) --> (entities)
+(view) --> (dto)
+(view) --> (viewmodel)
+(actions) --> (entities)
+(actions) --> (events)
+(actions) --> (dto)
+(entities) --> (events)
+(entities) --> (dto)
+(events) --> (dto)
+(dto) --> (domain)
+@enduml

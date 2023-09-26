@@ -1,0 +1,13 @@
+@startuml
+skinparam monochrome reverse
+skinparam actorStyle hollow
+
+title ReservationEntity Lifecycle
+RunSearch -up-> (INIT): emptyState()
+(INIT) --> (SELECTING): ResourceSelected
+(SELECTING) --> (SELECTING): ResourceSelected
+(UNAVAILABLE) <-down- (INIT): Rejected
+(FULFILLED) <-- (SELECTING): Booked
+(UNAVAILABLE) <-up- (SELECTING): Rejected
+(FULFILLED) --> (CANCELLED): Booked
+@enduml

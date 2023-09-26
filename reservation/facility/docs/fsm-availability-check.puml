@@ -1,0 +1,15 @@
+@startuml
+skinparam monochrome reverse
+skinparam actorStyle hollow
+
+title ReservationEntity Lifecycle with Availability Check
+DeclareAvailability --> (INIT): emptyState()
+(INIT) --> (AVAILABILITYCHECK): AvailabilityProcessed
+(AVAILABILITYCHECK) <-- (AVAILABILITYCHECK): AvailabilityProcessed
+(AVAILABILITYCHECK) --> (CONFIRMSTATE): AvailabilityCheckDone
+(CONFIRMSTATE) --> (CONFIRMSTATE): ResourceSelected
+(CONFIRMSTATE) --> (CONFIRMSTATE): AvailabilityCheckDone
+(UNAVAILABLE) <-- (CONFIRMSTATE): AvailabilityNotFound
+(FULLFILLED) <-up- (CONFIRMSTATE): Booked
+(FULLFILLED) --> (PUBLISHED): save()
+@enduml
