@@ -3,10 +3,7 @@ package com.rez.facility.entities;
 import com.rez.facility.events.ResourceEvent;
 import com.rez.facility.domain.*;
 import com.rez.facility.dto.Reservation;
-import kalix.javasdk.annotations.Acl;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
-import kalix.javasdk.annotations.EventHandler;
+import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
@@ -15,8 +12,8 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
 
-@EntityType("resource")
-@EntityKey("resource_id")
+@Id("resource_id")
+@TypeId("resource")
 @RequestMapping("/resource/{resource_id}")
 public class ResourceEntity extends EventSourcedEntity<Resource, ResourceEvent> {
     private static final Logger log = LoggerFactory.getLogger(ResourceEntity.class);

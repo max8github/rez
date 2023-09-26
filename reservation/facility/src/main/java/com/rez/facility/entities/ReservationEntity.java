@@ -3,10 +3,7 @@ package com.rez.facility.entities;
 import com.rez.facility.events.ReservationEvent;
 import com.rez.facility.domain.ReservationState;
 import com.rez.facility.dto.Reservation;
-import kalix.javasdk.annotations.Acl;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
-import kalix.javasdk.annotations.EventHandler;
+import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
@@ -17,8 +14,8 @@ import java.util.List;
 
 import static com.rez.facility.domain.ReservationState.State.*;
 
-@EntityKey("reservationId")
-@EntityType("reservation")
+@Id("reservationId")
+@TypeId("reservation")
 @RequestMapping("/reservation/{reservationId}")
 public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
     private static final Logger log = LoggerFactory.getLogger(ReservationEntity.class);

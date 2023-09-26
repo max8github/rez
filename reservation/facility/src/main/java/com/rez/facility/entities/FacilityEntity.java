@@ -5,12 +5,9 @@ import com.rez.facility.domain.Address;
 import com.rez.facility.domain.Facility;
 import com.rez.facility.dto.Reservation;
 import com.rez.facility.dto.Resource;
+import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
-import kalix.javasdk.annotations.Acl;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
-import kalix.javasdk.annotations.EventHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -18,8 +15,8 @@ import org.springframework.web.bind.annotation.*;
 import java.util.ArrayList;
 import java.util.UUID;
 
-@EntityKey("facilityId")
-@EntityType("facility")
+@Id("facilityId")
+@TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
 public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> {
     private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);

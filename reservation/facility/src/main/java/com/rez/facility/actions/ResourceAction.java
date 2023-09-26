@@ -1,46 +1,45 @@
 package com.rez.facility.actions;
 
+import com.rez.facility.entities.FacilityEntity;
 import com.rez.facility.entities.ReservationEntity;
 import com.rez.facility.entities.ResourceEntity;
 import com.rez.facility.events.ResourceEvent;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 
 @Subscribe.EventSourcedEntity(value = ResourceEntity.class, ignoreUnknown = true)
 public class ResourceAction extends Action {
-    private final KalixClient kalixClient;
+    private final ComponentClient kalixClient;
 
-    public ResourceAction(KalixClient kalixClient) {
+    public ResourceAction(ComponentClient kalixClient) {
         this.kalixClient = kalixClient;
     }
 
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
-        var path = "/facility/%s/resource/%s".formatted(event.facilityId(), event.entityId());
-        var deferredCall = kalixClient.post(path, String.class);
+        var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
+                .call(FacilityEntity::addResourceId).params(event.entityId());
         return effects().forward(deferredCall);
     }
 
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/book".formatted(reservationId);
         var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservation());
-        var deferredCall = kalixClient.post(path, command, String.class);
+        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::book).params(command);
         return effects().forward(deferredCall);
     }
 
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/runSearch".formatted(reservationId);
         var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
-        var deferredCall = kalixClient.post(path, command, String.class);
+        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::runSearch).params(command);
         return effects().forward(deferredCall);
     }
 
     public Effect<String> on(ResourceEvent.BookingCanceled event) {
         var reservationId = event.reservationId();
-        var path = "/reservation/%s/cancel".formatted(reservationId);
-        var deferredCall = kalixClient.delete(path, String.class);
+        var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
+                .call(ReservationEntity::cancel);
         return effects().forward(deferredCall);
     }
 }

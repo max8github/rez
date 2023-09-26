@@ -4,12 +4,14 @@ import com.google.protobuf.any.Any;
 import com.mcalder.rez.spi.Assembler;
 import com.mcalder.rez.spi.Parser;
 import com.rez.facility.dto.Reservation;
+import com.rez.facility.entities.FacilityEntity;
+import com.rez.facility.entities.ReservationEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.Metadata;
 import kalix.javasdk.SideEffect;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Acl;
-import kalix.spring.KalixClient;
+import kalix.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -18,11 +20,11 @@ import org.springframework.web.bind.annotation.*;
 public class WebhookAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(WebhookAction.class);
 
-    private final KalixClient kalixClient;
+    private final ComponentClient kalixClient;
     private final Assembler assembler;
     private final Parser parser;
 
-    public WebhookAction(KalixClient kalixClient, Assembler assembler, Parser parser) {
+    public WebhookAction(ComponentClient kalixClient, Assembler assembler, Parser parser) {
         this.kalixClient = kalixClient;
         this.assembler = assembler;
         this.parser = parser;
@@ -50,15 +52,12 @@ public class WebhookAction extends Action {
         log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, textMessage);
 
         Parser.ReservationDto rDto = parser.parse(facilityId, textMessage);
-        String path;
-        DeferredCall<Any, Parser.Text> deferredCall;
+        DeferredCall<Any, String> deferredCall;
         if(rDto.command().equals("cancel")) {
-            path = "/reservation/%s/cancelRequest".formatted(rDto.reservationId());
-            deferredCall = kalixClient.delete(path, Parser.Text.class);
+            deferredCall = kalixClient.forEventSourcedEntity(rDto.reservationId()).call(ReservationEntity::cancelRequest);
         } else {
-            path = "/facility/%s/reservation/create".formatted(facilityId);
             Reservation body = new Reservation(rDto.emails(), rDto.dateTime());
-            deferredCall = kalixClient.post(path, body, Parser.Text.class);
+            deferredCall = kalixClient.forEventSourcedEntity(facilityId).call(FacilityEntity::createReservation).params(body);
 
         }
 
