@@ -1,8 +1,7 @@
-package com.rez.facility.parsers;
+package com.mcalder.rez.stringparser;
 
 import com.mcalder.rez.spi.Parser;
 import com.mcalder.rez.spi.Nlp;
-import com.rez.facility.dto.Reservation;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -34,9 +33,7 @@ public class TextMessageParser implements Parser {
                     "cancel");
         } else {
             try {
-                Reservation reservation = commentToReservation(textMessage);
-                dto = new ReservationDto(facilityId, "#####", reservation.emails(), reservation.dateTime(),
-                        "create");
+                dto = commentToReservation(facilityId, textMessage);
             } catch (Exception e) {
                 log.warn("Incoming message could not be parsed. Message:\n{}", content);
                 throw new RuntimeException(
@@ -49,7 +46,7 @@ public class TextMessageParser implements Parser {
 
 
 
-    private Reservation commentToReservation(TextMessage textMessage) {
+    private ReservationDto commentToReservation(String facilityId, TextMessage textMessage) {
         List<String> attendees = new ArrayList<>();
         attendees.add(textMessage.creator_name());//todo: these are names, not emails afaik
         //todo: i should get the emails from the users accounts
@@ -59,7 +56,8 @@ public class TextMessageParser implements Parser {
 
         List<String> attendeesAndCreator = new ArrayList<>(parseResult.who().stream().toList());
         attendeesAndCreator.addAll(attendees);
-        return new Reservation(attendeesAndCreator, localDateTime);
+        return new ReservationDto(facilityId, "#####", attendeesAndCreator, localDateTime,
+                "create");
     }
 
 }
