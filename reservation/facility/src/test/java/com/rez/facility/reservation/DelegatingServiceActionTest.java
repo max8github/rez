@@ -1,4 +1,4 @@
-package com.rez.facility.actions;
+package com.rez.facility.reservation;
 
 import com.mcalder.rez.spi.CalendarSender;
 import org.junit.jupiter.api.Test;

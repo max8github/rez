@@ -1,7 +1,7 @@
 package com.rez.facility.view;
 
-import com.rez.facility.entities.FacilityEntity;
-import com.rez.facility.events.FacilityEvent;
+import com.rez.facility.pool.FacilityEntity;
+import com.rez.facility.pool.FacilityEvent;
 import kalix.javasdk.view.View;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;

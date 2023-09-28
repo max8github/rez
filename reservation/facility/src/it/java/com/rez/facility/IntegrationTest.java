@@ -1,7 +1,7 @@
 package com.rez.facility;
 
-import com.rez.facility.dto.Address;
-import com.rez.facility.dto.Facility;
+import com.rez.facility.pool.dto.Address;
+import com.rez.facility.pool.dto.Facility;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
 import org.junit.jupiter.api.Assertions;

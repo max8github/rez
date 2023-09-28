@@ -1,9 +1,8 @@
-package com.rez.facility.entities;
+package com.rez.facility.pool;
 
-import com.rez.facility.events.FacilityEvent;
-import com.rez.facility.domain.Facility;
-import com.rez.facility.dto.Address;
 import com.rez.facility.dto.Reservation;
+import com.rez.facility.pool.dto.Address;
+import com.rez.facility.pool.dto.Facility;
 import kalix.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
@@ -20,7 +19,7 @@ public class FacilityEntityTest {
     @Test
     public void testCreateFacility() {
         Address address = new Address("street", "city");
-        com.rez.facility.dto.Facility facility = new com.rez.facility.dto.Facility("TCL", address, Collections.emptySet());
+        Facility facility = new Facility("TCL", address, Collections.emptySet());
 
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
         var facilityResult = testKit.call(e -> e.create(facility));
@@ -54,7 +53,7 @@ public class FacilityEntityTest {
         var result = testKit.getState();
         assertEquals(2, result.resourceIds().size());
         Assertions.assertEquals(
-                new Facility(facilityId, result.name(),
+                new com.rez.facility.pool.Facility(facilityId, result.name(),
                         result.address(),
                         result.resourceIds()),
                 result);
