@@ -16,6 +16,7 @@ public class FacilityAction extends Action {
         this.kalixClient = kalixClient;
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
         var resourceEntityId = event.resourceId();
         var command = new ResourceEntity.CreateResourceCommand(event.facilityId(), event.resourceDto());
@@ -23,10 +24,11 @@ public class FacilityAction extends Action {
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(FacilityEvent.ReservationCreated event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.InitiateReservation(event.facilityId(), event.reservationDto(), event.resources());
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
+        var deferredCall = kalixClient.forWorkflow(reservationId).call(ReservationEntity::init).params(command, reservationId);
         return effects().forward(deferredCall);
     }
 }

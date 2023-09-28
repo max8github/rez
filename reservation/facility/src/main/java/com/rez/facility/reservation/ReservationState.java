@@ -1,6 +1,7 @@
 package com.rez.facility.reservation;
 
 import java.time.LocalDateTime;
+import java.time.ZoneOffset;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,7 +26,11 @@ public record ReservationState(State state, String reservationId, String facilit
                 this.currentResourceIndex + 1, this.resources, this.dateTime);
     }
 
+    public long deadline() {
+        return dateTime.toEpochSecond(ZoneOffset.UTC);
+    }
+
     public enum State {
-        INIT, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
+        INIT, SELECTING, FULFILLED, CANCELLED, CANCEL_REQUESTED, UNAVAILABLE, COMPLETE
     }
 }
