@@ -12,7 +12,6 @@ import reactor.core.publisher.Flux;
 @Table("resources_by_facility_id")
 public class ResourceView extends View<ResourceV> {
 
-    @SuppressWarnings("unused")
     @GetMapping("/resource/by_facility/{facility_id}")
     @Query("SELECT * FROM resources_by_facility_id WHERE facilityId = :facility_id")
     public Flux<ResourceV> getResource(String facility_id) {
@@ -31,7 +30,7 @@ public class ResourceView extends View<ResourceV> {
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationAccepted event) {
         String reservationId = event.reservationId();
-        return effects().updateState(viewState().withBooking(event.reservationDto().dateTime(), reservationId));
+        return effects().updateState(viewState().withBooking(event.reservation().dateTime(), reservationId));
     }
 
     @SuppressWarnings("unused")
@@ -40,16 +39,9 @@ public class ResourceView extends View<ResourceV> {
         return effects().ignore();
     }
 
-
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationCanceled event) {
-        return effects().updateState(viewState().withoutBooking(event.dateTime()));
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationCanceled cancellation) {
+        return effects().updateState(viewState().withoutBooking(cancellation.dateTime()));
     }
 }

@@ -32,7 +32,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody com.rezhub.reservation.pool.dto.Facility facility) {
+    public Effect<String> create(@RequestBody Facility facility) {
         log.info("created facility {}", facility.name());
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
@@ -64,7 +64,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody com.rezhub.reservation.pool.dto.Address address) {
+    public Effect<String> changeAddress(@RequestBody Address address) {
         return effects()
                 .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
@@ -73,7 +73,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
     @SuppressWarnings("unused")
     @EventHandler
     public com.rezhub.reservation.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        com.rezhub.reservation.pool.dto.Address address = addressChanged.address();
+        Address address = addressChanged.address();
         return currentState().withAddress(new com.rezhub.reservation.pool.Address(address.street(), address.city()));
     }
 
@@ -124,10 +124,10 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rezhub.reservation.pool.dto.Facility> getFacility() {
+    public Effect<Facility> getFacility() {
         com.rezhub.reservation.pool.Facility facilityState = currentState();
         com.rezhub.reservation.pool.Address addressState = facilityState.address();
-        com.rezhub.reservation.pool.dto.Address address = new Address(addressState.street(), addressState.city());
+        Address address = new Address(addressState.street(), addressState.city());
         return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
     }
 

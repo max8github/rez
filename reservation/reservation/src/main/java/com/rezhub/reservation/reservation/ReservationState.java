@@ -1,44 +1,36 @@
 package com.rezhub.reservation.reservation;
 
-import lombok.With;
 import java.time.LocalDateTime;
-import java.util.*;
+import java.time.ZoneOffset;
+import java.util.Collections;
+import java.util.List;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 
-@With
 public record ReservationState(State state, String reservationId, String facilityId, List<String> emails,
-                               Set<String> availableResources, List<String> resources,
-                               LocalDateTime dateTime, String resourceId) {
+                               int currentResourceIndex, List<String> resources, LocalDateTime dateTime) {
 
     public static ReservationState initiate(String entityId) {
-        List<String> empty = new ArrayList<>();
-        return new ReservationState(INIT, entityId, "", empty, new HashSet<>(), empty, LocalDateTime.now(), "");
+        List<String> empty = Collections.emptyList();
+        return new ReservationState(INIT, entityId, "", empty, -1, empty, LocalDateTime.now());
 
     }
 
-    public ReservationState withAdded(String resourceId) {
-        this.availableResources.add(resourceId);
-        return this;
+    public ReservationState withState(State state) {
+        return new ReservationState(state, this.reservationId, this.facilityId, this.emails,
+                this.currentResourceIndex, this.resources, this.dateTime);
     }
 
-    public ReservationState withRemoved(String resourceId) {
-        this.availableResources.remove(resourceId);
-        return this;
+    public ReservationState withIncrementedIndex() {
+        return new ReservationState(this.state, this.reservationId, this.facilityId, this.emails,
+                this.currentResourceIndex + 1, this.resources, this.dateTime);
     }
 
-    boolean hasAvailableResources() {
-        return this.availableResources.iterator().hasNext();
+    public long deadline() {
+        return dateTime.toEpochSecond(ZoneOffset.UTC);
     }
-
-    public String pop() {
-        Iterator<String> iterator = this.availableResources.iterator();
-        if(iterator.hasNext()) return iterator.next();
-        else return "";
-    }
-
 
     public enum State {
-        INIT, COLLECTING, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
+        INIT, SELECTING, FULFILLED, CANCELLED, CANCEL_REQUESTED, UNAVAILABLE, COMPLETE
     }
 }

@@ -3,13 +3,15 @@ skinparam monochrome reverse
 skinparam actorStyle hollow
 
 title ReservationEntity Lifecycle
-Request -> (INIT)
-(INIT) --> (COLLECTING): Initiated
-(COLLECTING) -> (COLLECTING): (no)
-(COLLECTING) --> (SELECTING): (yes)
-(SELECTING) --> (SELECTING): (yes/no)
-(UNAVAILABLE) <-left- (COLLECTING): Rejected
-(FULFILLED) <-- (SELECTING): Accepted
-(SELECTING) -> (COLLECTING): Rejected
-(FULFILLED) --> (CANCELLED)
+RunSearch -up-> (INIT): emptyState()
+(INIT) --> (SELECTING): ResourceSelected
+(SELECTING) --> (SELECTING): ResourceSelected
+(UNAVAILABLE) <-down- (INIT): Rejected
+(FULFILLED) <-- (SELECTING): Booked
+(UNAVAILABLE) <-up- (SELECTING): Rejected
+(FULFILLED) --> (CANCELLED): Canceled
+(FULFILLED) <-- (CANCELLED): Rebooked
+'COMPLETE is when a reservation is in the past
+(COMPLETE) <-- (CANCELLED): Timeout
+(FULFILLED) --> (COMPLETE): Timeout
 @enduml
