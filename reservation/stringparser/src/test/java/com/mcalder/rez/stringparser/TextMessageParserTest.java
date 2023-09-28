@@ -1,8 +1,7 @@
-package com.rez.facility.parsers;
+package com.mcalder.rez.stringparser;
 
 import com.mcalder.rez.spi.Nlp;
 import com.mcalder.rez.spi.Parser;
-import com.mcalder.rez.stringparser.StringNlpParser;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;

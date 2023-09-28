@@ -1,8 +1,6 @@
-package com.rez.facility.actions;
+package com.rez.facility.reservation;
 
-import com.rez.facility.entities.ReservationEntity;
-import com.rez.facility.events.ReservationEvent;
-import com.rez.facility.entities.ResourceEntity;
+import com.rez.facility.resource.ResourceEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
@@ -20,7 +18,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ReservationInitiated event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
+        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
                 .call(ReservationEntity::runSearch).params(command);
         return effects().forward(deferredCall);
@@ -28,7 +26,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), event.facilityId(), event.reservation());
+        var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), event.facilityId(), event.reservationDto());
         var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::inquireBooking).params(command);
         return effects().forward(deferredCall);
     }

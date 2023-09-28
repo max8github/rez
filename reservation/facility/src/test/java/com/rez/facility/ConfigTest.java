@@ -1,4 +1,4 @@
-package com.rez.facility.events;
+package com.rez.facility;
 
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;

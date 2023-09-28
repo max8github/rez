@@ -1,10 +1,10 @@
-package com.rez.facility.domain;
+package com.rez.facility.reservation;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import static com.rez.facility.domain.ReservationState.State.INIT;
+import static com.rez.facility.reservation.ReservationState.State.INIT;
 
 public record ReservationState(State state, String reservationId, String facilityId, List<String> emails,
                                int currentResourceIndex, List<String> resources, LocalDateTime dateTime) {

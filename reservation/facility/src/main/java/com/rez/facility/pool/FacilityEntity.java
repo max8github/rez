@@ -1,10 +1,9 @@
-package com.rez.facility.entities;
+package com.rez.facility.pool;
 
-import com.rez.facility.events.FacilityEvent;
-import com.rez.facility.domain.Address;
-import com.rez.facility.domain.Facility;
 import com.rez.facility.dto.Reservation;
-import com.rez.facility.dto.Resource;
+import com.rez.facility.pool.dto.Address;
+import com.rez.facility.pool.dto.Facility;
+import com.rez.facility.resource.dto.Resource;
 import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -18,7 +17,7 @@ import java.util.UUID;
 @Id("facilityId")
 @TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
-public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> {
+public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Facility, FacilityEvent> {
     private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
     private final String entityId;
 
@@ -27,13 +26,13 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @Override
-    public Facility emptyState() {
-        return Facility.create(entityId).withName("noname").withAddress(new Address("nostreet", "nocity"));
+    public com.rez.facility.pool.Facility emptyState() {
+        return com.rez.facility.pool.Facility.create(entityId).withName("noname").withAddress(new com.rez.facility.pool.Address("nostreet", "nocity"));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody com.rez.facility.dto.Facility facility) {
+    public Effect<String> create(@RequestBody Facility facility) {
         log.info("created facility {}", facility.name());
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
@@ -41,7 +40,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility created(FacilityEvent.Created created) {
+    public com.rez.facility.pool.Facility created(FacilityEvent.Created created) {
         var dto = created.facility();
         return dto.toFacilityState(created.entityId());
     }
@@ -54,34 +53,34 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility renamed(FacilityEvent.Renamed renamed) {
+    public com.rez.facility.pool.Facility renamed(FacilityEvent.Renamed renamed) {
         return currentState().withName(renamed.newName());
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody com.rez.facility.dto.Address address) {
+    public Effect<String> changeAddress(@RequestBody Address address) {
         return effects()
                 .emitEvent(new FacilityEvent.AddressChanged(address))
                 .thenReply(newState -> "OK");
     }
 
     @EventHandler
-    public Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
+    public com.rez.facility.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
         return currentState().withAddress(addressChanged.address().toAddressState());
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/resource/submit")
-    public Effect<String> submitResource(@RequestBody Resource resource) {
-        String id = resource.resourceId();
+    public Effect<String> submitResource(@RequestBody Resource resourceDto) {
+        String id = resourceDto.resourceId();
         return effects()
-                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resource, id))
+                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDto, id))
                 .thenReply(newState -> id);
     }
 
     @EventHandler
-    public Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
+    public com.rez.facility.pool.Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
         return currentState();
     }
 
@@ -94,7 +93,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
+    public com.rez.facility.pool.Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
         return currentState().withResourceId(event.resourceEntityId());
     }
 
@@ -109,22 +108,22 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
+    public com.rez.facility.pool.Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
         return currentState().withoutResourceId(event.resourceEntityId());
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rez.facility.dto.Facility> getFacility() {
-        return effects().reply(com.rez.facility.dto.Facility.fromFacilityState(currentState()));
+    public Effect<Facility> getFacility() {
+        return effects().reply(Facility.fromFacilityState(currentState()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/reservation/create")
-    public Effect<String> createReservation(@RequestBody Reservation reservation) {
+    public Effect<String> createReservation(@RequestBody Reservation reservationDto) {
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
-        log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservation.dateTime());
-        FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
+        log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservationDto.dateTime());
+        FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservationDto,
                 new ArrayList<>(currentState().resourceIds()));
         log.info("Emitting event: " + reservationCreated);
         return effects()
@@ -133,7 +132,7 @@ public class FacilityEntity extends EventSourcedEntity<Facility, FacilityEvent> 
     }
 
     @EventHandler
-    public Facility reservationCreated(FacilityEvent.ReservationCreated event) {
+    public com.rez.facility.pool.Facility reservationCreated(FacilityEvent.ReservationCreated event) {
         return currentState();
     }
 }

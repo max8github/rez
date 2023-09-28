@@ -1,7 +1,4 @@
-package com.rez.facility.view;
-
-import com.rez.facility.domain.Resource;
-import com.rez.facility.events.ResourceEvent;
+package com.rez.facility.resource;
 
 import java.time.LocalDateTime;
 
@@ -9,9 +6,9 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.entityId();
-        com.rez.facility.domain.Resource resource = created.resource() == null
-                ? com.rez.facility.domain.Resource.initialize("noname", 0)
-                : created.resource().toResourceState();
+        Resource resource = created.resourceDto() == null
+                ? Resource.initialize("noname", 0)
+                : created.resourceDto().toResourceState();
         return new ResourceV(facilityId, resourceId, resource.name(), resource.timeWindow());
     }
 

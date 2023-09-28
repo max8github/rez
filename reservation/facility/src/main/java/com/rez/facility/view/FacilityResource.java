@@ -1,7 +1,7 @@
 package com.rez.facility.view;
 
 
-import com.rez.facility.domain.Address;
+import com.rez.facility.pool.Address;
 
 public record FacilityResource(
         String name,

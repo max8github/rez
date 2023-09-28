@@ -1,7 +1,5 @@
-package com.rez.facility.actions;
+package com.rez.facility.reservation;
 
-import com.rez.facility.entities.ReservationEntity;
-import com.rez.facility.events.ReservationEvent;
 import com.rez.facility.dto.Reservation;
 import com.mcalder.rez.spi.CalendarSender;
 import com.mcalder.rez.spi.NotificationSender;
@@ -111,12 +109,12 @@ public class DelegatingServiceAction extends Action {
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
-        Reservation reservation = event.reservation();
+        Reservation reservationDto = event.reservationDto();
         List<String> resourceIds = event.resourceIds();
         String facilityId = "facilityId";
         // todo: here i need: resource name (not id) and type, facility address and name (not id),
         var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, resourceIds,
-                reservation.emails(), reservation.toLocalDateTime());
+                reservationDto.emails(), reservationDto.dateTime());
         var stageGoogle = calendarSender.saveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
         return effects().asyncReply(stage);
@@ -125,7 +123,7 @@ public class DelegatingServiceAction extends Action {
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
                 event.resourceIds(),
-                event.reservation().emails(), event.reservation().toLocalDateTime());
+                event.reservationDto().emails(), event.reservationDto().dateTime());
         var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));
     }

@@ -1,4 +1,4 @@
-package com.rez.facility.domain;
+package com.rez.facility.pool;
 
 import java.util.HashSet;
 import java.util.Set;

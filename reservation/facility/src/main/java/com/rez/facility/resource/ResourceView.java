@@ -1,7 +1,5 @@
-package com.rez.facility.view;
+package com.rez.facility.resource;
 
-import com.rez.facility.entities.ResourceEntity;
-import com.rez.facility.events.ResourceEvent;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.annotations.Table;
@@ -30,7 +28,7 @@ public class ResourceView extends View<ResourceV> {
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingAccepted event) {
         String reservationId = event.reservationId();
-        return effects().updateState(viewState().withBooking(event.reservation().dateTime(), reservationId));
+        return effects().updateState(viewState().withBooking(event.reservationDto().dateTime(), reservationId));
     }
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)

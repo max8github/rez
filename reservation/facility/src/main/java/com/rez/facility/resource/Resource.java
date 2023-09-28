@@ -1,4 +1,4 @@
-package com.rez.facility.domain;
+package com.rez.facility.resource;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

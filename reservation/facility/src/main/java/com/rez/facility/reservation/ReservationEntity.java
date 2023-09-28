@@ -1,7 +1,5 @@
-package com.rez.facility.entities;
+package com.rez.facility.reservation;
 
-import com.rez.facility.events.ReservationEvent;
-import com.rez.facility.domain.ReservationState;
 import com.rez.facility.dto.Reservation;
 import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
@@ -12,7 +10,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-import static com.rez.facility.domain.ReservationState.State.*;
+import static com.rez.facility.reservation.ReservationState.State.*;
 
 @Id("reservationId")
 @TypeId("reservation")
@@ -24,6 +22,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     public ReservationEntity(EventSourcedEntityContext context) {
         this.entityId = context.entityId();
+    }
+
+    public static Reservation fromReservationState(ReservationState reservationState) {
+        return new Reservation(reservationState.emails(), reservationState.dateTime());
+    }
+
+    public static ReservationState toReservationState(Reservation dto, String reservationId, String facilityId, List<String> resources) {
+        return new ReservationState(INIT, reservationId, facilityId, dto.emails(),
+                -1, resources, dto.dateTime());
     }
 
     @Override
@@ -42,15 +49,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
             case INIT -> effects()
                     .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
-                            command.facilityId(), command.reservation(), command.resources()))
+                            command.facilityId(), command.reservationDto(), command.resources()))
                     .thenReply(newState -> command.reservationId());
         };
     }
 
     @EventHandler
     public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
-        return event.reservation()
-                .toReservationState(event.reservationId(), event.facilityId(), event.resources())
+        return toReservationState(
+                event.reservationDto(), event.reservationId(), event.facilityId(), event.resources())
                 .withState(SELECTING);
     }
 
@@ -65,12 +72,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     log.info("Reservation {} searching for availability: resource {}", command.reservationId, nextResourceId);
                     return effects()
                             .emitEvent(new ReservationEvent.ResourceSelected(nextIndex, nextResourceId,
-                                    command.reservationId(), command.facilityId(), command.reservation))
+                                    command.reservationId(), command.facilityId(), command.reservationDto))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
                             .emitEvent(new ReservationEvent.SearchExhausted(command.reservationId(),
-                                    command.facilityId(), command.reservation(), currentState().resources()))
+                                    command.facilityId(), command.reservationDto(), currentState().resources()))
                             .thenReply(newState -> "Not Available");
                 }
             case FULFILLED:
@@ -100,7 +107,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> book(@RequestBody Book command) {
         return effects()
                 .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                        command.reservationId(), command.reservation(), currentState().resources()))
+                        command.reservationId(), command.reservationDto(), currentState().resources()))
                 .thenReply(newState -> "OK, picked resource " + command.resourceId());
     }
 
@@ -151,7 +158,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                         .emitEvent(new ReservationEvent.ReservationCancelled(
                                 entityId,
                                 currentState().facilityId(),
-                                Reservation.fromReservationState(currentState()),
+                                fromReservationState(currentState()),
                                 resourceId, currentState().resources()))
                         .thenReply(newState -> entityId);
             default:
@@ -165,11 +172,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withIncrementedIndex().withState(CANCELLED);
     }
 
-    public record InitiateReservation(String reservationId, String facilityId, Reservation reservation,
+    public record InitiateReservation(String reservationId, String facilityId, Reservation reservationDto,
                                       List<String> resources) {}
 
-    public record RunSearch(String reservationId, String facilityId, Reservation reservation) {}
+    public record RunSearch(String reservationId, String facilityId, Reservation reservationDto) {}
 
-    public record Book(String resourceId, String reservationId, Reservation reservation) {}
+    public record Book(String resourceId, String reservationId, Reservation reservationDto) {}
 
 }
