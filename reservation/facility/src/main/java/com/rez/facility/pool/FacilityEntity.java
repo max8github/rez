@@ -42,7 +42,10 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
     @EventHandler
     public com.rez.facility.pool.Facility created(FacilityEvent.Created created) {
         var dto = created.facility();
-        return dto.toFacilityState(created.entityId());
+        return com.rez.facility.pool.Facility.create(created.entityId())
+                .withName(dto.name())
+                .withAddress(new com.rez.facility.pool.Address(dto.address().street(), dto.address().city()))
+                .withResourceIds(dto.resourceIds());
     }
 
     @PostMapping("/rename/{newName}")
@@ -67,7 +70,8 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
 
     @EventHandler
     public com.rez.facility.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        return currentState().withAddress(addressChanged.address().toAddressState());
+        Address address = addressChanged.address();
+        return currentState().withAddress(new com.rez.facility.pool.Address(address.street(), address.city()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -115,7 +119,10 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
     public Effect<Facility> getFacility() {
-        return effects().reply(Facility.fromFacilityState(currentState()));
+        com.rez.facility.pool.Facility facilityState = currentState();
+        com.rez.facility.pool.Address addressState = facilityState.address();
+        Address address = new Address(addressState.street(), addressState.city());
+        return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))

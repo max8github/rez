@@ -51,7 +51,8 @@ public class ResourceEntity extends EventSourcedEntity<com.rez.facility.resource
 
     @EventHandler
     public com.rez.facility.resource.Resource created(ResourceEvent.ResourceCreated resourceCreated) {
-        return resourceCreated.resourceDto().toResourceState();
+        Resource resource = resourceCreated.resourceDto();
+        return com.rez.facility.resource.Resource.initialize(resource.resourceName(), resource.size());
     }
 
     @PostMapping("/inquireBooking")

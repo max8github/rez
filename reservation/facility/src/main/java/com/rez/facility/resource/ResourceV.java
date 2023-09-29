@@ -6,9 +6,10 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.entityId();
+        com.rez.facility.resource.dto.Resource resource1 = created.resourceDto();
         Resource resource = created.resourceDto() == null
                 ? Resource.initialize("noname", 0)
-                : created.resourceDto().toResourceState();
+                : Resource.initialize(resource1.resourceName(), resource1.size());
         return new ResourceV(facilityId, resourceId, resource.name(), resource.timeWindow());
     }
 
