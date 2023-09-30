@@ -1,63 +1,132 @@
 package com.rez.facility.resource;
 
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.util.Arrays;
+import java.time.Period;
+import java.util.*;
 
 /**
  * Models a resource to be booked.
- * A resource has a name (identifying that resource within the facility) and a circular time array of
- * available slots for people to book.
- *
- * @param name       name/identifier of the resource, as it is set by the facility. Example: 'Conference Room 25'
- * @param timeWindow array of time slots, like hours in a day.
- * @param size       size of the time window
- * @param nowPointer array index that points to the slot we are in right now.
+ * A resource has:
+ * <ul>
+ *     <li>a name (identifying that resource within the facility)</li>
+ *     <li>a maximum future bookable time, setting the bookable time period</li>
+ *     <li>a Map of time -> reservation id</li>
+ * </ul>
+ * The operations are:
+ * <ul>
+ *     <li>inquire if a time is reservable</li>
+ *     <li>reserve a time</li>
+ *     <li>cancel a reservation</li>
+ * </ul>
+ * When inquiring, a peek on the key, the iso date-time, needs to be checked on the Map.
+ * When reserving, validation is performed first and then the datetime key is put into the Map with the reservation
+ * id as the value.
+ * <br>
+ * The validation when reserving is about time period and key.
+ * The key needs to be set correct depending on policy. For example, if a reservation's datetime is
+ * 2023-09-28T08:07, and only full hours are bookable, then the key 2023-09-28T08:07 needs to be automatically corrected
+ * and transformed to 2023-09-28T08:00.
+ * The datetime needs to be also within the timeframe allowed for reservations.
  */
-public record ResourceState(String name, String[] timeWindow, int size, int nowPointer) {
+@Accessors(fluent = true)
+public class ResourceState {
+    @Getter
+    private final String name;
+    private final SortedMap<LocalDateTime, String> map;
+    private final Period period;
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
-    public static ResourceState initialize(String name, int size) {
-        String[] tw = new String[size];
-        Arrays.fill(tw, "");
-        return new ResourceState(name, tw, size, 0);
+
+    public ResourceState(String name) {
+        this.name = name;
+        this.map = new TreeMap<>();
+        this.period = Period.ofMonths(3);
     }
-    public ResourceState withTimeWindow(int timeSlot, String reservationId) {
-        if (timeSlot < timeWindow.length)
-            this.timeWindow[timeSlot] = reservationId;
-        return this;
+
+    public static ResourceState initialize(String name) {
+        return new ResourceState(name);
     }
+    public ResourceState set(LocalDateTime dateTime, String reservationId) {
+        if (dateTime.isBefore(LocalDateTime.now().plus(period))) {
+            map.put(roundToValidTime(dateTime), reservationId);
+            return this;
+        } else {
+            throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
+                    "Reservation can be taken from today until " + LocalDateTime.now().plus(period));
+        }
+    }
+
+    public boolean fitsInto(LocalDateTime dateTime) {
+        LocalDateTime key = roundToValidTime(dateTime);
+        return dateTime.isBefore(LocalDateTime.now().plus(period)) && !map.containsKey(key);
+    }
+
+    private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
+        if (dateTime.getMinute() == 0 && dateTime.getSecond() == 0) return dateTime;
+        int minute = dateTime.getMinute();
+        LocalDateTime oClock = dateTime.minusMinutes(minute).minusSeconds(dateTime.getSecond());
+        return (minute < 30) ? oClock : oClock.plusHours(1);
+    }
+
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        int timeSlot = toTimeSlot(dateTime);
-        if (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty()) {
-            log.warn("reservation {} was not present or it was already cancelled in time slot {}", reservationId, timeSlot);
-        } else if(!timeWindow[timeSlot].equals(reservationId)) {
-            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found on time slot {}",
-                    reservationId, timeWindow[timeSlot], timeSlot);
+        LocalDateTime key = roundToValidTime(dateTime);
+        if (!map.containsKey(key)) {
+            log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
+        } else if(!map.get(key).equals(reservationId)) {
+            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found for time {}",
+                    reservationId, map.get(key), dateTime);
             throw new IllegalStateException("Cancellation of wrong reservation");
         } else {
-            String oldRezId = timeWindow[timeSlot];
-            log.info("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
-            timeWindow[timeSlot] = "";
+            String oldRezId = map.get(key);
+            log.debug("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
+            log.info("Reservation {} was removed from resource {} for time {}", reservationId, name, key);
+            map.remove(key);
         }
         return this;
     }
 
-    //todo: it is not like this in general (could be broken in half hours, quarters, etc). timeSlot is an implementation
-    //detail of Resource, it should not surface here. In the end, a Resource is probably just a list of reservations
-    //and for that, it should just print those out, when inquired about its state.
-    public static int toTimeSlot(LocalDateTime dateTime) {
-        return dateTime.getHour();
+    String printMap() {
+        return "" + new PrettyPrintingMap<>(map);
     }
 
     @Override
     public String toString() {
-        return "Resource{" +
+        return "ResourceState{" +
                 "name='" + name + '\'' +
-                ", timeWindow=" + Arrays.toString(timeWindow) +
-                ", size=" + size +
-                ", nowPointer=" + nowPointer +
+                ", map=" + printMap() +
                 '}';
+    }
+
+    public Map<LocalDateTime, String> timeWindow() {
+        return map;
+    }
+
+    static class PrettyPrintingMap<K, V> {
+        private final Map<K, V> map;
+
+        public PrettyPrintingMap(Map<K, V> map) {
+            this.map = map;
+        }
+
+        public String toString() {
+            StringBuilder sb = new StringBuilder();
+            sb.append("\t\n");
+            Iterator<Map.Entry<K, V>> iter = map.entrySet().iterator();
+            while (iter.hasNext()) {
+                Map.Entry<K, V> entry = iter.next();
+                sb.append(entry.getKey());
+                sb.append(" = ");
+                sb.append(entry.getValue());
+                if (iter.hasNext()) {
+                    sb.append("\t\n");
+                }
+            }
+            return sb.toString();
+
+        }
     }
 }

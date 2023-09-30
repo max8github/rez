@@ -22,24 +22,9 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         this.entityId = context.entityId();
     }
 
-    //todo: it is not like this in general (could be broken in half hours, quarters, etc)
-    public static int toTimeSlot(Reservation dto) {
-        return dto.dateTime().toLocalTime().getHour();
-    }
-
-    public static boolean fitsInto(Reservation dto, ResourceState r) {
-        if (toTimeSlot(dto) < r.timeWindow().length)
-            return r.timeWindow()[toTimeSlot(dto)].isEmpty();
-        else return false;
-    }
-
-    public static ResourceState setInto(Reservation dto, ResourceState r, String reservationId) {
-        return r.withTimeWindow(toTimeSlot(dto), reservationId);
-    }
-
     @Override
     public ResourceState emptyState() {
-        return ResourceState.initialize(entityId, 24);
+        return ResourceState.initialize(entityId);
     }
 
     @PostMapping("/create")
@@ -52,12 +37,12 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     @EventHandler
     public ResourceState created(ResourceEvent.ResourceCreated resourceCreated) {
         Resource resource = resourceCreated.resourceDto();
-        return ResourceState.initialize(resource.resourceName(), resource.size());
+        return ResourceState.initialize(resource.resourceName());
     }
 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
-        if(fitsInto(command.reservationDto(), currentState())) {
+        if(currentState().fitsInto(command.reservationDto().dateTime())) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
@@ -90,7 +75,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @EventHandler
     public ResourceState bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return setInto(event.reservationDto(), currentState(), event.reservationId());
+        return currentState().set(event.reservationDto().dateTime(), event.reservationId());
     }
 
     @EventHandler
