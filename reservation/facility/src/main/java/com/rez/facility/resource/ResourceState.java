@@ -16,19 +16,19 @@ import java.util.Arrays;
  * @param size       size of the time window
  * @param nowPointer array index that points to the slot we are in right now.
  */
-public record Resource(String name, String[] timeWindow, int size, int nowPointer) {
-    private static final Logger log = LoggerFactory.getLogger(Resource.class);
-    public static Resource initialize(String name, int size) {
+public record ResourceState(String name, String[] timeWindow, int size, int nowPointer) {
+    private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
+    public static ResourceState initialize(String name, int size) {
         String[] tw = new String[size];
         Arrays.fill(tw, "");
-        return new Resource(name, tw, size, 0);
+        return new ResourceState(name, tw, size, 0);
     }
-    public Resource withTimeWindow(int timeSlot, String reservationId) {
+    public ResourceState withTimeWindow(int timeSlot, String reservationId) {
         if (timeSlot < timeWindow.length)
             this.timeWindow[timeSlot] = reservationId;
         return this;
     }
-    public Resource cancel(LocalDateTime dateTime, String reservationId) {
+    public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
         int timeSlot = toTimeSlot(dateTime);
         if (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty()) {
             log.warn("reservation {} was not present or it was already cancelled in time slot {}", reservationId, timeSlot);
