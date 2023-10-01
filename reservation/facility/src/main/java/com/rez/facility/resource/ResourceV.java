@@ -1,17 +1,16 @@
 package com.rez.facility.resource;
 
 import java.time.LocalDateTime;
-import java.util.Set;
+import java.util.SortedSet;
+import java.util.TreeSet;
 
-public record ResourceV(String facilityId, String resourceId, String resourceName, Set<String> timeWindow) {
+public record ResourceV(String facilityId, String resourceId, String resourceName, SortedSet<ResourceState.Entry> timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.entityId();
         com.rez.facility.resource.dto.Resource resourceDto = created.resourceDto();
-        ResourceState resourceState = resourceDto == null
-                ? ResourceState.initialize("noname")
-                : ResourceState.initialize(resourceDto.resourceName());
-        return new ResourceV(facilityId, resourceId, resourceState.name(), resourceState.timeWindow());
+        String name = resourceDto == null ? "noname" : resourceDto.resourceName();
+        return new ResourceV(facilityId, resourceId, name, new TreeSet<>());
     }
 
 //    private static Map<LocalDateTime, String> fromListToMap(List<Map.Entry<LocalDateTime, String>> list) {
@@ -21,12 +20,12 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
 //    }
 
     ResourceV withBooking(LocalDateTime dateTime, String fill) {
-        timeWindow.add(ResourceState.entry(dateTime, fill));
+        timeWindow.add(new ResourceState.Entry(dateTime.toString(), fill));
         return this;
     }
 
     ResourceV withoutBooking (LocalDateTime dateTime, String reservationId){
-        this.timeWindow.remove(ResourceState.entry(dateTime, reservationId));
+        this.timeWindow.remove(new ResourceState.Entry(dateTime.toString(), reservationId));
         return this;
     }
 }
