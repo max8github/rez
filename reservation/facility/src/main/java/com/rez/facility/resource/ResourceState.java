@@ -7,10 +7,9 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.Comparator;
-import java.util.Objects;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.Map;
+import java.util.SortedMap;
+import java.util.TreeMap;
 
 /**
  * Models a resource to be booked.
@@ -40,13 +39,13 @@ import java.util.TreeSet;
 public class ResourceState {
     @Getter
     private final String name;
-    private final SortedSet<Entry> map;
+    private final SortedMap<String, String> map;
     private final Period period;
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
     public ResourceState(String name) {
         this.name = name;
-        this.map = new TreeSet<>();
+        this.map = new TreeMap<>();
         this.period = Period.ofMonths(3);
     }
 
@@ -55,7 +54,7 @@ public class ResourceState {
     }
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
         if (dateTime.isBefore(LocalDateTime.now().plus(period))) {
-            map.add(new Entry(roundToValidTime(dateTime).toString(), reservationId));
+            map.put(roundToValidTime(dateTime).toString(), reservationId);
             return this;
         } else {
             throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
@@ -63,9 +62,9 @@ public class ResourceState {
         }
     }
 
-    public boolean fitsInto(LocalDateTime dateTime, String reservationId) {
+    public boolean fitsInto(LocalDateTime dateTime) {
         LocalDateTime key = roundToValidTime(dateTime);
-        return dateTime.isBefore(LocalDateTime.now().plus(period)) && !map.contains(new Entry(key.toString(), reservationId));
+        return key.isBefore(LocalDateTime.now().plus(period)) && !map.containsKey(key.toString());
     }
 
     private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
@@ -76,12 +75,18 @@ public class ResourceState {
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime key = roundToValidTime(dateTime);
-        if (!map.contains(new Entry(key.toString(), reservationId))) {
+        String key = roundToValidTime(dateTime).toString();
+        if (!map.containsKey(key)) {
             log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
+        } else if(!map.get(key).equals(reservationId)) {
+            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found for time {}",
+                    reservationId, map.get(key), dateTime);
+            throw new IllegalStateException("Cancellation of wrong reservation");
         } else {
+            String oldRezId = map.get(key);
+            log.debug("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
             log.info("Reservation {} was removed from resource {} for time {}", reservationId, name, key);
-            map.remove(new Entry(key.toString(), reservationId));
+            map.remove(key);
         }
         return this;
     }
@@ -94,15 +99,8 @@ public class ResourceState {
                 '}';
     }
 
-    public SortedSet<Entry> timeWindow() {
+    public Map<String, String> timeWindow() {
         return map;
     }
 
-    record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
-        @Override
-        public int compareTo(Entry that) {
-            return Objects.compare(this, that,
-                    Comparator.comparing(Entry::dateTime));
-        }
-    }
 }
