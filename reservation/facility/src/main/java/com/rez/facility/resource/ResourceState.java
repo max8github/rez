@@ -39,7 +39,7 @@ import java.util.TreeMap;
 public class ResourceState {
     @Getter
     private final String name;
-    private final SortedMap<String, String> map;
+    private final SortedMap<LocalDateTime, String> map;
     private final Period period;
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
@@ -54,7 +54,7 @@ public class ResourceState {
     }
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
         if (dateTime.isBefore(LocalDateTime.now().plus(period))) {
-            map.put(roundToValidTime(dateTime).toString(), reservationId);
+            map.put(roundToValidTime(dateTime), reservationId);
             return this;
         } else {
             throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
@@ -64,7 +64,7 @@ public class ResourceState {
 
     public boolean fitsInto(LocalDateTime dateTime) {
         LocalDateTime key = roundToValidTime(dateTime);
-        return key.isBefore(LocalDateTime.now().plus(period)) && !map.containsKey(key.toString());
+        return key.isBefore(LocalDateTime.now().plus(period)) && !map.containsKey(key);
     }
 
     private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
@@ -75,7 +75,7 @@ public class ResourceState {
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        String key = roundToValidTime(dateTime).toString();
+        LocalDateTime key = roundToValidTime(dateTime);
         if (!map.containsKey(key)) {
             log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
         } else if(!map.get(key).equals(reservationId)) {
@@ -99,7 +99,7 @@ public class ResourceState {
                 '}';
     }
 
-    public Map<String, String> timeWindow() {
+    public Map<LocalDateTime, String> timeWindow() {
         return map;
     }
 
