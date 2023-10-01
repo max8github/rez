@@ -101,8 +101,12 @@ public class ResourceState {
                 '}';
     }
 
-    public Map<LocalDateTime, String> timeWindow() {
-        return map;
+    public List<String[]> timeWindow() {
+        return fromMapToArray(map);
+    }
+
+    static List<String[]> fromMapToArray(Map<LocalDateTime, String> map) {
+        return map.entrySet().stream().toList().stream().map(e -> new String[]{e.getKey().toString(), e.getValue()}).toList();
     }
 
     static class PrettyPrintingMap<K, V> {

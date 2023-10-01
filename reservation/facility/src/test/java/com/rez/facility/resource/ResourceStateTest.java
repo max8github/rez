@@ -4,6 +4,8 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
+import java.util.*;
+import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -38,5 +40,22 @@ class ResourceStateTest {
         LocalDateTime now = LocalDateTime.now();
         r.set(now, "1000");
         Assertions.assertFalse(r.fitsInto(now));
+    }
+
+    @Test
+    void testViewConversions() {
+        List<Map.Entry<LocalDateTime, String>> lt = new ArrayList<>();
+        lt.add(Map.entry(LocalDateTime.now(), "123"));
+        lt.add(Map.entry(LocalDateTime.now(), "300"));
+        lt.add(Map.entry(LocalDateTime.now(), "400"));
+
+        TreeMap<LocalDateTime, String> map = lt.stream().collect(
+                        Collectors.toMap(Map.Entry::getKey, Map.Entry::getValue, (x, y) -> x + ", " + y,
+                                        TreeMap::new));
+        System.out.println("map = " + map);
+
+        //reverse
+        List<Map.Entry<LocalDateTime, String>> list = map.entrySet().stream().toList();
+        System.out.println("list = " + list);
     }
 }

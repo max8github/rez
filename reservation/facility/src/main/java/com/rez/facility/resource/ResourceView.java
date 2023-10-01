@@ -38,6 +38,6 @@ public class ResourceView extends View<ResourceV> {
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingCanceled cancellation) {
-        return effects().updateState(viewState().withoutBooking(cancellation.dateTime()));
+        return effects().updateState(viewState().withoutBooking(cancellation.dateTime(), cancellation.reservationId()));
     }
 }
