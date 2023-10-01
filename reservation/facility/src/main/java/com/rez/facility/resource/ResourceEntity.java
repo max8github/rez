@@ -14,7 +14,7 @@ import java.time.LocalDateTime;
 @Id("resource_id")
 @TypeId("resource")
 @RequestMapping("/resource/{resource_id}")
-public class ResourceEntity extends EventSourcedEntity<com.rez.facility.resource.Resource, ResourceEvent> {
+public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEvent> {
     private static final Logger log = LoggerFactory.getLogger(ResourceEntity.class);
     private final String entityId;
 
@@ -22,24 +22,9 @@ public class ResourceEntity extends EventSourcedEntity<com.rez.facility.resource
         this.entityId = context.entityId();
     }
 
-    //todo: it is not like this in general (could be broken in half hours, quarters, etc)
-    public static int toTimeSlot(Reservation dto) {
-        return dto.dateTime().toLocalTime().getHour();
-    }
-
-    public static boolean fitsInto(Reservation dto, com.rez.facility.resource.Resource r) {
-        if (toTimeSlot(dto) < r.timeWindow().length)
-            return r.timeWindow()[toTimeSlot(dto)].isEmpty();
-        else return false;
-    }
-
-    public static com.rez.facility.resource.Resource setInto(Reservation dto, com.rez.facility.resource.Resource r, String reservationId) {
-        return r.withTimeWindow(toTimeSlot(dto), reservationId);
-    }
-
     @Override
-    public com.rez.facility.resource.Resource emptyState() {
-        return com.rez.facility.resource.Resource.initialize(entityId, 24);
+    public ResourceState emptyState() {
+        return ResourceState.initialize(entityId);
     }
 
     @PostMapping("/create")
@@ -50,13 +35,14 @@ public class ResourceEntity extends EventSourcedEntity<com.rez.facility.resource
     }
 
     @EventHandler
-    public com.rez.facility.resource.Resource created(ResourceEvent.ResourceCreated resourceCreated) {
-        return resourceCreated.resourceDto().toResourceState();
+    public ResourceState created(ResourceEvent.ResourceCreated resourceCreated) {
+        Resource resource = resourceCreated.resourceDto();
+        return ResourceState.initialize(resource.resourceName());
     }
 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
-        if(fitsInto(command.reservationDto(), currentState())) {
+        if(currentState().fitsInto(command.reservationDto().dateTime())) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
@@ -83,23 +69,23 @@ public class ResourceEntity extends EventSourcedEntity<com.rez.facility.resource
     }
 
     @EventHandler
-    public com.rez.facility.resource.Resource bookingCanceled(ResourceEvent.BookingCanceled event) {
+    public ResourceState bookingCanceled(ResourceEvent.BookingCanceled event) {
         return currentState().cancel(event.dateTime(), event.reservationId());
     }
 
     @EventHandler
-    public com.rez.facility.resource.Resource bookingAccepted(ResourceEvent.BookingAccepted event) {
-        return setInto(event.reservationDto(), currentState(), event.reservationId());
+    public ResourceState bookingAccepted(ResourceEvent.BookingAccepted event) {
+        return currentState().set(event.reservationDto().dateTime(), event.reservationId());
     }
 
     @EventHandler
-    public com.rez.facility.resource.Resource bookingRejected(ResourceEvent.BookingRejected event) {
+    public ResourceState bookingRejected(ResourceEvent.BookingRejected event) {
         return currentState();
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rez.facility.resource.Resource> getResource() {
+    public Effect<ResourceState> getResource() {
         return effects().reply(currentState());
     }
 

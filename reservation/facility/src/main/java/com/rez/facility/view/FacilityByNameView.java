@@ -2,6 +2,7 @@ package com.rez.facility.view;
 
 import com.rez.facility.pool.FacilityEntity;
 import com.rez.facility.pool.FacilityEvent;
+import com.rez.facility.pool.dto.Address;
 import kalix.javasdk.view.View;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
@@ -23,9 +24,10 @@ public class FacilityByNameView extends View<FacilityV> {
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
     public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
+        Address address = created.facility().address();
         return effects().updateState(new FacilityV(
                 created.facility().name(),
-                created.facility().address().toAddressState(),
+                new com.rez.facility.pool.Address(address.street(), address.city()),
                 created.entityId()));
     }
 
@@ -36,7 +38,8 @@ public class FacilityByNameView extends View<FacilityV> {
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
     public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
-        return effects().updateState(viewState().withAddress(event.address().toAddressState()));
+        Address address = event.address();
+        return effects().updateState(viewState().withAddress(new com.rez.facility.pool.Address(address.street(), address.city())));
     }
 
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
