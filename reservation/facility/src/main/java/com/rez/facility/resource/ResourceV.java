@@ -1,9 +1,9 @@
 package com.rez.facility.resource;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
-public record ResourceV(String facilityId, String resourceId, String resourceName, List<String[]> timeWindow) {
+public record ResourceV(String facilityId, String resourceId, String resourceName, Set<String> timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.entityId();
@@ -21,12 +21,12 @@ public record ResourceV(String facilityId, String resourceId, String resourceNam
 //    }
 
     ResourceV withBooking(LocalDateTime dateTime, String fill) {
-        timeWindow.add(new String[]{dateTime.toString(), fill});
+        timeWindow.add(ResourceState.entry(dateTime, fill));
         return this;
     }
 
     ResourceV withoutBooking (LocalDateTime dateTime, String reservationId){
-        this.timeWindow.remove(new String[]{dateTime.toString(), reservationId});
+        this.timeWindow.remove(ResourceState.entry(dateTime, reservationId));
         return this;
     }
 }

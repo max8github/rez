@@ -37,13 +37,13 @@ import java.util.*;
 public class ResourceState {
     @Getter
     private final String name;
-    private final SortedMap<LocalDateTime, String> map;
+    private final SortedSet<String> map;
     private final Period period;
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
     public ResourceState(String name) {
         this.name = name;
-        this.map = new TreeMap<>();
+        this.map = new TreeSet<>();
         this.period = Period.ofMonths(3);
     }
 
@@ -52,7 +52,7 @@ public class ResourceState {
     }
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
         if (dateTime.isBefore(LocalDateTime.now().plus(period))) {
-            map.put(roundToValidTime(dateTime), reservationId);
+            map.add(entry(roundToValidTime(dateTime), reservationId));
             return this;
         } else {
             throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
@@ -60,9 +60,9 @@ public class ResourceState {
         }
     }
 
-    public boolean fitsInto(LocalDateTime dateTime) {
+    public boolean fitsInto(LocalDateTime dateTime, String reservationId) {
         LocalDateTime key = roundToValidTime(dateTime);
-        return dateTime.isBefore(LocalDateTime.now().plus(period)) && !map.containsKey(key);
+        return dateTime.isBefore(LocalDateTime.now().plus(period)) && !map.contains(entry(key, reservationId));
     }
 
     private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
@@ -72,65 +72,30 @@ public class ResourceState {
         return (minute < 30) ? oClock : oClock.plusHours(1);
     }
 
-    public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime key = roundToValidTime(dateTime);
-        if (!map.containsKey(key)) {
-            log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
-        } else if(!map.get(key).equals(reservationId)) {
-            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found for time {}",
-                    reservationId, map.get(key), dateTime);
-            throw new IllegalStateException("Cancellation of wrong reservation");
-        } else {
-            String oldRezId = map.get(key);
-            log.debug("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
-            log.info("Reservation {} was removed from resource {} for time {}", reservationId, name, key);
-            map.remove(key);
-        }
-        return this;
+    static String entry(LocalDateTime key, String value) {
+        return key.toString() + "-" + value;
     }
 
-    String printMap() {
-        return "" + new PrettyPrintingMap<>(map);
+    public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
+        LocalDateTime key = roundToValidTime(dateTime);
+        if (!map.contains(entry(key, reservationId))) {
+            log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
+        } else {
+            log.info("Reservation {} was removed from resource {} for time {}", reservationId, name, key);
+            map.remove(entry(key, reservationId));
+        }
+        return this;
     }
 
     @Override
     public String toString() {
         return "ResourceState{" +
                 "name='" + name + '\'' +
-                ", map=" + printMap() +
+                ", map=" + map +
                 '}';
     }
 
-    public List<String[]> timeWindow() {
-        return fromMapToArray(map);
-    }
-
-    static List<String[]> fromMapToArray(Map<LocalDateTime, String> map) {
-        return map.entrySet().stream().toList().stream().map(e -> new String[]{e.getKey().toString(), e.getValue()}).toList();
-    }
-
-    static class PrettyPrintingMap<K, V> {
-        private final Map<K, V> map;
-
-        public PrettyPrintingMap(Map<K, V> map) {
-            this.map = map;
-        }
-
-        public String toString() {
-            StringBuilder sb = new StringBuilder();
-            sb.append("\t\n");
-            Iterator<Map.Entry<K, V>> iter = map.entrySet().iterator();
-            while (iter.hasNext()) {
-                Map.Entry<K, V> entry = iter.next();
-                sb.append(entry.getKey());
-                sb.append(" = ");
-                sb.append(entry.getValue());
-                if (iter.hasNext()) {
-                    sb.append("\t\n");
-                }
-            }
-            return sb.toString();
-
-        }
+    public Set<String> timeWindow() {
+        return map;
     }
 }

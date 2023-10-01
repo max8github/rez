@@ -18,19 +18,20 @@ class ResourceStateTest {
         r.set(now, "1000");
         r.set(now.plusHours(1), "2000");
         System.out.println("r = " + r);
-        System.out.println("r.timeWindow() = " + r.printMap());
+        System.out.println("r.timeWindow() = " + r.timeWindow());
     }
 
     @Test
     void testSet() {
         ResourceState r = ResourceState.initialize("hotel1");
         LocalDateTime now = LocalDateTime.now();
-        assertTrue(r.fitsInto(now));
-        r.set(now, "1000");
-        r.set(now, "1000");
-        Assertions.assertFalse(r.fitsInto(now));
+        String reservationId = "1000";
+        assertTrue(r.fitsInto(now, reservationId));
+        r.set(now, reservationId);
+        r.set(now, reservationId);
+        Assertions.assertFalse(r.fitsInto(now, reservationId));
         Assertions.assertEquals(1, r.timeWindow().size());
-        r.set(now.plusHours(1), "1000");
+        r.set(now.plusHours(1), reservationId);
         Assertions.assertEquals(2, r.timeWindow().size());
     }
 
@@ -38,8 +39,9 @@ class ResourceStateTest {
     void testFits() {
         ResourceState r = ResourceState.initialize("hotel1");
         LocalDateTime now = LocalDateTime.now();
-        r.set(now, "1000");
-        Assertions.assertFalse(r.fitsInto(now));
+        String reservationId = "1000";
+        r.set(now, reservationId);
+        Assertions.assertFalse(r.fitsInto(now, reservationId));
     }
 
     @Test
