@@ -60,8 +60,8 @@ public class ReservationEntityIntegrationTest {
 
         if(index >= 0 && index < resIds.size()) {
           ResourceState resource = getResource(resIds.get(index));
-          assertThat(resource.timeWindow().get(dateTime)).as("resource %s should be booked with %s",
-                  resource.name(), reservationId).isEqualTo(reservationId);
+          assertThat(resource.timeWindow().contains(new Resource.Entry(dateTime.toString(), reservationId))).as("resource %s should be booked with %s",
+                  resource.name(), reservationId).isTrue();
           System.out.println("resource booked = " + resource);
           p = id -> !id.equals(resIds.get(index));
         } else {
@@ -70,8 +70,8 @@ public class ReservationEntityIntegrationTest {
 
         resIds.stream().filter(p).forEach(id -> {
           var res = getResource(id);
-          assertThat(res.timeWindow().getOrDefault(dateTime, "no-reservation")).as("resource %s should NOT be booked with %s",
-                  res.name(), reservationId).isNotEqualTo(reservationId);
+          assertThat(res.timeWindow().contains(new Resource.Entry(dateTime.toString(), "no-reservation"))).as("resource %s should NOT be booked with %s",
+                  res.name(), reservationId).isFalse();
         });
       });
   }

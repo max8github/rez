@@ -32,6 +32,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
     }
 
 
+    @SuppressWarnings("rawtypes")
     @Override
     public WorkflowDef<ReservationState> definition() {
         Step search = step("search").call(RunSearch.class, c -> {

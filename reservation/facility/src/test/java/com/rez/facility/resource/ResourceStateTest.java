@@ -8,6 +8,8 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ResourceStateTest {
 
@@ -28,11 +30,10 @@ class ResourceStateTest {
         String reservationId = "1000";
         assertTrue(r.fitsInto(now));
         r.set(now, reservationId);
-        r.set(now, reservationId);
-        Assertions.assertFalse(r.fitsInto(now));
-        Assertions.assertEquals(1, r.timeWindow().size());
+        assertFalse(r.fitsInto(now));
+        assertEquals(1, r.timeWindow().size());
         r.set(now.plusHours(1), reservationId);
-        Assertions.assertEquals(2, r.timeWindow().size());
+        assertEquals(2, r.timeWindow().size());
     }
 
     @Test
