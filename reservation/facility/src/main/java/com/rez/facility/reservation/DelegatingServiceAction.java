@@ -107,12 +107,12 @@ public class DelegatingServiceAction extends Action {
     }
 
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
-        var resourceId = event.resourceId();
-        String reservationId = event.reservationId();
         Reservation reservationDto = event.reservationDto();
+        String reservationId = event.reservationId();
         List<String> resourceIds = event.resourceIds();
-        String facilityId = "facilityId";
-        // todo: here i need: resource name (not id) and type, facility address and name (not id),
+        // todo: here i need the resource and facility details, not their ids:
+        String resourceId = event.resourceId();
+        String facilityId = event.facilityId();
         var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, resourceIds,
                 reservationDto.emails(), reservationDto.dateTime());
         var stageGoogle = calendarSender.saveToGoogle(eventDetails);

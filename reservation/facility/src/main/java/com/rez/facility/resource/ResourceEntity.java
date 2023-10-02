@@ -34,6 +34,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState created(ResourceEvent.ResourceCreated resourceCreated) {
         Resource resource = resourceCreated.resourceDto();
@@ -45,13 +46,13 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         if(currentState().fitsInto(command.reservationDto().dateTime())) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
+                    .emitEvent(new ResourceEvent.BookingAccepted(entityId, command.reservationId(),
                             command.facilityId(), command.reservationDto()))
                     .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(),
+                    .emitEvent(new ResourceEvent.BookingRejected(entityId, command.reservationId(),
                             command.facilityId(), command.reservationDto()
                     ))
                     .thenReply(newState -> "UNAVAILABLE");
@@ -68,16 +69,19 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingCanceled(ResourceEvent.BookingCanceled event) {
         return currentState().cancel(event.dateTime(), event.reservationId());
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingAccepted(ResourceEvent.BookingAccepted event) {
         return currentState().set(event.reservationDto().dateTime(), event.reservationId());
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingRejected(ResourceEvent.BookingRejected event) {
         return currentState();
@@ -91,6 +95,5 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
 
-    //todo: value obj
-    public record InquireBooking(String resourceId, String reservationId, String facilityId, Reservation reservationDto) {}
+    public record InquireBooking(String reservationId, String facilityId, Reservation reservationDto) {}
 }

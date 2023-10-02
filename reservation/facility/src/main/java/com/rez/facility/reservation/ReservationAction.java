@@ -7,6 +7,7 @@ import kalix.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+@SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class ReservationAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(ReservationAction.class);
@@ -18,7 +19,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ReservationInitiated event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
+        var command = new ReservationEntity.RunSearch(event.facilityId(), event.reservationDto());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
                 .call(ReservationEntity::runSearch).params(command);
         return effects().forward(deferredCall);
@@ -26,7 +27,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.InquireBooking(resourceId, event.reservationId(), event.facilityId(), event.reservationDto());
+        var command = new ResourceEntity.InquireBooking(event.reservationId(), event.facilityId(), event.reservationDto());
         var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::inquireBooking).params(command);
         return effects().forward(deferredCall);
     }

@@ -40,7 +40,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @PostMapping("/init")
     public Effect<String> init(@RequestBody InitiateReservation command) {
-        log.info("Created reservation {} entity", command.reservationId);
+        log.info("Created reservation entity with reservation id {}", entityId);
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
             case UNAVAILABLE ->
@@ -48,12 +48,13 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case FULFILLED -> effects().reply("Reservation was accepted: cannot be reinitialized");
             case SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
             case INIT -> effects()
-                    .emitEvent(new ReservationEvent.ReservationInitiated(command.reservationId(),
+                    .emitEvent(new ReservationEvent.ReservationInitiated(entityId,
                             command.facilityId(), command.reservationDto(), command.resources()))
-                    .thenReply(newState -> command.reservationId());
+                    .thenReply(newState -> entityId);
         };
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
         return toReservationState(
@@ -69,34 +70,36 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 var nextIndex = currentState().currentResourceIndex() + 1;
                 if(currentState().resources().size() > nextIndex) {
                     var nextResourceId = currentState().resources().get(nextIndex);
-                    log.info("Reservation {} searching for availability: resource {}", command.reservationId, nextResourceId);
+                    log.info("Reservation {} searching for availability: resource {}", entityId, nextResourceId);
                     return effects()
                             .emitEvent(new ReservationEvent.ResourceSelected(nextIndex, nextResourceId,
-                                    command.reservationId(), command.facilityId(), command.reservationDto))
+                                    entityId, command.facilityId(), command.reservationDto))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
-                            .emitEvent(new ReservationEvent.SearchExhausted(command.reservationId(),
+                            .emitEvent(new ReservationEvent.SearchExhausted(entityId,
                                     command.facilityId(), command.reservationDto(), currentState().resources()))
                             .thenReply(newState -> "Not Available");
                 }
             case FULFILLED:
             case CANCELLED:
             case UNAVAILABLE:
-                return effects().error("Reservation " + command.reservationId()
+                return effects().error("Reservation " + entityId
                         + "is completed for facility id " + command.facilityId());
             default:
-                return effects().error("This should never happen for reservation entity " + command.reservationId()
+                return effects().error("This should never happen for reservation entity " + entityId
                         + "facility id " + command.facilityId());
 
         }
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
         return currentState().withIncrementedIndex().withState(SELECTING);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
         log.info("Search exhausted for reservation {}: UNAVAILABLE ", event.reservationId());
@@ -107,10 +110,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> book(@RequestBody Book command) {
         return effects()
                 .emitEvent(new ReservationEvent.Booked(command.resourceId(),
-                        command.reservationId(), command.reservationDto(), currentState().resources()))
+                        entityId, command.reservationDto(), currentState().resources(), command.facilityId()))
                 .thenReply(newState -> "OK, picked resource " + command.resourceId());
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState booked(ReservationEvent.Booked event) {
         log.info("Reservation {} booked in resource {}", event.reservationId(), event.resourceId());
@@ -126,16 +130,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @DeleteMapping("/cancelRequest")
     public Effect<String> cancelRequest() {
         log.info("Cancelling reservation {} requested", entityId);
-        switch (currentState().state()) {
-            case FULFILLED:
+        return switch (currentState().state()) {
+            case FULFILLED, SELECTING -> {
                 String resourceId = getResourceIdFromState();
-                return effects()
+                yield effects()
                         .emitEvent(new ReservationEvent.CancelRequested(entityId,
                                 currentState().facilityId(), resourceId, currentState().dateTime()))
                         .thenReply(newState -> entityId);
-            default:
-                return effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
-        }
+            }
+            default ->
+                    effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
+        };
     }
 
     private String getResourceIdFromState() {
@@ -143,6 +148,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return state.resources().get(state.currentResourceIndex() - 1);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState cancelRequested(ReservationEvent.CancelRequested event) {
         return currentState();
@@ -152,7 +158,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> cancel() {
         log.info("Cancelling of reservation {} is confirmed", entityId);
         switch (currentState().state()) {//todo: states here ok in the FSM workings?
-            case FULFILLED:
+            case FULFILLED, SELECTING -> {
                 String resourceId = getResourceIdFromState();
                 return effects()
                         .emitEvent(new ReservationEvent.ReservationCancelled(
@@ -161,22 +167,25 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                                 fromReservationState(currentState()),
                                 resourceId, currentState().resources()))
                         .thenReply(newState -> entityId);
-            default:
+            }
+            default -> {
                 return effects().error("reservation entity " + entityId + " was not in fulfilled state");
+            }
         }
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ReservationState reservationCancelled(ReservationEvent.ReservationCancelled event) {
         log.info("Reservation {} cancelled from resource {}", event.reservationId(), event.resourceId());
         return currentState().withIncrementedIndex().withState(CANCELLED);
     }
 
-    public record InitiateReservation(String reservationId, String facilityId, Reservation reservationDto,
+    public record InitiateReservation(String facilityId, Reservation reservationDto,
                                       List<String> resources) {}
 
-    public record RunSearch(String reservationId, String facilityId, Reservation reservationDto) {}
+    public record RunSearch(String facilityId, Reservation reservationDto) {}
 
-    public record Book(String resourceId, String reservationId, Reservation reservationDto) {}
+    public record Book(String resourceId, Reservation reservationDto, String facilityId) {}
 
 }
