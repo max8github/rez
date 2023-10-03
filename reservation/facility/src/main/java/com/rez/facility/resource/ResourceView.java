@@ -21,7 +21,7 @@ public class ResourceView extends View<ResourceV> {
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
         String id = updateContext().eventSubject().orElse("");
-        assert id.equals(created.entityId());
+        assert id.equals(created.resourceId());
         return effects().updateState(ResourceV.initialize(created));
     }
 
@@ -38,6 +38,6 @@ public class ResourceView extends View<ResourceV> {
 
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingCanceled cancellation) {
-        return effects().updateState(viewState().withoutBooking(cancellation.dateTime(), cancellation.reservationId()));
+        return effects().updateState(viewState().withoutBooking(cancellation.dateTime()));
     }
 }

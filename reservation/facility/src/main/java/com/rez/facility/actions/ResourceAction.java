@@ -20,7 +20,7 @@ public class ResourceAction extends Action {
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
         var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
-                .call(FacilityEntity::addResourceId).params(event.entityId());
+                .call(FacilityEntity::addResourceId).params(event.resourceId());
         return effects().forward(deferredCall);
     }
 

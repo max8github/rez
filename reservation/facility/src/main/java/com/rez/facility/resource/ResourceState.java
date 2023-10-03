@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.Optional;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
@@ -17,7 +18,7 @@ import java.util.TreeSet;
  * <ul>
  *     <li>a name (identifying that resource within the facility)</li>
  *     <li>a maximum future bookable time, setting the bookable time period</li>
- *     <li>a Map of time -> reservation id</li>
+ *     <li>an association of time -> reservation id</li>
  * </ul>
  * The operations are:
  * <ul>
@@ -25,23 +26,23 @@ import java.util.TreeSet;
  *     <li>reserve a time</li>
  *     <li>cancel a reservation</li>
  * </ul>
- * When inquiring, a peek on the key, the iso date-time, needs to be checked on the Map.
- * When reserving, validation is performed first and then the datetime key is put into the Map with the reservation
- * id as the value.
+ * When inquiring, a peek on the key, the iso date-time, needs to be checked.
+ * When reserving, validation is performed first and then the datetime/reservation entry is inserted.
  * <br>
  * The validation when reserving is about time period and key.
- * The key needs to be set correct depending on policy. For example, if a reservation's datetime is
+ * The datetime needs to be set correct depending on policy. For example, if a reservation's datetime is
  * 2023-09-28T08:07, and only full hours are bookable, then the key 2023-09-28T08:07 needs to be automatically corrected
  * and transformed to 2023-09-28T08:00.
  * The datetime needs to be also within the timeframe allowed for reservations.
  */
 @Accessors(fluent = true)
 public class ResourceState {
+    private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
+
     @Getter
     private final String name;
     private final SortedSet<Resource.Entry> map;
     private final Period period;
-    private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
     public ResourceState(String name) {
         this.name = name;
@@ -52,9 +53,11 @@ public class ResourceState {
     public static ResourceState initialize(String name) {
         return new ResourceState(name);
     }
+
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
-        if (dateTime.isBefore(LocalDateTime.now().plus(period))) {
-            map.add(new Resource.Entry(roundToValidTime(dateTime).toString(), reservationId));
+        LocalDateTime key = roundToValidTime(dateTime);
+        if (key.isBefore(LocalDateTime.now().plus(period))) {
+            map.add(new Resource.Entry(roundToValidTime(key).toString(), reservationId));
             return this;
         } else {
             throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
@@ -62,16 +65,17 @@ public class ResourceState {
         }
     }
 
+    public String get(LocalDateTime dateTime) {
+        //the following is crazy, but if i cannot use Map, what can i do? I could use an array,
+        //but i don't want to keep all that space empty all the time. Besides, this method is only used in tests.
+        Resource.Entry ke = new Resource.Entry(dateTime.toString(), "");
+        Optional<Resource.Entry> entry = map.stream().filter(e -> e.equals(ke)).findFirst();
+        return entry.orElse(ke).reservationId();
+    }
+
     public boolean fitsInto(LocalDateTime dateTime) {
         LocalDateTime key = roundToValidTime(dateTime);
         return key.isBefore(LocalDateTime.now().plus(period)) && !map.contains(new Resource.Entry(key.toString(), ""));
-    }
-
-    private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
-        if (dateTime.getMinute() == 0 && dateTime.getSecond() == 0) return dateTime;
-        int minute = dateTime.getMinute();
-        LocalDateTime oClock = dateTime.minusMinutes(minute).minusSeconds(dateTime.getSecond()).minusNanos(dateTime.getNano());
-        return (minute < 30) ? oClock : oClock.plusHours(1);
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
@@ -98,4 +102,10 @@ public class ResourceState {
         return map;
     }
 
+    private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
+        if (dateTime.getMinute() == 0 && dateTime.getSecond() == 0) return dateTime;
+        int minute = dateTime.getMinute();
+        LocalDateTime oClock = dateTime.minusMinutes(minute).minusSeconds(dateTime.getSecond()).minusNanos(dateTime.getNano());
+        return (minute < 30) ? oClock : oClock.plusHours(1);
+    }
 }

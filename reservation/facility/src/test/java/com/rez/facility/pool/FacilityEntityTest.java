@@ -11,8 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertTrue;
+import static org.junit.jupiter.api.Assertions.*;
 
 public class FacilityEntityTest {
 
@@ -68,7 +67,7 @@ public class FacilityEntityTest {
         {
             var result = testKit.call(e -> e.createReservation(new Reservation(
                     List.of("john.doe@example.com"), LocalDateTime.of(2023, 8, 10, 0, 0))));
-            assertTrue(result.getReply().length() > 0);
+            assertFalse(result.getReply().isEmpty());
 
             var reservationCreated = result.getNextEventOfType(FacilityEvent.ReservationCreated.class);
             assertEquals(0, reservationCreated.resources().size());

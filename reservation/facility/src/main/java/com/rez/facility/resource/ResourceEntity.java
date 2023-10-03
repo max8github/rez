@@ -29,16 +29,16 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @PostMapping("/create")
     public Effect<String> create(@RequestBody CreateResourceCommand resCommand) {
+        String resourceName = resCommand.resourceDto().resourceName();
         return effects()
-                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resCommand.resourceDto(), resCommand.facilityId()))
-                .thenReply(newState -> "OK");
+                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resourceName, resCommand.facilityId()))
+                .thenReply(newState -> "OK - " + resourceName);
     }
 
     @SuppressWarnings("unused")
     @EventHandler
     public ResourceState created(ResourceEvent.ResourceCreated resourceCreated) {
-        Resource resource = resourceCreated.resourceDto();
-        return ResourceState.initialize(resource.resourceName());
+        return ResourceState.initialize(resourceCreated.resourceName());
     }
 
     @PostMapping("/inquireBooking")
@@ -55,7 +55,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
                     .emitEvent(new ResourceEvent.BookingRejected(entityId, command.reservationId(),
                             command.facilityId(), command.reservationDto()
                     ))
-                    .thenReply(newState -> "UNAVAILABLE");
+                    .thenReply(newState -> "UNAVAILABLE resource");
 
         }
     }

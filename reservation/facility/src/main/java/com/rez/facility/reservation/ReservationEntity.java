@@ -142,7 +142,7 @@ public class ReservationEntity extends Workflow<ReservationState> {
 
     @PostMapping("/init")
     public Effect<String> init(@RequestBody InitiateReservation command, @PathVariable String reservationId) {
-        log.info("Created reservation {} entity", reservationId);
+        log.info("Created reservation entity {}", reservationId);
         if (command.resources().isEmpty()) {
             return effects().error("There are no resources available to reserve");
         } else if (currentState() != null) {

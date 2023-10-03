@@ -1,6 +1,5 @@
 package com.rez.facility.resource;
 
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -9,7 +8,6 @@ import java.util.stream.Collectors;
 
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertFalse;
-import static org.junit.jupiter.api.Assertions.assertEquals;
 
 class ResourceStateTest {
 
@@ -27,13 +25,15 @@ class ResourceStateTest {
     void testSet() {
         ResourceState r = ResourceState.initialize("hotel1");
         LocalDateTime now = LocalDateTime.now();
+        LocalDateTime nowPlus1 = now.plusHours(1);
+
         String reservationId = "1000";
         assertTrue(r.fitsInto(now));
         r.set(now, reservationId);
         assertFalse(r.fitsInto(now));
-        assertEquals(1, r.timeWindow().size());
-        r.set(now.plusHours(1), reservationId);
-        assertEquals(2, r.timeWindow().size());
+        assertTrue(r.fitsInto(nowPlus1));
+        r.set(nowPlus1, reservationId);
+        assertFalse(r.fitsInto(nowPlus1));
     }
 
     @Test
@@ -42,7 +42,7 @@ class ResourceStateTest {
         LocalDateTime now = LocalDateTime.now();
         String reservationId = "1000";
         r.set(now, reservationId);
-        Assertions.assertFalse(r.fitsInto(now));
+        assertFalse(r.fitsInto(now));
     }
 
     @Test

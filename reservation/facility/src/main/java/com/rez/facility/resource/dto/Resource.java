@@ -3,7 +3,7 @@ package com.rez.facility.resource.dto;
 import java.util.Comparator;
 import java.util.Objects;
 
-public record Resource(String resourceId, String resourceName, int size) {
+public record Resource(String resourceId, String resourceName) {
 
     public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
         @Override
