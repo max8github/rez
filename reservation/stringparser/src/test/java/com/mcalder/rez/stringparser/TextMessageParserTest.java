@@ -4,6 +4,9 @@ import com.mcalder.rez.spi.Nlp;
 import com.mcalder.rez.spi.Parser;
 import org.junit.jupiter.api.Test;
 
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -35,5 +38,17 @@ class TextMessageParserTest {
         assertEquals("create", reservationDto.command());
         assertEquals(facilityId, reservationDto.facilityId());
         assertEquals(List.of("john.doe@example.com", "tom.smith@example.com"), reservationDto.emails());
+    }
+
+    @Test
+    void parseIsoDate() {
+        String isoDate = "2024-03-13T21:34:05.000Z";
+        LocalDate date = LocalDateTime.parse(isoDate, DateTimeFormatter.ISO_DATE_TIME).toLocalDate();
+        String dateString = "2024-03-13";
+        assertEquals(dateString, isoDate.substring(0, 10));
+        assertEquals(dateString, date.toString());
+
+        String dateF = date.format(DateTimeFormatter.ISO_DATE);
+        assertEquals(dateString, dateF);
     }
 }

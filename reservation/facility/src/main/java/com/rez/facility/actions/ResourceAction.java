@@ -16,12 +16,14 @@ public class ResourceAction extends Action {
         this.kalixClient = kalixClient;
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
         var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
                 .call(FacilityEntity::addResourceId).params(event.entityId());
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.Book(event.resourceId(), event.reservationDto(), event.facilityId());
@@ -29,6 +31,7 @@ public class ResourceAction extends Action {
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.RunSearch(event.facilityId(), event.reservationDto());
@@ -36,6 +39,7 @@ public class ResourceAction extends Action {
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingCanceled event) {
         var reservationId = event.reservationId();
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
