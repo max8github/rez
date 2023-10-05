@@ -1,6 +1,5 @@
 package com.rez.facility.resource;
 
-import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.experimental.Accessors;
@@ -34,20 +33,25 @@ import java.util.Objects;
  * and transformed to 2023-09-28T08:00.
  * The datetime needs to be also within the timeframe allowed for reservations.
  */
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@AllArgsConstructor
 @Accessors(fluent = true)
 public class ResourceState {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
     @Getter
-    String name;
-    String[] timeWindow;
-    int nowPointer;
+    String name = "Nameless";
+    String[] timeWindow = new String[]{"","","","","","","","","","","","","","","","","","","","","","","",""};
+    int nowPointer = 0;
+
+    public ResourceState() {
+    }
+
+    public ResourceState(String name) {
+        this.name = name;
+    }
 
     public static ResourceState initialize(String name) {
-        String[] tw = new String[24];
-        Arrays.fill(tw, "");
-        return new ResourceState(name, tw, 0);
+        return new ResourceState(name);
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
@@ -96,6 +100,10 @@ public class ResourceState {
 
     public String[] timeWindow() {
         return timeWindow;
+    }
+
+    public int nowPointer() {
+        return this.nowPointer;
     }
 
     static LocalDateTime roundToValidTime(LocalDateTime dateTime) {
