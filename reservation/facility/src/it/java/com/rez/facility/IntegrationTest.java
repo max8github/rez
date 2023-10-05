@@ -2,6 +2,7 @@ package com.rez.facility;
 
 import com.rez.facility.pool.dto.Address;
 import com.rez.facility.pool.dto.Facility;
+import com.rez.facility.resource.ResourceState;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
 import org.junit.jupiter.api.Assertions;
@@ -14,8 +15,12 @@ import org.springframework.web.reactive.function.client.WebClient;
 import reactor.core.publisher.Mono;
 
 import java.time.Duration;
+import java.time.LocalDateTime;
 import java.util.Collections;
+import java.util.List;
 
+import static com.rez.facility.reservation.ReservationState.State.FULFILLED;
+import static com.rez.facility.reservation.ReservationState.State.UNAVAILABLE;
 import static java.time.temporal.ChronoUnit.SECONDS;
 
 
@@ -31,6 +36,8 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
   @Autowired
   private WebClient webClient;
+  @Autowired
+  private ReservationEntityIntegrationTest util;
 
   private final Duration timeout = Duration.of(5, SECONDS);
 
@@ -50,5 +57,38 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
                     .block(timeout);
 
     Assertions.assertEquals(HttpStatus.OK, created.getStatusCode());
+  }
+
+  @Test
+  public void shouldReserve() throws Exception {
+    var resourceId1 = "c1";
+    var resourceId2 = "c2";
+    util.createResource(resourceId1);
+    util.createResource(resourceId2);
+    List<String> resourceIds = List.of(resourceId1, resourceId2);
+    LocalDateTime now = LocalDateTime.now();
+    LocalDateTime dateTime = now.plusHours(2).minusMinutes(now.getMinute()).minusSeconds(now.getSecond()).minusNanos(now.getNano());
+    String dateTimeString = dateTime.toString();
+    System.out.println("dateTimeString to test = " + dateTimeString);
+
+    String reservationId1 = util.issueNewReservationRequest(resourceIds, dateTime);
+    System.out.println("reservationId1 = " + reservationId1);
+    Thread.sleep(2000);
+
+    String reservationId2 = util.issueNewReservationRequest(resourceIds, dateTime);
+    System.out.println("reservationId2 = " + reservationId2);
+
+    String reservationId3 = util.issueNewReservationRequest(resourceIds, dateTime);
+    System.out.println("reservationId3 = " + reservationId3);
+    util.assertReservationState(reservationId1, FULFILLED);
+    util.assertReservationState(reservationId2, FULFILLED);
+    util.assertNotBooked(reservationId3, resourceIds, dateTime);
+    util.assertReservationState(reservationId3, UNAVAILABLE);
+    ResourceState resourceC1 = util.getResource(resourceIds.get(0));
+    ResourceState resourceC2 = util.getResource(resourceIds.get(1));
+    System.out.println("resourceC1 = " + resourceC1);
+    System.out.println("resourceC2 = " + resourceC2);
+    util.assertBookedAtResource(reservationId1, resourceIds, 0, dateTime);
+    util.assertBookedAtResource(reservationId2, resourceIds, 1, dateTime);
   }
 }

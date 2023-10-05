@@ -8,6 +8,7 @@ import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
 
+@SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = ResourceEntity.class, ignoreUnknown = true)
 public class ResourceAction extends Action {
     private final ComponentClient kalixClient;
@@ -16,19 +17,22 @@ public class ResourceAction extends Action {
         this.kalixClient = kalixClient;
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
         var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
-                .call(FacilityEntity::addResourceId).params(event.entityId());
+                .call(FacilityEntity::addResourceId).params(event.resourceId());
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingAccepted event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservationDto());
+        var command = new ReservationEntity.Book(event.resourceId(), reservationId, event.reservationDto(), event.facilityId());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::book).params(command);
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
@@ -36,6 +40,7 @@ public class ResourceAction extends Action {
         return effects().forward(deferredCall);
     }
 
+    @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingCanceled event) {
         var reservationId = event.reservationId();
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId)

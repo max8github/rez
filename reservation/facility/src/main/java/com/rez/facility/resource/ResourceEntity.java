@@ -29,32 +29,34 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @PostMapping("/create")
     public Effect<String> create(@RequestBody CreateResourceCommand resCommand) {
+        String resourceName = resCommand.resourceDto().resourceName();
         return effects()
-                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resCommand.resourceDto(), resCommand.facilityId()))
-                .thenReply(newState -> "OK");
+                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resourceName, resCommand.facilityId()))
+                .thenReply(newState -> "OK - " + resourceName);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState created(ResourceEvent.ResourceCreated resourceCreated) {
-        Resource resource = resourceCreated.resourceDto();
-        return ResourceState.initialize(resource.resourceName());
+        return ResourceState.initialize(resourceCreated.resourceName());
     }
 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
-        if(currentState().fitsInto(command.reservationDto().dateTime())) {
+        LocalDateTime validTime = ResourceState.roundToValidTime(command.reservationDto().dateTime());
+        if(currentState().isReservableAt(validTime)) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingAccepted(command.resourceId(), command.reservationId(),
+                    .emitEvent(new ResourceEvent.BookingAccepted(entityId, command.reservationId(),
                             command.facilityId(), command.reservationDto()))
                     .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(command.resourceId(), command.reservationId(),
+                    .emitEvent(new ResourceEvent.BookingRejected(entityId, command.reservationId(),
                             command.facilityId(), command.reservationDto()
                     ))
-                    .thenReply(newState -> "UNAVAILABLE");
+                    .thenReply(newState -> "UNAVAILABLE resource");
 
         }
     }
@@ -62,22 +64,26 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     @DeleteMapping("/reservation/{reservationId}/{isoTime}")
     public Effect<String> cancel(@PathVariable String reservationId, @PathVariable String isoTime) {
         LocalDateTime dateTime = LocalDateTime.parse(isoTime);
-        log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, isoTime);
+        LocalDateTime validTime = ResourceState.roundToValidTime(dateTime);
+        log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, validTime);
         return effects()
-                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, dateTime))
+                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, validTime))
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingCanceled(ResourceEvent.BookingCanceled event) {
         return currentState().cancel(event.dateTime(), event.reservationId());
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingAccepted(ResourceEvent.BookingAccepted event) {
         return currentState().set(event.reservationDto().dateTime(), event.reservationId());
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public ResourceState bookingRejected(ResourceEvent.BookingRejected event) {
         return currentState();
@@ -91,6 +97,5 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
 
-    //todo: value obj
-    public record InquireBooking(String resourceId, String reservationId, String facilityId, Reservation reservationDto) {}
+    public record InquireBooking(String reservationId, String facilityId, Reservation reservationDto) {}
 }

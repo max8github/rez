@@ -22,5 +22,6 @@ public sealed interface ReservationEvent {
     @TypeName("reservation-selected")
     record ResourceSelected(int resourceIndex, String resourceId, String reservationId, String facilityId, Reservation reservationDto) implements ReservationEvent {}
     @TypeName("booked")
-    record Booked(String resourceId, String reservationId, Reservation reservationDto, List<String> resourceIds) implements ReservationEvent {}
+    record Booked(String resourceId, String reservationId, Reservation reservationDto, List<String> resourceIds,
+                  String facilityId) implements ReservationEvent {}
 }
