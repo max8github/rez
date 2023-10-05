@@ -39,6 +39,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> entityId);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility created(FacilityEvent.Created created) {
         var dto = created.facility();
@@ -55,6 +56,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility renamed(FacilityEvent.Renamed renamed) {
         return currentState().withName(renamed.newName());
@@ -68,6 +70,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
         Address address = addressChanged.address();
@@ -83,6 +86,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> id);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
         return currentState();
@@ -96,6 +100,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> resourceId);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
         return currentState().withResourceId(event.resourceEntityId());
@@ -111,6 +116,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> "OK");
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
         return currentState().withoutResourceId(event.resourceEntityId());
@@ -138,6 +144,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
                 .thenReply(newState -> reservationId);
     }
 
+    @SuppressWarnings("unused")
     @EventHandler
     public com.rez.facility.pool.Facility reservationCreated(FacilityEvent.ReservationCreated event) {
         return currentState();

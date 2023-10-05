@@ -19,7 +19,7 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.ReservationInitiated event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(event.facilityId(), event.reservationDto());
+        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
                 .call(ReservationEntity::runSearch).params(command);
         return effects().forward(deferredCall);

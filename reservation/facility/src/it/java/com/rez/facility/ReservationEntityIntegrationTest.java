@@ -17,6 +17,7 @@ import reactor.core.publisher.Mono;
 import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
@@ -47,31 +48,39 @@ public class ReservationEntityIntegrationTest {
    * resources in the list.
    *
    * @param reservationId reservation id
-   * @param resIds list of resource ids, pointing to resource entities
+   * @param resourceIds list of resource ids, pointing to resource entities
    * @param index the index of the resource id in the list of the resource that should contain the reservation id
    * @param dateTime the time slot within the available slots for reserving
    */
-  void assertBookedAtResource(String reservationId, List<String> resIds, int index, LocalDateTime dateTime) {
+  void assertBookedAtResource(String reservationId, List<String> resourceIds, int index, LocalDateTime dateTime) {
+    await()
+      .atMost(15, TimeUnit.of(SECONDS))
+      .untilAsserted(() -> {
+        Objects.checkIndex(index, resourceIds.size());
+
+        ResourceState resource = getResource(resourceIds.get(index));
+        assertThat(!resource.isReservableAt(dateTime)).as("resource %s cannot be booked with %s at resource %s",
+                resource.name(), dateTime, resourceIds.get(index)).isTrue();
+        assertThat(resource.get(dateTime)).as("reservation id").isEqualTo(reservationId);
+        System.out.println("resource booked = " + resource);
+
+        Predicate<String> predicate = id -> !id.equals(resourceIds.get(index));
+        resourceIds.stream().filter(predicate).forEach(resourceId -> {
+          ResourceState resourceState = getResource(resourceId);
+          assertThat(resourceState.get(dateTime)).as("resource %s should NOT be booked with %s",
+                  resourceState.name(), reservationId).isNotEqualTo(reservationId);
+        });
+      });
+  }
+
+  void assertNotBooked(String reservationId, List<String> resourceIds, LocalDateTime dateTime) {
     await()
       .atMost(10, TimeUnit.of(SECONDS))
       .untilAsserted(() -> {
-
-        Predicate<String> p;
-
-        if(index >= 0 && index < resIds.size()) {
-          ResourceState resource = getResource(resIds.get(index));
-          assertThat(resource.timeWindow().get(dateTime)).as("resource %s should be booked with %s",
-                  resource.name(), reservationId).isEqualTo(reservationId);
-          System.out.println("resource booked = " + resource);
-          p = id -> !id.equals(resIds.get(index));
-        } else {
-          p = id -> true;
-        }
-
-        resIds.stream().filter(p).forEach(id -> {
-          var res = getResource(id);
-          assertThat(res.timeWindow().getOrDefault(dateTime, "no-reservation")).as("resource %s should NOT be booked with %s",
-                  res.name(), reservationId).isNotEqualTo(reservationId);
+        resourceIds.forEach(resourceId -> {
+          ResourceState resourceState = getResource(resourceId);
+          assertThat(resourceState.get(dateTime)).as("resource %s should NOT be booked with %s",
+                  resourceState.name(), reservationId).isNotEqualTo(reservationId);
         });
       });
   }
@@ -82,10 +91,9 @@ public class ReservationEntityIntegrationTest {
   }
 
   @NotNull
-  String issueNewReservationRequest(List<String> resourceIds, String dateTimeString) {
+  String issueNewReservationRequest(List<String> resourceIds, LocalDateTime dateTime) {
     var reservationId = randomId();
     String facilityId = "fac1";
-    LocalDateTime dateTime = LocalDateTime.parse(dateTimeString);
     Reservation reservation = new Reservation(List.of("max@example.com"), dateTime);
     var command = new ReservationEntity.InitiateReservation(facilityId, reservation, resourceIds);
     ResponseEntity<Void> response = webClient.post().uri("/reservation/" + reservationId + "/init")
@@ -95,6 +103,7 @@ public class ReservationEntityIntegrationTest {
             .block(timeout);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    System.out.println("Reservation " + reservationId + " initiated");
     return reservationId;
   }
 
@@ -105,7 +114,7 @@ public class ReservationEntityIntegrationTest {
 
   void createResource(String resourceId) {
     String facilityId = "fac1";
-    Resource resourceDto = new Resource(resourceId, resourceId, 24);
+    Resource resourceDto = new Resource(resourceId, resourceId);
     var command = new ResourceEntity.CreateResourceCommand(facilityId, resourceDto);
 
     ResponseEntity<Void> response = webClient.post().uri("/resource/" + resourceId + "/create")
@@ -115,12 +124,14 @@ public class ReservationEntityIntegrationTest {
       .block(timeout);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
+    ResourceState resource = getResource(resourceId);
+    System.out.println("resource = " + resource);
   }
 
-  com.rez.facility.resource.ResourceState getResource(String resourceId) {
+  ResourceState getResource(String resourceId) {
     return webClient.get().uri("/resource/" + resourceId)
       .retrieve()
-      .bodyToMono(com.rez.facility.resource.ResourceState.class)
+      .bodyToMono(ResourceState.class)
       .block(timeout);
   }
 

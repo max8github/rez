@@ -8,6 +8,7 @@ import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
 
+@SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
     private final ComponentClient kalixClient;
