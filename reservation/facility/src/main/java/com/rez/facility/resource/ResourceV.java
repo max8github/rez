@@ -1,25 +1,23 @@
 package com.rez.facility.resource;
 
-import com.rez.facility.resource.dto.Resource;
-
 import java.time.LocalDateTime;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.HashMap;
+import java.util.Map;
 
-public record ResourceV(String facilityId, String resourceId, String resourceName, SortedSet<Resource.Entry> timeWindow) {
+public record ResourceV(String facilityId, String resourceId, String resourceName, Map<LocalDateTime, String> timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.resourceId();
-        return new ResourceV(facilityId, resourceId, created.resourceName(), new TreeSet<>());
+        return new ResourceV(facilityId, resourceId, created.resourceName(), new HashMap<>());
     }
 
     ResourceV withBooking(LocalDateTime dateTime, String fill) {
-        timeWindow.add(new Resource.Entry(dateTime.toString(), fill));
+        timeWindow.put(dateTime, fill);
         return this;
     }
 
     ResourceV withoutBooking (LocalDateTime dateTime){
-        this.timeWindow.remove(new Resource.Entry(dateTime.toString(), ""));
+        this.timeWindow.remove(dateTime);
         return this;
     }
 }
