@@ -37,7 +37,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   @Autowired
   private WebClient webClient;
   @Autowired
-  private ReservationEntityIntegrationTest util;
+  private WebClientUtil util;
 
   private final Duration timeout = Duration.of(5, SECONDS);
 

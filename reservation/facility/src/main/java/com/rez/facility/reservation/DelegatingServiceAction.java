@@ -107,7 +107,7 @@ public class DelegatingServiceAction extends Action {
     }
 
     public Effect<String> on(ReservationEvent.Booked event) throws Exception {
-        Reservation reservationDto = event.reservationDto();
+        Reservation reservationDto = event.reservation();
         String reservationId = event.reservationId();
         List<String> resourceIds = event.resourceIds();
         // todo: here i need the resource and facility details, not their ids:
@@ -123,7 +123,7 @@ public class DelegatingServiceAction extends Action {
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
                 event.resourceIds(),
-                event.reservationDto().emails(), event.reservationDto().dateTime());
+                event.reservation().emails(), event.reservation().dateTime());
         var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));
     }

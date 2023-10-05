@@ -133,10 +133,10 @@ public class FacilityEntity extends EventSourcedEntity<com.rez.facility.pool.Fac
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/reservation/create")
-    public Effect<String> createReservation(@RequestBody Reservation reservationDto) {
+    public Effect<String> createReservation(@RequestBody Reservation reservation) {
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
-        log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservationDto.dateTime());
-        FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservationDto,
+        log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservation.dateTime());
+        FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
                 new ArrayList<>(currentState().resourceIds()));
         log.info("Emitting event: " + reservationCreated);
         return effects()
