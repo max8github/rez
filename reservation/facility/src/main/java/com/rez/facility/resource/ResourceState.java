@@ -1,14 +1,11 @@
 package com.rez.facility.resource;
 
-import com.rez.facility.resource.dto.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.time.Period;
-import java.util.Optional;
-import java.util.SortedSet;
-import java.util.TreeSet;
+import java.util.*;
 
 /**
  * Models a resource to be booked.
@@ -33,54 +30,47 @@ import java.util.TreeSet;
  * and transformed to 2023-09-28T08:00.
  * The datetime needs to be also within the timeframe allowed for reservations.
  */
-public record ResourceState(String name, SortedSet<Resource.Entry> timeWindow, Period period) {
+public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, Period period) {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
-    public ResourceState {
-        timeWindow = new TreeSet<>();
-        period = Period.ofMonths(3);
-    }
-
-    public ResourceState(String name) {
-        this(name, new TreeSet<>(), Period.ofMonths(3));
-    }
-
     public static ResourceState initialize(String name) {
-        return new ResourceState(name);
+        return new ResourceState(name, new TreeMap<>(), Period.ofMonths(3));
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime key = roundToValidTime(dateTime);
-        if (key.isBefore(LocalDateTime.now().plus(period))) {
-            timeWindow.add(new Resource.Entry(roundToValidTime(key).toString(), reservationId));
-            return this;
-        } else {
-            throw new IllegalArgumentException("Cannot reserve time outside of the bookable period." +
-                    "Reservation can be taken from today until " + LocalDateTime.now().plus(period));
-        }
+        LocalDateTime validTime = roundToValidTime(dateTime);
+        if(!isWithinBounds(validTime))
+            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
+
+        if(timeWindow.containsKey(validTime))
+            throw new IllegalArgumentException("Datetime provided cannot be set: it is already taken");
+
+        timeWindow.put(validTime, reservationId);
+        return this;
+    }
+
+    private boolean isWithinBounds(LocalDateTime validTime) {
+        return validTime.isBefore(LocalDateTime.now().plus(period));
     }
 
     public String get(LocalDateTime dateTime) {
-        //the following is crazy, but if i cannot use Map, what can i do? I could use an array,
-        //but i don't want to keep all that space empty all the time. Besides, this method is only used in tests.
-        Resource.Entry ke = new Resource.Entry(dateTime.toString(), "");
-        Optional<Resource.Entry> entry = timeWindow.stream().filter(e -> e.equals(ke)).findFirst();
-        return entry.orElse(ke).reservationId();
+        LocalDateTime validTime = roundToValidTime(dateTime);
+        if(!isWithinBounds(validTime))
+            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
+
+        return this.timeWindow.get(validTime);
     }
 
     public boolean fitsInto(LocalDateTime dateTime) {
-        LocalDateTime key = roundToValidTime(dateTime);
-        return key.isBefore(LocalDateTime.now().plus(period)) && !timeWindow.contains(new Resource.Entry(key.toString(), ""));
+        LocalDateTime validTime = roundToValidTime(dateTime);
+        return isWithinBounds(validTime) && !timeWindow.containsKey(validTime);
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime key = roundToValidTime(dateTime);
-        Resource.Entry entry = new Resource.Entry(key.toString(), reservationId);
-        if (!timeWindow.contains(entry)) {
-            log.warn("reservation {} was not present or it was already cancelled for time {}", reservationId, dateTime);
-        } else {
-            timeWindow.remove(entry);
-            log.info("Reservation {} was removed from resource {} for time {}", reservationId, name, key);
-        }
+        LocalDateTime vt = roundToValidTime(dateTime);
+        if(!isWithinBounds(vt))
+            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
+
+        if(timeWindow.containsKey(vt) && timeWindow.get(vt).equals(reservationId)) timeWindow.remove(vt);
         return this;
     }
 
@@ -89,17 +79,11 @@ public record ResourceState(String name, SortedSet<Resource.Entry> timeWindow, P
         return "ResourceState{" +
                 "name='" + name + '\'' +
                 ", timeWindow=" + timeWindow +
+                ", period=" + period +
                 '}';
     }
 
-    public SortedSet<Resource.Entry> timeWindow() {
-        return timeWindow;
-    }
-
     private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
-        if (dateTime.getMinute() == 0 && dateTime.getSecond() == 0) return dateTime;
-        int minute = dateTime.getMinute();
-        LocalDateTime oClock = dateTime.minusMinutes(minute).minusSeconds(dateTime.getSecond()).minusNanos(dateTime.getNano());
-        return (minute < 30) ? oClock : oClock.plusHours(1);
+        return dateTime.minusMinutes(dateTime.getMinute()).minusSeconds(dateTime.getSecond()).minusNanos(dateTime.getNano());
     }
 }
