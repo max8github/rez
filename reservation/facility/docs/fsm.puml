@@ -9,9 +9,5 @@ RunSearch -up-> (INIT): emptyState()
 (UNAVAILABLE) <-down- (INIT): Rejected
 (FULFILLED) <-- (SELECTING): Booked
 (UNAVAILABLE) <-up- (SELECTING): Rejected
-(FULFILLED) --> (CANCELLED): Canceled
-(FULFILLED) <-- (CANCELLED): Rebooked
-'COMPLETE is when a reservation is in the past
-(COMPLETE) <-- (CANCELLED): Timeout
-(FULFILLED) --> (COMPLETE): Timeout
+(FULFILLED) --> (CANCELLED): Booked
 @enduml

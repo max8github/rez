@@ -4,16 +4,17 @@ import com.rez.facility.dto.Reservation;
 import com.mcalder.rez.spi.CalendarSender;
 import com.mcalder.rez.spi.NotificationSender;
 import kalix.javasdk.action.Action;
+import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.WebClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
 import org.springframework.web.reactive.function.client.WebClient;
 
+import java.io.*;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
-@RequestMapping("/external")
+@Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
@@ -105,8 +106,7 @@ public class DelegatingServiceAction extends Action {
         return notificationSender.messageTwist(webClient, body);
     }
 
-    @PostMapping("/book")
-    public Effect<String> book(@RequestBody Booked event) throws Exception {
+    public Effect<String> on(ReservationEvent.Booked event) throws Exception {
         Reservation reservationDto = event.reservationDto();
         String reservationId = event.reservationId();
         List<String> resourceIds = event.resourceIds();
@@ -120,28 +120,19 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(stage);
     }
 
-    @PostMapping("/unavailable")
-    public Effect<String> unavailable(@RequestBody NotifySearchExhausted message) {
-        var eventDetails = new CalendarSender.EventDetails("", message.reservationId(), message.facilityId(),
-                message.resourceIds(),
-                message.reservationDto().emails(), message.reservationDto().dateTime());
-        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(message.resourceIds()));
+    public Effect<String> on(ReservationEvent.SearchExhausted event) {
+        var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
+                event.resourceIds(),
+                event.reservationDto().emails(), event.reservationDto().dateTime());
+        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
         return effects().asyncReply(messageTwistReject(result));
     }
 
-    @PostMapping("/cancel/{resourceId}/{reservationId}")
-    public Effect<String> cancel(@PathVariable String resourceId, @PathVariable String reservationId, @RequestBody Resources resources) {
-        List<String> resourceIds = resources.reservationIds();
-        String calendarId = resourceId + "@group.calendar.google.com";
-        String calEventId = reservationId;
+    public Effect<String> on(ReservationEvent.ReservationCancelled event) throws IOException {
+        String calendarId = event.resourceId() + "@group.calendar.google.com";
+        String calEventId = event.reservationId();
         var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);
-        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, resourceIds));
+        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));
         return effects().asyncReply(stage);
     }
-
-    public record Resources(List<String> reservationIds) {}
-
-    public record NotifySearchExhausted(String reservationId, String facilityId, Reservation reservationDto, List<String> resourceIds) {}
-
-    public record Booked(String resourceId, String reservationId, Reservation reservationDto, List<String> resourceIds, String facilityId) {}
 }

@@ -79,7 +79,7 @@
 			"response": []
 		},
 		{
-			"name": "register resource 1",
+			"name": "register court 1",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -142,7 +142,7 @@
 			"response": []
 		},
 		{
-			"name": "register resource 2",
+			"name": "register court 2",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -150,69 +150,6 @@
 						"exec": [
 							"var resourceId = \"63hd39cd9ppt8tajp76vglt394\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var resourceName = \"court 2\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = 24;",
-							"",
-							"console.info(\"Resource is: \"+ resourceId);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"console.info(\"Resource size is: \"+ timeSlotsSize);",
-							"",
-							"pm.variables.set(\"resourceId\", resourceId);",
-							"pm.variables.set(\"resourceName\", resourceName);",
-							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"resource",
-						"submit"
-					]
-				},
-				"description": "Creates a new Resource entity and adds its entity id into Facility"
-			},
-			"response": []
-		},
-		{
-			"name": "register resource 3",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var resourceId = \"4b6986f31c4d5f95344ff3aa02\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var resourceName = \"court 3\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
 							"var timeSlotsSize = 24;",
 							"",
 							"console.info(\"Resource is: \"+ resourceId);",
@@ -300,7 +237,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"content\": \"\",\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-10T14:00, Bob, Tom, Andy\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-07-10 10:22:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
+					"raw": "{\n  \"content\": \"\",\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-10, 14, Bob\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-07-10 10:22:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
 					"options": {
 						"raw": {
 							"language": "json"
@@ -331,7 +268,7 @@
 						"exec": [
 							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
 							"var username = 'max.calderoni@gmail.com';",
-							"var dateTime = \"2023-07-22T00:00\";",
+							"var dateTime = \"2023-07-18T11:00\";",
 							"",
 							"console.info(\"username is: \"+ username);",
 							"console.info(\"dateTime is: \"+ dateTime);",
@@ -917,7 +854,16 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							""
+							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
+							"var username = 'max.calderoni@gmail.com';",
+							"var randDate = pm.variables.replaceIn('{{$randomDateFuture}}');",
+							"var date = \"2023-06-22T11:00\";//new Date(randDate).toISOString().substr(0, 10);",
+							"",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"dateTime is: \"+ dateTime);",
+							"",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"dateTime\", dateTime);"
 						],
 						"type": "text/javascript"
 					}
@@ -926,7 +872,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
 						],
 						"type": "text/javascript"
 					}
@@ -941,6 +887,10 @@
 						"value": "application/json"
 					}
 				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}/cancelRequest",
 					"protocol": "{{protocol}}",

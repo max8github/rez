@@ -1,29 +1,42 @@
 package com.rez.facility.reservation;
 
+import com.rez.facility.resource.ResourceEntity;
 import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Acl;
+import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.DeleteMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 @SuppressWarnings("unused")
-@RequestMapping("/rezmanage")
+@Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class ReservationAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(ReservationAction.class);
-    private final ComponentClient componentClient;
+    private final ComponentClient kalixClient;
 
-    public ReservationAction(ComponentClient componentClient) {
-        this.componentClient = componentClient;
+    public ReservationAction(ComponentClient kalixClient) {
+        this.kalixClient = kalixClient;
     }
 
-    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-    @DeleteMapping("/{rezId}")
-    public Effect<String> expire(@PathVariable String rezId) {
-        log.info("called expire with id {}", rezId);
-        var deferredCall = componentClient.forWorkflow(rezId).call(ReservationEntity::complete);
+    public Effect<String> on(ReservationEvent.ReservationInitiated event) {
+        var reservationId = event.reservationId();
+        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
+        var deferredCall = kalixClient.forEventSourcedEntity(reservationId)
+                .call(ReservationEntity::runSearch).params(command);
+        return effects().forward(deferredCall);
+    }
+
+    public Effect<String> on(ReservationEvent.ResourceSelected event) {
+        var resourceId = event.resourceId();
+        var command = new ResourceEntity.InquireBooking(event.reservationId(), event.facilityId(), event.reservationDto());
+        var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::inquireBooking).params(command);
+        return effects().forward(deferredCall);
+    }
+
+    public Effect<String> on(ReservationEvent.CancelRequested event) {
+        log.info("Cancel reservation {} in resource {}", event.reservationId(), event.resourceId());
+        var resourceId = event.resourceId();
+        var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::cancel)
+                .params(event.reservationId(), event.dateTime().toString());
         return effects().forward(deferredCall);
     }
 }
