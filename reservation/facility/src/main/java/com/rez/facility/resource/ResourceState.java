@@ -1,11 +1,15 @@
 package com.rez.facility.resource;
 
+import lombok.AccessLevel;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.experimental.Accessors;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
-import java.time.Period;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Objects;
 
 /**
  * Models a resource to be booked.
@@ -30,31 +34,54 @@ import java.util.*;
  * and transformed to 2023-09-28T08:00.
  * The datetime needs to be also within the timeframe allowed for reservations.
  */
-public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, Period period) {
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Accessors(fluent = true)
+public class ResourceState {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
+
+    @Getter
+    String name;
+    String[] timeWindow;
+    int nowPointer;
+
     public static ResourceState initialize(String name) {
-        return new ResourceState(name, new TreeMap<>(), Period.ofMonths(3));
+        String[] tw = new String[24];
+        Arrays.fill(tw, "");
+        return new ResourceState(name, tw, 0);
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
-        timeWindow.put(dateTime, reservationId);
+        int timeSlot = dateTime.getHour();
+        if (timeSlot < timeWindow.length)
+            this.timeWindow[timeSlot] = reservationId;
         return this;
     }
 
     public String get(LocalDateTime dateTime) {
-        return this.timeWindow.get(dateTime);
-    }
-
-    private boolean isWithinBounds(LocalDateTime validTime) {
-        return validTime.isBefore(LocalDateTime.now().plus(period));
+        int timeSlot = dateTime.getHour();
+        Objects.checkIndex(timeSlot, timeWindow.length);
+        return this.timeWindow[timeSlot];
     }
 
     public boolean isReservableAt(LocalDateTime dateTime) {
-        return isWithinBounds(dateTime) && !timeWindow.containsKey(dateTime);
+        int timeSlot = dateTime.getHour();
+        Objects.checkIndex(timeSlot, timeWindow.length);
+        return (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty());
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        if(timeWindow.containsKey(dateTime) && timeWindow.get(dateTime).equals(reservationId)) timeWindow.remove(dateTime);
+        int timeSlot = dateTime.getHour();
+        if (timeWindow[timeSlot] == null || timeWindow[timeSlot].isEmpty()) {
+            log.warn("reservation {} was not present or it was already cancelled in time slot {}", reservationId, timeSlot);
+        } else if(!timeWindow[timeSlot].equals(reservationId)) {
+            log.error("A cancellation was requested on reservation id {}, but reservation id {} was found on time slot {}",
+                    reservationId, timeWindow[timeSlot], timeSlot);
+            throw new IllegalStateException("Cancellation of wrong reservation");
+        } else {
+            String oldRezId = timeWindow[timeSlot];
+            log.info("Reservation {} was removed from resource {}, which had res id '{}'", reservationId, name, oldRezId);
+            timeWindow[timeSlot] = "";
+        }
         return this;
     }
 
@@ -62,9 +89,13 @@ public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, 
     public String toString() {
         return "ResourceState{" +
                 "name='" + name + '\'' +
-                ", timeWindow=" + timeWindow +
-                ", period=" + period +
+                ", timeWindow=" + Arrays.toString(timeWindow) +
+                ", nowPointer=" + nowPointer +
                 '}';
+    }
+
+    public String[] timeWindow() {
+        return timeWindow;
     }
 
     static LocalDateTime roundToValidTime(LocalDateTime dateTime) {
