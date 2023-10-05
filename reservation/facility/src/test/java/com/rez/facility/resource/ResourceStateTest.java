@@ -28,12 +28,12 @@ class ResourceStateTest {
         LocalDateTime nowPlus1 = now.plusHours(1);
 
         String reservationId = "1000";
-        assertTrue(r.fitsInto(now));
+        assertTrue(r.isReservableAt(now));
         r.set(now, reservationId);
-        assertFalse(r.fitsInto(now));
-        assertTrue(r.fitsInto(nowPlus1));
+        assertFalse(r.isReservableAt(now));
+        assertTrue(r.isReservableAt(nowPlus1));
         r.set(nowPlus1, reservationId);
-        assertFalse(r.fitsInto(nowPlus1));
+        assertFalse(r.isReservableAt(nowPlus1));
     }
 
     @Test
@@ -42,7 +42,7 @@ class ResourceStateTest {
         LocalDateTime now = LocalDateTime.now();
         String reservationId = "1000";
         r.set(now, reservationId);
-        assertFalse(r.fitsInto(now));
+        assertFalse(r.isReservableAt(now));
     }
 
     @Test

@@ -59,7 +59,7 @@ public class ReservationEntityIntegrationTest {
         Objects.checkIndex(index, resourceIds.size());
 
         ResourceState resource = getResource(resourceIds.get(index));
-        assertThat(!resource.fitsInto(dateTime)).as("resource %s cannot be booked with %s at resource %s",
+        assertThat(!resource.isReservableAt(dateTime)).as("resource %s cannot be booked with %s at resource %s",
                 resource.name(), dateTime, resourceIds.get(index)).isTrue();
         assertThat(resource.get(dateTime)).as("reservation id").isEqualTo(reservationId);
         System.out.println("resource booked = " + resource);

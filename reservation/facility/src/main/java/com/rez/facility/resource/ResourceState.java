@@ -37,40 +37,24 @@ public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, 
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime validTime = roundToValidTime(dateTime);
-        if(!isWithinBounds(validTime))
-            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
-
-        if(timeWindow.containsKey(validTime))
-            throw new IllegalArgumentException("Datetime provided cannot be set: it is already taken");
-
-        timeWindow.put(validTime, reservationId);
+        timeWindow.put(dateTime, reservationId);
         return this;
+    }
+
+    public String get(LocalDateTime dateTime) {
+        return this.timeWindow.get(dateTime);
     }
 
     private boolean isWithinBounds(LocalDateTime validTime) {
         return validTime.isBefore(LocalDateTime.now().plus(period));
     }
 
-    public String get(LocalDateTime dateTime) {
-        LocalDateTime validTime = roundToValidTime(dateTime);
-        if(!isWithinBounds(validTime))
-            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
-
-        return this.timeWindow.get(validTime);
-    }
-
-    public boolean fitsInto(LocalDateTime dateTime) {
-        LocalDateTime validTime = roundToValidTime(dateTime);
-        return isWithinBounds(validTime) && !timeWindow.containsKey(validTime);
+    public boolean isReservableAt(LocalDateTime dateTime) {
+        return isWithinBounds(dateTime) && !timeWindow.containsKey(dateTime);
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        LocalDateTime vt = roundToValidTime(dateTime);
-        if(!isWithinBounds(vt))
-            throw new IllegalArgumentException("Datetime provided is outside of the bookable range of " + period);
-
-        if(timeWindow.containsKey(vt) && timeWindow.get(vt).equals(reservationId)) timeWindow.remove(vt);
+        if(timeWindow.containsKey(dateTime) && timeWindow.get(dateTime).equals(reservationId)) timeWindow.remove(dateTime);
         return this;
     }
 
@@ -83,7 +67,7 @@ public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, 
                 '}';
     }
 
-    private LocalDateTime roundToValidTime(LocalDateTime dateTime) {
+    static LocalDateTime roundToValidTime(LocalDateTime dateTime) {
         return dateTime.minusMinutes(dateTime.getMinute()).minusSeconds(dateTime.getSecond()).minusNanos(dateTime.getNano());
     }
 }

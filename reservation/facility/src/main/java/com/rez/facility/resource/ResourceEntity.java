@@ -43,7 +43,8 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @PostMapping("/inquireBooking")
     public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
-        if(currentState().fitsInto(command.reservationDto().dateTime())) {
+        LocalDateTime validTime = ResourceState.roundToValidTime(command.reservationDto().dateTime());
+        if(currentState().isReservableAt(validTime)) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                     .emitEvent(new ResourceEvent.BookingAccepted(entityId, command.reservationId(),
@@ -63,9 +64,10 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     @DeleteMapping("/reservation/{reservationId}/{isoTime}")
     public Effect<String> cancel(@PathVariable String reservationId, @PathVariable String isoTime) {
         LocalDateTime dateTime = LocalDateTime.parse(isoTime);
-        log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, isoTime);
+        LocalDateTime validTime = ResourceState.roundToValidTime(dateTime);
+        log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, validTime);
         return effects()
-                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, dateTime))
+                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, validTime))
                 .thenReply(newState -> "OK");
     }
 
