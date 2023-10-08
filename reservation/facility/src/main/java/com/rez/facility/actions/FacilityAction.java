@@ -1,5 +1,6 @@
 package com.rez.facility.actions;
 
+import akka.Done;
 import com.rez.facility.pool.FacilityEntity;
 import com.rez.facility.pool.FacilityEvent;
 import com.rez.facility.reservation.ReservationEntity;
@@ -7,10 +8,17 @@ import com.rez.facility.resource.ResourceEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.time.Duration;
+import java.util.concurrent.CompletionStage;
 
 @SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
+    private static final Logger log = LoggerFactory.getLogger(FacilityAction.class);
+    public static final int TIMEOUT = 5;
     private final ComponentClient kalixClient;
 
     public FacilityAction(ComponentClient kalixClient) {
@@ -29,7 +37,21 @@ public class FacilityAction extends Action {
     public Effect<String> on(FacilityEvent.ReservationCreated event) {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.InitiateReservation(event.facilityId(), event.reservationDto(), event.resources());
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
-        return effects().forward(deferredCall);
+        CompletionStage<Done> timerRegistration =
+                timers().startSingleTimer(
+                        timerName(event.reservationId()),
+                        Duration.ofSeconds(TIMEOUT),
+                        kalixClient.forAction().call(TimerAction::expire).params(event.reservationId())
+                );
+        var request = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
+        return effects().asyncReply(
+                timerRegistration
+                        .thenCompose(done -> request.execute())
+                        .thenApply(reservation -> reservation)
+        );
+    }
+
+    static String timerName(String reservationId) {
+        return "timer-" + reservationId;
     }
 }

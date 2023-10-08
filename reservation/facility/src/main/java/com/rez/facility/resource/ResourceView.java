@@ -36,6 +36,12 @@ public class ResourceView extends View<ResourceV> {
         return effects().ignore();
     }
 
+
+    @Subscribe.EventSourcedEntity(ResourceEntity.class)
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
+        return effects().ignore();
+    }
+
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingCanceled cancellation) {
         return effects().updateState(viewState().withoutBooking(cancellation.dateTime()));

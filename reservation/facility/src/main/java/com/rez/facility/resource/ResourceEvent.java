@@ -14,4 +14,6 @@ public sealed interface ResourceEvent {
     @TypeName("booking-rejected")
     record BookingRejected(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
     record BookingCanceled(String resourceId, String reservationId, LocalDateTime dateTime) implements ResourceEvent {}
+    @TypeName("booking-available")
+    record AvalabilityChecked(String resourceId, String reservationId, boolean available, String facilityId) implements ResourceEvent {}
 }

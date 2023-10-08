@@ -19,8 +19,16 @@ public sealed interface ReservationEvent {
     @TypeName("search-exhausted")
     record SearchExhausted(String reservationId, String facilityId, Reservation reservation, List<String> resourceIds) implements ReservationEvent {}
 
-    @TypeName("resource-selected")
-    record ResourceSelected(int resourceIndex, String resourceId, String reservationId, String facilityId, Reservation reservation) implements ReservationEvent {}
+    @TypeName("waiting")
+    record Waiting(String reservationId, String resourceId) implements ReservationEvent {}
+    @TypeName("keep-waiting")
+    record KeepWaiting(String reservationId) implements ReservationEvent {}
+
+    @TypeName("resource-responded")
+    record ResourceResponded(String resourceId, String reservationId, Reservation reservation, boolean available, String facilityId) implements ReservationEvent {}
+    @TypeName("candidate-flagged")
+    record ResourceSelected(String resourceId, String reservationId, Reservation reservation, String facilityId) implements ReservationEvent {}
+
     @TypeName("booked")
     record Booked(String resourceId, String reservationId, Reservation reservation, List<String> resourceIds,
                   String facilityId) implements ReservationEvent {}
