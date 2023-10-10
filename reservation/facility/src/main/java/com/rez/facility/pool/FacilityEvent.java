@@ -31,5 +31,4 @@ public sealed interface FacilityEvent {
     @TypeName("reservation-created")
     record ReservationCreated(String reservationId, String facilityId, Reservation reservationDto,
                               List<String> resources) implements FacilityEvent {}
-
 }

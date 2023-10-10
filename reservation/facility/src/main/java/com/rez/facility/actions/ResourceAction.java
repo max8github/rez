@@ -35,7 +35,7 @@ public class ResourceAction extends Action {
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservationDto());
+        var command = new ReservationEntity.RunSearch(reservationId, event.facilityId(), event.reservation());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::runSearch).params(command);
         return effects().forward(deferredCall);
     }

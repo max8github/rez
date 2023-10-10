@@ -1,23 +1,19 @@
 package com.rez.facility.reservation;
 
+import lombok.With;
 import java.time.LocalDateTime;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 import static com.rez.facility.reservation.ReservationState.State.INIT;
 
+@With
 public record ReservationState(State state, String reservationId, String facilityId, List<String> emails,
                                int currentResourceIndex, List<String> resources, LocalDateTime dateTime) {
 
     public static ReservationState initiate(String entityId) {
-        List<String> empty = Collections.emptyList();
+        List<String> empty = new ArrayList<>();
         return new ReservationState(INIT, entityId, "", empty, -1, empty, LocalDateTime.now());
 
-    }
-
-    public ReservationState withState(State state) {
-        return new ReservationState(state, this.reservationId, this.facilityId, this.emails,
-                this.currentResourceIndex, this.resources, this.dateTime);
     }
 
     public ReservationState withIncrementedIndex() {

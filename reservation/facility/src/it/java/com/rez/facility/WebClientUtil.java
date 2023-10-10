@@ -27,11 +27,11 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
 
 @Component
-public class ReservationEntityIntegrationTest {
+public class WebClientUtil {
   @Autowired
   private WebClient webClient;
 
-  ReservationEntityIntegrationTest(WebClient webClient) {
+  WebClientUtil(WebClient webClient) {
     this.webClient = webClient;
   }
 

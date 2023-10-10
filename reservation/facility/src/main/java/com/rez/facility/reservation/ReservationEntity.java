@@ -28,11 +28,6 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return new Reservation(reservationState.emails(), reservationState.dateTime());
     }
 
-    public static ReservationState toReservationState(Reservation dto, String reservationId, String facilityId, List<String> resources) {
-        return new ReservationState(INIT, reservationId, facilityId, dto.emails(),
-                -1, resources, dto.dateTime());
-    }
-
     @Override
     public ReservationState emptyState() {
         return ReservationState.initiate(entityId);
@@ -40,11 +35,10 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @PostMapping("/init")
     public Effect<String> init(@RequestBody InitiateReservation command) {
-        log.info("Created reservation entity with reservation id {}", entityId);
+        log.info("ReservationEntity initializes with reservation id {}", entityId);
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
-            case UNAVAILABLE ->
-                    effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
+            case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
             case FULFILLED -> effects().reply("Reservation was accepted: cannot be reinitialized");
             case SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
             case INIT -> effects()
@@ -57,9 +51,9 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     @SuppressWarnings("unused")
     @EventHandler
     public ReservationState initiated(ReservationEvent.ReservationInitiated event) {
-        return toReservationState(
-                event.reservationDto(), event.reservationId(), event.facilityId(), event.resources())
-                .withState(SELECTING);
+        Reservation reservation = event.reservation();
+        return ReservationState.initiate(event.reservationId()).withState(SELECTING).withFacilityId(event.facilityId())
+          .withEmails(reservation.emails()).withResources(event.resources()).withDateTime(reservation.dateTime());
     }
 
     @PostMapping("/runSearch")
