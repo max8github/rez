@@ -1,4 +1,4 @@
-package com.rez.user;
+package com.mcalder.recordhub.customer;
 
 import kalix.javasdk.annotations.Acl;
 import org.slf4j.Logger;

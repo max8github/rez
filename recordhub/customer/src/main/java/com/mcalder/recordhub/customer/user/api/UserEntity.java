@@ -1,7 +1,7 @@
-package com.rez.user.api;
+package com.mcalder.recordhub.customer.user.api;
 
-import com.rez.user.domain.Address;
-import com.rez.user.domain.User;
+import com.mcalder.recordhub.customer.user.domain.Address;
+import com.mcalder.recordhub.customer.user.domain.User;
 import kalix.javasdk.valueentity.ValueEntity;
 import kalix.javasdk.annotations.EntityKey;
 import kalix.javasdk.annotations.EntityType;
@@ -17,8 +17,8 @@ public class UserEntity extends ValueEntity<User> {
     public ValueEntity.Effect<String> create(@RequestBody User user) {
         if (currentState() == null)
             return effects()
-                    .updateState(user)
-                    .thenReply("OK");
+              .updateState(user)
+              .thenReply("OK");
         else
             return effects().error("Facility exists already");
     }
@@ -27,8 +27,8 @@ public class UserEntity extends ValueEntity<User> {
     public ValueEntity.Effect<User> getUser() {
         if (currentState() == null)
             return effects().error(
-                    "No user found for id '" + commandContext().entityId() + "'",
-                    Status.Code.NOT_FOUND
+              "No user found for id '" + commandContext().entityId() + "'",
+              Status.Code.NOT_FOUND
             );
         else
             return effects().reply(currentState());
@@ -38,8 +38,8 @@ public class UserEntity extends ValueEntity<User> {
     public Effect<String> changeName(@PathVariable String newName) {
         User updatedUser = currentState().withName(newName);
         return effects()
-                .updateState(updatedUser)
-                .thenReply("OK");
+          .updateState(updatedUser)
+          .thenReply("OK");
     }
 
     @PostMapping("/changeAddress")

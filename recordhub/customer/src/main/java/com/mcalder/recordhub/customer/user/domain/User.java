@@ -1,4 +1,4 @@
-package com.rez.user.domain;
+package com.mcalder.recordhub.customer.user.domain;
 
 public record User(String email, String name, Address address) {
 
