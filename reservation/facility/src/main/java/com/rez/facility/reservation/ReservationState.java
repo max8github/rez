@@ -8,20 +8,37 @@ import static com.rez.facility.reservation.ReservationState.State.INIT;
 
 @With
 public record ReservationState(State state, String reservationId, String facilityId, List<String> emails,
-                               int currentResourceIndex, List<String> resources, LocalDateTime dateTime) {
+                               Set<String> availableResources, List<String> resources,
+                               LocalDateTime dateTime, String resourceId) {
 
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
-        return new ReservationState(INIT, entityId, "", empty, -1, empty, LocalDateTime.now());
+        return new ReservationState(INIT, entityId, "", empty, new HashSet<>(), empty, LocalDateTime.now(), "");
 
     }
 
-    public ReservationState withIncrementedIndex() {
-        return new ReservationState(this.state, this.reservationId, this.facilityId, this.emails,
-                this.currentResourceIndex + 1, this.resources, this.dateTime);
+    public ReservationState withAdded(String resourceId) {
+        this.availableResources.add(resourceId);
+        return this;
     }
+
+    public ReservationState withRemoved(String resourceId) {
+        this.availableResources.remove(resourceId);
+        return this;
+    }
+
+    boolean hasAvailableResources() {
+        return this.availableResources.iterator().hasNext();
+    }
+
+    public String pop() {
+        Iterator<String> iterator = this.availableResources.iterator();
+        if(iterator.hasNext()) return iterator.next();
+        else return "";
+    }
+
 
     public enum State {
-        INIT, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
+        INIT, COLLECTING, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
     }
 }
