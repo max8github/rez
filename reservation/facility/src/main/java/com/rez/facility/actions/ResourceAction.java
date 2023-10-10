@@ -33,8 +33,8 @@ public class ResourceAction extends Action {
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.AvalabilityChecked event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(reservationId, event.resourceId(), event.available(), event.facilityId());
-        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::runSearch).params(command);
+        var command = new ReservationEntity.ReplyAvailability(reservationId, event.resourceId(), event.available(), event.facilityId());
+        var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::replyAvailability).params(command);
         return effects().forward(deferredCall);
     }
 
@@ -57,7 +57,7 @@ public class ResourceAction extends Action {
     public Effect<String> on(ResourceEvent.BookingRejected event) {
         log.info("Resource {} sends rejection to reservation {}, tryNext", event.resourceId(), event.reservationId());
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.RunSearch(reservationId, event.resourceId(), false, event.facilityId());
+        var command = new ReservationEntity.ReplyAvailability(reservationId, event.resourceId(), false, event.facilityId());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::reject).params(command);
         return effects().forward(deferredCall);
     }

@@ -12,6 +12,9 @@ import java.util.List;
 
 import static com.rez.facility.reservation.ReservationState.State.*;
 
+/**
+ * For an explanation on how this work, see description of 'broadcast' in git commits.
+ */
 @Id("reservationId")
 @TypeId("reservation")
 @RequestMapping("/reservation/{reservationId}")
@@ -56,8 +59,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
           .withEmails(reservation.emails()).withResources(event.resources()).withDateTime(reservation.dateTime());
     }
 
-    @PostMapping("/runSearch")
-    public Effect<String> runSearch(@RequestBody RunSearch command) {
+    @PostMapping("/replyAvailability")
+    public Effect<String> replyAvailability(@RequestBody ReplyAvailability command) {
         switch (currentState().state()) {
             case COLLECTING -> {
                 log.info("Reservation " + entityId + ", in COLLECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
@@ -210,7 +213,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/reject")
-    public Effect<String> reject(@RequestBody RunSearch command) {
+    public Effect<String> reject(@RequestBody ReplyAvailability command) {
 
         switch (currentState().state()) {
             case SELECTING -> {
@@ -271,7 +274,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public record InitiateReservation(String facilityId, Reservation reservation,
                                       List<String> resources) {}
 
-    public record RunSearch(String reservationId, String resourceId, boolean available, String facilityId) {}
+    public record ReplyAvailability(String reservationId, String resourceId, boolean available, String facilityId) {}
     public record Wait(String reservationId, String resourceId) {}
 
     public record Book(String resourceId, String reservationId, Reservation reservation, String facilityId) {}
