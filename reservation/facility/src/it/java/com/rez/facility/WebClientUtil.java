@@ -117,7 +117,7 @@ public class WebClientUtil {
     var command = new ResourceEntity.CreateResourceCommand(facilityId, resourceDto);
 
     ResponseEntity<Void> response = webClient.post().uri("/resource/" + resourceId + "/create")
-      .body(Mono.just(command), ReservationEntity.InitiateReservation.class)
+      .body(Mono.just(command), ReservationEntity.Init.class)
       .retrieve()
       .toBodilessEntity()
       .block(timeout);
