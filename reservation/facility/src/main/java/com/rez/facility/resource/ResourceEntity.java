@@ -41,8 +41,8 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return ResourceState.initialize(resourceCreated.resourceName());
     }
 
-    @PostMapping("/inquireBooking")
-    public Effect<String> inquireBooking(@RequestBody InquireBooking command) {
+    @PostMapping("/checkAvailability")
+    public Effect<String> checkAvailability(@RequestBody CheckAvailability command) {
         LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
         boolean vacant = currentState().isReservableAt(validTime);
         String yes = vacant?"":"NOT ";
@@ -58,19 +58,19 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return currentState();
     }
 
-    @PostMapping("/bookit")
-    public Effect<String> bookIt(@RequestBody BookIt command) {
+    @PostMapping("/reserve")
+    public Effect<String> reserve(@RequestBody Reserve command) {
         LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
         if(currentState().isReservableAt(validTime)) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingAccepted(entityId, command.reservationId(),
+                    .emitEvent(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
                             command.facilityId(), command.reservation()))
                     .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.BookingRejected(entityId, command.reservationId(),
+                    .emitEvent(new ResourceEvent.ReservationRejected(entityId, command.reservationId(),
                             command.facilityId(), command.reservation()
                     ))
                     .thenReply(newState -> "UNAVAILABLE resource");
@@ -84,25 +84,25 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         LocalDateTime validTime = ResourceState.roundToValidTime(dateTime);
         log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, validTime);
         return effects()
-                .emitEvent(new ResourceEvent.BookingCanceled(entityId, reservationId, validTime))
+                .emitEvent(new ResourceEvent.ReservationCanceled(entityId, reservationId, validTime))
                 .thenReply(newState -> "OK");
     }
 
     @SuppressWarnings("unused")
     @EventHandler
-    public ResourceState bookingCanceled(ResourceEvent.BookingCanceled event) {
+    public ResourceState reservationCanceled(ResourceEvent.ReservationCanceled event) {
         return currentState().cancel(event.dateTime(), event.reservationId());
     }
 
     @SuppressWarnings("unused")
     @EventHandler
-    public ResourceState bookingAccepted(ResourceEvent.BookingAccepted event) {
+    public ResourceState bookingAccepted(ResourceEvent.ReservationAccepted event) {
         return currentState().set(event.reservationDto().dateTime(), event.reservationId());
     }
 
     @SuppressWarnings("unused")
     @EventHandler
-    public ResourceState bookingRejected(ResourceEvent.BookingRejected event) {
+    public ResourceState reservationRejected(ResourceEvent.ReservationRejected event) {
         return currentState();
     }
 
@@ -114,7 +114,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
 
-    public record InquireBooking(String reservationId, String facilityd, Reservation reservation) {}
+    public record CheckAvailability(String reservationId, String facilityd, Reservation reservation) {}
 
-    public record BookIt(String reservationId, Reservation reservation, String facilityId) { }
+    public record Reserve(String reservationId, Reservation reservation, String facilityId) { }
 }

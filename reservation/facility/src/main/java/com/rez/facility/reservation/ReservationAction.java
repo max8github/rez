@@ -22,11 +22,11 @@ public class ReservationAction extends Action {
         this.kalixClient = kalixClient;
     }
 
-    public Effect<String> on(ReservationEvent.ReservationInitiated event) {
-        log.info("Broadcast starts to resources{}", event.resources());
+    public Effect<String> on(ReservationEvent.Inited event) {
+        log.info("Broadcast starts to resources {}", event.resources());
         List<CompletableFuture<String>> futureList = event.resources().stream().sorted().map(id -> {
-            var command = new ResourceEntity.InquireBooking(event.reservationId(), event.facilityId(), event.reservation());
-            return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::inquireBooking).params(command).execute().toCompletableFuture();
+            var command = new ResourceEntity.CheckAvailability(event.reservationId(), event.facilityId(), event.reservation());
+            return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
         }).toList();
 
         CompletableFuture<Effect<String>> completableFuture = CompletableFuture.allOf(futureList.toArray(new CompletableFuture<?>[0]))
@@ -39,19 +39,21 @@ public class ReservationAction extends Action {
     }
 
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
-        log.info("Reservation {} has a candidate ({}) and sends a BookIt to it", event.reservationId(), event.resourceId());
+        log.info("Reservation {} has a candidate ({}) and sends a Fulfill to it", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.BookIt(event.reservationId(), event.reservation(), event.facilityId());
-        DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::bookIt).params(command);
+        var command = new ResourceEntity.Reserve(event.reservationId(), event.reservation(), event.facilityId());
+        DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::reserve).params(command);
         return effects().forward(deferredCall);
     }
 
-    public Effect<String> on(ReservationEvent.Waiting event) {
+    public Effect<String> on(ReservationEvent.RejectedWithNext event) {
         var reservationId = event.reservationId();
         var resourceId = event.resourceId();
-        log.info("Reservation {} had a candidate ({}), but that refused, after attempting booking it. Now back to waiting.", reservationId, resourceId);
-        var command = new ReservationEntity.Wait(reservationId, resourceId);
-        DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::tryNext).params(command);
+        var nextResourceId = event.nextResourceId();
+        log.info("Reservation {} had a candidate ({}), but that got subsequently rejected. Now to try: {}.",
+          reservationId, resourceId, nextResourceId);
+        var command = new ReservationEntity.ReplyAvailability(reservationId, event.nextResourceId(), true, event.facilityId());
+        DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::replyAvailability).params(command);
         return effects().forward(deferredCall);
     }
 

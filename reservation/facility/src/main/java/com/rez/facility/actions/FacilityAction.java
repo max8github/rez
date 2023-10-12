@@ -36,7 +36,7 @@ public class FacilityAction extends Action {
     @SuppressWarnings("unused")
     public Effect<String> on(FacilityEvent.ReservationCreated event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.InitiateReservation(event.facilityId(), event.reservationDto(), event.resources());
+        var command = new ReservationEntity.Init(event.facilityId(), event.reservationDto(), event.resources());
         CompletionStage<Done> timerRegistration =
                 timers().startSingleTimer(
                         timerName(event.reservationId()),

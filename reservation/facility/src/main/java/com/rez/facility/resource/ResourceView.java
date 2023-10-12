@@ -12,12 +12,14 @@ import reactor.core.publisher.Flux;
 @Table("resources_by_facility_id")
 public class ResourceView extends View<ResourceV> {
 
+    @SuppressWarnings("unused")
     @GetMapping("/resource/by_facility/{facility_id}")
     @Query("SELECT * FROM resources_by_facility_id WHERE facilityId = :facility_id")
     public Flux<ResourceV> getResource(String facility_id) {
         return null;
     }
 
+    @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
         String id = updateContext().eventSubject().orElse("");
@@ -25,25 +27,29 @@ public class ResourceView extends View<ResourceV> {
         return effects().updateState(ResourceV.initialize(created));
     }
 
+    @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingAccepted event) {
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationAccepted event) {
         String reservationId = event.reservationId();
         return effects().updateState(viewState().withBooking(event.reservationDto().dateTime(), reservationId));
     }
 
+    @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingRejected notInteresting) {
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationRejected notInteresting) {
         return effects().ignore();
     }
 
 
+    @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
         return effects().ignore();
     }
 
+    @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.BookingCanceled cancellation) {
-        return effects().updateState(viewState().withoutBooking(cancellation.dateTime()));
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationCanceled event) {
+        return effects().updateState(viewState().withoutBooking(event.dateTime()));
     }
 }

@@ -106,7 +106,7 @@ public class DelegatingServiceAction extends Action {
         return notificationSender.messageTwist(webClient, body);
     }
 
-    public Effect<String> on(ReservationEvent.Booked event) throws Exception {
+    public Effect<String> on(ReservationEvent.Fulfilled event) throws Exception {
         Reservation reservationDto = event.reservation();
         String reservationId = event.reservationId();
         List<String> resourceIds = event.resourceIds();
