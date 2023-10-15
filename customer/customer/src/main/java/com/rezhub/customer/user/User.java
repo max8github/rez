@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.user;
+package com.rezhub.customer.user;
 
 public record User(String email, String name, Address address) {
 

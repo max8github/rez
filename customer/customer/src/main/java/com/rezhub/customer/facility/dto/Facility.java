@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.facility.dto;
+package com.rezhub.customer.facility.dto;
 
 import java.util.Set;
 

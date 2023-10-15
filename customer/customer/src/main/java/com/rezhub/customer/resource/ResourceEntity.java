@@ -1,6 +1,6 @@
-package com.mcalder.recordhub.customer.resource;
+package com.rezhub.customer.resource;
 
-import com.mcalder.recordhub.customer.resource.dto.Resource;
+import com.rezhub.customer.resource.dto.Resource;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;

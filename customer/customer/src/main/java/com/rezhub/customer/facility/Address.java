@@ -1,3 +1,3 @@
-package com.mcalder.recordhub.customer.facility;
+package com.rezhub.customer.facility;
 
 public record Address(String street, String city) {}

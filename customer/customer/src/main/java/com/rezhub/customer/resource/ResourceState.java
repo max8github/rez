@@ -1,3 +1,3 @@
-package com.mcalder.recordhub.customer.resource;
+package com.rezhub.customer.resource;
 
 public record ResourceState(String name, String resourceId) {}

@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer;
+package com.rezhub.customer;
 
 import kalix.javasdk.annotations.Acl;
 import org.slf4j.Logger;
@@ -12,7 +12,7 @@ import org.springframework.context.annotation.ComponentScan;
 // Kalix service, but disallow access from the internet. This can be overridden explicitly
 // per component or method using annotations.
 // Documentation at https://docs.kalix.io/services/using-acls.html
-@ComponentScan({"com.mcalder.recordhub.customer.user"})
+@ComponentScan({"com.rezhub.customer.user"})
 @Acl(allow = @Acl.Matcher(service = "*"))
 public class Main {
 

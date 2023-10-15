@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.facility;
+package com.rezhub.customer.facility;
 
 import lombok.With;
 

@@ -1,8 +1,8 @@
-package com.mcalder.recordhub.customer.facility;
+package com.rezhub.customer.facility;
 
-import com.mcalder.recordhub.customer.facility.dto.Address;
-import com.mcalder.recordhub.customer.facility.dto.Facility;
-import com.mcalder.recordhub.customer.resource.dto.Resource;
+import com.rezhub.customer.facility.dto.Address;
+import com.rezhub.customer.facility.dto.Facility;
+import com.rezhub.customer.resource.dto.Resource;
 import kalix.javasdk.annotations.TypeName;
 
 public sealed interface FacilityEvent {

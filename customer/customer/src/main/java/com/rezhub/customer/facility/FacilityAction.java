@@ -1,6 +1,6 @@
-package com.mcalder.recordhub.customer.facility;
+package com.rezhub.customer.facility;
 
-import com.mcalder.recordhub.customer.resource.ResourceEntity;
+import com.rezhub.customer.resource.ResourceEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;

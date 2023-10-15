@@ -2,13 +2,14 @@
 <project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
   <modelVersion>4.0.0</modelVersion>
   <parent>
-    <groupId>com.mcalder.recordhub</groupId>
-    <artifactId>recordhub</artifactId>
-    <version>0.1</version>
+    <groupId>com.rezhub.customer</groupId>
+    <artifactId>customer</artifactId>
+    <version>0.2</version>
   </parent>
 
+  <groupId>com.rezhub</groupId>
   <artifactId>customer</artifactId>
-  <version>0.2</version>
+  <version>0.3</version>
   <packaging>jar</packaging>
 
   <name>customer</name>
@@ -17,7 +18,7 @@
     <!-- TODO Update to your own Docker repository or Docker Hub scope -->
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${maven.build.timestamp}</dockerTag>
-    <mainClass>com.mcalder.recordhub.customer.Main</mainClass>
+    <mainClass>com.rezhub.customer.Main</mainClass>
   </properties>
 
   <build>

@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.resource.dto;
+package com.rezhub.customer.resource.dto;
 
 import java.util.Comparator;
 import java.util.Objects;

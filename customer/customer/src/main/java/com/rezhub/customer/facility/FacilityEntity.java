@@ -1,8 +1,8 @@
-package com.mcalder.recordhub.customer.facility;
+package com.rezhub.customer.facility;
 
-import com.mcalder.recordhub.customer.facility.dto.Address;
-import com.mcalder.recordhub.customer.facility.dto.Facility;
-import com.mcalder.recordhub.customer.resource.dto.Resource;
+import com.rezhub.customer.facility.dto.Address;
+import com.rezhub.customer.facility.dto.Facility;
+import com.rezhub.customer.resource.dto.Resource;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
@@ -26,7 +26,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @Override
   public FacilityState emptyState() {
-    return FacilityState.create(entityId).withName("noname").withAddress(new com.mcalder.recordhub.customer.facility.Address("nostreet", "nocity"));
+    return FacilityState.create(entityId).withName("noname").withAddress(new com.rezhub.customer.facility.Address("nostreet", "nocity"));
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -44,7 +44,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     var dto = created.facility();
     return FacilityState.create(created.entityId())
       .withName(dto.name())
-      .withAddress(new com.mcalder.recordhub.customer.facility.Address(dto.address().street(), dto.address().city()))
+      .withAddress(new com.rezhub.customer.facility.Address(dto.address().street(), dto.address().city()))
       .withResourceIds(dto.resourceIds());
   }
 
@@ -73,7 +73,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   @EventHandler
   public FacilityState addressChanged(FacilityEvent.AddressChanged addressChanged) {
     Address address = addressChanged.address();
-    return currentState().withAddress(new com.mcalder.recordhub.customer.facility.Address(address.street(), address.city()));
+    return currentState().withAddress(new com.rezhub.customer.facility.Address(address.street(), address.city()));
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -125,7 +125,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   @GetMapping()
   public Effect<Facility> getFacility() {
     FacilityState facilityState = currentState();
-    com.mcalder.recordhub.customer.facility.Address addressState = facilityState.address();
+    com.rezhub.customer.facility.Address addressState = facilityState.address();
     Address address = new Address(addressState.street(), addressState.city());
     return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
   }

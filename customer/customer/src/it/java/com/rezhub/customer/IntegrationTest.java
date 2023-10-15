@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer;
+package com.rezhub.customer;
 
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 

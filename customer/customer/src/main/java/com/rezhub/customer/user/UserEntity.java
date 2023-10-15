@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.user;
+package com.rezhub.customer.user;
 
 import io.grpc.Status;
 import kalix.javasdk.annotations.EntityKey;

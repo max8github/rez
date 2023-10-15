@@ -1,4 +1,4 @@
-package com.mcalder.recordhub.customer.resource;
+package com.rezhub.customer.resource;
 
 import kalix.javasdk.annotations.TypeName;
 
