@@ -16,7 +16,7 @@
   <properties>
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${maven.build.timestamp}</dockerTag>
-    <mainClass>com.rez.facility.Main</mainClass>
+    <mainClass>com.rezhub.reservation.Main</mainClass>
   </properties>
 
   <build>
