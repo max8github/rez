@@ -14,7 +14,7 @@ import org.slf4j.LoggerFactory;
  * kalix secret create generic msg-creds --literal INSTALL_TOKEN=t0k3n
  * </pre>
  * <pre>
- * kalix service deploy facility registry.hub.docker.com/max8github/facility:0.4-20230610232357 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
+ * kalix service deploy reservation registry.hub.docker.com/max8github/reservation:0.4-20230610232357 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
  * </pre>
  */
 public class ConfigTest {

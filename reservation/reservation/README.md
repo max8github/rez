@@ -61,14 +61,14 @@ mvn verify -Pit
 kalix secret create generic msg-creds --literal INSTALL_TOKEN=xxxxxxxxxxxxx
 mvn deploy
 # grab correct tag (i.e. 0.5) and paste it here:
-kalix service deploy facility registry.hub.docker.com/max8github/facility:0.5 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
+kalix service deploy reservation registry.hub.docker.com/max8github/reservation:0.5 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
 kalix services list           # to check status
-kalix services get facility   # to check status
+kalix services get reservation   # to check status
 ```
 
 ## Prod
 To expose the service, do:
 ```shell
-kalix services expose facility  # --enable-cors
-   The service 'facility' was successfully exposed at: name1.name2.kalix.app
+kalix services expose reservation  # --enable-cors
+   The service 'reservation' was successfully exposed at: name1.name2.kalix.app
 ```

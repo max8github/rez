@@ -7,9 +7,9 @@
         <artifactId>spring-boot-starter-parent</artifactId>
         <version>3.1.0</version>
     </parent>
-    <groupId>com.mcalder.rez</groupId>
-    <artifactId>rez</artifactId>
-    <version>0.3</version>
+    <groupId>com.rezhub.reservation</groupId>
+    <artifactId>reservation</artifactId>
+    <version>0.4</version>
     <packaging>pom</packaging>
 
     <properties>
@@ -24,7 +24,7 @@
     </properties>
 
     <modules>
-        <module>facility</module>
+        <module>reservation</module>
         <module>stringparser</module>
         <module>calendarstub</module>
         <module>spi</module>

@@ -4,9 +4,9 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
     <parent>
-        <groupId>com.mcalder.rez</groupId>
-        <artifactId>rez</artifactId>
-        <version>0.3</version>
+        <groupId>com.rezhub.reservation</groupId>
+        <artifactId>reservation</artifactId>
+        <version>0.4</version>
     </parent>
 
     <artifactId>stringparser</artifactId>
