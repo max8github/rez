@@ -8,14 +8,14 @@ import kalix.javasdk.view.View;
 import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Flux;
 
-@ViewId("view_resources_by_facility_id")
-@Table("resources_by_facility_id")
+@ViewId("view_resources_by_pool_id")
+@Table("resources_by_pool_id")
 public class ResourceView extends View<ResourceV> {
 
     @SuppressWarnings("unused")
-    @GetMapping("/resource/by_facility/{facility_id}")
-    @Query("SELECT * FROM resources_by_facility_id WHERE facilityId = :facility_id")
-    public Flux<ResourceV> getResource(String facility_id) {
+    @GetMapping("/resource/by_pool/{pool_id}")
+    @Query("SELECT * FROM resources_by_pool_id WHERE poolId = :pool_id")
+    public Flux<ResourceV> getResource(String pool_id) {
         return null;
     }
 

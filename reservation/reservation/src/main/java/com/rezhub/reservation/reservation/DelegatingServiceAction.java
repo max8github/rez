@@ -114,8 +114,7 @@ public class DelegatingServiceAction extends Action {
         Set<String> resourceIds = event.resourceIds();
         // todo: here i need the resource and facility details, not their ids:
         String resourceId = event.resourceId();
-        String facilityId = event.facilityId();
-        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, facilityId, resourceIds,
+        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, "facilityId", resourceIds,
                 reservationDto.emails(), reservationDto.dateTime());
         var stageGoogle = calendarSender.saveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
@@ -123,7 +122,7 @@ public class DelegatingServiceAction extends Action {
     }
 
     public Effect<String> on(ReservationEvent.SearchExhausted event) {
-        var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), event.facilityId(),
+        var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), "facilityId",
                 event.resourceIds(),
                 event.reservation().emails(), event.reservation().dateTime());
         var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));

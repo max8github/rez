@@ -1,6 +1,6 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.pool.FacilityEntity;
+import com.rezhub.reservation.pool.PoolEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceEvent;
@@ -25,15 +25,15 @@ public class ResourceAction extends Action {
 
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
-        var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
-          .call(FacilityEntity::addResourceId).params(event.resourceId());
+        var deferredCall = kalixClient.forEventSourcedEntity(event.poolId())
+          .call(PoolEntity::addResourceId).params(event.resourceId());
         return effects().forward(deferredCall);
     }
 
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.AvalabilityChecked event) {
         var reservationId = event.reservationId();
-        var command = new ReservationEntity.ReplyAvailability(reservationId, event.resourceId(), event.available(), event.facilityId());
+        var command = new ReservationEntity.ReplyAvailability(reservationId, event.resourceId(), event.available());
         var deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::replyAvailability).params(command);
         return effects().forward(deferredCall);
     }
@@ -43,11 +43,11 @@ public class ResourceAction extends Action {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
         log.info("Resource {} sends acceptance to reservation {}", resourceId, reservationId);
-        var command = new ReservationEntity.Fulfill(event.resourceId(), reservationId, event.reservation(), event.facilityId());
+        var command = new ReservationEntity.Fulfill(event.resourceId(), reservationId, event.reservation());
 
         CompletionStage<String> reply = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::fulfill).params(command)
           .execute()
-          .thenCompose(req -> timers().cancel(FacilityAction.timerName(reservationId)))
+          .thenCompose(req -> timers().cancel(PoolAction.timerName(reservationId)))
           .thenApply(done -> "Ok");
 
         return effects().asyncReply(reply);

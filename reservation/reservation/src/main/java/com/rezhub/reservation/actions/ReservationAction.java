@@ -1,6 +1,10 @@
-package com.rezhub.reservation.reservation;
+package com.rezhub.reservation.actions;
 
 import com.google.protobuf.any.Any;
+import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.pool.PoolEntity;
+import com.rezhub.reservation.reservation.ReservationEntity;
+import com.rezhub.reservation.reservation.ReservationEvent;
 import com.rezhub.reservation.resource.ResourceEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.action.Action;
@@ -9,6 +13,7 @@ import kalix.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -24,24 +29,36 @@ public class ReservationAction extends Action {
 
     public Effect<String> on(ReservationEvent.Inited event) {
         log.info("Broadcast starts to resources {}", event.resources());
-        List<CompletableFuture<String>> futureList = event.resources().stream().sorted().map(id -> {
-            var command = new ResourceEntity.CheckAvailability(event.reservationId(), event.facilityId(), event.reservation());
-            return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
+        CompletableFuture<Effect<String>> completableFuture = futureBroadcast(this, kalixClient, event.reservationId(),
+          event.reservation(), event.resources());
+        return effects().asyncEffect(completableFuture);
+    }
+
+    static CompletableFuture<Effect<String>> futureBroadcast(Action action, ComponentClient kalixClient,
+                                                             String reservationId, Reservation reservation,
+                                                             Set<String> resources) {
+        List<CompletableFuture<String>> futureChecks = resources.stream().sorted().map(id -> {
+            var command = new ResourceEntity.CheckAvailability(reservationId, reservation);
+            //sorry, but cannot use inheritance. If it were possible, checkAvailability() would
+            //be a method (of a super entity) with polymorphic behavior.
+            if(id.startsWith("pool")) {
+                return kalixClient.forEventSourcedEntity(id).call(PoolEntity::checkAvailability).params(command).execute().toCompletableFuture();
+            } else {
+                return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
+            }
         }).toList();
 
-        CompletableFuture<Effect<String>> completableFuture = CompletableFuture.allOf(futureList.toArray(new CompletableFuture<?>[0]))
-                .thenApply(v -> futureList.stream()
+      return CompletableFuture.allOf(futureChecks.toArray(new CompletableFuture<?>[0]))
+                .thenApply(v -> futureChecks.stream()
                         .map(CompletableFuture::join)
                         .collect(Collectors.toList())
-                ).thenApply(v -> effects().reply("ok - broadcast"));
-
-        return effects().asyncEffect(completableFuture);
+                ).thenApply(v -> action.effects().reply("ok - broadcast"));
     }
 
     public Effect<String> on(ReservationEvent.ResourceSelected event) {
         log.info("Reservation {} has a candidate ({}) and sends a Fulfill to it", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.Reserve(event.reservationId(), event.reservation(), event.facilityId());
+        var command = new ResourceEntity.Reserve(event.reservationId(), event.reservation());
         DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::reserve).params(command);
         return effects().forward(deferredCall);
     }
@@ -52,7 +69,7 @@ public class ReservationAction extends Action {
         var nextResourceId = event.nextResourceId();
         log.info("Reservation {} had a candidate ({}), but that got subsequently rejected. Now to try: {}.",
           reservationId, resourceId, nextResourceId);
-        var command = new ReservationEntity.ReplyAvailability(reservationId, event.nextResourceId(), true, event.facilityId());
+        var command = new ReservationEntity.ReplyAvailability(reservationId, event.nextResourceId(), true);
         DeferredCall<Any, String> deferredCall = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::replyAvailability).params(command);
         return effects().forward(deferredCall);
     }

@@ -32,7 +32,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         String id = commandContext().entityId();
         String resourceName = resCommand.resourceDto().resourceName();
         return effects()
-          .emitEvent(new ResourceEvent.ResourceCreated(id, resourceName, resCommand.facilityId()))
+          .emitEvent(new ResourceEvent.ResourceCreated(id, resourceName, resCommand.poolId()))
           .thenReply(newState -> "OK - " + resourceName);
     }
 
@@ -49,7 +49,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         String yes = vacant?"":"NOT ";
         log.info("Resource {} ({}) can {}accept reservation {} ", currentState().name(), entityId, yes, command.reservationId);
         return effects()
-          .emitEvent(new ResourceEvent.AvalabilityChecked(entityId, command.reservationId(), vacant, command.facilityd()))
+          .emitEvent(new ResourceEvent.AvalabilityChecked(entityId, command.reservationId(), vacant))
           .thenReply(newState -> "OK");
     }
 
@@ -66,13 +66,13 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
               .emitEvent(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
-                command.facilityId(), command.reservation()))
+                command.reservation()))
               .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
               .emitEvent(new ResourceEvent.ReservationRejected(entityId, command.reservationId(),
-                command.facilityId(), command.reservation()
+                command.reservation()
               ))
               .thenReply(newState -> "UNAVAILABLE resource");
 
@@ -113,9 +113,9 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return effects().reply(currentState());
     }
 
-    public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
+    public record CreateResourceCommand(String poolId, Resource resourceDto) {}
 
-    public record CheckAvailability(String reservationId, String facilityd, Reservation reservation) {}
+    public record CheckAvailability(String reservationId, Reservation reservation) {}
 
-    public record Reserve(String reservationId, Reservation reservation, String facilityId) { }
+    public record Reserve(String reservationId, Reservation reservation) { }
 }

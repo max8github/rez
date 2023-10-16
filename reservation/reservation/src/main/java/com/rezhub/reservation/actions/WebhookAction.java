@@ -4,7 +4,6 @@ import com.google.protobuf.any.Any;
 import com.rezhub.reservation.spi.Assembler;
 import com.rezhub.reservation.spi.Parser;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import kalix.javasdk.DeferredCall;
 import kalix.javasdk.Metadata;
@@ -15,6 +14,9 @@ import kalix.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.Set;
+import java.util.UUID;
 
 @RequestMapping("/outwebhook")
 public class WebhookAction extends Action {
@@ -49,15 +51,17 @@ public class WebhookAction extends Action {
             log.info("dropping system message {}", textMessage);
             return effects().ignore();
         }
-        log.info("*** REQUESTED, for facility {}, comment:\n\t {}", facilityId, textMessage);
+        log.info("*** REQUESTED, for pool {}, comment:\n\t {}", facilityId, textMessage);
+        var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
 
         Parser.ReservationDto rDto = parser.parse(facilityId, textMessage);
         DeferredCall<Any, String> deferredCall;
         if(rDto.command().equals("cancel")) {
             deferredCall = kalixClient.forEventSourcedEntity(rDto.reservationId()).call(ReservationEntity::cancelRequest);
         } else {
-            Reservation body = new Reservation(rDto.emails(), rDto.dateTime());
-            deferredCall = kalixClient.forEventSourcedEntity(facilityId).call(FacilityEntity::createReservation).params(body);
+            Reservation r = new Reservation(rDto.emails(), rDto.dateTime());
+            SelectionAction.Selection body = new SelectionAction.Selection(r, Set.of(facilityId));
+            deferredCall = kalixClient.forAction().call(SelectionAction::requestReservation).params(body, reservationId);
 
         }
 

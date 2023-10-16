@@ -1,6 +1,7 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.pool.dto.Facility;
+import com.rezhub.reservation.pool.PoolEntity;
+import com.rezhub.reservation.pool.dto.Pool;
 import com.rezhub.reservation.resource.ResourceState;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
@@ -43,36 +44,40 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void shouldReserve() throws Exception {
 
-    String facilityId = "fac1";
-    Facility facility = new Facility("TCL", Collections.emptySet());
+    String poolId = PoolEntity.PREFIX + "fac1";
+    Pool pool = new Pool("TCL", Collections.emptySet());
 
     ResponseEntity<String> created =
       webClient.post()
-        .uri("/facility/" + facilityId + "/create")
-        .body(Mono.just(facility), Facility.class)
+        .uri("/pool/" + poolId + "/create")
+        .body(Mono.just(pool), Pool.class)
         .retrieve()
         .toEntity(String.class)
         .block(timeout);
 
     Assertions.assertEquals(HttpStatus.OK, created.getStatusCode());
 
+    System.out.println("Pool = " + util.getPool(poolId));
+
     var resourceId1 = "c1";
     var resourceId2 = "c2";
-    util.createResource(facilityId, resourceId1);
-    util.createResource(facilityId, resourceId2);
+    util.createResource(poolId, resourceId1);
+    util.createResource(poolId, resourceId2);
     List<String> resourceIds = List.of(resourceId1, resourceId2);
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime dateTime = now.plusHours(2).minusMinutes(now.getMinute()).minusSeconds(now.getSecond()).minusNanos(now.getNano());
     String dateTimeString = dateTime.toString();
     System.out.println("dateTimeString to test = " + dateTimeString);
 
-    String reservationId1 = util.issueNewReservationRequest(facilityId, dateTime);
+    String reservationId1 = util.issueNewReservationRequest(poolId, dateTime);
     System.out.println("reservationId1 = " + reservationId1);
     System.out.println("reservation 1 = " + util.getReservationState(reservationId1));
     Thread.sleep(2000);
 
-    String reservationId2 = util.issueNewReservationRequest(facilityId, dateTime);
+    String reservationId2 = util.issueNewReservationRequest(poolId, dateTime);
     System.out.println("reservationId2 = " + reservationId2);
+    System.out.println("reservationId2 = " + util.getReservationState(reservationId2));
+    Thread.sleep(2000);
     util.assertReservationState(reservationId1, FULFILLED);
     util.assertReservationState(reservationId2, FULFILLED);
 
@@ -86,7 +91,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     Thread.sleep(3000);
 
-    String reservationId3 = util.issueNewReservationRequest(facilityId, dateTime);
+    String reservationId3 = util.issueNewReservationRequest(poolId, dateTime);
     System.out.println("reservationId3 = " + reservationId3);
     System.out.println("reservation 3 = " + util.getReservationState(reservationId3));
 

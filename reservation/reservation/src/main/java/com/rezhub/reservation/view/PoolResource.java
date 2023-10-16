@@ -1,8 +1,8 @@
 package com.rezhub.reservation.view;
 
-public record FacilityResource(
+public record PoolResource(
         String name,
-        String facilityId,
+        String poolId,
         String resourceName,
         String resourceId,
         String[] timeWindow
