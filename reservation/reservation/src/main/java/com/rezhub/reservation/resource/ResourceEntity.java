@@ -29,10 +29,10 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @PostMapping("/create")
     public Effect<String> create(@RequestBody CreateResourceCommand resCommand) {
-        String resourceName = resCommand.resource().resourceName();
+        String resourceName = resCommand.resourceDto().resourceName();
         return effects()
-                .emitEvent(new ResourceEvent.ResourceCreated(entityId, resourceName, resCommand.facilityId()))
-                .thenReply(newState -> "OK - " + resourceName);
+          .emitEvent(new ResourceEvent.ResourceCreated(entityId, resourceName, resCommand.facilityId()))
+          .thenReply(newState -> "OK - " + resourceName);
     }
 
     @SuppressWarnings("unused")
@@ -41,22 +41,39 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return ResourceState.initialize(resourceCreated.resourceName());
     }
 
-    @PostMapping("/inquireBooking")
-    public Effect<String> inquireBooking(@RequestBody CheckAvailability command) {
+    @PostMapping("/checkAvailability")
+    public Effect<String> checkAvailability(@RequestBody CheckAvailability command) {
+        LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
+        boolean vacant = currentState().isReservableAt(validTime);
+        String yes = vacant?"":"NOT ";
+        log.info("Resource {} ({}) can {}accept reservation {} ", currentState().name(), entityId, yes, command.reservationId);
+        return effects()
+          .emitEvent(new ResourceEvent.AvalabilityChecked(entityId, command.reservationId(), vacant, command.facilityd()))
+          .thenReply(newState -> "OK");
+    }
+
+    @SuppressWarnings("unused")
+    @EventHandler
+    public ResourceState availabilityChecked(ResourceEvent.AvalabilityChecked event) {
+        return currentState();
+    }
+
+    @PostMapping("/reserve")
+    public Effect<String> reserve(@RequestBody Reserve command) {
         LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
         if(currentState().isReservableAt(validTime)) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
-                            command.facilityId(), command.reservation()))
-                    .thenReply(newState -> "OK");
+              .emitEvent(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
+                command.facilityId(), command.reservation()))
+              .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
-                    .emitEvent(new ResourceEvent.ReservationRejected(entityId, command.reservationId(),
-                            command.facilityId(), command.reservation()
-                    ))
-                    .thenReply(newState -> "UNAVAILABLE resource");
+              .emitEvent(new ResourceEvent.ReservationRejected(entityId, command.reservationId(),
+                command.facilityId(), command.reservation()
+              ))
+              .thenReply(newState -> "UNAVAILABLE resource");
 
         }
     }
@@ -67,8 +84,8 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         LocalDateTime validTime = ResourceState.roundToValidTime(dateTime);
         log.info("Cancelling reservation {} from resource {} on dateTime {} ", reservationId, entityId, validTime);
         return effects()
-                .emitEvent(new ResourceEvent.ReservationCanceled(entityId, reservationId, validTime))
-                .thenReply(newState -> "OK");
+          .emitEvent(new ResourceEvent.ReservationCanceled(entityId, reservationId, validTime))
+          .thenReply(newState -> "OK");
     }
 
     @SuppressWarnings("unused")
@@ -79,7 +96,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @SuppressWarnings("unused")
     @EventHandler
-    public ResourceState reservationAccepted(ResourceEvent.ReservationAccepted event) {
+    public ResourceState bookingAccepted(ResourceEvent.ReservationAccepted event) {
         return currentState().set(event.reservation().dateTime(), event.reservationId());
     }
 
@@ -95,7 +112,9 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return effects().reply(currentState());
     }
 
-    public record CreateResourceCommand(String facilityId, Resource resource) {}
+    public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
 
-    public record CheckAvailability(String reservationId, String facilityId, Reservation reservation) {}
+    public record CheckAvailability(String reservationId, String facilityd, Reservation reservation) {}
+
+    public record Reserve(String reservationId, Reservation reservation, String facilityId) { }
 }
