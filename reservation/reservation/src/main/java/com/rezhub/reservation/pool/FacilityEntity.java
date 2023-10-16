@@ -1,7 +1,6 @@
 package com.rezhub.reservation.pool;
 
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import com.rezhub.reservation.resource.dto.Resource;
 import kalix.javasdk.annotations.*;
@@ -27,7 +26,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @Override
     public com.rezhub.reservation.pool.Facility emptyState() {
-        return com.rezhub.reservation.pool.Facility.create(entityId).withName("noname").withAddress(new com.rezhub.reservation.pool.Address("nostreet", "nocity"));
+        return com.rezhub.reservation.pool.Facility.create(entityId).withName("noname");
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -45,7 +44,6 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
         var dto = created.facility();
         return com.rezhub.reservation.pool.Facility.create(created.entityId())
                 .withName(dto.name())
-                .withAddress(new com.rezhub.reservation.pool.Address(dto.address().street(), dto.address().city()))
                 .withResourceIds(dto.resourceIds());
     }
 
@@ -60,21 +58,6 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
     @EventHandler
     public com.rezhub.reservation.pool.Facility renamed(FacilityEvent.Renamed renamed) {
         return currentState().withName(renamed.newName());
-    }
-
-    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-    @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody com.rezhub.reservation.pool.dto.Address address) {
-        return effects()
-                .emitEvent(new FacilityEvent.AddressChanged(address))
-                .thenReply(newState -> "OK");
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public com.rezhub.reservation.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        com.rezhub.reservation.pool.dto.Address address = addressChanged.address();
-        return currentState().withAddress(new com.rezhub.reservation.pool.Address(address.street(), address.city()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -126,9 +109,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
     @GetMapping()
     public Effect<com.rezhub.reservation.pool.dto.Facility> getFacility() {
         com.rezhub.reservation.pool.Facility facilityState = currentState();
-        com.rezhub.reservation.pool.Address addressState = facilityState.address();
-        com.rezhub.reservation.pool.dto.Address address = new Address(addressState.street(), addressState.city());
-        return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
+        return effects().reply(new Facility(facilityState.name(), facilityState.resourceIds()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))

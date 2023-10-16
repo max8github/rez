@@ -1,6 +1,5 @@
 package com.rezhub.reservation.pool;
 
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import com.rezhub.reservation.resource.dto.Resource;
 import com.rezhub.reservation.dto.Reservation;
@@ -15,9 +14,6 @@ public sealed interface FacilityEvent {
 
     @TypeName("renamed")
     record Renamed(String newName) implements FacilityEvent {}
-
-    @TypeName("addressChanged")
-    record AddressChanged(Address address) implements FacilityEvent {}
 
     @TypeName("resource-submitted")
     record ResourceSubmitted(String facilityId, Resource resourceDto, String resourceId) implements FacilityEvent {}

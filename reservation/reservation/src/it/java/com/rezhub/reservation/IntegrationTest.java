@@ -1,9 +1,7 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import com.rezhub.reservation.resource.ResourceState;
-import com.rezhub.reservation.reservation.ReservationState;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
 import org.junit.jupiter.api.Assertions;
@@ -46,8 +44,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   public void shouldReserve() throws Exception {
 
     String facilityId = "fac1";
-    Address address = new Address("street", "city");
-    Facility facility = new Facility("TCL", address, Collections.emptySet());
+    Facility facility = new Facility("TCL", Collections.emptySet());
 
     ResponseEntity<String> created =
             webClient.post()

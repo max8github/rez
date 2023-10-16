@@ -1,7 +1,6 @@
 package com.rezhub.reservation.pool;
 
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import kalix.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
@@ -17,8 +16,7 @@ public class FacilityEntityTest {
 
     @Test
     public void testCreateFacility() {
-        Address address = new Address("street", "city");
-        Facility facility = new Facility("TCL", address, Collections.emptySet());
+        Facility facility = new Facility("TCL", Collections.emptySet());
 
         var testKit = EventSourcedTestKit.of(FacilityEntity::new);
         var facilityResult = testKit.call(e -> e.create(facility));
@@ -53,7 +51,6 @@ public class FacilityEntityTest {
         assertEquals(2, result.resourceIds().size());
         Assertions.assertEquals(
                 new com.rezhub.reservation.pool.Facility(facilityId, result.name(),
-                        result.address(),
                         result.resourceIds()),
                 result);
 

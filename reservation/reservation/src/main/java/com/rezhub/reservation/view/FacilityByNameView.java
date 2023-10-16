@@ -2,7 +2,6 @@ package com.rezhub.reservation.view;
 
 import com.rezhub.reservation.pool.FacilityEntity;
 import com.rezhub.reservation.pool.FacilityEvent;
-import com.rezhub.reservation.pool.dto.Address;
 import kalix.javasdk.view.View;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
@@ -26,10 +25,8 @@ public class FacilityByNameView extends View<FacilityV> {
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
     public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
-        Address address = created.facility().address();
         return effects().updateState(new FacilityV(
                 created.facility().name(),
-                new com.rezhub.reservation.pool.Address(address.street(), address.city()),
                 created.entityId()));
     }
 
@@ -37,13 +34,6 @@ public class FacilityByNameView extends View<FacilityV> {
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
     public UpdateEffect<FacilityV> onEvent(FacilityEvent.Renamed event) {
         return effects().updateState(viewState().withName(event.newName()));
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
-        Address address = event.address();
-        return effects().updateState(viewState().withAddress(new com.rezhub.reservation.pool.Address(address.street(), address.city())));
     }
 
     @SuppressWarnings("unused")
