@@ -50,7 +50,7 @@ public class FacilityEntityTest {
         var result = testKit.getState();
         assertEquals(2, result.resourceIds().size());
         Assertions.assertEquals(
-                new com.rezhub.reservation.pool.Facility(facilityId, result.name(),
+                new FacilityState(facilityId, result.name(),
                         result.resourceIds()),
                 result);
 

@@ -42,7 +42,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
             case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
-            case FULFILLED -> effects().reply("Reservation was accepted: cannot be reinitialized");
+            case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
             case COLLECTING, SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
             case INIT -> effects()
                     .emitEvent(new ReservationEvent.Inited(entityId,

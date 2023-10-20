@@ -15,6 +15,7 @@ import java.util.List;
 import java.util.concurrent.CompletableFuture;
 
 @Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
+@SuppressWarnings("unused")
 public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
@@ -23,7 +24,7 @@ public class DelegatingServiceAction extends Action {
     final private CalendarSender calendarSender;
     final private NotificationSender notificationSender;
 
-
+    @SuppressWarnings("unused")
     public DelegatingServiceAction(WebClientProvider webClientProvider, CalendarSender calendarSender, NotificationSender notificationSender) {
         this.webClient = webClientProvider.webClientFor("twist");
         this.calendarSender = calendarSender;

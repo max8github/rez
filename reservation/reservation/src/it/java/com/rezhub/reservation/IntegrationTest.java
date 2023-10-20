@@ -58,8 +58,8 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     var resourceId1 = "c1";
     var resourceId2 = "c2";
-    util.createResource(resourceId1);
-    util.createResource(resourceId2);
+    util.createResource(facilityId, resourceId1);
+    util.createResource(facilityId, resourceId2);
     List<String> resourceIds = List.of(resourceId1, resourceId2);
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime dateTime = now.plusHours(2).minusMinutes(now.getMinute()).minusSeconds(now.getSecond()).minusNanos(now.getNano());
