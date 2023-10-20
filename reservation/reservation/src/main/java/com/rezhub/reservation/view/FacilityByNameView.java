@@ -26,8 +26,8 @@ public class FacilityByNameView extends View<FacilityV> {
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
     public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
         return effects().updateState(new FacilityV(
-                created.facility().name(),
-                created.entityId()));
+          created.facility().name(),
+          created.entityId()));
     }
 
     @SuppressWarnings("unused")

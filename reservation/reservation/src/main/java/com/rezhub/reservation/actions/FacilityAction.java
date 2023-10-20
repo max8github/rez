@@ -38,16 +38,16 @@ public class FacilityAction extends Action {
         var reservationId = event.reservationId();
         var command = new ReservationEntity.Init(event.facilityId(), event.reservationDto(), event.resources());
         CompletionStage<Done> timerRegistration =
-                timers().startSingleTimer(
-                        timerName(event.reservationId()),
-                        Duration.ofSeconds(TIMEOUT),
-                        kalixClient.forAction().call(TimerAction::expire).params(event.reservationId())
-                );
+          timers().startSingleTimer(
+            timerName(event.reservationId()),
+            Duration.ofSeconds(TIMEOUT),
+            kalixClient.forAction().call(TimerAction::expire).params(event.reservationId())
+          );
         var request = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
         return effects().asyncReply(
-                timerRegistration
-                        .thenCompose(done -> request.execute())
-                        .thenApply(reservation -> reservation)
+          timerRegistration
+            .thenCompose(done -> request.execute())
+            .thenApply(reservation -> reservation)
         );
     }
 
