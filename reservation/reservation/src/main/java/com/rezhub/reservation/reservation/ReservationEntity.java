@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Set;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.*;
 
@@ -253,7 +253,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
     }
 
-    public record Init(String facilityId, Reservation reservation, List<String> resources) {}
+    public record Init(String facilityId, Reservation reservation, Set<String> resources) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available, String facilityId) {}
     public record Reject(String resourceId) {}

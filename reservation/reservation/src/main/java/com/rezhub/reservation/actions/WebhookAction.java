@@ -1,8 +1,8 @@
 package com.rezhub.reservation.actions;
 
 import com.google.protobuf.any.Any;
-import com.mcalder.rez.spi.Assembler;
-import com.mcalder.rez.spi.Parser;
+import com.rezhub.reservation.spi.Assembler;
+import com.rezhub.reservation.spi.Parser;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.pool.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;

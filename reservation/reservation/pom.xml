@@ -9,10 +9,10 @@
 
   <groupId>com.rezhub</groupId>
   <artifactId>reservation</artifactId>
-  <version>0.7</version>
+  <version>0.8</version>
   <packaging>jar</packaging>
 
-  <name>facility</name>
+  <name>reservation</name>
   <properties>
     <dockerImage>registry.hub.docker.com/max8github/${project.artifactId}</dockerImage>
     <dockerTag>${project.version}-${maven.build.timestamp}</dockerTag>
@@ -279,27 +279,27 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.mcalder.rez</groupId>
+      <groupId>com.rezhub.reservation</groupId>
       <artifactId>stringparser</artifactId>
-      <version>0.3</version>
+      <version>0.5</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>com.mcalder.rez</groupId>
+      <groupId>com.rezhub.reservation</groupId>
       <artifactId>calendarstub</artifactId>
-      <version>0.3</version>
+      <version>0.5</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>com.mcalder.rez</groupId>
+      <groupId>com.rezhub.reservation</groupId>
       <artifactId>notifierstub</artifactId>
-      <version>0.3</version>
+      <version>0.5</version>
       <scope>runtime</scope>
     </dependency>
     <dependency>
-      <groupId>com.mcalder.rez</groupId>
+      <groupId>com.rezhub.reservation</groupId>
       <artifactId>spi</artifactId>
-      <version>0.3</version>
+      <version>0.5</version>
     </dependency>
     <dependency>
       <groupId>io.kalix</groupId>

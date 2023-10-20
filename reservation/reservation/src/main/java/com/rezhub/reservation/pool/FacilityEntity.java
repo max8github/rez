@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.UUID;
 
 @Id("facilityId")
@@ -118,7 +118,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
         log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservation.dateTime());
         FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
-                new ArrayList<>(currentState().resourceIds()));
+                new HashSet<>(currentState().resourceIds()));
         log.info("Emitting event: " + reservationCreated);
         return effects()
                 .emitEvent(reservationCreated)
