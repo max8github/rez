@@ -6,11 +6,11 @@ import java.time.LocalDateTime;
 import java.util.SortedSet;
 import java.util.TreeSet;
 
-public record ResourceV(String facilityId, String resourceId, String resourceName, SortedSet<Resource.Entry> timeWindow) {
+public record ResourceV(String resourceId, String resourceName, String facilityId, SortedSet<Resource.Entry> timeWindow) {
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         String facilityId = created.facilityId();
         String resourceId = created.resourceId();
-        return new ResourceV(facilityId, resourceId, created.resourceName(), new TreeSet<>());
+        return new ResourceV(resourceId, created.resourceName(), facilityId, new TreeSet<>());
     }
 
     ResourceV withBooking(LocalDateTime dateTime, String fill) {
