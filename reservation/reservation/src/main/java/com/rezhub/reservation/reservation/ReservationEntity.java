@@ -8,7 +8,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.util.Set;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.*;
 
@@ -42,7 +42,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
             case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
-            case FULFILLED -> effects().reply("Reservation was accepted: cannot be reinitialized");
+            case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
             case COLLECTING, SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
             case INIT -> effects()
                     .emitEvent(new ReservationEvent.Inited(entityId,
@@ -253,7 +253,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
     }
 
-    public record Init(String facilityId, Reservation reservation, List<String> resources) {}
+    public record Init(String facilityId, Reservation reservation, Set<String> resources) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available, String facilityId) {}
     public record Reject(String resourceId) {}

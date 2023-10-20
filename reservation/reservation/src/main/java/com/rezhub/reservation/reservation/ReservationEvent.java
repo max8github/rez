@@ -4,20 +4,20 @@ import com.rezhub.reservation.dto.Reservation;
 import kalix.javasdk.annotations.TypeName;
 
 import java.time.LocalDateTime;
-import java.util.List;
+import java.util.Set;
 
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record Inited(String reservationId, String facilityId, Reservation reservation,
-                  List<String> resources) implements ReservationEvent {}
+                  Set<String> resources) implements ReservationEvent {}
     @TypeName("reservation-cancelled")
     record ReservationCancelled(String reservationId, String facilityId, Reservation reservation, String resourceId,
-                                List<String> resourceIds) implements ReservationEvent {}
+                                Set<String> resourceIds) implements ReservationEvent {}
     @TypeName("cancel-requested")
     record CancelRequested(String reservationId, String facilityId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
 
     @TypeName("search-exhausted")
-    record SearchExhausted(String reservationId, String facilityId, Reservation reservation, List<String> resourceIds) implements ReservationEvent {}
+    record SearchExhausted(String reservationId, String facilityId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
 
     @TypeName("rejectedWithNext")
     record RejectedWithNext(String reservationId, String resourceId, String nextResourceId, String facilityId) implements ReservationEvent {}
@@ -30,6 +30,6 @@ public sealed interface ReservationEvent {
     record ResourceSelected(String resourceId, String reservationId, Reservation reservation, String facilityId) implements ReservationEvent {}
 
     @TypeName("booked")
-    record Fulfilled(String resourceId, String reservationId, Reservation reservation, List<String> resourceIds,
+    record Fulfilled(String resourceId, String reservationId, Reservation reservation, Set<String> resourceIds,
                      String facilityId) implements ReservationEvent {}
 }

@@ -10,6 +10,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>googlecalendar</artifactId>
+    <version>0.5</version>
+
     <dependencies>
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -30,9 +32,9 @@
             <artifactId>spring-context</artifactId>
         </dependency>
         <dependency>
-            <groupId>com.mcalder.rez</groupId>
+            <groupId>com.rezhub.reservation</groupId>
             <artifactId>spi</artifactId>
-            <version>0.3</version>
+            <version>0.5</version>
         </dependency>
         <dependency>
             <groupId>com.google.oauth-client</groupId>

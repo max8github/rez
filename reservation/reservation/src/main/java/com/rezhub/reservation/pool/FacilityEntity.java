@@ -1,7 +1,6 @@
 package com.rezhub.reservation.pool;
 
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import com.rezhub.reservation.resource.dto.Resource;
 import kalix.javasdk.annotations.*;
@@ -11,13 +10,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.UUID;
 
 @Id("facilityId")
 @TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
-public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.pool.Facility, FacilityEvent> {
+public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
     private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
     private final String entityId;
 
@@ -26,13 +25,13 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
     }
 
     @Override
-    public com.rezhub.reservation.pool.Facility emptyState() {
-        return com.rezhub.reservation.pool.Facility.create(entityId).withName("noname").withAddress(new com.rezhub.reservation.pool.Address("nostreet", "nocity"));
+    public FacilityState emptyState() {
+        return FacilityState.create(entityId).withName("noname");
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody com.rezhub.reservation.pool.dto.Facility facility) {
+    public Effect<String> create(@RequestBody Facility facility) {
         log.info("created facility {}", facility.name());
         return effects()
                 .emitEvent(new FacilityEvent.Created(entityId, facility))
@@ -41,11 +40,10 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility created(FacilityEvent.Created created) {
+    public FacilityState created(FacilityEvent.Created created) {
         var dto = created.facility();
-        return com.rezhub.reservation.pool.Facility.create(created.entityId())
+        return FacilityState.create(created.entityId())
                 .withName(dto.name())
-                .withAddress(new com.rezhub.reservation.pool.Address(dto.address().street(), dto.address().city()))
                 .withResourceIds(dto.resourceIds());
     }
 
@@ -58,23 +56,8 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility renamed(FacilityEvent.Renamed renamed) {
+    public FacilityState renamed(FacilityEvent.Renamed renamed) {
         return currentState().withName(renamed.newName());
-    }
-
-    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-    @PostMapping("/changeAddress")
-    public Effect<String> changeAddress(@RequestBody com.rezhub.reservation.pool.dto.Address address) {
-        return effects()
-                .emitEvent(new FacilityEvent.AddressChanged(address))
-                .thenReply(newState -> "OK");
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public com.rezhub.reservation.pool.Facility addressChanged(FacilityEvent.AddressChanged addressChanged) {
-        com.rezhub.reservation.pool.dto.Address address = addressChanged.address();
-        return currentState().withAddress(new com.rezhub.reservation.pool.Address(address.street(), address.city()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -88,7 +71,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
+    public FacilityState resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
         return currentState();
     }
 
@@ -102,7 +85,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
+    public FacilityState resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
         return currentState().withResourceId(event.resourceEntityId());
     }
 
@@ -118,17 +101,15 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
+    public FacilityState resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
         return currentState().withoutResourceId(event.resourceEntityId());
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
     @GetMapping()
-    public Effect<com.rezhub.reservation.pool.dto.Facility> getFacility() {
-        com.rezhub.reservation.pool.Facility facilityState = currentState();
-        com.rezhub.reservation.pool.Address addressState = facilityState.address();
-        com.rezhub.reservation.pool.dto.Address address = new Address(addressState.street(), addressState.city());
-        return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
+    public Effect<Facility> getFacility() {
+        FacilityState facilityState = currentState();
+        return effects().reply(new Facility(facilityState.name(), facilityState.resourceIds()));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -137,7 +118,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
         log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservation.dateTime());
         FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
-                new ArrayList<>(currentState().resourceIds()));
+                new HashSet<>(currentState().resourceIds()));
         log.info("Emitting event: " + reservationCreated);
         return effects()
                 .emitEvent(reservationCreated)
@@ -146,7 +127,7 @@ public class FacilityEntity extends EventSourcedEntity<com.rezhub.reservation.po
 
     @SuppressWarnings("unused")
     @EventHandler
-    public com.rezhub.reservation.pool.Facility reservationCreated(FacilityEvent.ReservationCreated event) {
+    public FacilityState reservationCreated(FacilityEvent.ReservationCreated event) {
         return currentState();
     }
 }

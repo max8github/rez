@@ -111,8 +111,7 @@ public class WebClientUtil {
     return reservationId;
   }
 
-  void createResource(String resourceId) {
-    String facilityId = "fac1";
+  void createResource(String facilityId, String resourceId) {
     Resource resourceDto = new Resource(resourceId, resourceId);
     var command = new ResourceEntity.CreateResourceCommand(facilityId, resourceDto);
 

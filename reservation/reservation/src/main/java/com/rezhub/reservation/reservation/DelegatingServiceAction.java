@@ -1,8 +1,8 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
-import com.mcalder.rez.spi.CalendarSender;
-import com.mcalder.rez.spi.NotificationSender;
+import com.rezhub.reservation.spi.CalendarSender;
+import com.rezhub.reservation.spi.NotificationSender;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.spring.WebClientProvider;
@@ -12,9 +12,11 @@ import org.springframework.web.reactive.function.client.WebClient;
 
 import java.io.*;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 @Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
+@SuppressWarnings("unused")
 public class DelegatingServiceAction extends Action {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
@@ -23,7 +25,7 @@ public class DelegatingServiceAction extends Action {
     final private CalendarSender calendarSender;
     final private NotificationSender notificationSender;
 
-
+    @SuppressWarnings("unused")
     public DelegatingServiceAction(WebClientProvider webClientProvider, CalendarSender calendarSender, NotificationSender notificationSender) {
         this.webClient = webClientProvider.webClientFor("twist");
         this.calendarSender = calendarSender;
@@ -82,7 +84,7 @@ public class DelegatingServiceAction extends Action {
      * It is used for posting a confirmation to Twist that something happened.
      */
     CompletableFuture<String> messageCancelToTwist(CalendarSender.CalendarEventDeletionResult result,
-                                                   List<String> resourceIds) {
+                                                   Set<String> resourceIds) {
         log.info("Messaging Twist confirming cancellation of reservation id {} from calendar {}",
                 result.calEventId(), result.calendarId());
 //        String messageContent = "Reservation {} cancelled.".formatted(result.calEventId());
@@ -109,7 +111,7 @@ public class DelegatingServiceAction extends Action {
     public Effect<String> on(ReservationEvent.Fulfilled event) throws Exception {
         Reservation reservationDto = event.reservation();
         String reservationId = event.reservationId();
-        List<String> resourceIds = event.resourceIds();
+        Set<String> resourceIds = event.resourceIds();
         // todo: here i need the resource and facility details, not their ids:
         String resourceId = event.resourceId();
         String facilityId = event.facilityId();

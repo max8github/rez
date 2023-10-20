@@ -1,12 +1,11 @@
 package com.rezhub.reservation.pool;
 
-import com.rezhub.reservation.pool.dto.Address;
 import com.rezhub.reservation.pool.dto.Facility;
 import com.rezhub.reservation.resource.dto.Resource;
 import com.rezhub.reservation.dto.Reservation;
 import kalix.javasdk.annotations.TypeName;
 
-import java.util.List;
+import java.util.Set;
 
 public sealed interface FacilityEvent {
 
@@ -15,9 +14,6 @@ public sealed interface FacilityEvent {
 
     @TypeName("renamed")
     record Renamed(String newName) implements FacilityEvent {}
-
-    @TypeName("addressChanged")
-    record AddressChanged(Address address) implements FacilityEvent {}
 
     @TypeName("resource-submitted")
     record ResourceSubmitted(String facilityId, Resource resourceDto, String resourceId) implements FacilityEvent {}
@@ -30,5 +26,5 @@ public sealed interface FacilityEvent {
 
     @TypeName("reservation-created")
     record ReservationCreated(String reservationId, String facilityId, Reservation reservationDto,
-                              List<String> resources) implements FacilityEvent {}
+                              Set<String> resources) implements FacilityEvent {}
 }
