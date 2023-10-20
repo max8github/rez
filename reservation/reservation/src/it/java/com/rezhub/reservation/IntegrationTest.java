@@ -25,7 +25,7 @@ import static java.time.temporal.ChronoUnit.SECONDS;
 
 /**
  * This is a skeleton for implementing integration tests for a Kalix application built with the Java SDK.
- * This test will initiate a Kalix Proxy using testcontainers and therefore it's required to have Docker installed
+ * This test will initiate a Kalix Proxy using testcontainers, and therefore it's required to have Docker installed
  * on your machine. This test will also start your Spring Boot application.
  * Since this is an integration tests, it interacts with the application using a WebClient
  * (already configured and provided automatically through injection).
@@ -47,12 +47,12 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
     Facility facility = new Facility("TCL", Collections.emptySet());
 
     ResponseEntity<String> created =
-            webClient.post()
-                    .uri("/facility/" + facilityId + "/create")
-                    .body(Mono.just(facility), Facility.class)
-                    .retrieve()
-                    .toEntity(String.class)
-                    .block(timeout);
+      webClient.post()
+        .uri("/facility/" + facilityId + "/create")
+        .body(Mono.just(facility), Facility.class)
+        .retrieve()
+        .toEntity(String.class)
+        .block(timeout);
 
     Assertions.assertEquals(HttpStatus.OK, created.getStatusCode());
 
@@ -68,7 +68,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     String reservationId1 = util.issueNewReservationRequest(facilityId, dateTime);
     System.out.println("reservationId1 = " + reservationId1);
-    System.out.println("reservationId1 = " + util.getReservationState(reservationId1));
+    System.out.println("reservation 1 = " + util.getReservationState(reservationId1));
     Thread.sleep(2000);
 
     String reservationId2 = util.issueNewReservationRequest(facilityId, dateTime);
@@ -88,12 +88,11 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     String reservationId3 = util.issueNewReservationRequest(facilityId, dateTime);
     System.out.println("reservationId3 = " + reservationId3);
-    System.out.println("reservationId3 = " + util.getReservationState(reservationId3));
+    System.out.println("reservation 3 = " + util.getReservationState(reservationId3));
 
     Thread.sleep(3000);
 
     util.assertNotBooked(reservationId3, resourceIds, dateTime);
     util.assertReservationState(reservationId3, UNAVAILABLE);
-    System.out.println("reservationId3 = " + util.getReservationState(reservationId3));
   }
 }

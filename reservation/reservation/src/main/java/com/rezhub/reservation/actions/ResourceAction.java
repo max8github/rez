@@ -26,7 +26,7 @@ public class ResourceAction extends Action {
     @SuppressWarnings("unused")
     public Effect<String> on(ResourceEvent.ResourceCreated event) {
         var deferredCall = kalixClient.forEventSourcedEntity(event.facilityId())
-                .call(FacilityEntity::addResourceId).params(event.resourceId());
+          .call(FacilityEntity::addResourceId).params(event.resourceId());
         return effects().forward(deferredCall);
     }
 
@@ -43,12 +43,12 @@ public class ResourceAction extends Action {
         var resourceId = event.resourceId();
         String reservationId = event.reservationId();
         log.info("Resource {} sends acceptance to reservation {}", resourceId, reservationId);
-        var command = new ReservationEntity.Fulfill(event.resourceId(), reservationId, event.reservationDto(), event.facilityId());
+        var command = new ReservationEntity.Fulfill(event.resourceId(), reservationId, event.reservation(), event.facilityId());
 
         CompletionStage<String> reply = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::fulfill).params(command)
-                .execute()
-                .thenCompose(req -> timers().cancel(FacilityAction.timerName(reservationId)))
-                .thenApply(done -> "Ok");
+          .execute()
+          .thenCompose(req -> timers().cancel(FacilityAction.timerName(reservationId)))
+          .thenApply(done -> "Ok");
 
         return effects().asyncReply(reply);
     }

@@ -31,7 +31,7 @@ public class ResourceView extends View<ResourceV> {
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationAccepted event) {
         String reservationId = event.reservationId();
-        return effects().updateState(viewState().withBooking(event.reservationDto().dateTime(), reservationId));
+        return effects().updateState(viewState().withBooking(event.reservation().dateTime(), reservationId));
     }
 
     @SuppressWarnings("unused")
