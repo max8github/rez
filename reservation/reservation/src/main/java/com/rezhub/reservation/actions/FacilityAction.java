@@ -14,6 +14,8 @@ import org.slf4j.LoggerFactory;
 import java.time.Duration;
 import java.util.concurrent.CompletionStage;
 
+import static com.rezhub.reservation.reservation.ReservationEntity.timerName;
+
 @SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
@@ -43,7 +45,7 @@ public class FacilityAction extends Action {
             Duration.ofSeconds(TIMEOUT),
             kalixClient.forAction().call(TimerAction::expire).params(event.reservationId())
           );
-        var request = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
+        var request = kalixClient.forWorkflow(reservationId).call(ReservationEntity::init).params(command, reservationId);
         return effects().asyncReply(
           timerRegistration
             .thenCompose(done -> request.execute())
@@ -51,7 +53,4 @@ public class FacilityAction extends Action {
         );
     }
 
-    static String timerName(String reservationId) {
-        return "timer-" + reservationId;
-    }
 }

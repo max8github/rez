@@ -68,7 +68,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     String reservationId1 = util.issueNewReservationRequest(facilityId, dateTime);
     System.out.println("reservationId1 = " + reservationId1);
-    System.out.println("reservation 1 = " + util.getReservationState(reservationId1));
+//    System.out.println("reservation 1 = " + util.getReservationState(reservationId1));
     Thread.sleep(2000);
 
     String reservationId2 = util.issueNewReservationRequest(facilityId, dateTime);
@@ -88,7 +88,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     String reservationId3 = util.issueNewReservationRequest(facilityId, dateTime);
     System.out.println("reservationId3 = " + reservationId3);
-    System.out.println("reservation 3 = " + util.getReservationState(reservationId3));
+//    System.out.println("reservation 3 = " + util.getReservationState(reservationId3));
 
     Thread.sleep(3000);
 

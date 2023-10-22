@@ -14,6 +14,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import java.util.Set;
 import java.util.concurrent.CompletionStage;
 
+/**
+ * This timer is used for when a reservation is stuck waiting for availability that may never come.
+ */
 @RequestMapping("/timer")
 public class TimerAction extends Action {
 
@@ -27,7 +30,7 @@ public class TimerAction extends Action {
   @PostMapping("/{reservationId}")
   public Action.Effect<String> expire(@PathVariable String reservationId) {
     log.info("Expiring reservation '{}'", reservationId);
-    var expireRequest = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::expire);
+    var expireRequest = kalixClient.forWorkflow(reservationId).call(ReservationEntity::expire);
 
     CompletionStage<String> reply =
       expireRequest
