@@ -32,6 +32,7 @@
         <module>notifierstub</module>
         <module>twistnotifier</module>
         <module>opennlp</module>
+        <module>customer</module>
     </modules>
 
     <dependencies>

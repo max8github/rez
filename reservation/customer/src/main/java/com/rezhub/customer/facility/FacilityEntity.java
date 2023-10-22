@@ -1,7 +1,7 @@
 package com.rezhub.customer.facility;
 
-import com.rezhub.customer.facility.dto.Address;
 import com.rezhub.customer.facility.dto.Facility;
+import com.rezhub.customer.facility.dto.Address;
 import com.rezhub.customer.resource.dto.Resource;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
@@ -11,11 +11,15 @@ import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
+import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
 
 @Id("facilityId")
 @TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
+@Configuration
+@EnableAutoConfiguration
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
   private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
   private final String entityId;
@@ -63,7 +67,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @PostMapping("/changeAddress")
-  public Effect<String> changeAddress(@RequestBody Address address) {
+  public Effect<String> changeAddress(@RequestBody com.rezhub.customer.facility.Address address) {
     return effects()
       .emitEvent(new FacilityEvent.AddressChanged(address))
       .thenReply(newState -> "OK");
@@ -72,7 +76,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   @SuppressWarnings("unused")
   @EventHandler
   public FacilityState addressChanged(FacilityEvent.AddressChanged addressChanged) {
-    Address address = addressChanged.address();
+    com.rezhub.customer.facility.Address address = addressChanged.address();
     return currentState().withAddress(new com.rezhub.customer.facility.Address(address.street(), address.city()));
   }
 

@@ -1,6 +1,5 @@
 package com.rezhub.customer.facility;
 
-import com.rezhub.customer.facility.dto.Address;
 import com.rezhub.customer.facility.dto.Facility;
 import com.rezhub.customer.resource.dto.Resource;
 import kalix.javasdk.annotations.TypeName;
