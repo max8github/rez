@@ -9,8 +9,6 @@ public sealed interface ResourceEvent {
 
     @TypeName("resource-created")
     record ResourceCreated(String resourceId, String resourceName, String facilityId) implements ResourceEvent {}
-    @TypeName("availability-checked")
-    record AvalabilityChecked(String resourceId, String reservationId, boolean available, String facilityId) implements ResourceEvent {}
     @TypeName("reservation-accepted")
     record ReservationAccepted(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
     @TypeName("reservation-rejected")

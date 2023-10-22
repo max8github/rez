@@ -54,7 +54,7 @@ public class WebhookAction extends Action {
         Parser.ReservationDto rDto = parser.parse(facilityId, textMessage);
         DeferredCall<Any, String> deferredCall;
         if(rDto.command().equals("cancel")) {
-            deferredCall = kalixClient.forEventSourcedEntity(rDto.reservationId()).call(ReservationEntity::cancelRequest);
+            deferredCall = kalixClient.forWorkflow(rDto.reservationId()).call(ReservationEntity::cancelRequest).params(rDto.reservationId());
         } else {
             Reservation body = new Reservation(rDto.emails(), rDto.dateTime());
             deferredCall = kalixClient.forEventSourcedEntity(facilityId).call(FacilityEntity::createReservation).params(body);
@@ -62,7 +62,7 @@ public class WebhookAction extends Action {
         }
 
         return effects().reply(new Parser.Text("Processing ..."), Metadata.EMPTY.add("_kalix-http-code", "202"))
-                .addSideEffect(SideEffect.of(deferredCall));
+          .addSideEffect(SideEffect.of(deferredCall));
     }
 
     @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))

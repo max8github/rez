@@ -66,33 +66,24 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
     String dateTimeString = dateTime.toString();
     System.out.println("dateTimeString to test = " + dateTimeString);
 
-    String reservationId1 = util.issueNewReservationRequest(facilityId, dateTime);
+    String reservationId1 = util.issueNewReservationRequest(resourceIds, facilityId, dateTime);
     System.out.println("reservationId1 = " + reservationId1);
-    System.out.println("reservation 1 = " + util.getReservationState(reservationId1));
     Thread.sleep(2000);
 
-    String reservationId2 = util.issueNewReservationRequest(facilityId, dateTime);
+    String reservationId2 = util.issueNewReservationRequest(resourceIds, facilityId, dateTime);
     System.out.println("reservationId2 = " + reservationId2);
+
+    String reservationId3 = util.issueNewReservationRequest(resourceIds, facilityId, dateTime);
+    System.out.println("reservationId3 = " + reservationId3);
     util.assertReservationState(reservationId1, FULFILLED);
     util.assertReservationState(reservationId2, FULFILLED);
-
-
+    util.assertNotBooked(reservationId3, resourceIds, dateTime);
+    util.assertReservationState(reservationId3, UNAVAILABLE);
     ResourceState resourceC1 = util.getResource(resourceIds.get(0));
     ResourceState resourceC2 = util.getResource(resourceIds.get(1));
     System.out.println("resourceC1 = " + resourceC1);
     System.out.println("resourceC2 = " + resourceC2);
-    util.assertBooked(reservationId1, resourceIds, dateTime);
-    util.assertBooked(reservationId2, resourceIds, dateTime);
-
-    Thread.sleep(3000);
-
-    String reservationId3 = util.issueNewReservationRequest(facilityId, dateTime);
-    System.out.println("reservationId3 = " + reservationId3);
-    System.out.println("reservation 3 = " + util.getReservationState(reservationId3));
-
-    Thread.sleep(3000);
-
-    util.assertNotBooked(reservationId3, resourceIds, dateTime);
-    util.assertReservationState(reservationId3, UNAVAILABLE);
+    util.assertBookedAtResource(reservationId1, resourceIds, 0, dateTime);
+    util.assertBookedAtResource(reservationId2, resourceIds, 1, dateTime);
   }
 }

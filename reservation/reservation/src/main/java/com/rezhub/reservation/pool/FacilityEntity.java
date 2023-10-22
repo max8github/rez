@@ -10,7 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.HashSet;
+import java.util.ArrayList;
 import java.util.UUID;
 
 @Id("facilityId")
@@ -34,8 +34,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public Effect<String> create(@RequestBody Facility facility) {
         log.info("created facility {}", facility.name());
         return effects()
-                .emitEvent(new FacilityEvent.Created(entityId, facility))
-                .thenReply(newState -> entityId);
+          .emitEvent(new FacilityEvent.Created(entityId, facility))
+          .thenReply(newState -> entityId);
     }
 
     @SuppressWarnings("unused")
@@ -43,15 +43,15 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public FacilityState created(FacilityEvent.Created created) {
         var dto = created.facility();
         return FacilityState.create(created.entityId())
-                .withName(dto.name())
-                .withResourceIds(dto.resourceIds());
+          .withName(dto.name())
+          .withResourceIds(dto.resourceIds());
     }
 
     @PostMapping("/rename/{newName}")
     public Effect<String> rename(@PathVariable String newName) {
         return effects()
-                .emitEvent(new FacilityEvent.Renamed(newName))
-                .thenReply(newState -> "OK");
+          .emitEvent(new FacilityEvent.Renamed(newName))
+          .thenReply(newState -> "OK");
     }
 
     @SuppressWarnings("unused")
@@ -65,8 +65,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public Effect<String> submitResource(@RequestBody Resource resourceDto) {
         String id = resourceDto.resourceId();
         return effects()
-                .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDto, id))
-                .thenReply(newState -> id);
+          .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDto, id))
+          .thenReply(newState -> id);
     }
 
     @SuppressWarnings("unused")
@@ -79,8 +79,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public Effect<String> addResourceId(@PathVariable String resourceId) {
         log.info("added resource id {}", resourceId);
         return effects()
-                .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
-                .thenReply(newState -> resourceId);
+          .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
+          .thenReply(newState -> resourceId);
     }
 
     @SuppressWarnings("unused")
@@ -95,8 +95,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
             return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
         }
         return effects()
-                .emitEvent(new FacilityEvent.ResourceIdRemoved(resourceId))
-                .thenReply(newState -> "OK");
+          .emitEvent(new FacilityEvent.ResourceIdRemoved(resourceId))
+          .thenReply(newState -> "OK");
     }
 
     @SuppressWarnings("unused")
@@ -118,11 +118,11 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
         log.info("Facility assigns id {} to reservation, datetime {}", reservationId, reservation.dateTime());
         FacilityEvent.ReservationCreated reservationCreated = new FacilityEvent.ReservationCreated(reservationId, commandContext().entityId(), reservation,
-                new HashSet<>(currentState().resourceIds()));
+          new ArrayList<>(currentState().resourceIds()));
         log.info("Emitting event: " + reservationCreated);
         return effects()
-                .emitEvent(reservationCreated)
-                .thenReply(newState -> reservationId);
+          .emitEvent(reservationCreated)
+          .thenReply(newState -> reservationId);
     }
 
     @SuppressWarnings("unused")

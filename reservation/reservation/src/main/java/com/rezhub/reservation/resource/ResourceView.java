@@ -40,13 +40,6 @@ public class ResourceView extends View<ResourceV> {
         return effects().ignore();
     }
 
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
-        return effects().ignore();
-    }
-
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationCanceled event) {

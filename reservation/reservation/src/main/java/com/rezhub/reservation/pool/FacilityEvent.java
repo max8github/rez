@@ -5,7 +5,7 @@ import com.rezhub.reservation.resource.dto.Resource;
 import com.rezhub.reservation.dto.Reservation;
 import kalix.javasdk.annotations.TypeName;
 
-import java.util.Set;
+import java.util.List;
 
 public sealed interface FacilityEvent {
 
@@ -26,5 +26,6 @@ public sealed interface FacilityEvent {
 
     @TypeName("reservation-created")
     record ReservationCreated(String reservationId, String facilityId, Reservation reservationDto,
-                              Set<String> resources) implements FacilityEvent {}
+                              List<String> resources) implements FacilityEvent {}
+
 }

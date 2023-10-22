@@ -18,6 +18,7 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
@@ -93,22 +94,28 @@ public class WebClientUtil {
 
   void assertReservationState(String reservationId, ReservationState.State status) {
     await().atMost(10, TimeUnit.of(SECONDS))
-      .untilAsserted(() -> assertThat(getReservationState(reservationId).state()).isEqualTo(status));
+      .untilAsserted(() ->  assertThat(getReservationState(reservationId).state()).isEqualTo(status));
   }
 
   @NotNull
-  String issueNewReservationRequest(String facilityId, LocalDateTime dateTime) {
+  String issueNewReservationRequest(List<String> resourceIds, String facilityId, LocalDateTime dateTime) {
+    var reservationId = randomId();
     Reservation reservation = new Reservation(List.of("max@example.com"), dateTime);
-    ResponseEntity<String> response = webClient.post().uri("facility/" + facilityId + "/reservation/create")
-      .body(Mono.just(reservation), Reservation.class)
+    var command = new ReservationEntity.Init(facilityId, reservation, resourceIds);
+    ResponseEntity<Void> response = webClient.post().uri("/reservation/" + reservationId + "/init")
+      .body(Mono.just(command), ReservationEntity.Init.class)
       .retrieve()
-      .toEntity(String.class)
+      .toBodilessEntity()
       .block(timeout);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String reservationId = response.getBody().replaceAll("\"", "");
-    System.out.println("Reservation '" + reservationId + "' initiated");
+    System.out.println("Reservation " + reservationId + " initiated");
     return reservationId;
+  }
+
+
+  String randomId() {
+    return UUID.randomUUID().toString().substring(0, 8);
   }
 
   void createResource(String facilityId, String resourceId) {
