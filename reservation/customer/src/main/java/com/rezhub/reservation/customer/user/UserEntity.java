@@ -1,4 +1,4 @@
-package com.rezhub.customer.user;
+package com.rezhub.reservation.customer.user;
 
 import io.grpc.Status;
 import kalix.javasdk.annotations.EntityKey;

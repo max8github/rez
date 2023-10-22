@@ -279,7 +279,7 @@
 
   <dependencies>
     <dependency>
-      <groupId>com.rezhub</groupId>
+      <groupId>com.rezhub.reservation</groupId>
       <artifactId>customer</artifactId>
       <version>0.4</version>
 <!--      <scope>runtime</scope>-->

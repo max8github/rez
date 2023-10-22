@@ -1,8 +1,7 @@
-package com.rezhub.customer.facility;
+package com.rezhub.reservation.customer.facility;
 
-import com.rezhub.customer.facility.dto.Facility;
-import com.rezhub.customer.facility.dto.Address;
-import com.rezhub.customer.resource.dto.Resource;
+import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.customer.asset.dto.Asset;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
@@ -30,7 +29,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @Override
   public FacilityState emptyState() {
-    return FacilityState.create(entityId).withName("noname").withAddress(new com.rezhub.customer.facility.Address("nostreet", "nocity"));
+    return FacilityState.create(entityId).withName("noname").withAddress(new com.rezhub.reservation.customer.facility.Address("nostreet", "nocity"));
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -48,8 +47,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     var dto = created.facility();
     return FacilityState.create(created.entityId())
       .withName(dto.name())
-      .withAddress(new com.rezhub.customer.facility.Address(dto.address().street(), dto.address().city()))
-      .withResourceIds(dto.resourceIds());
+      .withAddress(new com.rezhub.reservation.customer.facility.Address(dto.address().street(), dto.address().city()))
+      .withAssetIds(dto.assetIds());
   }
 
   @PostMapping("/rename/{newName}")
@@ -67,7 +66,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @PostMapping("/changeAddress")
-  public Effect<String> changeAddress(@RequestBody com.rezhub.customer.facility.Address address) {
+  public Effect<String> changeAddress(@RequestBody com.rezhub.reservation.customer.facility.Address address) {
     return effects()
       .emitEvent(new FacilityEvent.AddressChanged(address))
       .thenReply(newState -> "OK");
@@ -76,61 +75,61 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   @SuppressWarnings("unused")
   @EventHandler
   public FacilityState addressChanged(FacilityEvent.AddressChanged addressChanged) {
-    com.rezhub.customer.facility.Address address = addressChanged.address();
-    return currentState().withAddress(new com.rezhub.customer.facility.Address(address.street(), address.city()));
+    com.rezhub.reservation.customer.facility.Address address = addressChanged.address();
+    return currentState().withAddress(new com.rezhub.reservation.customer.facility.Address(address.street(), address.city()));
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-  @PostMapping("/resource/submit")
-  public Effect<String> submitResource(@RequestBody Resource resourceDto) {
-    String id = resourceDto.resourceId();
+  @PostMapping("/asset/submit")
+  public Effect<String> submitAsset(@RequestBody Asset asset) {
+    String id = asset.assetId();
     return effects()
-      .emitEvent(new FacilityEvent.ResourceSubmitted(currentState().facilityId(), resourceDto, id))
+      .emitEvent(new FacilityEvent.AssetSubmitted(currentState().facilityId(), asset, id))
       .thenReply(newState -> id);
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState resourceIdSubmitted(FacilityEvent.ResourceSubmitted event) {
+  public FacilityState assetIdSubmitted(FacilityEvent.AssetSubmitted event) {
     return currentState();
   }
 
-  @PostMapping("/resource/{resourceId}")
-  public Effect<String> addResourceId(@PathVariable String resourceId) {
-    log.info("added resource id {}", resourceId);
+  @PostMapping("/asset/{assetId}")
+  public Effect<String> addAssetId(@PathVariable String assetId) {
+    log.info("added asset id {}", assetId);
     return effects()
-      .emitEvent(new FacilityEvent.ResourceIdAdded(resourceId))
-      .thenReply(newState -> resourceId);
+      .emitEvent(new FacilityEvent.AssetIdAdded(assetId))
+      .thenReply(newState -> assetId);
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState resourceIdAdded(FacilityEvent.ResourceIdAdded event) {
-    return currentState().withResourceId(event.resourceId());
+  public FacilityState assetIdAdded(FacilityEvent.AssetIdAdded event) {
+    return currentState().addAsset(event.assetId());
   }
 
-  @DeleteMapping("/resource/{resourceId}")
-  public Effect<String> removeResourceId(@PathVariable String resourceId) {
-    if (!currentState().resourceIds().contains(resourceId)) {
-      return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
+  @DeleteMapping("/asset/{assetId}")
+  public Effect<String> removeAssetId(@PathVariable String assetId) {
+    if (!currentState().assetIds().contains(assetId)) {
+      return effects().error("Cannot remove asset " + assetId + " because it is not in the facility.");
     }
     return effects()
-      .emitEvent(new FacilityEvent.ResourceIdRemoved(resourceId))
+      .emitEvent(new FacilityEvent.AssetIdRemoved(assetId))
       .thenReply(newState -> "OK");
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState resourceIdRemoved(FacilityEvent.ResourceIdRemoved event) {
-    return currentState().withoutResourceId(event.resourceId());
+  public FacilityState assetIdRemoved(FacilityEvent.AssetIdRemoved event) {
+    return currentState().removeAsset(event.assetId());
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @GetMapping()
   public Effect<Facility> getFacility() {
     FacilityState facilityState = currentState();
-    com.rezhub.customer.facility.Address addressState = facilityState.address();
-    Address address = new Address(addressState.street(), addressState.city());
-    return effects().reply(new Facility(facilityState.name(), address, facilityState.resourceIds()));
+    com.rezhub.reservation.customer.facility.Address addressState = facilityState.address();
+    com.rezhub.reservation.customer.facility.dto.Address address = new com.rezhub.reservation.customer.facility.dto.Address(addressState.street(), addressState.city());
+    return effects().reply(new Facility(facilityState.name(), address, facilityState.assetIds()));
   }
 }

@@ -1,9 +1,9 @@
-package com.rezhub.customer.resource.dto;
+package com.rezhub.reservation.customer.asset.dto;
 
 import java.util.Comparator;
 import java.util.Objects;
 
-public record Resource(String resourceId, String resourceName) {
+public record Asset(String assetId, String assetName) {
 
   public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
     @Override

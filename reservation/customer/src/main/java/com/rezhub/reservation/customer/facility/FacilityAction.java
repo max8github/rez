@@ -1,6 +1,6 @@
-package com.rezhub.customer.facility;
+package com.rezhub.reservation.customer.facility;
 
-import com.rezhub.customer.resource.ResourceEntity;
+import com.rezhub.reservation.customer.asset.AssetEntity;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
@@ -15,10 +15,10 @@ public class FacilityAction extends Action {
   }
 
   @SuppressWarnings("unused")
-  public Effect<String> on(FacilityEvent.ResourceSubmitted event) {
-    var resourceEntityId = event.resourceId();
-    var command = new ResourceEntity.CreateResourceCommand(event.facilityId(), event.resource());
-    var deferredCall = kalixClient.forEventSourcedEntity(resourceEntityId).call(ResourceEntity::create).params(command);
+  public Effect<String> on(FacilityEvent.AssetSubmitted event) {
+    var assetEntityId = event.assetId();
+    var command = new AssetEntity.CreateAssetCommand(event.facilityId(), event.asset());
+    var deferredCall = kalixClient.forEventSourcedEntity(assetEntityId).call(AssetEntity::create).params(command);
     return effects().forward(deferredCall);
   }
 }

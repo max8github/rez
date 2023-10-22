@@ -1,3 +1,3 @@
-package com.rezhub.customer.facility;
+package com.rezhub.reservation.customer.facility;
 
 public record Address(String street, String city) {}
