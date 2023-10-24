@@ -15,10 +15,10 @@ public class FacilityAction extends Action {
   }
 
   @SuppressWarnings("unused")
-  public Effect<String> on(FacilityEvent.AssetSubmitted event) {
+  public Effect<String> on(FacilityEvent.AssetCreateAndRegisterRequested event) {
     var assetEntityId = event.assetId();
-    var command = new AssetEntity.CreateAssetCommand(event.facilityId(), event.asset());
-    var deferredCall = kalixClient.forEventSourcedEntity(assetEntityId).call(AssetEntity::create).params(command);
+    var command = new AssetEntity.CreateFacilityAsset(event.facilityId(), event.asset());
+    var deferredCall = kalixClient.forEventSourcedEntity(assetEntityId).call(AssetEntity::createFacilityAsset).params(command);
     return effects().forward(deferredCall);
   }
 }

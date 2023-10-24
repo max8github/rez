@@ -1,3 +1,3 @@
 package com.rezhub.reservation.customer.asset;
 
-public record AssetState(String name, String assetId) {}
+public record AssetState(String assetId, String name) {}

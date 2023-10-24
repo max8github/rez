@@ -1,6 +1,7 @@
 package com.rezhub.reservation.customer.asset;
 
 import com.rezhub.reservation.customer.asset.dto.Asset;
+import kalix.javasdk.StatusCode;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
 import kalix.javasdk.annotations.Id;
@@ -14,9 +15,9 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 
-@Id("asset_id")
+@Id("assetId")
 @TypeId("asset")
-@RequestMapping("/asset/{asset_id}")
+@RequestMapping("/asset/{assetId}")
 public class AssetEntity extends EventSourcedEntity<AssetState, AssetEvent> {
   private static final Logger log = LoggerFactory.getLogger(AssetEntity.class);
   private final String entityId;
@@ -27,21 +28,42 @@ public class AssetEntity extends EventSourcedEntity<AssetState, AssetEvent> {
 
   @Override
   public AssetState emptyState() {
-    return new AssetState("noname", entityId);
+    return new AssetState(entityId, "noname");
+  }
+
+  @PostMapping("/createFacilityAsset")
+  public Effect<String> createFacilityAsset(@RequestBody CreateFacilityAsset resCommand) {
+    String id = commandContext().entityId();
+    String assetName = resCommand.asset().assetName();
+    return effects()
+      .emitEvent(new AssetEvent.FacilityAssetCreated(id, assetName, resCommand.facilityId()))
+      .thenReply(newState -> id);
+  }
+
+  @SuppressWarnings("unused")
+  @EventHandler
+  public AssetState facilityAssetCreated(AssetEvent.FacilityAssetCreated event) {
+    return new AssetState(event.assetId(), event.assetName());
   }
 
   @PostMapping("/create")
-  public Effect<String> create(@RequestBody CreateAssetCommand resCommand) {
-    String assetName = resCommand.asset().assetName();
+  public Effect<String> create(@RequestBody Asset command) {
+    if(command.assetName().equals(Asset.FORBIDDEN_NAME)) {
+      return effects().error("Invalid name: name '" + command.assetName() + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
+    }
+    if(!currentState().name().equals(Asset.FORBIDDEN_NAME)) {
+      return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
+    }
+    String id = commandContext().entityId();
     return effects()
-      .emitEvent(new AssetEvent.AssetCreated(entityId, assetName, resCommand.facilityId()))
-      .thenReply(newState -> "OK - " + assetName);
+      .emitEvent(new AssetEvent.AssetCreated(id, command.assetName()))
+      .thenReply(newState -> id);
   }
 
   @SuppressWarnings("unused")
   @EventHandler
   public AssetState created(AssetEvent.AssetCreated assetCreated) {
-    return new AssetState(assetCreated.assetName(), assetCreated.assetName());
+    return new AssetState(assetCreated.assetId(), assetCreated.assetName());
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -50,6 +72,5 @@ public class AssetEntity extends EventSourcedEntity<AssetState, AssetEvent> {
     return effects().reply(currentState());
   }
 
-  public record CreateAssetCommand(String facilityId, Asset asset) {}
-
+  public record CreateFacilityAsset(String facilityId, Asset asset) {}
 }

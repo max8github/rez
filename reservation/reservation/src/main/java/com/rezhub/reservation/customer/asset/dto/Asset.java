@@ -5,6 +5,8 @@ import java.util.Objects;
 
 public record Asset(String assetId, String assetName) {
 
+  public static final String FORBIDDEN_NAME = "noname";
+
   public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
     @Override
     public int compareTo(Entry that) {

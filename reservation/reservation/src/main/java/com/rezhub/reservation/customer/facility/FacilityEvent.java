@@ -6,20 +6,20 @@ import kalix.javasdk.annotations.TypeName;
 
 public sealed interface FacilityEvent {
 
-  @TypeName("created")
+  @TypeName("facility-created")
   record Created(String entityId, Facility facility) implements FacilityEvent {}
 
-  @TypeName("renamed")
+  @TypeName("facility-renamed")
   record Renamed(String newName) implements FacilityEvent {}
 
-  @TypeName("addressChanged")
-  record AddressChanged(Address address) implements FacilityEvent {}
+  @TypeName("address-changed")
+  record AddressChanged(AddressState addressState) implements FacilityEvent {}
 
-  @TypeName("asset-submitted")
-  record AssetSubmitted(String facilityId, Asset asset, String assetId) implements FacilityEvent {}
+  @TypeName("asset-create-register-requested")
+  record AssetCreateAndRegisterRequested(String facilityId, Asset asset, String assetId) implements FacilityEvent {}
 
-  @TypeName("asset-id-added")
-  record AssetIdAdded(String assetId) implements FacilityEvent {}
+  @TypeName("asset-registered")
+  record AssetRegistered(String assetId) implements FacilityEvent {}
 
   @TypeName("asset-id-removed")
   record AssetIdRemoved(String assetId) implements FacilityEvent {}
