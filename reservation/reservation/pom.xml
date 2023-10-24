@@ -280,12 +280,6 @@
   <dependencies>
     <dependency>
       <groupId>com.rezhub.reservation</groupId>
-      <artifactId>customer</artifactId>
-      <version>0.4</version>
-<!--      <scope>runtime</scope>-->
-    </dependency>
-    <dependency>
-      <groupId>com.rezhub.reservation</groupId>
       <artifactId>stringparser</artifactId>
       <version>0.5</version>
       <scope>runtime</scope>

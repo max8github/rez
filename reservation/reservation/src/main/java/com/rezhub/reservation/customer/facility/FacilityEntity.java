@@ -10,15 +10,11 @@ import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.boot.autoconfigure.EnableAutoConfiguration;
-import org.springframework.context.annotation.Configuration;
 import org.springframework.web.bind.annotation.*;
 
 @Id("facilityId")
 @TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
-@Configuration
-@EnableAutoConfiguration
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
   private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
   private final String entityId;

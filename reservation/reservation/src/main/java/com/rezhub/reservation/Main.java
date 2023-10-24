@@ -8,7 +8,7 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.context.annotation.ComponentScan;
 
 @SpringBootApplication
-@ComponentScan({"com.rezhub.reservation.customer.user", "com.rezhub.reservation.customer.facility", "com.rezhub.reservation.customer.resource",
+@ComponentScan({
   "com.rezhub.reservation", "com.rezhub.reservation.stringparser", "com.rezhub.reservation.calendarstub",
   "com.rezhub.reservation.notifierstub"})
 @Acl(allow = @Acl.Matcher(service = "*")) // Documentation at https://docs.kalix.io/services/using-acls.html

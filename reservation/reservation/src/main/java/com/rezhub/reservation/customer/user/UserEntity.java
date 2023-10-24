@@ -1,13 +1,13 @@
 package com.rezhub.reservation.customer.user;
 
 import io.grpc.Status;
-import kalix.javasdk.annotations.EntityKey;
-import kalix.javasdk.annotations.EntityType;
+import kalix.javasdk.annotations.Id;
+import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.valueentity.ValueEntity;
 import org.springframework.web.bind.annotation.*;
 
-@EntityType("user")
-@EntityKey("user_id")
+@Id("user_id")
+@TypeId("user")
 @RequestMapping("/user/{user_id}")
 public class UserEntity extends ValueEntity<User> {
 
