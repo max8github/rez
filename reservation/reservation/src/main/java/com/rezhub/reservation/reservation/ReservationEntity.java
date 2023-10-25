@@ -41,12 +41,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         log.info("ReservationEntity initializes with reservation id {}", entityId);
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
-            case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
+            case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable selection: cannot be initialized");
             case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
-            case COLLECTING, SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
+            case COLLECTING, SELECTING -> effects().reply("Reservation is processing selection: cannot be initialized");
             case INIT -> effects()
                     .emitEvent(new ReservationEvent.Inited(entityId,
-                            command.reservation(), command.resources()))
+                            command.reservation(), command.selection()))
                     .thenReply(newState -> entityId);
         };
     }
@@ -57,7 +57,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         Reservation reservation = event.reservation();
         return ReservationState.initiate(event.reservationId())
           .withState(COLLECTING)
-          .withResources(event.resources())
+          .withResources(event.selection())
           .withDateTime(reservation.dateTime())
           .withEmails(reservation.emails());
     }
@@ -250,7 +250,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
     }
 
-    public record Init(Reservation reservation, Set<String> resources) {}
+    public record Init(Reservation reservation, Set<String> selection) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}
     public record Reject(String resourceId) {}

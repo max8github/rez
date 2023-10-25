@@ -2,7 +2,7 @@ package com.rezhub.reservation.actions;
 
 import com.google.protobuf.any.Any;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.PoolEntity;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationEvent;
 import com.rezhub.reservation.resource.ResourceEntity;
@@ -28,21 +28,21 @@ public class ReservationAction extends Action {
     }
 
     public Effect<String> on(ReservationEvent.Inited event) {
-        log.info("Broadcast starts to resources {}", event.resources());
-        CompletableFuture<Effect<String>> completableFuture = futureBroadcast(this, kalixClient, event.reservationId(),
-          event.reservation(), event.resources());
+        log.info("Broadcast starts to selection {}", event.selection());
+        CompletableFuture<Effect<String>> completableFuture = broadcast(this, kalixClient, event.reservationId(),
+          event.reservation(), event.selection());
         return effects().asyncEffect(completableFuture);
     }
 
-    static CompletableFuture<Effect<String>> futureBroadcast(Action action, ComponentClient kalixClient,
-                                                             String reservationId, Reservation reservation,
-                                                             Set<String> resources) {
+    public static CompletableFuture<Effect<String>> broadcast(Action action, ComponentClient kalixClient,
+                                                       String reservationId, Reservation reservation,
+                                                       Set<String> resources) {
         List<CompletableFuture<String>> futureChecks = resources.stream().sorted().map(id -> {
             var command = new ResourceEntity.CheckAvailability(reservationId, reservation);
-            //sorry, but cannot use inheritance. If it were possible, checkAvailability() would
+            //Note: cannot use inheritance. If it were possible, checkAvailability() would
             //be a method (of a super entity) with polymorphic behavior.
             if(id.startsWith("pool")) {
-                return kalixClient.forEventSourcedEntity(id).call(PoolEntity::checkAvailability).params(command).execute().toCompletableFuture();
+                return kalixClient.forEventSourcedEntity(id).call(FacilityEntity::checkAvailability).params(command).execute().toCompletableFuture();
             } else {
                 return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
             }

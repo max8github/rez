@@ -60,8 +60,8 @@ public class WebhookAction extends Action {
             deferredCall = kalixClient.forEventSourcedEntity(rDto.reservationId()).call(ReservationEntity::cancelRequest);
         } else {
             Reservation r = new Reservation(rDto.emails(), rDto.dateTime());
-            SelectionAction.Selection body = new SelectionAction.Selection(r, Set.of(facilityId));
-            deferredCall = kalixClient.forAction().call(SelectionAction::requestReservation).params(body, reservationId);
+            ReservationEntity.Init body = new ReservationEntity.Init(r, Set.of(facilityId));
+            deferredCall = kalixClient.forAction().call(RezAction::requestReservation).params(body, reservationId);
 
         }
 

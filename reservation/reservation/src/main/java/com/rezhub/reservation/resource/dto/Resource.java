@@ -4,6 +4,7 @@ import java.util.Comparator;
 import java.util.Objects;
 
 public record Resource(String resourceId, String resourceName) {
+    public static final String FORBIDDEN_NAME = "noname";
 
     public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
         @Override

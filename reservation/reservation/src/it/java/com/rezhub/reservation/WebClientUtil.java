@@ -1,8 +1,7 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.actions.SelectionAction;
+import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.pool.dto.Pool;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationState;
 import com.rezhub.reservation.resource.ResourceEntity;
@@ -105,9 +104,9 @@ public class WebClientUtil {
     var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
     Reservation reservation = new Reservation(List.of("max@example.com"), dateTime);
     Set<String> resources = Set.of(poolId);
-    SelectionAction.Selection selection = new SelectionAction.Selection(reservation, resources);
+    ReservationEntity.Init reservationRequest = new ReservationEntity.Init(reservation, resources);
     ResponseEntity<String> response = webClient.post().uri("selection/" + reservationId)
-      .body(Mono.just(selection), SelectionAction.Selection.class)
+      .body(Mono.just(reservationRequest), ReservationEntity.Init.class)
       .retrieve()
       .toEntity(String.class)
       .block(timeout);
@@ -117,11 +116,11 @@ public class WebClientUtil {
     return reservationId;
   }
 
-  void createResource(String poolId, String resourceId) {
+  void createAndRegisterResource(String facilityId, String resourceId) {
     Resource resourceDto = new Resource(resourceId, resourceId);
-    var command = new ResourceEntity.CreateResourceCommand(poolId, resourceDto);
+    var command = new ResourceEntity.CreateResourceCommand(facilityId, resourceDto);
 
-    ResponseEntity<Void> response = webClient.post().uri("/resource/" + resourceId + "/create")
+    ResponseEntity<Void> response = webClient.post().uri("/facility/" + facilityId + "/resource/" + resourceId)
       .body(Mono.just(command), ReservationEntity.Init.class)
       .retrieve()
       .toBodilessEntity()
@@ -139,10 +138,10 @@ public class WebClientUtil {
       .block(timeout);
   }
 
-  Pool getPool(String id) {
-    return webClient.get().uri("/pool/" + id)
+  Facility getFacility(String id) {
+    return webClient.get().uri("/facility/" + id)
       .retrieve()
-      .bodyToMono(Pool.class)
+      .bodyToMono(Facility.class)
       .block(timeout);
   }
 

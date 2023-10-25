@@ -2,7 +2,8 @@ package com.rezhub.reservation.customer.facility;
 
 import com.rezhub.reservation.customer.facility.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.customer.asset.dto.Asset;
+import com.rezhub.reservation.resource.dto.Resource;
+import com.rezhub.reservation.resource.ResourceEntity;
 import kalix.javasdk.StatusCode;
 import kalix.javasdk.annotations.Acl;
 import kalix.javasdk.annotations.EventHandler;
@@ -19,6 +20,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/facility/{facilityId}")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
   private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
+  public static final String PREFIX = "pool-";
   private final String entityId;
 
   public FacilityEntity(EventSourcedEntityContext context) {
@@ -27,22 +29,32 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @Override
   public FacilityState emptyState() {
-    return FacilityState.create(entityId).withName(Asset.FORBIDDEN_NAME).withAddressState(new AddressState("nostreet", "nocity"));
+    return FacilityState.create(entityId).withName(Resource.FORBIDDEN_NAME).withAddressState(new AddressState("nostreet", "nocity"));
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @PostMapping("/create")
   public Effect<String> create(@RequestBody Facility facility) {
-    if(facility.name().equals(Asset.FORBIDDEN_NAME)) {
+    String id = commandContext().entityId();
+    log.info("creating facility {}, {}", facility.name(), id);
+    if(facility.name() == null || facility.name().isEmpty()) {
+      return effects().error("A Facility must have a name", StatusCode.ErrorCode.BAD_REQUEST);
+    }
+    if(facility.name().equals(Resource.FORBIDDEN_NAME)) {
       return effects().error("Invalid name: name '" + facility.name() + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
     }
-    if(!currentState().name().equals(Asset.FORBIDDEN_NAME)) {
+    if(!currentState().name().equals(Resource.FORBIDDEN_NAME)) {
       return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
     }
-    log.info("created facility {}", facility.name());
-    return effects()
-      .emitEvent(new FacilityEvent.Created(entityId, facility))
-      .thenReply(newState -> entityId);
+    if(!id.startsWith(PREFIX) && !id.startsWith("stub")) {
+      String message = "The id provided, '" + id + "', is not valid for a Pool: it must start with the prefix '" + PREFIX + "' (or 'stub' for tests)";
+      log.error(message);
+      return effects().error(message, StatusCode.ErrorCode.BAD_REQUEST);
+    } else {
+      return effects()
+        .emitEvent(new FacilityEvent.Created(id, facility))
+        .thenReply(newState -> id);
+    }
   }
 
   @SuppressWarnings("unused")
@@ -52,7 +64,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     return FacilityState.create(created.entityId())
       .withName(dto.name())
       .withAddressState(new AddressState(dto.address().street(), dto.address().city()))
-      .withAssetIds(dto.assetIds());
+      .withResourceIds(dto.resourceIds());
   }
 
   @PutMapping("/rename/{newName}")
@@ -84,48 +96,47 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-  @PostMapping("/asset/requestAssetCreateAndRegister")
-  public Effect<String> requestAssetCreateAndRegister(@RequestBody Asset asset) {
-    String assetId = asset.assetId();
+  @PostMapping("/resource/{resourceId}")
+  public Effect<String> requestResourceCreateAndRegister(@RequestBody FacilityResourceRequest resource, @PathVariable String resourceId) {
     return effects()
-      .emitEvent(new FacilityEvent.AssetCreateAndRegisterRequested(currentState().facilityId(), asset, assetId))
-      .thenReply(newState -> assetId);
+      .emitEvent(new FacilityEvent.ResourceCreateAndRegisterRequested(currentState().facilityId(), resource.resourceName, resourceId))
+      .thenReply(newState -> resourceId);
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState assetCreateAndRegisterRequested(FacilityEvent.AssetCreateAndRegisterRequested event) {
+  public FacilityState resourceCreateAndRegisterRequested(FacilityEvent.ResourceCreateAndRegisterRequested event) {
     return currentState();
   }
 
-  @PutMapping("/registerAsset/{assetId}")
-  public Effect<String> registerAsset(@PathVariable String assetId) {
-    log.info("registering asset with id {}", assetId);
+  @PutMapping("/registerResource/{resourceId}")
+  public Effect<String> registerResource(@PathVariable String resourceId) {
+    log.info("registering resource with id {}", resourceId);
     return effects()
-      .emitEvent(new FacilityEvent.AssetRegistered(assetId))
-      .thenReply(newState -> assetId);
+      .emitEvent(new FacilityEvent.ResourceRegistered(resourceId))
+      .thenReply(newState -> resourceId);
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState assetRegistered(FacilityEvent.AssetRegistered event) {
-    return currentState().registerAsset(event.assetId());
+  public FacilityState resourceRegistered(FacilityEvent.ResourceRegistered event) {
+    return currentState().registerResource(event.resourceId());
   }
 
-  @DeleteMapping("/asset/{assetId}")
-  public Effect<String> removeAssetId(@PathVariable String assetId) {
-    if (!currentState().assetIds().contains(assetId)) {
-      return effects().error("Cannot remove asset " + assetId + " because it is not in the facility.");
+  @DeleteMapping("/resource/{resourceId}")
+  public Effect<String> unregisterResource(@PathVariable String resourceId) {
+    if (!currentState().resourceIds().contains(resourceId)) {
+      return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
     }
     return effects()
-      .emitEvent(new FacilityEvent.AssetIdRemoved(assetId))
+      .emitEvent(new FacilityEvent.ResourceUnregistered(resourceId))
       .thenReply(newState -> "OK");
   }
 
   @SuppressWarnings("unused")
   @EventHandler
-  public FacilityState assetIdRemoved(FacilityEvent.AssetIdRemoved event) {
-    return currentState().unregisterAsset(event.assetId());
+  public FacilityState resourceUnregistered(FacilityEvent.ResourceUnregistered event) {
+    return currentState().unregisterResource(event.resourceId());
   }
 
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -133,6 +144,22 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   public Effect<Facility> getFacility() {
     FacilityState state = currentState();
     Address address = new Address(state.addressState().street(), state.addressState().city());
-    return effects().reply(new Facility(state.name(), address, state.assetIds()));
+    return effects().reply(new Facility(state.name(), address, state.resourceIds()));
   }
+
+  @PostMapping("/checkAvailability")
+  public Effect<String> checkAvailability(@RequestBody ResourceEntity.CheckAvailability command) {
+    log.info("FacilityEntity {} checks availability for reservation {} by delegating to its selection", entityId, command.reservation());
+    return effects()
+      .emitEvent(new FacilityEvent.AvalabilityRequested(command.reservationId(), command.reservation(), currentState().resourceIds()))
+      .thenReply(newState -> "OK");
+  }
+
+  @SuppressWarnings("unused")
+  @EventHandler
+  public FacilityState availabilityChecked(FacilityEvent.AvalabilityRequested event) {
+    return currentState();
+  }
+
+  record FacilityResourceRequest(String resourceName) {}
 }

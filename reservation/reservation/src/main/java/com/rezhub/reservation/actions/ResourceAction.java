@@ -1,6 +1,7 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.pool.PoolEntity;
+import com.rezhub.reservation.customer.facility.FacilityAction;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceEvent;
@@ -24,9 +25,10 @@ public class ResourceAction extends Action {
     }
 
     @SuppressWarnings("unused")
-    public Effect<String> on(ResourceEvent.ResourceCreated event) {
-        var deferredCall = kalixClient.forEventSourcedEntity(event.poolId())
-          .call(PoolEntity::addResourceId).params(event.resourceId());
+    public Effect<String> on(ResourceEvent.FacilityResourceCreated event) {
+        log.debug("Facility Asset was Created with id {}", event.resourceId());
+        var deferredCall = kalixClient.forEventSourcedEntity(event.parentId()).call(FacilityEntity::registerResource)
+          .params(event.resourceId());
         return effects().forward(deferredCall);
     }
 
@@ -47,7 +49,7 @@ public class ResourceAction extends Action {
 
         CompletionStage<String> reply = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::fulfill).params(command)
           .execute()
-          .thenCompose(req -> timers().cancel(PoolAction.timerName(reservationId)))
+          .thenCompose(req -> timers().cancel(FacilityAction.timerName(reservationId)))
           .thenApply(done -> "Ok");
 
         return effects().asyncReply(reply);

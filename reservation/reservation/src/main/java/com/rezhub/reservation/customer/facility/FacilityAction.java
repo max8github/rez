@@ -1,13 +1,20 @@
 package com.rezhub.reservation.customer.facility;
 
-import com.rezhub.reservation.customer.asset.AssetEntity;
+import com.rezhub.reservation.actions.ReservationAction;
+import com.rezhub.reservation.resource.ResourceEntity;
+import com.rezhub.reservation.resource.dto.Resource;
 import kalix.javasdk.action.Action;
 import kalix.javasdk.annotations.Subscribe;
 import kalix.javasdk.client.ComponentClient;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
 public class FacilityAction extends Action {
+  private static final Logger log = LoggerFactory.getLogger(FacilityAction.class);
   private final ComponentClient kalixClient;
 
   public FacilityAction(ComponentClient kalixClient) {
@@ -15,10 +22,23 @@ public class FacilityAction extends Action {
   }
 
   @SuppressWarnings("unused")
-  public Effect<String> on(FacilityEvent.AssetCreateAndRegisterRequested event) {
-    var assetEntityId = event.assetId();
-    var command = new AssetEntity.CreateFacilityAsset(event.facilityId(), event.asset());
-    var deferredCall = kalixClient.forEventSourcedEntity(assetEntityId).call(AssetEntity::createFacilityAsset).params(command);
+  public Effect<String> on(FacilityEvent.ResourceCreateAndRegisterRequested event) {
+    var resourceId = event.resourceId();
+    var command = new ResourceEntity.CreateChildResource(event.facilityId(), new Resource(event.resourceId(), event.resourceName()));
+    var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::createFacilityResource).params(command);
     return effects().forward(deferredCall);
+  }
+
+  @SuppressWarnings("unused")
+  public Effect<String> on(FacilityEvent.AvalabilityRequested event) {
+    log.info("fan out, continue the broadcast");
+    CompletableFuture<Effect<String>> completableFuture = ReservationAction.broadcast(this, kalixClient,
+      event.reservationId(), event.reservation(), event.resources());
+
+    return effects().asyncEffect(completableFuture);
+  }
+
+  public static String timerName(String reservationId) {
+    return "timer-" + reservationId;
   }
 }

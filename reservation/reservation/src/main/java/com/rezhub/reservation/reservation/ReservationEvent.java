@@ -9,7 +9,7 @@ import java.util.Set;
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record Inited(String reservationId, Reservation reservation,
-                  Set<String> resources) implements ReservationEvent {}
+                  Set<String> selection) implements ReservationEvent {}
     @TypeName("reservation-cancelled")
     record ReservationCancelled(String reservationId, Reservation reservation, String resourceId,
                                 Set<String> resourceIds) implements ReservationEvent {}
