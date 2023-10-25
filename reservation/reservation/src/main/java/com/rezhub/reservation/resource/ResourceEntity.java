@@ -27,7 +27,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @Override
     public ResourceState emptyState() {
-        return ResourceState.initialize(entityId);
+        return ResourceState.initialize(FORBIDDEN_NAME);
     }
 
     @PostMapping("/createFacilityResource")
@@ -48,15 +48,17 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     @PostMapping("/create")
     public Effect<String> create(@RequestBody Resource command) {
         String id = commandContext().entityId();
-        if(command.resourceName() == null || command.resourceName().isEmpty()) {
+        String name = command.resourceName();
+        String stateName = currentState().name();
+
+        if(name == null || name.isEmpty()) {
             return effects().error("A Resource must have a name", StatusCode.ErrorCode.BAD_REQUEST);
-        }
-        if(command.resourceName().equals(FORBIDDEN_NAME)) {
-            return effects().error("Invalid name: name '" + command.resourceName() + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
-        }
-        if(!currentState().name().equals(FORBIDDEN_NAME)) {
+        } else if(name.equals(Resource.FORBIDDEN_NAME)) {
+            return effects().error("Invalid name: name '" + name + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
+        } else if(!stateName.equals(Resource.FORBIDDEN_NAME) && !name.equals(stateName)) {
             return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
         }
+
         return effects()
           .emitEvent(new ResourceEvent.ResourceCreated(id, command.resourceName()))
           .thenReply(newState -> id);

@@ -114,7 +114,7 @@ public class DelegatingServiceAction extends Action {
         Set<String> resourceIds = event.resourceIds();
         // todo: here i need the resource and facility details, not their ids:
         String resourceId = event.resourceId();
-        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, "facilityId", resourceIds,
+        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, "facilityId", resourceIds,//todo bug: resourceIds is the selection, not all facilities resource ids
                 reservationDto.emails(), reservationDto.dateTime());
         var stageGoogle = calendarSender.saveToGoogle(eventDetails);
         var stage = stageGoogle.thenCompose(this::messageTwistAccept);
@@ -125,7 +125,7 @@ public class DelegatingServiceAction extends Action {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), "facilityId",
                 event.resourceIds(),
                 event.reservation().emails(), event.reservation().dateTime());
-        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));
+        var result = new CalendarSender.ReservationResult(eventDetails, "UNAVAILABLE", CalendarSender.calendarUrl(event.resourceIds()));//todo bug: resourceIds is the selection, not all facilities resource ids
         return effects().asyncReply(messageTwistReject(result));
     }
 
@@ -133,7 +133,7 @@ public class DelegatingServiceAction extends Action {
         String calendarId = event.resourceId() + "@group.calendar.google.com";
         String calEventId = event.reservationId();
         var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);
-        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));
+        var stage = stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()));//todo bug: resourceIds is the selection, not all facilities resource ids
         return effects().asyncReply(stage);
     }
 }

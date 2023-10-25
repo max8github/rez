@@ -15,12 +15,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
+import static com.rezhub.reservation.dto.Reservation.FACILITY;
+
 @Id("facilityId")
 @TypeId("facility")
 @RequestMapping("/facility/{facilityId}")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
   private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
-  public static final String PREFIX = "pool-";
+
   private final String entityId;
 
   public FacilityEntity(EventSourcedEntityContext context) {
@@ -36,18 +38,18 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
   @PostMapping("/create")
   public Effect<String> create(@RequestBody Facility facility) {
     String id = commandContext().entityId();
-    log.info("creating facility {}, {}", facility.name(), id);
-    if(facility.name() == null || facility.name().isEmpty()) {
+    String name = facility.name();
+    String stateName = currentState().name();
+    log.info("creating facility {}, {}", name, id);
+    if(name == null || name.isEmpty()) {
       return effects().error("A Facility must have a name", StatusCode.ErrorCode.BAD_REQUEST);
+    } else if(name.equals(Resource.FORBIDDEN_NAME)) {
+      return effects().error("Invalid name: name '" + name + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
+    } else if(!stateName.equals(Resource.FORBIDDEN_NAME) && !name.equals(stateName)) {
+        return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
     }
-    if(facility.name().equals(Resource.FORBIDDEN_NAME)) {
-      return effects().error("Invalid name: name '" + facility.name() + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
-    }
-    if(!currentState().name().equals(Resource.FORBIDDEN_NAME)) {
-      return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
-    }
-    if(!id.startsWith(PREFIX) && !id.startsWith("stub")) {
-      String message = "The id provided, '" + id + "', is not valid for a Pool: it must start with the prefix '" + PREFIX + "' (or 'stub' for tests)";
+    if(!id.startsWith(FACILITY) && !id.startsWith("stub")) {
+      String message = "The id provided, '" + id + "', is not valid for a Pool: it must start with the prefix '" + FACILITY + "' (or 'stub' for tests)";
       log.error(message);
       return effects().error(message, StatusCode.ErrorCode.BAD_REQUEST);
     } else {
@@ -109,7 +111,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     return currentState();
   }
 
-  @PutMapping("/registerResource/{resourceId}")
+  @PutMapping("/resource/{resourceId}")
   public Effect<String> registerResource(@PathVariable String resourceId) {
     log.info("registering resource with id {}", resourceId);
     return effects()

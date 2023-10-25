@@ -17,6 +17,8 @@ import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
+import static com.rezhub.reservation.dto.Reservation.*;
+
 @SuppressWarnings("unused")
 @Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class ReservationAction extends Action {
@@ -41,11 +43,14 @@ public class ReservationAction extends Action {
             var command = new ResourceEntity.CheckAvailability(reservationId, reservation);
             //Note: cannot use inheritance. If it were possible, checkAvailability() would
             //be a method (of a super entity) with polymorphic behavior.
-            if(id.startsWith("pool")) {
-                return kalixClient.forEventSourcedEntity(id).call(FacilityEntity::checkAvailability).params(command).execute().toCompletableFuture();
-            } else {
-                return kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
-            }
+            String type = extractPrefix(id);
+            return switch (type) {
+                case FACILITY -> kalixClient.forEventSourcedEntity(id).call(FacilityEntity::checkAvailability).params(command).execute().toCompletableFuture();
+                case RESOURCE -> kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
+                default -> kalixClient.forEventSourcedEntity(id).call(ResourceEntity::checkAvailability).params(command).execute().toCompletableFuture();
+//                default -> throw new IllegalStateException("Unexpected value: " + type);
+            };
+
         }).toList();
 
       return CompletableFuture.allOf(futureChecks.toArray(new CompletableFuture<?>[0]))
@@ -53,6 +58,13 @@ public class ReservationAction extends Action {
                         .map(CompletableFuture::join)
                         .collect(Collectors.toList())
                 ).thenApply(v -> action.effects().reply("ok - broadcast"));
+    }
+
+    static String extractPrefix(String id) {
+        int index = id.indexOf(DELIMITER);
+        if (index > -1) {
+            return id.substring(0, index) + DELIMITER;
+        } else return "";
     }
 
     public Effect<String> on(ReservationEvent.ResourceSelected event) {

@@ -57,7 +57,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         Reservation reservation = event.reservation();
         return ReservationState.initiate(event.reservationId())
           .withState(COLLECTING)
-          .withResources(event.selection())
+          .withSelection(event.selection())
           .withDateTime(reservation.dateTime())
           .withEmails(reservation.emails());
     }
@@ -126,7 +126,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case SELECTING -> effects()
                     .emitEvent(new ReservationEvent.Fulfilled(command.resourceId(),
-                            entityId, command.reservation(), currentState().resources()))
+                            entityId, command.reservation(), currentState().selection()))
                     .thenReply(newState -> "OK, picked resource " + command.resourceId());
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
@@ -183,7 +183,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                         .emitEvent(new ReservationEvent.ReservationCancelled(
                                 entityId,
                                 fromReservationState(currentState()),
-                                resourceId, currentState().resources()))
+                                resourceId, currentState().selection()))
                         .thenReply(newState -> entityId);
             }
             default -> {
@@ -207,7 +207,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                         .emitEvent(new ReservationEvent.SearchExhausted(
                                 entityId,
                                 new Reservation(currentState().emails(), currentState().dateTime()),
-                                currentState().resources()))
+                                currentState().selection()))
                         .thenReply(newState -> entityId);
             case FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("OK");
         };

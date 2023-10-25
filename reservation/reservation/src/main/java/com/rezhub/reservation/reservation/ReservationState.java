@@ -8,7 +8,7 @@ import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 
 @With
 public record ReservationState(State state, String reservationId, List<String> emails,
-                               Set<String> availableResources, Set<String> resources,
+                               Set<String> availableResources, Set<String> selection,
                                LocalDateTime dateTime, String resourceId) {
 
     public static ReservationState initiate(String entityId) {

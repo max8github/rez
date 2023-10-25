@@ -1,8 +1,8 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceState;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
@@ -45,7 +45,7 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void shouldReserve() throws Exception {
 
-    String facilityId = FacilityEntity.PREFIX + "fac1";
+    String facilityId = Reservation.FACILITY + "fac1";
     Facility facility = new Facility("TCL", new Address("some street", "city"), Collections.emptySet());
 
     ResponseEntity<String> created =
