@@ -1,6 +1,5 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.customer.facility.FacilityAction;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
@@ -49,7 +48,7 @@ public class ResourceAction extends Action {
 
         CompletionStage<String> reply = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::fulfill).params(command)
           .execute()
-          .thenCompose(req -> timers().cancel(FacilityAction.timerName(reservationId)))
+          .thenCompose(req -> timers().cancel(RezAction.timerName(reservationId)))
           .thenApply(done -> "Ok");
 
         return effects().asyncReply(reply);

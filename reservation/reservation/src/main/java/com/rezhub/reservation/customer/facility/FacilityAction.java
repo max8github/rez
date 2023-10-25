@@ -37,8 +37,4 @@ public class FacilityAction extends Action {
 
     return effects().asyncEffect(completableFuture);
   }
-
-  public static String timerName(String reservationId) {
-    return "timer-" + reservationId;
-  }
 }

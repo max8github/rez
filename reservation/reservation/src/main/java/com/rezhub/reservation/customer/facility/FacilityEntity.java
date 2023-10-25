@@ -163,5 +163,5 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     return currentState();
   }
 
-  record FacilityResourceRequest(String resourceName) {}
+  public record FacilityResourceRequest(String resourceName) {}
 }

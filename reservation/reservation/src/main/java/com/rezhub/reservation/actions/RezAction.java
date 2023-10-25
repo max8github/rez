@@ -42,7 +42,7 @@ public class RezAction extends Action {
     return effects().asyncReply(
       timerRegistration
         .thenCompose(done -> request.execute())
-        .thenApply(reservation -> reservation)
+        .thenApply(message -> message)
     );
   }
 

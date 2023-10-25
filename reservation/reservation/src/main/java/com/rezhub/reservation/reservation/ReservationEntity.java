@@ -38,16 +38,16 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     @PostMapping("/init")
     public Effect<String> init(@RequestBody Init command) {
-        log.info("ReservationEntity initializes with reservation id {}", entityId);
+        String id = commandContext().entityId();
+        log.info("ReservationEntity initializes with reservation id {}", id);
         return switch (currentState().state()) {
             case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
             case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable selection: cannot be initialized");
             case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
             case COLLECTING, SELECTING -> effects().reply("Reservation is processing selection: cannot be initialized");
             case INIT -> effects()
-                    .emitEvent(new ReservationEvent.Inited(entityId,
-                            command.reservation(), command.selection()))
-                    .thenReply(newState -> entityId);
+              .emitEvent(new ReservationEvent.Inited(id, command.reservation(), command.selection()))
+              .thenReply(newState -> id);
         };
     }
 
