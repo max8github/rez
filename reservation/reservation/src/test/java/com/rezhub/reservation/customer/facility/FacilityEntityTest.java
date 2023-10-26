@@ -1,15 +1,13 @@
 package com.rezhub.reservation.customer.facility;
 
-import com.rezhub.reservation.customer.facility.dto.Address;
+import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.Reservation;
 import kalix.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
-import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.*;
 

@@ -4,6 +4,7 @@ import io.grpc.Status;
 import kalix.javasdk.annotations.Id;
 import kalix.javasdk.annotations.TypeId;
 import kalix.javasdk.valueentity.ValueEntity;
+import com.rezhub.reservation.customer.dto.Address;
 import org.springframework.web.bind.annotation.*;
 
 @Id("user_id")

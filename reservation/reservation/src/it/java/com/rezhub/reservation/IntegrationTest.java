@@ -1,6 +1,6 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.customer.facility.dto.Address;
+import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceState;
