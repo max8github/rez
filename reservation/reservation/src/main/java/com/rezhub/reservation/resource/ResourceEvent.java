@@ -7,14 +7,16 @@ import java.time.LocalDateTime;
 
 public sealed interface ResourceEvent {
 
+    @TypeName("facility-resource-created")
+    record FacilityResourceCreated(String resourceId, String name, String parentId) implements ResourceEvent {}
     @TypeName("resource-created")
-    record ResourceCreated(String resourceId, String resourceName, String facilityId) implements ResourceEvent {}
+    record ResourceCreated(String resourceId, String resourceName) implements ResourceEvent {}
     @TypeName("availability-checked")
-    record AvalabilityChecked(String resourceId, String reservationId, boolean available, String facilityId) implements ResourceEvent {}
+    record AvalabilityChecked(String resourceId, String reservationId, boolean available) implements ResourceEvent {}
     @TypeName("reservation-accepted")
-    record ReservationAccepted(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
+    record ReservationAccepted(String resourceId, String reservationId, Reservation reservation) implements ResourceEvent {}
     @TypeName("reservation-rejected")
-    record ReservationRejected(String resourceId, String reservationId, String facilityId, Reservation reservation) implements ResourceEvent {}
+    record ReservationRejected(String resourceId, String reservationId, Reservation reservation) implements ResourceEvent {}
     @TypeName("reservation-canceled")
     record ReservationCanceled(String resourceId, String reservationId, LocalDateTime dateTime) implements ResourceEvent {}
 }

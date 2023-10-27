@@ -8,28 +8,27 @@ import java.util.Set;
 
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
-    record Inited(String reservationId, String facilityId, Reservation reservation,
-                  Set<String> resources) implements ReservationEvent {}
+    record Inited(String reservationId, Reservation reservation,
+                  Set<String> selection) implements ReservationEvent {}
     @TypeName("reservation-cancelled")
-    record ReservationCancelled(String reservationId, String facilityId, Reservation reservation, String resourceId,
+    record ReservationCancelled(String reservationId, Reservation reservation, String resourceId,
                                 Set<String> resourceIds) implements ReservationEvent {}
     @TypeName("cancel-requested")
-    record CancelRequested(String reservationId, String facilityId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
+    record CancelRequested(String reservationId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
 
     @TypeName("search-exhausted")
-    record SearchExhausted(String reservationId, String facilityId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
+    record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
 
     @TypeName("rejectedWithNext")
-    record RejectedWithNext(String reservationId, String resourceId, String nextResourceId, String facilityId) implements ReservationEvent {}
+    record RejectedWithNext(String reservationId, String resourceId, String nextResourceId) implements ReservationEvent {}
     @TypeName("rejected")
     record Rejected(String reservationId, String resourceId) implements ReservationEvent {}
 
     @TypeName("resource-responded")
-    record AvailabilityReplied(String resourceId, String reservationId, Reservation reservation, boolean available, String facilityId) implements ReservationEvent {}
+    record AvailabilityReplied(String resourceId, String reservationId, Reservation reservation, boolean available) implements ReservationEvent {}
     @TypeName("candidate-flagged")
-    record ResourceSelected(String resourceId, String reservationId, Reservation reservation, String facilityId) implements ReservationEvent {}
+    record ResourceSelected(String resourceId, String reservationId, Reservation reservation) implements ReservationEvent {}
 
     @TypeName("booked")
-    record Fulfilled(String resourceId, String reservationId, Reservation reservation, Set<String> resourceIds,
-                     String facilityId) implements ReservationEvent {}
+    record Fulfilled(String resourceId, String reservationId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
 }

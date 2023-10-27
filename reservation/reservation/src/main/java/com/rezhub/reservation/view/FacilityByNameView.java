@@ -1,7 +1,7 @@
 package com.rezhub.reservation.view;
 
-import com.rezhub.reservation.pool.FacilityEntity;
-import com.rezhub.reservation.pool.FacilityEvent;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.FacilityEvent;
 import kalix.javasdk.view.View;
 import kalix.javasdk.annotations.Query;
 import kalix.javasdk.annotations.Subscribe;
@@ -38,25 +38,31 @@ public class FacilityByNameView extends View<FacilityV> {
 
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceSubmitted event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
         return effects().ignore();
     }
 
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdAdded event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceCreateAndRegisterRequested event) {
         return effects().ignore();
     }
 
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceIdRemoved event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceRegistered event) {
         return effects().ignore();
     }
 
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ReservationCreated event) {
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceUnregistered event) {
+        return effects().ignore();
+    }
+
+    @SuppressWarnings("unused")
+    @Subscribe.EventSourcedEntity(FacilityEntity.class)
+    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AvalabilityRequested event) {
         return effects().ignore();
     }
 }

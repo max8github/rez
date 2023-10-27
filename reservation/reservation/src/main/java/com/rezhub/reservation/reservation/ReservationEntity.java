@@ -1,6 +1,7 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
+import kalix.javasdk.StatusCode;
 import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -37,17 +38,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/init")
-    public Effect<String> init(@RequestBody Init command) {
-        log.info("ReservationEntity initializes with reservation id {}", entityId);
+    public Effect<ReservationId> init(@RequestBody Init command) {
+        String id = commandContext().entityId();
+        log.info("ReservationEntity initializes with reservation id {}", id);
         return switch (currentState().state()) {
-            case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
-            case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable resources: cannot be initialized");
-            case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
-            case COLLECTING, SELECTING -> effects().reply("Reservation is processing resources: cannot be initialized");
+            case CANCELLED -> effects().error("Reservation cancelled: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case UNAVAILABLE -> effects().error("Reservation was rejected for unavailable selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
             case INIT -> effects()
-                    .emitEvent(new ReservationEvent.Inited(entityId,
-                            command.facilityId(), command.reservation(), command.resources()))
-                    .thenReply(newState -> entityId);
+              .emitEvent(new ReservationEvent.Inited(id, command.reservation(), command.selection()))
+              .thenReply(newState -> new ReservationId(id));
         };
     }
 
@@ -57,9 +58,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         Reservation reservation = event.reservation();
         return ReservationState.initiate(event.reservationId())
           .withState(COLLECTING)
-          .withResources(event.resources())
+          .withSelection(event.selection())
           .withDateTime(reservation.dateTime())
-          .withFacilityId(event.facilityId())
           .withEmails(reservation.emails());
     }
 
@@ -67,34 +67,34 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> replyAvailability(@RequestBody ReplyAvailability command) {
         switch (currentState().state()) {
             case COLLECTING -> {
-                log.info("Reservation " + entityId + ", in COLLECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
+                log.info("Reservation " + entityId + ", in COLLECTING, got a " + (command.available() ? "YES " : "NO ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
                 if (command.available()) {
                     return effects()
-                            .emitEvent(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation, command.facilityId))
+                            .emitEvent(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation))
                             .thenReply(newState -> "OK");
                 } else {
                     return effects()
                             .emitEvent(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
-                                    reservation, false, command.facilityId))
+                                    reservation, false))
                             .thenReply(newState -> "OK");
                 }
             }
-            case SELECTING -> {
+            case SELECTING, UNAVAILABLE, FULFILLED, CANCELLED -> {
                 log.info("Reservation " + entityId + ", in SELECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
                     return effects()
                             .emitEvent(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
-                                    reservation, command.available(), command.facilityId))
+                                    reservation, command.available()))
                             .thenReply(newState -> "OK");
             }
-            case INIT, FULFILLED, CANCELLED, UNAVAILABLE -> {
-                return effects().error("Reservation " + entityId + " cannot be invoked");
+            case INIT -> {
+                return effects().error("Reservation " + entityId + " in INIT state cannot possibly receive availability replies yet", StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
             }
             default -> {
-                return effects().error("This should never happen for reservation entity " + entityId);
+                return effects().error("This should never happen for reservation entity " + entityId, StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
         }
@@ -127,7 +127,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case SELECTING -> effects()
                     .emitEvent(new ReservationEvent.Fulfilled(command.resourceId(),
-                            entityId, command.reservation(), currentState().resources(), command.facilityId()))
+                            entityId, command.reservation(), currentState().selection()))
                     .thenReply(newState -> "OK, picked resource " + command.resourceId());
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
@@ -148,15 +148,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @DeleteMapping("/cancelRequest")
-    public Effect<String> cancelRequest() {
+    public Effect<ReservationId> cancelRequest() {
         log.info("Cancelling reservation {} requested", entityId);
         return switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
                 String resourceId = getResourceIdFromState();
                 yield effects()
                         .emitEvent(new ReservationEvent.CancelRequested(entityId,
-                                currentState().facilityId(), resourceId, currentState().dateTime()))
-                        .thenReply(newState -> entityId);
+                                resourceId, currentState().dateTime()))
+                        .thenReply(newState -> new ReservationId(entityId));
             }
             default ->
                     effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
@@ -183,9 +183,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 return effects()
                         .emitEvent(new ReservationEvent.ReservationCancelled(
                                 entityId,
-                                currentState().facilityId(),
                                 fromReservationState(currentState()),
-                                resourceId, currentState().resources()))
+                                resourceId, currentState().selection()))
                         .thenReply(newState -> entityId);
             }
             default -> {
@@ -208,9 +207,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case INIT, COLLECTING, SELECTING -> effects()
                         .emitEvent(new ReservationEvent.SearchExhausted(
                                 entityId,
-                                currentState().facilityId(),
                                 new Reservation(currentState().emails(), currentState().dateTime()),
-                                currentState().resources()))
+                                currentState().selection()))
                         .thenReply(newState -> entityId);
             case FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("OK");
         };
@@ -225,7 +223,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 if(currentState().hasAvailableResources()) {
                     String nextResourceId = currentState().pop();
                     log.info("Reservation {} was rejected (resource {}) and will try another resource", entityId, resourceId);
-                    return effects().emitEvent(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId, currentState().facilityId()))
+                    return effects().emitEvent(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId))
                       .thenReply(newState -> "OK");
                 } else {
                     log.info("Reservation {} was rejected (resource {}) but there is nothing left available to reserve", entityId, resourceId);
@@ -253,10 +251,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
     }
 
-    public record Init(String facilityId, Reservation reservation, Set<String> resources) {}
+    public record Init(Reservation reservation, Set<String> selection) {}
+    public record ReservationId(String reservationId) {}
 
-    public record ReplyAvailability(String reservationId, String resourceId, boolean available, String facilityId) {}
+    public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}
     public record Reject(String resourceId) {}
 
-    public record Fulfill(String resourceId, String reservationId, Reservation reservation, String facilityId) {}
+    public record Fulfill(String resourceId, String reservationId, Reservation reservation) {}
 }

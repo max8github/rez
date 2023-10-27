@@ -1,40 +1,36 @@
 {
 	"info": {
-		"_postman_id": "a6bf1339-9838-4b06-a325-f076961a984d",
-		"name": "Kalix Facility",
+		"_postman_id": "4dc5783a-b213-4ea4-a483-607cb2ca3cd4",
+		"name": "Kalix - Reservation",
 		"description": "curl commands from [tutorial](https://docs.kalix.io/java/quickstart/cr-value-entity-java.html)",
 		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
 		"_exporter_id": "1644939",
-		"_collection_link": "https://marketaxess.postman.co/workspace/My-Workspace~6398942d-31c2-4ffe-8d0d-5171fa41bc36/collection/1644939-a6bf1339-9838-4b06-a325-f076961a984d?action=share&creator=1644939&source=collection_link"
+		"_collection_link": "https://marketaxess.postman.co/workspace/6398942d-31c2-4ffe-8d0d-5171fa41bc36/collection/1644939-4dc5783a-b213-4ea4-a483-607cb2ca3cd4?action=share&source=collection_link&creator=1644939"
 	},
 	"item": [
 		{
-			"name": "Create TCL Facility",
+			"name": "Facility 4463962",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"var facility_id = \"4463962\";",
-							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
+							"var prefix = pm.globals.get(\"FACILITY_PREFIX\");",
+							"var facility_id = prefix+\"4463962\";",
+							"var facilityName = \"Holiday Inn\";",
+							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+							"var city = pm.variables.replaceIn('{{$randomCity}}');",
 							"",
-							"",
-							"var facilityName = \"Tennisclub Ladenburg\";",
-							"var resourceName = \"court1\";",
-							"",
-							"var street = \"Römerstadion 6\";",
-							"var city = \"Ladenburg\";",
-							"",
-							"console.info(\"Entity id is: \"+ facility_id);",
-							"console.info(\"Facilityname is: \"+ facilityName);",
+							"console.info(\"----------- Facility id is: \"+ facility_id);",
+							"console.info(\"Facility name is: \"+ facilityName);",
 							"console.info(\"Street is: \"+ street);",
 							"console.info(\"City is: \"+ city);",
-							"console.info(\"Resource is: \"+ resourceName);",
 							"",
+							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
 							"pm.variables.set(\"facilityName\", facilityName);",
 							"pm.variables.set(\"street\", street);",
 							"pm.variables.set(\"city\", city);",
-							"pm.variables.set(\"resourceName\", resourceName);"
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -60,7 +56,7 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    }\n  }"
+					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    },\n    \"resourceIds\": []\n  }"
 				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/create",
@@ -79,39 +75,34 @@
 			"response": []
 		},
 		{
-			"name": "register court 1",
+			"name": "Facility 4463962",
 			"event": [
 				{
-					"listen": "prerequest",
+					"listen": "test",
 					"script": {
 						"exec": [
-							"var resourceId = \"3d228lvsdmdjmj79662t8r1fh4\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var resourceName = \"court 1\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = 24;",
-							"",
-							"console.info(\"Resource is: \"+ resourceId);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"console.info(\"Resource size is: \"+ timeSlotsSize);",
-							"",
-							"pm.variables.set(\"resourceId\", resourceId);",
-							"pm.variables.set(\"resourceName\", resourceName);",
-							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
+							""
 						],
 						"type": "text/javascript"
 					}
 				},
 				{
-					"listen": "test",
+					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
+							"var facility_id = pm.globals.get(\"FACILITY_PREFIX\")+\"4463962\";",
+							"pm.variables.set(\"facility_id\", facility_id);",
+							"pm.environment.set(\"facility_id\", facility_id);"
 						],
 						"type": "text/javascript"
 					}
 				}
 			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
 			"request": {
-				"method": "POST",
+				"method": "GET",
 				"header": [
 					{
 						"key": "Content-Type",
@@ -121,10 +112,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
+					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -132,85 +123,33 @@
 					"port": "{{port}}",
 					"path": [
 						"facility",
-						"{{facility_id}}",
-						"resource",
-						"submit"
+						"{{facility_id}}"
 					]
-				},
-				"description": "Creates a new Resource entity and adds its entity id into Facility"
-			},
-			"response": []
-		},
-		{
-			"name": "register court 2",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var resourceId = \"63hd39cd9ppt8tajp76vglt394\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var resourceName = \"court 2\";//pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = 24;",
-							"",
-							"console.info(\"Resource is: \"+ resourceId);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"console.info(\"Resource size is: \"+ timeSlotsSize);",
-							"",
-							"pm.variables.set(\"resourceId\", resourceId);",
-							"pm.variables.set(\"resourceName\", resourceName);",
-							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
-						],
-						"type": "text/javascript"
-					}
 				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"resource",
-						"submit"
-					]
-				},
-				"description": "Creates a new Resource entity and adds its entity id into Facility"
 			},
 			"response": []
 		},
 		{
-			"name": "Twist: my command (INPUT)",
+			"name": "Facility 47304fe7",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
+							"var facility_id = pm.globals.get(\"FACILITY_PREFIX\")+\"47304fe7\";",
+							"var facilityName = \"Motel 6\";",
+							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+							"var city = pm.variables.replaceIn('{{$randomCity}}');",
+							"",
+							"console.info(\"----------- Facility id is: \"+ facility_id);",
+							"console.info(\"Facility name is: \"+ facilityName);",
+							"console.info(\"Street is: \"+ street);",
+							"console.info(\"City is: \"+ city);",
+							"",
+							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
+							"pm.variables.set(\"facilityName\", facilityName);",
+							"pm.variables.set(\"street\", street);",
+							"pm.variables.set(\"city\", city);",
 							""
 						],
 						"type": "text/javascript"
@@ -220,7 +159,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							""
+							"//pm.environment.set(\"facility_id\", pm.response.text());"
 						],
 						"type": "text/javascript"
 					}
@@ -237,73 +176,10 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": "{\n  \"content\": \"\",\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-10, 14, Bob\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-07-10 10:22:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
-					"options": {
-						"raw": {
-							"language": "json"
-						}
-					}
+					"raw": "{\n    \"name\": \"{{facilityName}}\",\n    \"address\": {\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n    },\n    \"resourceIds\": []\n  }"
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/outwebhook",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"outwebhook"
-					]
-				},
-				"description": "It represents the input to Rez, which is performed by a Twist message, sent by Twist to Rez."
-			},
-			"response": []
-		},
-		{
-			"name": "Create my Reservation",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
-							"var username = 'max.calderoni@gmail.com';",
-							"var dateTime = \"2023-07-18T11:00\";",
-							"",
-							"console.info(\"username is: \"+ username);",
-							"console.info(\"dateTime is: \"+ dateTime);",
-							"",
-							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"dateTime\", dateTime);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n      \"emails\": [\"{{username}}\"],\n      \"dateTime\": \"{{dateTime}}\"\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/reservation/create",
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/create",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -312,7 +188,6 @@
 					"path": [
 						"facility",
 						"{{facility_id}}",
-						"reservation",
 						"create"
 					]
 				}
@@ -320,43 +195,83 @@
 			"response": []
 		},
 		{
-			"name": "Create Facility",
+			"name": "Facility 47304fe7",
+			"event": [
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var facility_id = pm.globals.get(\"FACILITY_PREFIX\")+\"47304fe7\";",
+							"pm.variables.set(\"facility_id\", facility_id);",
+							"pm.environment.set(\"facility_id\", facility_id);"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Facility",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"function create_UUID(){",
-							"    var dt = new Date().getTime();",
-							"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
-							"        var r = (dt + Math.random()*16)%16 | 0;",
-							"        dt = Math.floor(dt/16);",
-							"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
-							"    });",
-							"    uuid = uuid.substring(0, 8);",
-							"    return uuid;",
-							"}",
-							"",
-							"var facility_id = create_UUID();",
-							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
-							"",
+							"var facility_id = pm.collectionVariables.get(\"FACILITY_PREFIX\") + Utils.create_UUID();",
 							"",
 							"var facilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"",
 							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
 							"var city = pm.variables.replaceIn('{{$randomCity}}');",
 							"",
-							"console.info(\"Entity id is: \"+ facility_id);",
-							"console.info(\"Facilityname is: \"+ facilityName);",
+							"console.info(\"Facility id is: \"+ facility_id);",
+							"console.info(\"Facility name is: \"+ facilityName);",
 							"console.info(\"Street is: \"+ street);",
 							"console.info(\"City is: \"+ city);",
-							"console.info(\"Resource is: \"+ resourceName);",
 							"",
+							"postman.setEnvironmentVariable(\"facility_id\", facility_id);",
 							"pm.variables.set(\"facilityName\", facilityName);",
 							"pm.variables.set(\"street\", street);",
 							"pm.variables.set(\"city\", city);",
-							"pm.variables.set(\"resourceName\", resourceName);"
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -401,179 +316,7 @@
 			"response": []
 		},
 		{
-			"name": "Change facility address",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
-							"var city = pm.variables.replaceIn('{{$randomCity}}');",
-							"",
-							"console.info(\"Street is: \"+ street);",
-							"console.info(\"City is: \"+ city);",
-							"",
-							"pm.variables.set(\"street\", street);",
-							"pm.variables.set(\"city\", city);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							""
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n\n}"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/changeAddress",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"changeAddress"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Change facility name",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var newFacilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"console.info(\"New facilityName is: \"+ newFacilityName);",
-							"pm.variables.set(\"newFacilityName\", newFacilityName);",
-							""
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"//pm.environment.set(\"facility_id\", pm.response.text());"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/rename/{{newFacilityName}}",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"rename",
-						"{{newFacilityName}}"
-					]
-				}
-			},
-			"response": []
-		},
-		{
-			"name": "Create&register resource",
-			"event": [
-				{
-					"listen": "prerequest",
-					"script": {
-						"exec": [
-							"var resourceId = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
-							"var timeSlotsSize = 24;",
-							"",
-							"console.info(\"Resource is: \"+ resourceId);",
-							"console.info(\"Resource is: \"+ resourceName);",
-							"console.info(\"Resource size is: \"+ timeSlotsSize);",
-							"",
-							"pm.variables.set(\"resourceId\", resourceId);",
-							"pm.variables.set(\"resourceName\", resourceName);",
-							"pm.variables.set(\"timeSlotsSize\", timeSlotsSize);"
-						],
-						"type": "text/javascript"
-					}
-				},
-				{
-					"listen": "test",
-					"script": {
-						"exec": [
-							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
-						],
-						"type": "text/javascript"
-					}
-				}
-			],
-			"request": {
-				"method": "POST",
-				"header": [
-					{
-						"key": "Content-Type",
-						"type": "text",
-						"value": "application/json"
-					}
-				],
-				"body": {
-					"mode": "raw",
-					"raw": "{\n    \"resourceId\": \"{{resourceId}}\",\n    \"resourceName\": \"{{resourceName}}\",\n    \"size\": {{timeSlotsSize}}\n}\n"
-				},
-				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/submit",
-					"protocol": "{{protocol}}",
-					"host": [
-						"{{host}}"
-					],
-					"port": "{{port}}",
-					"path": [
-						"facility",
-						"{{facility_id}}",
-						"resource",
-						"submit"
-					]
-				},
-				"description": "Creates a new Resource entity and adds its entity id into Facility"
-			},
-			"response": []
-		},
-		{
-			"name": "Get Facility",
+			"name": "Facility",
 			"event": [
 				{
 					"listen": "test",
@@ -664,7 +407,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/facility/by_name/Tennisclub%20Ladenburg",
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/by_name/Motel%206",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -673,14 +416,14 @@
 					"path": [
 						"facility",
 						"by_name",
-						"Tennisclub%20Ladenburg"
+						"Motel%206"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "View Full Facility",
+			"name": "View Full Facility (JOIN)",
 			"event": [
 				{
 					"listen": "test",
@@ -718,7 +461,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/joined_facility_resources/4463962",
+					"raw": "{{protocol}}://{{host}}:{{port}}/joined_facility_resources/pool-4463962",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -726,7 +469,7 @@
 					"port": "{{port}}",
 					"path": [
 						"joined_facility_resources",
-						"4463962"
+						"pool-4463962"
 					]
 				}
 			},
@@ -748,6 +491,293 @@
 					"listen": "prerequest",
 					"script": {
 						"exec": [
+							"// pm.variables.set(\"facility_id\", pm.variables.get(\"FACILITY_PREFIX\")+\"47304fe7\");//4463962"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"protocolProfileBehavior": {
+				"disableBodyPruning": true
+			},
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/resource/by_container/{{facility_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"by_container",
+						"{{facility_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "resource & register",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var resource_id = pm.variables.replaceIn('{{$randomUUID}}');",
+							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"",
+							"console.info(\"resource_id is: \"+ resource_id);",
+							"console.info(\"resourceName is: \"+ resourceName);",
+							"",
+							"pm.variables.set(\"resource_id\", resource_id);",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceName\": \"{{resourceName}}\"\n}\n"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"{{resource_id}}"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"// var resource_id = pm.variables.get(\"resourceId\");",
+							"// var resource_id = pm.variables.replaceIn('{{$randomUUID}}');",
+							"var resource_id = pm.globals.get(\"LONE_RESOURCE\");",
+							"var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"",
+							"console.info(\"resource_id is: \"+ resource_id);",
+							"console.info(\"resourceName is: \"+ resourceName);",
+							"",
+							"pm.variables.set(\"resource_id\", resource_id);",
+							"pm.variables.set(\"resourceName\", resourceName);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"pm.environment.set(\"resource_id\", pm.response.text().replace(/\"/g, \"\"));"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"resourceId\": \"{{resource_id}}\",\n    \"resourceName\": \"{{resourceName}}\"\n}\n"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/create",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"{{resource_id}}",
+						"create"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.info(\"resource_id is: \"+ pm.environment.get(\"resource_id\"));",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"{{resource_id}}"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"console.info(\"resource_id is: \"+ pm.environment.get(\"resource_id\"));",
+							"",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": ""
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource/{{resource_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"resource",
+						"{{resource_id}}"
+					]
+				},
+				"description": "Creates a new Resource entity and adds its entity id into Facility"
+			},
+			"response": []
+		},
+		{
+			"name": "Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
 							""
 						],
 						"type": "text/javascript"
@@ -771,7 +801,7 @@
 					"raw": ""
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/resource/by_facility/{{facility_id}}",
+					"raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
@@ -779,15 +809,259 @@
 					"port": "{{port}}",
 					"path": [
 						"resource",
-						"by_facility",
-						"{{facility_id}}"
+						"{{resource_id}}"
 					]
 				}
 			},
 			"response": []
 		},
 		{
-			"name": "Create Reservation",
+			"name": "facility address",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+							"var city = pm.variables.replaceIn('{{$randomCity}}');",
+							"",
+							"console.info(\"Street is: \"+ street);",
+							"console.info(\"City is: \"+ city);",
+							"",
+							"pm.variables.set(\"street\", street);",
+							"pm.variables.set(\"city\", city);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n      \"street\": \"{{street}}\",\n      \"city\": \"{{city}}\"\n\n}"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/changeAddress",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"changeAddress"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "facility name",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var newFacilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+							"console.info(\"New facilityName is: \"+ newFacilityName);",
+							"pm.variables.set(\"newFacilityName\", newFacilityName);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"//pm.environment.set(\"facility_id\", pm.response.text());"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "PUT",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/rename/{{newFacilityName}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"facility",
+						"{{facility_id}}",
+						"rename",
+						"{{newFacilityName}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reservation [4463962, 47304fe7]",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var reservation_id = Utils.create_UUID();",
+							"// var reservation_id = \"222222\";",
+							"",
+							"var sid_1 = pm.globals.get(\"FACILITY_PREFIX\")+\"4463962\";",
+							"var sid_2 = pm.globals.get(\"FACILITY_PREFIX\")+\"47304fe7\";",
+							"var sid_3 = pm.globals.get(\"LONE_RESOURCE\");",
+							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
+							"var username = 'max.calderoni@gmail.com';",
+							"var dateTime = \"2023-10-27T23:00\";",
+							"",
+							"console.info(\"reservation_id is: \"+ reservation_id);",
+							"console.info(\"sid_1 is: \"+ sid_1);",
+							"console.info(\"sid_2 is: \"+ sid_2);",
+							"console.info(\"sid_3 is: \"+ sid_3);",
+							"console.info(\"username is: \"+ username);",
+							"console.info(\"dateTime is: \"+ dateTime);",
+							"",
+							"pm.variables.set(\"reservation_id\", reservation_id);",
+							"pm.variables.set(\"sid_1\", sid_1);",
+							"pm.variables.set(\"sid_2\", sid_2);",
+							"pm.variables.set(\"sid_3\", sid_3);",
+							"pm.variables.set(\"username\", username);",
+							"pm.variables.set(\"dateTime\", dateTime);",
+							"",
+							"// postman.setEnvironmentVariable(\"reservation_id\", reservation_id);",
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							"// var string = pm.response.text().replaceAll('\\\\\"\"', '');",
+							"// string = string.replaceAll('\"\\\\\"', '').replace(/\"/g, \"\");",
+							"// pm.environment.set(\"reservation_id\", string);",
+							"",
+							"",
+							"pm.test(\"Your test name\", function () {",
+							"    var jsonData = pm.response.json();",
+							"    pm.environment.set(\"reservation_id\", jsonData.reservationId);",
+							"    pm.expect(jsonData.reservationId).to.eql(\"e2c12333\");",
+							"});"
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"reservation\": {\n        \"emails\": [\n            \"{{username}}\"\n        ],\n        \"dateTime\": \"{{dateTime}}\"\n    },\n    \"selection\": [\n            \"{{sid_1}}\",\n            \"{{sid_2}}\",\n            \"{{sid_3}}\"\n        ]\n}"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/selection/{{reservation_id}}",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"selection",
+						"{{reservation_id}}"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reservation (INTERNAL)",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							"var facility_id = pm.variables.get(\"FACILITY_PREFIX\")+\"4463962\";",
+							"pm.variables.set(\"facility_id\", facility_id);"
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\n    \"facilityId\": \"{{facility_id}}\",\n    \"reservation\": {\n        \"emails\": [\"john@example.com\"],\n        \"dateTime\": \"2023-10-13T21:00\"\n        },\n    \"resources\": [\"3d228lvsdmdjmj79662t8r1fh4\"]\n}"
+				},
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/060c38c85f9b46579d62abb38644d9f7/init",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"reservation",
+						"060c38c85f9b46579d62abb38644d9f7",
+						"init"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reservation",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -799,10 +1073,10 @@
 							"var dateTime = \"2023-06-22T18:00\";//new Date(randDate).toISOString().substr(0, 10);",
 							"",
 							"console.info(\"username is: \"+ username);",
-							"console.info(\"date is: \"+ date);",
+							"console.info(\"dateTime is: \"+ dateTime);",
 							"",
 							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"date\", date);"
+							"pm.variables.set(\"dateTime\", dateTime);"
 						],
 						"type": "text/javascript"
 					}
@@ -848,22 +1122,13 @@
 			"response": []
 		},
 		{
-			"name": "Delete Reservation",
+			"name": "Reservation",
 			"event": [
 				{
 					"listen": "prerequest",
 					"script": {
 						"exec": [
-							"// var username = pm.variables.replaceIn('{{$randomEmail}}');",
-							"var username = 'max.calderoni@gmail.com';",
-							"var randDate = pm.variables.replaceIn('{{$randomDateFuture}}');",
-							"var date = \"2023-06-22T11:00\";//new Date(randDate).toISOString().substr(0, 10);",
-							"",
-							"console.info(\"username is: \"+ username);",
-							"console.info(\"dateTime is: \"+ dateTime);",
-							"",
-							"pm.variables.set(\"username\", username);",
-							"pm.variables.set(\"dateTime\", dateTime);"
+							"// pm.variables.set(\"reservation_id\", \"eb3d2eaa\");"
 						],
 						"type": "text/javascript"
 					}
@@ -872,7 +1137,7 @@
 					"listen": "test",
 					"script": {
 						"exec": [
-							"pm.environment.set(\"reservation_id\", pm.response.text().replace(/\"/g, \"\"));"
+							""
 						],
 						"type": "text/javascript"
 					}
@@ -887,10 +1152,6 @@
 						"value": "application/json"
 					}
 				],
-				"body": {
-					"mode": "raw",
-					"raw": ""
-				},
 				"url": {
 					"raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}/cancelRequest",
 					"protocol": "{{protocol}}",
@@ -908,7 +1169,56 @@
 			"response": []
 		},
 		{
-			"name": "Get Reservation State",
+			"name": "Reservation@Resource",
+			"event": [
+				{
+					"listen": "prerequest",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				},
+				{
+					"listen": "test",
+					"script": {
+						"exec": [
+							""
+						],
+						"type": "text/javascript"
+					}
+				}
+			],
+			"request": {
+				"method": "DELETE",
+				"header": [
+					{
+						"key": "Content-Type",
+						"type": "text",
+						"value": "application/json"
+					}
+				],
+				"url": {
+					"raw": "{{protocol}}://{{host}}:{{port}}/resource/63hd39cd9ppt8tajp76vglt394/reservation/ab3b5bad25b54a05add1661a75440232/2023-09-26T01:00",
+					"protocol": "{{protocol}}",
+					"host": [
+						"{{host}}"
+					],
+					"port": "{{port}}",
+					"path": [
+						"resource",
+						"63hd39cd9ppt8tajp76vglt394",
+						"reservation",
+						"ab3b5bad25b54a05add1661a75440232",
+						"2023-09-26T01:00"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Reservation",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -961,7 +1271,7 @@
 			"response": []
 		},
 		{
-			"name": "Get Resource (INTERNAL)",
+			"name": "Twist: my command (INPUT)",
 			"event": [
 				{
 					"listen": "prerequest",
@@ -982,11 +1292,8 @@
 					}
 				}
 			],
-			"protocolProfileBehavior": {
-				"disableBodyPruning": true
-			},
 			"request": {
-				"method": "GET",
+				"method": "POST",
 				"header": [
 					{
 						"key": "Content-Type",
@@ -996,22 +1303,67 @@
 				],
 				"body": {
 					"mode": "raw",
-					"raw": ""
+					"raw": "{\n  \"content\": \"\",\n  \"attachments\": [],\n  \"channel_id\": \"473452\",\n  \"content\": \"2023-07-10T14:00, Bob, Tom, Andy\",\n  \"creator\": 717450,\n  \"creator_name\": \"Max\",\n  \"deleted\": false,\n  \"deleted_by\": null,\n  \"direct_group_mentions\": [],\n  \"direct_mentions\": [],\n  \"groups\": [\n    2\n  ],\n  \"id\": 84184313,\n  \"last_edited_ts\": null,\n  \"obj_index\": 2,\n  \"posted\": \"2023-07-10 10:22:53\",\n  \"reactions\": {},\n  \"recipients\": [],\n  \"system_message\": null,\n  \"thread_id\": 4463962,\n  \"to_emails\": [],\n  \"url\": \"https://twist.com/a/176177/ch/473452/t/4463962/c/84184313\",\n  \"version\": 0,\n  \"workspace_id\": 176177\n}\n",
+					"options": {
+						"raw": {
+							"language": "json"
+						}
+					}
 				},
 				"url": {
-					"raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}",
+					"raw": "{{protocol}}://{{host}}:{{port}}/outwebhook",
 					"protocol": "{{protocol}}",
 					"host": [
 						"{{host}}"
 					],
 					"port": "{{port}}",
 					"path": [
-						"resource",
-						"{{resource_id}}"
+						"outwebhook"
 					]
-				}
+				},
+				"description": "It represents the input to Rez, which is performed by a Twist message, sent by Twist to Rez."
 			},
 			"response": []
+		}
+	],
+	"event": [
+		{
+			"listen": "prerequest",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					"//see: https://stackoverflow.com/questions/45673961/how-to-write-global-functions-in-postman",
+					"",
+					"Utils = {",
+					"    create_UUID: function create_UUID(){",
+					"    var dt = new Date().getTime();",
+					"    var uuid = 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {",
+					"        var r = (dt + Math.random()*16)%16 | 0;",
+					"        dt = Math.floor(dt/16);",
+					"        return (c=='x' ? r :(r&0x3|0x8)).toString(16);",
+					"    });",
+					"    uuid = uuid.substring(0, 8);",
+					"    return uuid;",
+					"    }",
+					"};"
+				]
+			}
+		},
+		{
+			"listen": "test",
+			"script": {
+				"type": "text/javascript",
+				"exec": [
+					""
+				]
+			}
+		}
+	],
+	"variable": [
+		{
+			"key": "FACILITY_PREFIX",
+			"value": "f_",
+			"type": "string"
 		}
 	]
 }

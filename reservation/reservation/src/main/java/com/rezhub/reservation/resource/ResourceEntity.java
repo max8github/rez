@@ -2,6 +2,7 @@ package com.rezhub.reservation.resource;
 
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.dto.Resource;
+import kalix.javasdk.StatusCode;
 import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -10,6 +11,8 @@ import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+
+import static com.rezhub.reservation.resource.dto.Resource.FORBIDDEN_NAME;
 
 @Id("resource_id")
 @TypeId("resource")
@@ -24,16 +27,41 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @Override
     public ResourceState emptyState() {
-        return ResourceState.initialize(entityId);
+        return ResourceState.initialize(FORBIDDEN_NAME);
+    }
+
+    @PostMapping("/createFacilityResource")
+    public Effect<String> createFacilityResource(@RequestBody CreateChildResource resCommand) {
+        String id = commandContext().entityId();
+        String assetName = resCommand.resource().resourceName();
+        return effects()
+          .emitEvent(new ResourceEvent.FacilityResourceCreated(id, assetName, resCommand.facilityId()))
+          .thenReply(newState -> id);
+    }
+
+    @SuppressWarnings("unused")
+    @EventHandler
+    public ResourceState facilityResourceCreated(ResourceEvent.FacilityResourceCreated event) {
+        return ResourceState.initialize(event.name());
     }
 
     @PostMapping("/create")
-    public Effect<String> create(@RequestBody CreateResourceCommand resCommand) {
+    public Effect<String> create(@RequestBody Resource command) {
         String id = commandContext().entityId();
-        String resourceName = resCommand.resourceDto().resourceName();
+        String name = command.resourceName();
+        String stateName = currentState().name();
+
+        if(name == null || name.isEmpty()) {
+            return effects().error("A Resource must have a name", StatusCode.ErrorCode.BAD_REQUEST);
+        } else if(name.equals(Resource.FORBIDDEN_NAME)) {
+            return effects().error("Invalid name: name '" + name + "' cannot be used.", StatusCode.ErrorCode.BAD_REQUEST);
+        } else if(!stateName.equals(Resource.FORBIDDEN_NAME) && !name.equals(stateName)) {
+            return effects().error("Entity with id " + commandContext().entityId() + " is already created", StatusCode.ErrorCode.BAD_REQUEST);
+        }
+
         return effects()
-          .emitEvent(new ResourceEvent.ResourceCreated(id, resourceName, resCommand.facilityId()))
-          .thenReply(newState -> "OK - " + resourceName);
+          .emitEvent(new ResourceEvent.ResourceCreated(id, command.resourceName()))
+          .thenReply(newState -> id);
     }
 
     @SuppressWarnings("unused")
@@ -49,7 +77,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         String yes = vacant?"":"NOT ";
         log.info("Resource {} ({}) can {}accept reservation {} ", currentState().name(), entityId, yes, command.reservationId);
         return effects()
-          .emitEvent(new ResourceEvent.AvalabilityChecked(entityId, command.reservationId(), vacant, command.facilityd()))
+          .emitEvent(new ResourceEvent.AvalabilityChecked(entityId, command.reservationId(), vacant))
           .thenReply(newState -> "OK");
     }
 
@@ -66,13 +94,13 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
               .emitEvent(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
-                command.facilityId(), command.reservation()))
+                command.reservation()))
               .thenReply(newState -> "OK");
         } else {
             log.info("Resource {} {} rejects reservation {}", currentState().name(), entityId, command.reservationId);
             return effects()
               .emitEvent(new ResourceEvent.ReservationRejected(entityId, command.reservationId(),
-                command.facilityId(), command.reservation()
+                command.reservation()
               ))
               .thenReply(newState -> "UNAVAILABLE resource");
 
@@ -113,9 +141,10 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return effects().reply(currentState());
     }
 
-    public record CreateResourceCommand(String facilityId, Resource resourceDto) {}
+    public record CreateResourceCommand(String poolId, Resource resourceDto) {}
+    public record CreateChildResource(String facilityId, Resource resource) {}
 
-    public record CheckAvailability(String reservationId, String facilityd, Reservation reservation) {}
+    public record CheckAvailability(String reservationId, Reservation reservation) {}
 
-    public record Reserve(String reservationId, Reservation reservation, String facilityId) { }
+    public record Reserve(String reservationId, Reservation reservation) { }
 }

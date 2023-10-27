@@ -1,6 +1,8 @@
 package com.rezhub.reservation;
 
-import com.rezhub.reservation.pool.dto.Facility;
+import com.rezhub.reservation.customer.dto.Address;
+import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceState;
 import kalix.spring.testkit.KalixIntegrationTestKitSupport;
 
@@ -43,8 +45,8 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
   @Test
   public void shouldReserve() throws Exception {
 
-    String facilityId = "fac1";
-    Facility facility = new Facility("TCL", Collections.emptySet());
+    String facilityId = Reservation.FACILITY + "fac1";
+    Facility facility = new Facility("TCL", new Address("some street", "city"), Collections.emptySet());
 
     ResponseEntity<String> created =
       webClient.post()
@@ -56,10 +58,12 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     Assertions.assertEquals(HttpStatus.OK, created.getStatusCode());
 
+    System.out.println("Pool = " + util.getFacility(facilityId));
+
     var resourceId1 = "c1";
     var resourceId2 = "c2";
-    util.createResource(facilityId, resourceId1);
-    util.createResource(facilityId, resourceId2);
+    util.createAndRegisterResource(facilityId, resourceId1);
+    util.createAndRegisterResource(facilityId, resourceId2);
     List<String> resourceIds = List.of(resourceId1, resourceId2);
     LocalDateTime now = LocalDateTime.now();
     LocalDateTime dateTime = now.plusHours(2).minusMinutes(now.getMinute()).minusSeconds(now.getSecond()).minusNanos(now.getNano());
@@ -73,6 +77,8 @@ public class IntegrationTest extends KalixIntegrationTestKitSupport {
 
     String reservationId2 = util.issueNewReservationRequest(facilityId, dateTime);
     System.out.println("reservationId2 = " + reservationId2);
+    System.out.println("reservationId2 = " + util.getReservationState(reservationId2));
+    Thread.sleep(2000);
     util.assertReservationState(reservationId1, FULFILLED);
     util.assertReservationState(reservationId2, FULFILLED);
 

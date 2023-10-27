@@ -1,5 +1,6 @@
 package com.rezhub.reservation;
 
+import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationState;
@@ -18,6 +19,8 @@ import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
+import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Predicate;
 
@@ -97,25 +100,27 @@ public class WebClientUtil {
   }
 
   @NotNull
-  String issueNewReservationRequest(String facilityId, LocalDateTime dateTime) {
+  String issueNewReservationRequest(String poolId, LocalDateTime dateTime) {
+    var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
     Reservation reservation = new Reservation(List.of("max@example.com"), dateTime);
-    ResponseEntity<String> response = webClient.post().uri("facility/" + facilityId + "/reservation/create")
-      .body(Mono.just(reservation), Reservation.class)
+    Set<String> resources = Set.of(poolId);
+    ReservationEntity.Init reservationRequest = new ReservationEntity.Init(reservation, resources);
+    ResponseEntity<String> response = webClient.post().uri("selection/" + reservationId)
+      .body(Mono.just(reservationRequest), ReservationEntity.Init.class)
       .retrieve()
       .toEntity(String.class)
       .block(timeout);
 
     assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-    String reservationId = response.getBody().replaceAll("\"", "");
     System.out.println("Reservation '" + reservationId + "' initiated");
     return reservationId;
   }
 
-  void createResource(String facilityId, String resourceId) {
+  void createAndRegisterResource(String facilityId, String resourceId) {
     Resource resourceDto = new Resource(resourceId, resourceId);
     var command = new ResourceEntity.CreateResourceCommand(facilityId, resourceDto);
 
-    ResponseEntity<Void> response = webClient.post().uri("/resource/" + resourceId + "/create")
+    ResponseEntity<Void> response = webClient.post().uri("/facility/" + facilityId + "/resource/" + resourceId)
       .body(Mono.just(command), ReservationEntity.Init.class)
       .retrieve()
       .toBodilessEntity()
@@ -130,6 +135,13 @@ public class WebClientUtil {
     return webClient.get().uri("/resource/" + resourceId)
       .retrieve()
       .bodyToMono(ResourceState.class)
+      .block(timeout);
+  }
+
+  Facility getFacility(String id) {
+    return webClient.get().uri("/facility/" + id)
+      .retrieve()
+      .bodyToMono(Facility.class)
       .block(timeout);
   }
 

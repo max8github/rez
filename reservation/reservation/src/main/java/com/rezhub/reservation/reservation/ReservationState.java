@@ -7,13 +7,13 @@ import java.util.*;
 import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 
 @With
-public record ReservationState(State state, String reservationId, String facilityId, List<String> emails,
-                               Set<String> availableResources, Set<String> resources,
+public record ReservationState(State state, String reservationId, List<String> emails,
+                               Set<String> availableResources, Set<String> selection,
                                LocalDateTime dateTime, String resourceId) {
 
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
-        return new ReservationState(INIT, entityId, "", empty, new HashSet<>(), new HashSet<>(), LocalDateTime.now(), "");
+        return new ReservationState(INIT, entityId, empty, new HashSet<>(), new HashSet<>(), LocalDateTime.now(), "");
 
     }
 

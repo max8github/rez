@@ -8,15 +8,23 @@ import kalix.javasdk.view.View;
 import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Flux;
 
-@ViewId("view_resources_by_facility_id")
-@Table("resources_by_facility_id")
+@ViewId("view_resources_by_container_id")
+@Table("resources_by_container_id")
 public class ResourceView extends View<ResourceV> {
 
     @SuppressWarnings("unused")
-    @GetMapping("/resource/by_facility/{facility_id}")
-    @Query("SELECT * FROM resources_by_facility_id WHERE facilityId = :facility_id")
-    public Flux<ResourceV> getResource(String facility_id) {
+    @GetMapping("/resource/by_container/{container_id}")
+    @Query("SELECT * FROM resources_by_container_id WHERE facilityId = :container_id")
+    public Flux<ResourceV> getResource(String container_id) {
         return null;
+    }
+
+    @SuppressWarnings("unused")
+    @Subscribe.EventSourcedEntity(ResourceEntity.class)
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.FacilityResourceCreated created) {
+        String id = updateContext().eventSubject().orElse("");
+        assert id.equals(created.resourceId());
+        return effects().updateState(ResourceV.initialize(created));
     }
 
     @SuppressWarnings("unused")
@@ -25,6 +33,13 @@ public class ResourceView extends View<ResourceV> {
         String id = updateContext().eventSubject().orElse("");
         assert id.equals(created.resourceId());
         return effects().updateState(ResourceV.initialize(created));
+    }
+
+
+    @SuppressWarnings("unused")
+    @Subscribe.EventSourcedEntity(ResourceEntity.class)
+    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
+        return effects().ignore();
     }
 
     @SuppressWarnings("unused")
@@ -37,13 +52,6 @@ public class ResourceView extends View<ResourceV> {
     @SuppressWarnings("unused")
     @Subscribe.EventSourcedEntity(ResourceEntity.class)
     public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationRejected notInteresting) {
-        return effects().ignore();
-    }
-
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
         return effects().ignore();
     }
 
