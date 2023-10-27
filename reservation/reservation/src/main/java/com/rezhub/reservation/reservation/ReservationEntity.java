@@ -1,6 +1,7 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
+import kalix.javasdk.StatusCode;
 import kalix.javasdk.annotations.*;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
 import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -37,17 +38,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @PostMapping("/init")
-    public Effect<String> init(@RequestBody Init command) {
+    public Effect<ReservationId> init(@RequestBody Init command) {
         String id = commandContext().entityId();
         log.info("ReservationEntity initializes with reservation id {}", id);
         return switch (currentState().state()) {
-            case CANCELLED -> effects().reply("Reservation cancelled: cannot be initialized");
-            case UNAVAILABLE -> effects().reply("Reservation was rejected for unavailable selection: cannot be initialized");
-            case FULFILLED -> effects().reply("Reservation had already been accepted: it cannot be reinitialized");
-            case COLLECTING, SELECTING -> effects().reply("Reservation is processing selection: cannot be initialized");
+            case CANCELLED -> effects().error("Reservation cancelled: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case UNAVAILABLE -> effects().error("Reservation was rejected for unavailable selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized", StatusCode.ErrorCode.BAD_REQUEST);
+            case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
             case INIT -> effects()
               .emitEvent(new ReservationEvent.Inited(id, command.reservation(), command.selection()))
-              .thenReply(newState -> id);
+              .thenReply(newState -> new ReservationId(id));
         };
     }
 
@@ -147,7 +148,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     @DeleteMapping("/cancelRequest")
-    public Effect<String> cancelRequest() {
+    public Effect<ReservationId> cancelRequest() {
         log.info("Cancelling reservation {} requested", entityId);
         return switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
@@ -155,7 +156,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 yield effects()
                         .emitEvent(new ReservationEvent.CancelRequested(entityId,
                                 resourceId, currentState().dateTime()))
-                        .thenReply(newState -> entityId);
+                        .thenReply(newState -> new ReservationId(entityId));
             }
             default ->
                     effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
@@ -251,6 +252,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     public record Init(Reservation reservation, Set<String> selection) {}
+    public record ReservationId(String reservationId) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}
     public record Reject(String resourceId) {}

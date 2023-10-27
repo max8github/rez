@@ -29,7 +29,7 @@ public class RezAction extends Action {
   @SuppressWarnings("unused")
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @PostMapping("/{reservationId}")
-  public Effect<String> requestReservation(@RequestBody ReservationEntity.Init command, @PathVariable String reservationId) {
+  public Effect<ReservationEntity.ReservationId> requestReservation(@RequestBody ReservationEntity.Init command, @PathVariable String reservationId) {
     log.info("RezAction requestReservation");
 
     CompletionStage<Done> timerRegistration =
@@ -42,7 +42,7 @@ public class RezAction extends Action {
     return effects().asyncReply(
       timerRegistration
         .thenCompose(done -> request.execute())
-        .thenApply(message -> message)
+        .thenApply(response -> response)
     );
   }
 

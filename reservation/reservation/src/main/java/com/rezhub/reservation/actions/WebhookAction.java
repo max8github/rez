@@ -55,7 +55,7 @@ public class WebhookAction extends Action {
         var reservationId = UUID.randomUUID().toString().replaceAll("-", "");
 
         Parser.ReservationDto rDto = parser.parse(facilityId, textMessage);
-        DeferredCall<Any, String> deferredCall;
+        DeferredCall<Any, ReservationEntity.ReservationId> deferredCall;
         if(rDto.command().equals("cancel")) {
             deferredCall = kalixClient.forEventSourcedEntity(rDto.reservationId()).call(ReservationEntity::cancelRequest);
         } else {
