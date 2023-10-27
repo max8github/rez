@@ -36,7 +36,7 @@ public class FacilityAction extends Action {
 
   @SuppressWarnings("unused")
   public Effect<String> on(FacilityEvent.AvalabilityRequested event) {
-    log.info("fan out, continue the broadcast");
+    log.info("Facility fans out, continuing the broadcast");
     CompletableFuture<Effect<String>> completableFuture = broadcast(this, kalixClient,
       event.reservationId(), event.reservation(), event.resources());
 

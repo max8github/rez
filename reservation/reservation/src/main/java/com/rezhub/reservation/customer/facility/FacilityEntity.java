@@ -151,7 +151,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
   @PostMapping("/checkAvailability")
   public Effect<String> checkAvailability(@RequestBody ResourceEntity.CheckAvailability command) {
-    log.info("FacilityEntity {} checks availability for reservation {} by delegating to its selection", entityId, command.reservation());
+    log.info("FacilityEntity {} delegates availability check for reservation request {}", entityId, command.reservationId());
     return effects()
       .emitEvent(new FacilityEvent.AvalabilityRequested(command.reservationId(), command.reservation(), currentState().resourceIds()))
       .thenReply(newState -> "OK");

@@ -67,7 +67,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public Effect<String> replyAvailability(@RequestBody ReplyAvailability command) {
         switch (currentState().state()) {
             case COLLECTING -> {
-                log.info("Reservation " + entityId + ", in COLLECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
+                log.info("Reservation " + entityId + ", in COLLECTING, got a " + (command.available() ? "YES " : "NO ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
                 if (command.available()) {
@@ -81,7 +81,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                             .thenReply(newState -> "OK");
                 }
             }
-            case SELECTING -> {
+            case SELECTING, UNAVAILABLE, FULFILLED, CANCELLED -> {
                 log.info("Reservation " + entityId + ", in SELECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
@@ -90,11 +90,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                                     reservation, command.available()))
                             .thenReply(newState -> "OK");
             }
-            case INIT, FULFILLED, CANCELLED, UNAVAILABLE -> {
-                return effects().error("Reservation " + entityId + " cannot be invoked");
+            case INIT -> {
+                return effects().error("Reservation " + entityId + " in INIT state cannot possibly receive availability replies yet", StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
             }
             default -> {
-                return effects().error("This should never happen for reservation entity " + entityId);
+                return effects().error("This should never happen for reservation entity " + entityId, StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
             }
 
         }

@@ -19,7 +19,7 @@ import java.util.concurrent.CompletionStage;
 public class RezAction extends Action {
 
   private static final Logger log = LoggerFactory.getLogger(RezAction.class);
-  public static final int TIMEOUT = 10;
+  public static final int TIMEOUT = 14;
   private final ComponentClient kalixClient;
 
   public RezAction(ComponentClient kalixClient) {
@@ -30,7 +30,7 @@ public class RezAction extends Action {
   @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
   @PostMapping("/{reservationId}")
   public Effect<ReservationEntity.ReservationId> requestReservation(@RequestBody ReservationEntity.Init command, @PathVariable String reservationId) {
-    log.info("RezAction requestReservation");
+    log.info("---------- RezAction initiating reservation request {}", reservationId);
 
     CompletionStage<Done> timerRegistration =
       timers().startSingleTimer(
