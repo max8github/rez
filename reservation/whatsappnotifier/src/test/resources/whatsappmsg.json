@@ -15,7 +15,7 @@
             "contacts": [
               {
                 "profile": {
-                  "name": "test user name"
+                  "name": "John"
                 },
                 "wa_id": "16315551181"
               }
@@ -27,7 +27,7 @@
                 "timestamp": "1504902988",
                 "type": "text",
                 "text": {
-                  "body": "this is a text message"
+                  "body": "Hi there, what's up"
                 }
               }
             ]
