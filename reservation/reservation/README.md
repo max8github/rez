@@ -1,23 +1,27 @@
-# Project `Facility`
-
-
-For basic Kalix concepts, see [Designing services](https://docs.kalix.io/services/development-process.html).
-
-This project contains the framework to create a Kalix application by adding Kalix components.  
+# Module `reservation`
+Module `com.rezhub.reservation` is a Kalix project. It contains the framework to create a Kalix application by adding Kalix components.  
 To understand more about these components, see [Developing services](https://docs.kalix.io/services/) and check
 Spring-SDK [official documentation](https://docs.kalix.io/spring/index.html).  
+For basic Kalix concepts, see [Designing services](https://docs.kalix.io/services/development-process.html).
 Examples can be found [here](https://github.com/lightbend/kalix-jvm-sdk/tree/main/samples) in the folders with "spring" in their name.
 
 ## Build
-Use Maven to build your project:
+Use Maven to compile this module:
 
 ```shell
 mvn compile
 ```
+or compile all modules in the parent Maven project:
+```shell
+cd .. # that is: go to the Maven parent project directory rez/reservation
+mvn compile
+```
+
+Use `mvn install` to build.
 
 ## Run
-To run the example locally, you must run the Kalix proxy.  
-The included `docker-compose` file contains the configuration required to run the proxy for a locally running application.
+To run the example locally, you must run the Kalix runtime.  
+The included `docker-compose` file contains the configuration required to run the runtime locally.
 It also contains the configuration to start a local Google Pub/Sub emulator that the Kalix proxy will connect to.
 To start the proxy, run the following command from this directory:
 
@@ -25,13 +29,13 @@ To start the proxy, run the following command from this directory:
 docker-compose up
 ```
 
-To start the application locally, the `spring-boot-maven-plugin` is used. Use the following command:
+To start the application locally, the `spring-boot-maven-plugin` can be used:
 
 ```shell
 mvn spring-boot:run
 ```
 
-With both the proxy and your application running, once you have defined endpoints they should be available at `http://localhost:9000`.
+With both the runtime (a.k.a. proxy) and your application running, once you have defined endpoints they should be available at `http://localhost:9000`.
 
 
 To deploy your service, install the `kalix` CLI as documented in
