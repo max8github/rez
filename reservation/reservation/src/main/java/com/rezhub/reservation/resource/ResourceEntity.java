@@ -2,10 +2,10 @@ package com.rezhub.reservation.resource;
 
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.dto.Resource;
-import kalix.javasdk.StatusCode;
-import kalix.javasdk.annotations.*;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import akka.javasdk.StatusCode;
+import akka.javasdk.annotations.*;
+import akka.javasdk.eventsourcedentity.EventSourcedEntity;
+import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -14,8 +14,7 @@ import java.time.LocalDateTime;
 
 import static com.rezhub.reservation.resource.dto.Resource.FORBIDDEN_NAME;
 
-@Id("resource_id")
-@TypeId("resource")
+@Component(id = "resource")
 @RequestMapping("/resource/{resource_id}")
 public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEvent> {
     private static final Logger log = LoggerFactory.getLogger(ResourceEntity.class);

@@ -3,9 +3,10 @@ package com.rezhub.reservation.reservation;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.spi.CalendarSender;
 import com.rezhub.reservation.spi.NotificationSender;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.spring.WebClientProvider;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.annotations.Consume;
+import akka.javasdk.consumer.Consumer;
+import akka.javasdk.http.WebClientProvider;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.reactive.function.client.WebClient;
@@ -15,9 +16,10 @@ import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
-@Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
+@Component(id = "delegating-service-consumer")
+@Consume.FromEventSourcedEntity(ReservationEntity.class)
 @SuppressWarnings("unused")
-public class DelegatingServiceAction extends Action {
+public class DelegatingServiceAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
 
     final private WebClient webClient;
@@ -108,7 +110,7 @@ public class DelegatingServiceAction extends Action {
         return notificationSender.messageTwist(webClient, body);
     }
 
-    public Effect<String> on(ReservationEvent.Fulfilled event) throws Exception {
+    public Effect on(ReservationEvent.Fulfilled event) throws Exception {
         Reservation reservationDto = event.reservation();
         String reservationId = event.reservationId();
         Set<String> resourceIds = event.resourceIds();
@@ -121,7 +123,7 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(stage);
     }
 
-    public Effect<String> on(ReservationEvent.SearchExhausted event) {
+    public Effect on(ReservationEvent.SearchExhausted event) {
         var eventDetails = new CalendarSender.EventDetails("", event.reservationId(), "facilityId",
                 event.resourceIds(),
                 event.reservation().emails(), event.reservation().dateTime());
@@ -129,7 +131,7 @@ public class DelegatingServiceAction extends Action {
         return effects().asyncReply(messageTwistReject(result));
     }
 
-    public Effect<String> on(ReservationEvent.ReservationCancelled event) throws IOException {
+    public Effect on(ReservationEvent.ReservationCancelled event) throws IOException {
         String calendarId = event.resourceId() + "@group.calendar.google.com";
         String calEventId = event.reservationId();
         var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);

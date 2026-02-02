@@ -4,9 +4,9 @@ import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceEvent;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.client.ComponentClient;
+import akka.javasdk.action.Action;
+import akka.javasdk.annotations.Subscribe;
+import akka.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 

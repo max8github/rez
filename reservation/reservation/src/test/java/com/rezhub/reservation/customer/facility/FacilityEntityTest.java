@@ -2,7 +2,7 @@ package com.rezhub.reservation.customer.facility;
 
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import kalix.javasdk.testkit.EventSourcedTestKit;
+import akka.javasdk.testkit.EventSourcedTestKit;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;
 

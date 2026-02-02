@@ -1,7 +1,7 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
-import kalix.javasdk.annotations.TypeName;
+import akka.javasdk.annotations.TypeName;
 
 import java.time.LocalDateTime;
 import java.util.Set;

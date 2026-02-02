@@ -204,29 +204,12 @@
       </plugin>
 
       <plugin>
-        <groupId>io.kalix</groupId>
-        <artifactId>kalix-maven-plugin</artifactId>
-        <version>${kalix-sdk.version}</version>
-        <executions>
-          <execution>
-            <goals>
-              <goal>deploy</goal>
-            </goals>
-          </execution>
-        </executions>
-        <configuration>
-          <dockerImage>${dockerImage}:${dockerTag}</dockerImage>
-          <mainClass>${mainClass}</mainClass>
-          <integrationTestSourceDirectory>src/it/java</integrationTestSourceDirectory>
-        </configuration>
-      </plugin>
-      <plugin>
        <groupId>org.springframework.boot</groupId>
        <artifactId>spring-boot-maven-plugin</artifactId>
         <configuration>
             <systemPropertyVariables>
                 <logging.config>src/main/resources/logback-dev-mode.xml</logging.config>
-                <kalix.user-function-interface>0.0.0.0</kalix.user-function-interface>
+                <akka.javasdk.user-function-interface>0.0.0.0</akka.javasdk.user-function-interface>
             </systemPropertyVariables>
             <excludes>
               <exclude>
@@ -302,14 +285,14 @@
       <version>0.5</version>
     </dependency>
     <dependency>
-      <groupId>io.kalix</groupId>
-      <artifactId>kalix-spring-boot-starter</artifactId>
-      <version>${kalix-sdk.version}</version>
+      <groupId>com.akka</groupId>
+      <artifactId>akka-javasdk-spring-boot-starter</artifactId>
+      <version>${akka-sdk.version}</version>
     </dependency>
     <dependency>
-      <groupId>io.kalix</groupId>
-      <artifactId>kalix-spring-boot-starter-test</artifactId>
-      <version>${kalix-sdk.version}</version>
+      <groupId>com.akka</groupId>
+      <artifactId>akka-javasdk-spring-boot-starter-test</artifactId>
+      <version>${akka-sdk.version}</version>
       <scope>test</scope>
     </dependency>
     <dependency>

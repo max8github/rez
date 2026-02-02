@@ -1,10 +1,10 @@
 package com.rezhub.reservation.actions;
 
 import com.rezhub.reservation.reservation.ReservationEntity;
-import kalix.javasdk.DeferredCallResponseException;
-import kalix.javasdk.StatusCode;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.client.ComponentClient;
+import akka.javasdk.DeferredCallResponseException;
+import akka.javasdk.StatusCode;
+import akka.javasdk.action.Action;
+import akka.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;

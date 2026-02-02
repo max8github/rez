@@ -23,9 +23,9 @@
             <artifactId>spring-web</artifactId>
         </dependency>
         <dependency>
-            <groupId>io.kalix</groupId>
-            <artifactId>kalix-java-sdk-spring</artifactId>
-            <version>${kalix-sdk.version}</version>
+            <groupId>io.akka</groupId>
+            <artifactId>akka-javasdk-spring-boot-starter</artifactId>
+            <version>${akka-sdk.version}</version>
         </dependency>
     </dependencies>
 

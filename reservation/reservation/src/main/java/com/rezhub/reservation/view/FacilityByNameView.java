@@ -2,11 +2,11 @@ package com.rezhub.reservation.view;
 
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.FacilityEvent;
-import kalix.javasdk.view.View;
-import kalix.javasdk.annotations.Query;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.annotations.Table;
-import kalix.javasdk.annotations.ViewId;
+import akka.javasdk.view.View;
+import akka.javasdk.annotations.Query;
+import akka.javasdk.annotations.Subscribe;
+import akka.javasdk.annotations.Table;
+import akka.javasdk.annotations.ViewId;
 import reactor.core.publisher.Flux;
 
 import org.springframework.web.bind.annotation.GetMapping;

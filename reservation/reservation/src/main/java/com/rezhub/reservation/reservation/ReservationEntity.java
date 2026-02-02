@@ -1,10 +1,10 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
-import kalix.javasdk.StatusCode;
-import kalix.javasdk.annotations.*;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntity;
-import kalix.javasdk.eventsourcedentity.EventSourcedEntityContext;
+import akka.javasdk.StatusCode;
+import akka.javasdk.annotations.*;
+import akka.javasdk.eventsourcedentity.EventSourcedEntity;
+import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.*;
@@ -16,8 +16,7 @@ import static com.rezhub.reservation.reservation.ReservationState.State.*;
 /**
  * For an explanation on how this work, see description of 'broadcast' in git commits.
  */
-@Id("reservationId")
-@TypeId("reservation")
+@Component(id = "reservation")
 @RequestMapping("/reservation/{reservationId}")
 public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
     private static final Logger log = LoggerFactory.getLogger(ReservationEntity.class);

@@ -4,7 +4,7 @@ import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceState;
-import kalix.spring.testkit.KalixIntegrationTestKitSupport;
+import akka.spring.testkit.KalixIntegrationTestKitSupport;
 
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.Test;

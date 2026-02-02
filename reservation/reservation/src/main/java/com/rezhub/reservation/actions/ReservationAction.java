@@ -5,18 +5,20 @@ import com.rezhub.reservation.customer.facility.FacilityAction;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationEvent;
 import com.rezhub.reservation.resource.ResourceEntity;
-import kalix.javasdk.DeferredCall;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.client.ComponentClient;
+import akka.javasdk.DeferredCall;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.annotations.Consume;
+import akka.javasdk.client.ComponentClient;
+import akka.javasdk.consumer.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.concurrent.CompletableFuture;
 
 @SuppressWarnings("unused")
-@Subscribe.EventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
-public class ReservationAction extends Action {
+@Component(id = "reservation-events-consumer")
+@Consume.FromEventSourcedEntity(ReservationEntity.class)
+public class ReservationAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(ReservationAction.class);
     private final ComponentClient kalixClient;
 

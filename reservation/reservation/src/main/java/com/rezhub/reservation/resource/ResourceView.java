@@ -1,10 +1,10 @@
 package com.rezhub.reservation.resource;
 
-import kalix.javasdk.annotations.Query;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.annotations.Table;
-import kalix.javasdk.annotations.ViewId;
-import kalix.javasdk.view.View;
+import akka.javasdk.annotations.Query;
+import akka.javasdk.annotations.Subscribe;
+import akka.javasdk.annotations.Table;
+import akka.javasdk.annotations.ViewId;
+import akka.javasdk.view.View;
 import org.springframework.web.bind.annotation.GetMapping;
 import reactor.core.publisher.Flux;
 

@@ -2,9 +2,9 @@ package com.rezhub.reservation.actions;
 
 import akka.Done;
 import com.rezhub.reservation.reservation.ReservationEntity;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Acl;
-import kalix.javasdk.client.ComponentClient;
+import akka.javasdk.action.Action;
+import akka.javasdk.annotations.Acl;
+import akka.javasdk.client.ComponentClient;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.web.bind.annotation.PathVariable;

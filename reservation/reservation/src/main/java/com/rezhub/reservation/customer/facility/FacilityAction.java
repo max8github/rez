@@ -3,9 +3,10 @@ package com.rezhub.reservation.customer.facility;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.dto.Resource;
-import kalix.javasdk.action.Action;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.client.ComponentClient;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.annotations.Consume;
+import akka.javasdk.client.ComponentClient;
+import akka.javasdk.consumer.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -17,8 +18,9 @@ import java.util.stream.Collectors;
 import static com.rezhub.reservation.dto.Reservation.*;
 
 @SuppressWarnings("unused")
-@Subscribe.EventSourcedEntity(value = FacilityEntity.class, ignoreUnknown = true)
-public class FacilityAction extends Action {
+@Component(id = "facility-events-consumer")
+@Consume.FromEventSourcedEntity(FacilityEntity.class)
+public class FacilityAction extends Consumer {
   private static final Logger log = LoggerFactory.getLogger(FacilityAction.class);
   private final ComponentClient kalixClient;
 
@@ -27,7 +29,7 @@ public class FacilityAction extends Action {
   }
 
   @SuppressWarnings("unused")
-  public Effect<String> on(FacilityEvent.ResourceCreateAndRegisterRequested event) {
+  public Effect on(FacilityEvent.ResourceCreateAndRegisterRequested event) {
     var resourceId = event.resourceId();
     var command = new ResourceEntity.CreateChildResource(event.facilityId(), new Resource(event.resourceId(), event.resourceName()));
     var deferredCall = kalixClient.forEventSourcedEntity(resourceId).call(ResourceEntity::createFacilityResource).params(command);
@@ -35,15 +37,15 @@ public class FacilityAction extends Action {
   }
 
   @SuppressWarnings("unused")
-  public Effect<String> on(FacilityEvent.AvalabilityRequested event) {
+  public Effect on(FacilityEvent.AvalabilityRequested event) {
     log.info("Facility fans out, continuing the broadcast");
-    CompletableFuture<Effect<String>> completableFuture = broadcast(this, kalixClient,
+    CompletableFuture<Effect> completableFuture = broadcast(this, kalixClient,
       event.reservationId(), event.reservation(), event.resources());
 
     return effects().asyncEffect(completableFuture);
   }
 
-  public static CompletableFuture<Effect<String>> broadcast(Action action, ComponentClient kalixClient,
+  public static CompletableFuture<Effect> broadcast(Consumer consumer, ComponentClient kalixClient,
                                                             String reservationId, Reservation reservation,
                                                             Set<String> resources) {
     List<CompletableFuture<String>> futureChecks = resources.stream().sorted().map(id -> {
@@ -64,7 +66,7 @@ public class FacilityAction extends Action {
       .thenApply(v -> futureChecks.stream()
         .map(CompletableFuture::join)
         .collect(Collectors.toList())
-      ).thenApply(v -> action.effects().reply("ok - broadcast"));
+      ).thenApply(v -> consumer.effects().done());
   }
 
   public static String extractPrefix(String id) {
