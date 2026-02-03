@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.rezhub.reservation</groupId>
-        <artifactId>reservation</artifactId>
+        <artifactId>reservation-parent</artifactId>
         <version>0.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -20,13 +20,15 @@
         </dependency>
         <dependency>
             <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
+            <artifactId>spring-webflux</artifactId>
+            <version>6.1.1</version>
         </dependency>
         <dependency>
-            <groupId>io.akka</groupId>
-            <artifactId>akka-javasdk-spring-boot-starter</artifactId>
-            <version>${akka-sdk.version}</version>
+            <groupId>org.springframework</groupId>
+            <artifactId>spring-web</artifactId>
+            <version>6.1.1</version>
         </dependency>
+        <!-- Akka SDK is inherited from parent -->
     </dependencies>
 
 </project>

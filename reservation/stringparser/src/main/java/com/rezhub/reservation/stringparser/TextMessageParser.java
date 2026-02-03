@@ -2,7 +2,6 @@ package com.rezhub.reservation.stringparser;
 
 import com.rezhub.reservation.spi.Parser;
 import com.rezhub.reservation.spi.Nlp;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Component;
@@ -15,11 +14,14 @@ import java.util.StringTokenizer;
 
 /**
  */
-@RequiredArgsConstructor
 @Component
 public class TextMessageParser implements Parser {
     private static final Logger log = LoggerFactory.getLogger(TextMessageParser.class);
     private final Nlp nlp;
+
+    public TextMessageParser(Nlp nlp) {
+        this.nlp = nlp;
+    }
 
     @Override
     public ReservationDto parse(String facilityId, TextMessage textMessage) {
