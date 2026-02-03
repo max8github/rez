@@ -1,49 +1,49 @@
 package com.rezhub.reservation.actions;
 
-import akka.Done;
 import com.rezhub.reservation.reservation.ReservationEntity;
-import akka.javasdk.action.Action;
 import akka.javasdk.annotations.Acl;
+import akka.javasdk.annotations.http.HttpEndpoint;
+import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
+import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
 
 import java.time.Duration;
-import java.util.concurrent.CompletionStage;
 
-@RequestMapping("/selection")
-public class RezAction extends Action {
+@HttpEndpoint("/selection")
+@Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
+public class RezAction {
 
   private static final Logger log = LoggerFactory.getLogger(RezAction.class);
   public static final int TIMEOUT = 14;
-  private final ComponentClient kalixClient;
+  private final ComponentClient componentClient;
+  private final TimerScheduler timerScheduler;
 
-  public RezAction(ComponentClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public RezAction(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    this.componentClient = componentClient;
+    this.timerScheduler = timerScheduler;
   }
 
-  @SuppressWarnings("unused")
-  @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-  @PostMapping("/{reservationId}")
-  public Effect<ReservationEntity.ReservationId> requestReservation(@RequestBody ReservationEntity.Init command, @PathVariable String reservationId) {
+  @Post("/{reservationId}")
+  public ReservationEntity.ReservationId requestReservation(String reservationId, ReservationEntity.Init command) {
     log.info("---------- RezAction initiating reservation request {}", reservationId);
 
-    CompletionStage<Done> timerRegistration =
-      timers().startSingleTimer(
-        timerName(reservationId),
-        Duration.ofSeconds(TIMEOUT),
-        kalixClient.forAction().call(TimerAction::expire).params(reservationId)
-      );
-    var request = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::init).params(command);
-    return effects().asyncReply(
-      timerRegistration
-        .thenCompose(done -> request.execute())
-        .thenApply(response -> response)
+    // Register the timer first (before placing the reservation)
+    timerScheduler.createSingleTimer(
+      timerName(reservationId),
+      Duration.ofSeconds(TIMEOUT),
+      componentClient
+        .forTimedAction()
+        .method(TimerAction::expire)
+        .deferred(reservationId)
     );
+
+    // Now init the reservation
+    return componentClient
+      .forEventSourcedEntity(reservationId)
+      .method(ReservationEntity::init)
+      .invoke(command);
   }
 
   static String timerName(String reservationId) {

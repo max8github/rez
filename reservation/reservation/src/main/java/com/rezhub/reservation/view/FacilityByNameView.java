@@ -2,67 +2,39 @@ package com.rezhub.reservation.view;
 
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.FacilityEvent;
-import akka.javasdk.view.View;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
-import akka.javasdk.annotations.Subscribe;
-import akka.javasdk.annotations.Table;
-import akka.javasdk.annotations.ViewId;
-import reactor.core.publisher.Flux;
+import akka.javasdk.view.TableUpdater;
+import akka.javasdk.view.View;
 
-import org.springframework.web.bind.annotation.GetMapping;
+import java.util.List;
 
-@ViewId("view_facilities_by_name")
-@Table("facilities_by_name")
-public class FacilityByNameView extends View<FacilityV> {
+@Component(id = "view_facilities_by_name")
+public class FacilityByNameView extends View {
 
-    @SuppressWarnings("unused")
-    @GetMapping("/facility/by_name/{facility_name}")
-    @Query("SELECT * FROM facilities_by_name WHERE name = :facility_name")
-    public Flux<FacilityV> getFacility(String name) {
-        return null;
+    public record Facilities(List<FacilityV> facilities) {}
+
+    @Consume.FromEventSourcedEntity(FacilityEntity.class)
+    public static class FacilitiesByNameUpdater extends TableUpdater<FacilityV> {
+
+        public Effect<FacilityV> onEvent(FacilityEvent event) {
+            return switch (event) {
+                case FacilityEvent.Created e ->
+                    effects().updateRow(new FacilityV(e.facility().name(), e.entityId()));
+                case FacilityEvent.Renamed e ->
+                    effects().updateRow(rowState().withName(e.newName()));
+                case FacilityEvent.AddressChanged e -> effects().ignore();
+                case FacilityEvent.ResourceCreateAndRegisterRequested e -> effects().ignore();
+                case FacilityEvent.ResourceRegistered e -> effects().ignore();
+                case FacilityEvent.ResourceUnregistered e -> effects().ignore();
+                case FacilityEvent.AvalabilityRequested e -> effects().ignore();
+            };
+        }
     }
 
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.Created created) {
-        return effects().updateState(new FacilityV(
-          created.facility().name(),
-          created.entityId()));
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.Renamed event) {
-        return effects().updateState(viewState().withName(event.newName()));
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AddressChanged event) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceCreateAndRegisterRequested event) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceRegistered event) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.ResourceUnregistered event) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(FacilityEntity.class)
-    public UpdateEffect<FacilityV> onEvent(FacilityEvent.AvalabilityRequested event) {
-        return effects().ignore();
+    @Query("SELECT * AS facilities FROM facilities_by_name WHERE name = :facility_name")
+    public QueryEffect<Facilities> getFacility(String facility_name) {
+        return queryResult();
     }
 }

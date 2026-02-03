@@ -18,17 +18,11 @@
             <artifactId>config</artifactId>
             <version>1.4.2</version>
         </dependency>
+        <!-- Akka SDK provides HttpClient -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-webflux</artifactId>
-            <version>6.1.1</version>
+            <groupId>io.akka</groupId>
+            <artifactId>akka-javasdk</artifactId>
         </dependency>
-        <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-            <version>6.1.1</version>
-        </dependency>
-        <!-- Akka SDK is inherited from parent -->
     </dependencies>
 
 </project>

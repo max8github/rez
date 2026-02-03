@@ -1,49 +1,38 @@
 package com.rezhub.reservation.actions;
 
 import com.rezhub.reservation.reservation.ReservationEntity;
-import akka.javasdk.DeferredCallResponseException;
-import akka.javasdk.StatusCode;
-import akka.javasdk.action.Action;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
+import akka.javasdk.timedaction.TimedAction;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
 
-import java.util.Set;
-import java.util.concurrent.CompletionStage;
-
-@RequestMapping("/timer")
-public class TimerAction extends Action {
+@Component(id = "reservation-timer")
+public class TimerAction extends TimedAction {
 
   private static final Logger log = LoggerFactory.getLogger(TimerAction.class);
-  private final ComponentClient kalixClient;
+  private final ComponentClient componentClient;
 
-  public TimerAction(ComponentClient kalixClient) {
-    this.kalixClient = kalixClient;
+  public TimerAction(ComponentClient componentClient) {
+    this.componentClient = componentClient;
   }
 
-  @PostMapping("/{reservationId}")
-  public Action.Effect<String> expire(@PathVariable String reservationId) {
+  public Effect expire(String reservationId) {
     log.info("Expiring reservation '{}'", reservationId);
-    var expireRequest = kalixClient.forEventSourcedEntity(reservationId).call(ReservationEntity::expire);
-
-    CompletionStage<String> reply =
-      expireRequest
-        .execute()
-        .thenApply(cancelled -> "Ok")
-        .exceptionally(e -> {
-            if (e.getCause() instanceof DeferredCallResponseException dcre &&
-              Set.of(StatusCode.ErrorCode.NOT_FOUND, StatusCode.ErrorCode.BAD_REQUEST).contains(dcre.errorCode())) {
-              // if NotFound or InvalidArgument, we don't need to re-try, and we can move on
-              // other kind of failures are not recovered and will trigger a re-try
-              return "Ok";
-            } else {
-              throw new RuntimeException(e);
-            }
-          }
-        );
-    return effects().asyncReply(reply);
+    try {
+      componentClient
+        .forEventSourcedEntity(reservationId)
+        .method(ReservationEntity::expire)
+        .invoke();
+      return effects().done();
+    } catch (IllegalArgumentException e) {
+      // NotFound or InvalidArgument - we don't need to re-try
+      log.info("Reservation '{}' not found or invalid, timer completed", reservationId);
+      return effects().done();
+    } catch (Exception e) {
+      // Other failures should trigger a re-try
+      log.error("Error expiring reservation '{}': {}", reservationId, e.getMessage());
+      throw new RuntimeException(e);
+    }
   }
 }

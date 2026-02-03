@@ -8,10 +8,8 @@ import com.google.api.services.calendar.model.EventAttendee;
 import com.google.api.services.calendar.model.EventDateTime;
 import com.google.api.services.calendar.model.EventReminder;
 import com.rezhub.reservation.spi.CalendarSender;
-import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -20,11 +18,13 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-@RequiredArgsConstructor
-@Component
 public class GoogleCalendar implements CalendarSender {
 
     private final Calendar service;
+
+    public GoogleCalendar(Calendar service) {
+        this.service = service;
+    }
 
     private static final Logger log = LoggerFactory.getLogger(GoogleCalendar.class);
 

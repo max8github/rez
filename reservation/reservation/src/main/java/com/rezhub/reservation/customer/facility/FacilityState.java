@@ -1,15 +1,24 @@
 package com.rezhub.reservation.customer.facility;
 
-import lombok.With;
-
 import java.util.HashSet;
 import java.util.Set;
 
-@With
 public record FacilityState(String facilityId, String name, AddressState addressState, Set<String> resourceIds) {
 
   public static FacilityState create(String facilityId) {
     return new FacilityState(facilityId, "", new AddressState("", ""), new HashSet<>());
+  }
+
+  public FacilityState withName(String name) {
+    return new FacilityState(facilityId, name, addressState, resourceIds);
+  }
+
+  public FacilityState withAddressState(AddressState addressState) {
+    return new FacilityState(facilityId, name, addressState, resourceIds);
+  }
+
+  public FacilityState withResourceIds(Set<String> resourceIds) {
+    return new FacilityState(facilityId, name, addressState, resourceIds);
   }
 
   public FacilityState registerResource(String resourceId) {

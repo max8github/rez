@@ -1,13 +1,12 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
-import akka.javasdk.StatusCode;
-import akka.javasdk.annotations.*;
+import akka.javasdk.annotations.Acl;
+import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
 import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.web.bind.annotation.*;
 
 import java.util.Set;
 
@@ -17,7 +16,6 @@ import static com.rezhub.reservation.reservation.ReservationState.State.*;
  * For an explanation on how this work, see description of 'broadcast' in git commits.
  */
 @Component(id = "reservation")
-@RequestMapping("/reservation/{reservationId}")
 public class ReservationEntity extends EventSourcedEntity<ReservationState, ReservationEvent> {
     private static final Logger log = LoggerFactory.getLogger(ReservationEntity.class);
 
@@ -36,34 +34,61 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return ReservationState.initiate(entityId);
     }
 
-    @PostMapping("/init")
-    public Effect<ReservationId> init(@RequestBody Init command) {
-        String id = commandContext().entityId();
-        log.info("ReservationEntity initializes with reservation id {}", id);
-        return switch (currentState().state()) {
-            case CANCELLED -> effects().error("Reservation cancelled: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
-            case UNAVAILABLE -> effects().error("Reservation was rejected for unavailable selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
-            case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized", StatusCode.ErrorCode.BAD_REQUEST);
-            case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized", StatusCode.ErrorCode.BAD_REQUEST);
-            case INIT -> effects()
-              .emitEvent(new ReservationEvent.Inited(id, command.reservation(), command.selection()))
-              .thenReply(newState -> new ReservationId(id));
+    @Override
+    public ReservationState applyEvent(ReservationEvent event) {
+        return switch (event) {
+            case ReservationEvent.Inited e -> {
+                Reservation reservation = e.reservation();
+                yield ReservationState.initiate(e.reservationId())
+                    .withState(COLLECTING)
+                    .withSelection(e.selection())
+                    .withDateTime(reservation.dateTime())
+                    .withEmails(reservation.emails());
+            }
+            case ReservationEvent.AvailabilityReplied e -> e.available()
+                ? currentState().withAdded(e.resourceId())
+                : currentState().withRemoved(e.resourceId());
+            case ReservationEvent.ResourceSelected e ->
+                currentState().withAdded(e.resourceId()).withState(SELECTING);
+            case ReservationEvent.SearchExhausted e -> {
+                log.info("Search exhausted for reservation {}: UNAVAILABLE ", e.reservationId());
+                yield currentState().withState(UNAVAILABLE);
+            }
+            case ReservationEvent.Fulfilled e -> {
+                log.info("Reservation {} FULFILLED with resource {}", e.reservationId(), e.resourceId());
+                yield currentState().withRemoved(e.resourceId()).withResourceId(e.resourceId()).withState(FULFILLED);
+            }
+            case ReservationEvent.CancelRequested e -> currentState();
+            case ReservationEvent.ReservationCancelled e -> {
+                log.info("Reservation {} cancelled from resource {}", e.reservationId(), e.resourceId());
+                yield currentState().withState(CANCELLED);
+            }
+            case ReservationEvent.RejectedWithNext e -> {
+                log.info("Reservation was rejected => next availability");
+                yield currentState().withRemoved(e.resourceId()).withState(COLLECTING);
+            }
+            case ReservationEvent.Rejected e -> {
+                log.info("Reservation was rejected, waiting for availability");
+                yield currentState().withRemoved(e.resourceId()).withState(COLLECTING);
+            }
         };
     }
 
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState inited(ReservationEvent.Inited event) {
-        Reservation reservation = event.reservation();
-        return ReservationState.initiate(event.reservationId())
-          .withState(COLLECTING)
-          .withSelection(event.selection())
-          .withDateTime(reservation.dateTime())
-          .withEmails(reservation.emails());
+    public Effect<ReservationId> init(Init command) {
+        String id = commandContext().entityId();
+        log.info("ReservationEntity initializes with reservation id {}", id);
+        return switch (currentState().state()) {
+            case CANCELLED -> effects().error("Reservation cancelled: cannot be initialized");
+            case UNAVAILABLE -> effects().error("Reservation was rejected for unavailable selection: cannot be initialized");
+            case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized");
+            case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized");
+            case INIT -> effects()
+                .persist(new ReservationEvent.Inited(id, command.reservation(), command.selection()))
+                .thenReply(newState -> new ReservationId(id));
+        };
     }
 
-    @PostMapping("/replyAvailability")
-    public Effect<String> replyAvailability(@RequestBody ReplyAvailability command) {
+    public Effect<String> replyAvailability(ReplyAvailability command) {
         switch (currentState().state()) {
             case COLLECTING -> {
                 log.info("Reservation " + entityId + ", in COLLECTING, got a " + (command.available() ? "YES " : "NO ") + "from resource " + command.resourceId);
@@ -71,94 +96,62 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
                 if (command.available()) {
                     return effects()
-                            .emitEvent(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation))
-                            .thenReply(newState -> "OK");
+                        .persist(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation))
+                        .thenReply(newState -> "OK");
                 } else {
                     return effects()
-                            .emitEvent(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
-                                    reservation, false))
-                            .thenReply(newState -> "OK");
+                        .persist(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
+                            reservation, false))
+                        .thenReply(newState -> "OK");
                 }
             }
             case SELECTING, UNAVAILABLE, FULFILLED, CANCELLED -> {
                 log.info("Reservation " + entityId + ", in SELECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
                 Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
-                    return effects()
-                            .emitEvent(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
-                                    reservation, command.available()))
-                            .thenReply(newState -> "OK");
+                return effects()
+                    .persist(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
+                        reservation, command.available()))
+                    .thenReply(newState -> "OK");
             }
             case INIT -> {
-                return effects().error("Reservation " + entityId + " in INIT state cannot possibly receive availability replies yet", StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
+                return effects().error("Reservation " + entityId + " in INIT state cannot possibly receive availability replies yet");
             }
             default -> {
-                return effects().error("This should never happen for reservation entity " + entityId, StatusCode.ErrorCode.INTERNAL_SERVER_ERROR);
+                return effects().error("This should never happen for reservation entity " + entityId);
             }
 
         }
     }
 
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState availabilityReplied(ReservationEvent.AvailabilityReplied event) {
-        return event.available()
-                ? currentState().withAdded(event.resourceId())
-                : currentState().withRemoved(event.resourceId());
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState resourceSelected(ReservationEvent.ResourceSelected event) {
-        return currentState().withAdded(event.resourceId()).withState(SELECTING);
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState searchExhausted(ReservationEvent.SearchExhausted event) {
-        log.info("Search exhausted for reservation {}: UNAVAILABLE ", event.reservationId());
-        return currentState().withState(UNAVAILABLE);
-    }
-
-    @PostMapping("/fulfill")
-    public Effect<String> fulfill(@RequestBody Fulfill command) {
+    public Effect<String> fulfill(Fulfill command) {
         log.info("Reservation {} gets confirmation from resource {}", entityId, command.resourceId());
         return switch (currentState().state()) {
             case SELECTING -> effects()
-                    .emitEvent(new ReservationEvent.Fulfilled(command.resourceId(),
-                            entityId, command.reservation(), currentState().selection()))
-                    .thenReply(newState -> "OK, picked resource " + command.resourceId());
+                .persist(new ReservationEvent.Fulfilled(command.resourceId(),
+                    entityId, command.reservation(), currentState().selection()))
+                .thenReply(newState -> "OK, picked resource " + command.resourceId());
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
 
     }
 
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState fulfilled(ReservationEvent.Fulfilled event) {
-        log.info("Reservation {} FULFILLED with resource {}", event.reservationId(), event.resourceId());
-        return currentState().withRemoved(event.resourceId()).withResourceId(event.resourceId()).withState(FULFILLED);
-    }
-
-    @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
-    @GetMapping()
-    public Effect<ReservationState> getReservation() {
+    public ReadOnlyEffect<ReservationState> getReservation() {
         return effects().reply(currentState());
     }
 
-    @DeleteMapping("/cancelRequest")
     public Effect<ReservationId> cancelRequest() {
         log.info("Cancelling reservation {} requested", entityId);
         return switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
                 String resourceId = getResourceIdFromState();
                 yield effects()
-                        .emitEvent(new ReservationEvent.CancelRequested(entityId,
-                                resourceId, currentState().dateTime()))
-                        .thenReply(newState -> new ReservationId(entityId));
+                    .persist(new ReservationEvent.CancelRequested(entityId,
+                        resourceId, currentState().dateTime()))
+                    .thenReply(newState -> new ReservationId(entityId));
             }
             default ->
-                    effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
+                effects().error("Reservation entity " + entityId + " must be in fulfilled state to be cancelled");
         };
     }
 
@@ -167,24 +160,17 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return state.resourceId();
     }
 
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState cancelRequested(ReservationEvent.CancelRequested event) {
-        return currentState();
-    }
-
-    @DeleteMapping("/cancel")
     public Effect<String> cancel() {
         log.info("Cancelling of reservation {} is confirmed", entityId);
-        switch (currentState().state()) {//todo: states here ok in the FSM workings?
+        switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
                 String resourceId = getResourceIdFromState();
                 return effects()
-                        .emitEvent(new ReservationEvent.ReservationCancelled(
-                                entityId,
-                                fromReservationState(currentState()),
-                                resourceId, currentState().selection()))
-                        .thenReply(newState -> entityId);
+                    .persist(new ReservationEvent.ReservationCancelled(
+                        entityId,
+                        fromReservationState(currentState()),
+                        resourceId, currentState().selection()))
+                    .thenReply(newState -> entityId);
             }
             default -> {
                 return effects().error("reservation entity " + entityId + " was not in fulfilled state");
@@ -192,29 +178,20 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState reservationCancelled(ReservationEvent.ReservationCancelled event) {
-        log.info("Reservation {} cancelled from resource {}", event.reservationId(), event.resourceId());
-        return currentState().withState(CANCELLED);
-    }
-
-    @PostMapping("/expire")
     public Effect<String> expire() {
         log.info("Reservation {} is asked to expire for timeout", entityId);
         return switch (currentState().state()) {
             case INIT, COLLECTING, SELECTING -> effects()
-                        .emitEvent(new ReservationEvent.SearchExhausted(
-                                entityId,
-                                new Reservation(currentState().emails(), currentState().dateTime()),
-                                currentState().selection()))
-                        .thenReply(newState -> entityId);
+                .persist(new ReservationEvent.SearchExhausted(
+                    entityId,
+                    new Reservation(currentState().emails(), currentState().dateTime()),
+                    currentState().selection()))
+                .thenReply(newState -> entityId);
             case FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("OK");
         };
     }
 
-    @PostMapping("/reject")
-    public Effect<String> reject(@RequestBody Reject command) {
+    public Effect<String> reject(Reject command) {
 
         switch (currentState().state()) {
             case SELECTING -> {
@@ -222,32 +199,18 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 if(currentState().hasAvailableResources()) {
                     String nextResourceId = currentState().pop();
                     log.info("Reservation {} was rejected (resource {}) and will try another resource", entityId, resourceId);
-                    return effects().emitEvent(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId))
-                      .thenReply(newState -> "OK");
+                    return effects().persist(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId))
+                        .thenReply(newState -> "OK");
                 } else {
                     log.info("Reservation {} was rejected (resource {}) but there is nothing left available to reserve", entityId, resourceId);
-                    return effects().emitEvent(new ReservationEvent.Rejected(entityId, resourceId))
-                      .thenReply(newState -> "OK");
+                    return effects().persist(new ReservationEvent.Rejected(entityId, resourceId))
+                        .thenReply(newState -> "OK");
                 }
             }
             default -> {
                 return effects().error("Reservation " + entityId + " is completed");
             }
         }
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState rejectedWithNext(ReservationEvent.RejectedWithNext event) {
-        log.info("Reservation was rejected => next availability");
-        return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
-    }
-
-    @SuppressWarnings("unused")
-    @EventHandler
-    public ReservationState rejected(ReservationEvent.Rejected event) {
-        log.info("Reservation was rejected, waiting for availability");
-        return currentState().withRemoved(event.resourceId()).withState(COLLECTING);
     }
 
     public record Init(Reservation reservation, Set<String> selection) {}

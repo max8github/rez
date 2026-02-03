@@ -1,50 +1,46 @@
 package com.rezhub.reservation.customer.user;
 
-import io.grpc.Status;
-import akka.javasdk.annotations.Id;
-import akka.javasdk.annotations.TypeId;
-import akka.javasdk.valueentity.ValueEntity;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.keyvalueentity.KeyValueEntity;
+import akka.javasdk.keyvalueentity.KeyValueEntityContext;
 import com.rezhub.reservation.customer.dto.Address;
-import org.springframework.web.bind.annotation.*;
 
-@Id("user_id")
-@TypeId("user")
-@RequestMapping("/user/{user_id}")
-public class UserEntity extends ValueEntity<User> {
+@Component(id = "user")
+public class UserEntity extends KeyValueEntity<User> {
 
-  @PostMapping("/create")
-  public ValueEntity.Effect<String> create(@RequestBody User user) {
-    if (currentState() == null)
-      return effects()
-        .updateState(user)
-        .thenReply("OK");
-    else
-      return effects().error("Facility exists already");
-  }
+    private final String entityId;
 
-  @GetMapping()
-  public ValueEntity.Effect<User> getUser() {
-    if (currentState() == null)
-      return effects().error(
-        "No user found for id '" + commandContext().entityId() + "'",
-        Status.Code.NOT_FOUND
-      );
-    else
-      return effects().reply(currentState());
-  }
+    public UserEntity(KeyValueEntityContext context) {
+        this.entityId = context.entityId();
+    }
 
-  @PostMapping("/changeName/{newName}")
-  public Effect<String> changeName(@PathVariable String newName) {
-    User updatedUser = currentState().withName(newName);
-    return effects()
-      .updateState(updatedUser)
-      .thenReply("OK");
-  }
+    public Effect<String> create(User user) {
+        if (currentState() == null)
+            return effects()
+                .updateState(user)
+                .thenReply("OK");
+        else
+            return effects().error("Facility exists already");
+    }
 
-  @PostMapping("/changeAddress")
-  public Effect<String> changeAddress(@RequestBody Address newAddress) {
-    User updatedUser = currentState().withAddress(newAddress);
-    return effects().updateState(updatedUser).thenReply("OK");
-  }
+    public ReadOnlyEffect<User> getUser() {
+        if (currentState() == null)
+            return effects().error(
+                "No user found for id '" + entityId + "'"
+            );
+        else
+            return effects().reply(currentState());
+    }
 
+    public Effect<String> changeName(String newName) {
+        User updatedUser = currentState().withName(newName);
+        return effects()
+            .updateState(updatedUser)
+            .thenReply("OK");
+    }
+
+    public Effect<String> changeAddress(Address newAddress) {
+        User updatedUser = currentState().withAddress(newAddress);
+        return effects().updateState(updatedUser).thenReply("OK");
+    }
 }

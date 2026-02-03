@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
 
 @SuppressWarnings("unused")
 @Component(id = "reservation-events-consumer")
-@Consume.FromEventSourcedEntity(ReservationEntity.class)
+@Consume.FromEventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 public class ReservationAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(ReservationAction.class);
     private final ComponentClient componentClient;
@@ -55,9 +55,10 @@ public class ReservationAction extends Consumer {
     public Effect on(ReservationEvent.CancelRequested event) {
         log.info("Cancel reservation {} in resource {}", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();
+        var command = new ResourceEntity.CancelReservation(event.reservationId(), event.dateTime());
         componentClient.forEventSourcedEntity(resourceId)
             .method(ResourceEntity::cancel)
-            .invoke(event.reservationId(), event.dateTime().toString());
+            .invoke(command);
         return effects().done();
     }
 }
