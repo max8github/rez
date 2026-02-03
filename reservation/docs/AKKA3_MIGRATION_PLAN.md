@@ -1,13 +1,16 @@
 # Akka 3 Migration Plan
 
-## Status: Core Migration Complete ✅
+## Status: Migration Complete ✅
 
-The reservation project has been migrated from Kalix SDK to Akka 3. All components compile and unit tests pass.
+The reservation project has been fully migrated from Kalix SDK to Akka 3. All components compile, unit tests pass, and integration tests verify the system works end-to-end.
 
 ### Commits
 1. `fc6df44` - WIP: Akka 3 migration - POM restructure and initial component updates
 2. `4984d73` - Akka 3 migration: Core components now compile
 3. `ef0a435` - Fix tests for Akka 3 migration
+4. `2f71b9e` - Update migration plan with completed status
+5. `d5802f0` - Add integration tests using Akka 3 TestKitSupport
+6. *(pending)* - Add HTTP endpoints for Facility, Resource, and User entities
 
 ---
 
@@ -79,37 +82,40 @@ Lombok's `@With` doesn't work with Java records. Added manual `with*()` methods 
 | Disabled | `ConfigTest.java` - requires `INSTALL_TOKEN` env var |
 | Updated | `DelegatingServiceActionTest.java` - skip when config unavailable |
 
----
+### Integration Tests ✅
 
-## Remaining Work
+New integration tests using Akka 3's `TestKitSupport`:
 
-### Integration Tests (Future)
-
-The integration tests need to be rewritten using Akka 3's test framework:
+| File | Tests |
+|------|-------|
+| `ReservationIntegrationTest.java` | FacilityEntity creation, ResourceEntity creation, Facility with resources |
 
 ```java
-// Old (Kalix)
-@SpringBootTest(classes = Main.class)
-class IntegrationTest extends KalixIntegrationTestKitSupport {
-    @Autowired WebClient webClient;
-}
-
-// New (Akka 3)
-class IntegrationTest extends TestKitSupport {
-    // Use componentClient or httpClient from TestKitSupport
+// Akka 3 integration test pattern
+public class ReservationIntegrationTest extends TestKitSupport {
+    @Test
+    public void testCreateFacility() {
+        Facility result = componentClient
+            .forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::create)
+            .invoke(facility);
+    }
 }
 ```
 
-### HTTP Endpoint Extraction (Optional)
+### HTTP Endpoints ✅
 
-The original entities had HTTP annotations mixed in. While the migration removed these, dedicated endpoint classes could be created for cleaner separation:
+Dedicated endpoint classes for clean HTTP API:
 
-- `ReservationEndpoint.java` - HTTP routes for reservations
-- `ResourceEndpoint.java` - HTTP routes for resources
-- `FacilityEndpoint.java` - HTTP routes for facilities
-- `UserEndpoint.java` - HTTP routes for users
+| Endpoint | Routes |
+|----------|--------|
+| `FacilityEndpoint` (`/facility`) | POST, GET, PUT name/address, POST/DELETE resources |
+| `ResourceEndpoint` (`/resource`) | POST, GET |
+| `UserEndpoint` (`/user`) | POST, GET, PUT name/address |
 
-Currently, HTTP access is through `RezAction` and `WebhookAction`.
+---
+
+## Remaining Work
 
 ### Spring Dependency Cleanup (Optional)
 
