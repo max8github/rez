@@ -18,7 +18,7 @@ public class FacilityEntityTest {
         Address address = new Address("street", "city");
         Facility facility = new Facility("TCL", address, Collections.emptySet());
 
-        var testKit = EventSourcedTestKit.of(FacilityEntity::new);
+        var testKit = EventSourcedTestKit.of("stub-facility-id", FacilityEntity::new);
         var facilityResult = testKit.call(e -> e.create(facility));
         var facilityCreated = facilityResult.getNextEventOfType(FacilityEvent.Created.class);
         assertEquals("TCL", facilityCreated.facility().name());
@@ -26,8 +26,8 @@ public class FacilityEntityTest {
 
     @Test
     public void testAddResourceId() {
-        var testKit = EventSourcedTestKit.of(FacilityEntity::new);
-        var facilityId = "testkit-entity-id";
+        var facilityId = "stub-facility-id";
+        var testKit = EventSourcedTestKit.of(facilityId, FacilityEntity::new);
 
         {
             var rId = "abc123";

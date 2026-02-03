@@ -47,5 +47,12 @@
       <artifactId>lombok</artifactId>
     </dependency>
     <!-- Akka SDK is inherited from parent -->
+
+    <!-- Test dependencies -->
+    <dependency>
+      <groupId>io.akka</groupId>
+      <artifactId>akka-javasdk-testkit</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
 </project>
