@@ -5,13 +5,13 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.rezhub.reservation.spi.Assembler;
 import com.rezhub.reservation.spi.Parser;
-import org.springframework.stereotype.Component;
-import lombok.RequiredArgsConstructor;
 
-@RequiredArgsConstructor
-@Component
 public class TwistAssembler implements Assembler {
     private final ObjectMapper objectMapper;
+
+    public TwistAssembler(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
 
     /**
      * Assembling here is trivial, because TextMessage was modeled after the very Twist API.

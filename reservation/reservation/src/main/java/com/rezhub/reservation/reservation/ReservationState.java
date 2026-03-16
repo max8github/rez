@@ -1,12 +1,10 @@
 package com.rezhub.reservation.reservation;
 
-import lombok.With;
 import java.time.LocalDateTime;
 import java.util.*;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 
-@With
 public record ReservationState(State state, String reservationId, List<String> emails,
                                Set<String> availableResources, Set<String> selection,
                                LocalDateTime dateTime, String resourceId) {
@@ -14,7 +12,26 @@ public record ReservationState(State state, String reservationId, List<String> e
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
         return new ReservationState(INIT, entityId, empty, new HashSet<>(), new HashSet<>(), LocalDateTime.now(), "");
+    }
 
+    public ReservationState withState(State state) {
+        return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId);
+    }
+
+    public ReservationState withResourceId(String resourceId) {
+        return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId);
+    }
+
+    public ReservationState withEmails(List<String> emails) {
+        return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId);
+    }
+
+    public ReservationState withSelection(Set<String> selection) {
+        return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId);
+    }
+
+    public ReservationState withDateTime(LocalDateTime dateTime) {
+        return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId);
     }
 
     public ReservationState withAdded(String resourceId) {

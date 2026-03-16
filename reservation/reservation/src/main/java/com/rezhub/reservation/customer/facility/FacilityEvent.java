@@ -2,7 +2,7 @@ package com.rezhub.reservation.customer.facility;
 
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
-import kalix.javasdk.annotations.TypeName;
+import akka.javasdk.annotations.TypeName;
 
 import java.util.Set;
 

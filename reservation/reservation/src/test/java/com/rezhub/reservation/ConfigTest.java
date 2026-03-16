@@ -3,6 +3,7 @@ package com.rezhub.reservation;
 import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Disabled;
 import org.junit.jupiter.api.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +18,7 @@ import org.slf4j.LoggerFactory;
  * kalix service deploy reservation registry.hub.docker.com/max8github/reservation:0.4-20230610232357 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
  * </pre>
  */
+@Disabled("Requires INSTALL_TOKEN environment variable to be set")
 public class ConfigTest {
     private static final Logger log = LoggerFactory.getLogger(ConfigTest.class);
 

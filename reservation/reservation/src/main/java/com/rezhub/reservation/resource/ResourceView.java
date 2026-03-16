@@ -1,63 +1,44 @@
 package com.rezhub.reservation.resource;
 
-import kalix.javasdk.annotations.Query;
-import kalix.javasdk.annotations.Subscribe;
-import kalix.javasdk.annotations.Table;
-import kalix.javasdk.annotations.ViewId;
-import kalix.javasdk.view.View;
-import org.springframework.web.bind.annotation.GetMapping;
-import reactor.core.publisher.Flux;
+import akka.javasdk.annotations.Component;
+import akka.javasdk.annotations.Consume;
+import akka.javasdk.annotations.Query;
+import akka.javasdk.view.TableUpdater;
+import akka.javasdk.view.View;
 
-@ViewId("view_resources_by_container_id")
-@Table("resources_by_container_id")
-public class ResourceView extends View<ResourceV> {
+import java.util.List;
 
-    @SuppressWarnings("unused")
-    @GetMapping("/resource/by_container/{container_id}")
-    @Query("SELECT * FROM resources_by_container_id WHERE facilityId = :container_id")
-    public Flux<ResourceV> getResource(String container_id) {
-        return null;
+@Component(id = "view_resources_by_container_id")
+public class ResourceView extends View {
+
+    public record Resources(List<ResourceV> resources) {}
+
+    @Consume.FromEventSourcedEntity(ResourceEntity.class)
+    public static class ResourcesByContainerUpdater extends TableUpdater<ResourceV> {
+
+        public Effect<ResourceV> onEvent(ResourceEvent event) {
+            String id = updateContext().eventSubject().orElse("");
+            return switch (event) {
+                case ResourceEvent.FacilityResourceCreated e -> {
+                    assert id.equals(e.resourceId());
+                    yield effects().updateRow(ResourceV.initialize(e));
+                }
+                case ResourceEvent.ResourceCreated e -> {
+                    assert id.equals(e.resourceId());
+                    yield effects().updateRow(ResourceV.initialize(e));
+                }
+                case ResourceEvent.AvalabilityChecked e -> effects().ignore();
+                case ResourceEvent.ReservationAccepted e ->
+                    effects().updateRow(rowState().withBooking(e.reservation().dateTime(), e.reservationId()));
+                case ResourceEvent.ReservationRejected e -> effects().ignore();
+                case ResourceEvent.ReservationCanceled e ->
+                    effects().updateRow(rowState().withoutBooking(e.dateTime()));
+            };
+        }
     }
 
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.FacilityResourceCreated created) {
-        String id = updateContext().eventSubject().orElse("");
-        assert id.equals(created.resourceId());
-        return effects().updateState(ResourceV.initialize(created));
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ResourceCreated created) {
-        String id = updateContext().eventSubject().orElse("");
-        assert id.equals(created.resourceId());
-        return effects().updateState(ResourceV.initialize(created));
-    }
-
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.AvalabilityChecked notInteresting) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationAccepted event) {
-        String reservationId = event.reservationId();
-        return effects().updateState(viewState().withBooking(event.reservation().dateTime(), reservationId));
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationRejected notInteresting) {
-        return effects().ignore();
-    }
-
-    @SuppressWarnings("unused")
-    @Subscribe.EventSourcedEntity(ResourceEntity.class)
-    public UpdateEffect<ResourceV> onEvent(ResourceEvent.ReservationCanceled event) {
-        return effects().updateState(viewState().withoutBooking(event.dateTime()));
+    @Query("SELECT * AS resources FROM resources_by_container_id WHERE facilityId = :container_id")
+    public QueryEffect<Resources> getResource(String container_id) {
+        return queryResult();
     }
 }

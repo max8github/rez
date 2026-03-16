@@ -4,7 +4,7 @@
          xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <parent>
         <groupId>com.rezhub.reservation</groupId>
-        <artifactId>reservation</artifactId>
+        <artifactId>reservation-parent</artifactId>
         <version>0.4</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
@@ -18,14 +18,10 @@
             <artifactId>config</artifactId>
             <version>1.4.2</version>
         </dependency>
+        <!-- Akka SDK provides HttpClient -->
         <dependency>
-            <groupId>org.springframework</groupId>
-            <artifactId>spring-web</artifactId>
-        </dependency>
-        <dependency>
-            <groupId>io.kalix</groupId>
-            <artifactId>kalix-java-sdk-spring</artifactId>
-            <version>${kalix-sdk.version}</version>
+            <groupId>io.akka</groupId>
+            <artifactId>akka-javasdk</artifactId>
         </dependency>
     </dependencies>
 
