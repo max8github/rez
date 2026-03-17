@@ -19,10 +19,13 @@ import com.google.auth.oauth2.GoogleCredentials;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
@@ -57,11 +60,9 @@ public class CalendarFactory {
             throw new RuntimeException(e);
         }
         //Build service account credential
+        // Prefer GOOGLE_CREDENTIALS_PATH env var (for Docker/production), fall back to classpath resource (dev)
         HttpRequestInitializer requestInitializer;
-        try (InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH)) {
-            if (in == null) {
-                throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-            }
+        try (InputStream in = credentialsStream()) {
             GoogleCredentials googleCredentials = GoogleCredentials.fromStream(in).createScoped(SCOPES);
             requestInitializer = new HttpCredentialsAdapter(googleCredentials);
         } catch (IOException e) {
@@ -70,6 +71,16 @@ public class CalendarFactory {
         return new com.google.api.services.calendar.Calendar.Builder(httpTransport, JSON_FACTORY, requestInitializer)
                 .setApplicationName(APPLICATION_NAME)
                 .build();
+    }
+
+    private InputStream credentialsStream() throws IOException {
+        String envPath = System.getenv("GOOGLE_CREDENTIALS_PATH");
+        if (envPath != null && Files.exists(Paths.get(envPath))) {
+            return new FileInputStream(envPath);
+        }
+        InputStream in = Thread.currentThread().getContextClassLoader().getResourceAsStream(CREDENTIALS_FILE_PATH);
+        if (in == null) throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
+        return in;
     }
 
     /**

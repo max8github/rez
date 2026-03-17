@@ -9,7 +9,7 @@
 
   <groupId>com.rezhub</groupId>
   <artifactId>reservation</artifactId>
-  <version>0.8</version>
+  <version>0.9</version>
   <packaging>jar</packaging>
 
   <name>reservation</name>
@@ -17,21 +17,8 @@
   <dependencies>
     <dependency>
       <groupId>com.rezhub.reservation</groupId>
-      <artifactId>stringparser</artifactId>
-      <version>0.5</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.rezhub.reservation</groupId>
-      <artifactId>calendarstub</artifactId>
-      <version>0.5</version>
-      <scope>runtime</scope>
-    </dependency>
-    <dependency>
-      <groupId>com.rezhub.reservation</groupId>
       <artifactId>notifierstub</artifactId>
       <version>0.5</version>
-      <scope>runtime</scope>
     </dependency>
     <dependency>
       <groupId>com.rezhub.reservation</groupId>
@@ -55,4 +42,34 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+
+  <profiles>
+    <!-- Production (default): real Google Calendar -->
+    <profile>
+      <id>google</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <dependencies>
+        <dependency>
+          <groupId>com.rezhub.reservation</groupId>
+          <artifactId>googlecalendar</artifactId>
+          <version>0.5</version>
+        </dependency>
+      </dependencies>
+    </profile>
+
+    <!-- Local dev / testing: fake calendar (no Google API calls) -->
+    <profile>
+      <id>local</id>
+      <dependencies>
+        <dependency>
+          <groupId>com.rezhub.reservation</groupId>
+          <artifactId>calendarstub</artifactId>
+          <version>0.5</version>
+        </dependency>
+      </dependencies>
+    </profile>
+  </profiles>
+
 </project>

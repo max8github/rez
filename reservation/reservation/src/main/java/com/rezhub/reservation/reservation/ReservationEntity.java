@@ -208,7 +208,10 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 }
             }
             default -> {
-                return effects().error("Reservation " + entityId + " is completed");
+                // Late rejection arriving after the reservation is already completed (fulfilled/cancelled).
+                // This is a normal race condition - silently ignore rather than failing the consumer.
+                log.info("Reservation {} received late rejection from {} in state {} - ignoring", entityId, command.resourceId(), currentState().state());
+                return effects().reply("OK");
             }
         }
     }

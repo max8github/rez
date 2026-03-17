@@ -46,7 +46,7 @@ public class RezAction {
       .invoke(command);
   }
 
-  static String timerName(String reservationId) {
+  public static String timerName(String reservationId) {
     return "timer-" + reservationId;
   }
 }

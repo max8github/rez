@@ -29,9 +29,11 @@ public class ResourceView extends View {
                 }
                 case ResourceEvent.AvalabilityChecked e -> effects().ignore();
                 case ResourceEvent.ReservationAccepted e ->
+                    rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withBooking(e.reservation().dateTime(), e.reservationId()));
                 case ResourceEvent.ReservationRejected e -> effects().ignore();
                 case ResourceEvent.ReservationCanceled e ->
+                    rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withoutBooking(e.dateTime()));
             };
         }

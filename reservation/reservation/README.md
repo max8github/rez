@@ -1,74 +1,170 @@
-# Project `Facility`
+# Rez — AI-Powered Court Booking
 
+Rez lets tennis club members book courts by sending a natural language message
+via [Matrix/Element](https://matrix.org). An AI agent interprets the request,
+checks availability, books the court, and replies conversationally. Confirmed
+bookings appear automatically in Google Calendar.
 
-For basic Kalix concepts, see [Designing services](https://docs.kalix.io/services/development-process.html).
+## Architecture
 
-This project contains the framework to create a Kalix application by adding Kalix components.  
-To understand more about these components, see [Developing services](https://docs.kalix.io/services/) and check
-Spring-SDK [official documentation](https://docs.kalix.io/spring/index.html).  
-Examples can be found [here](https://github.com/lightbend/kalix-jvm-sdk/tree/main/samples) in the folders with "spring" in their name.
+```
+Member (Element app)
+  │  natural language message
+  ▼
+Matrix bot (bot.py, CT 113)
+  │  POST /matrix/message
+  ▼
+MatrixEndpoint  (Akka HTTP)
+  │
+  ▼
+BookingAgent    (Akka Agent, GPT-4o-mini)
+  │  tool calls
+  ▼
+BookingService  (Spring @Component)
+  │  ComponentClient calls
+  ├──▶ ResourceView      – check availability
+  ├──▶ ReservationEntity – initiate booking
+  └──▶ FacilityEntity    – broadcast to courts
+          │
+          ▼
+       ResourceEntity (court-1, court-2)
+          │  FULFILLED event
+          ▼
+       DelegatingServiceAction
+          │
+          ▼
+       GoogleCalendar (Google Calendar API)
+```
 
 ## Build
-Use Maven to build your project:
 
-```shell
-mvn compile
+From `reservation/reservation/`:
+
+```bash
+mvn clean compile
+```
+
+The `googlecalendar` and other stub modules must be installed in the local Maven
+repository first (one-time setup, or after a `clean`):
+
+```bash
+cd ../../spi          && mvn package && mvn install:install-file -Dfile=target/spi-0.5.jar            -DgroupId=com.rezhub.reservation -DartifactId=spi            -Dversion=0.5 -Dpackaging=jar
+cd ../notifierstub    && mvn package && mvn install:install-file -Dfile=target/notifierstub-0.5.jar   -DgroupId=com.rezhub.reservation -DartifactId=notifierstub    -Dversion=0.5 -Dpackaging=jar
+cd ../googlecalendar  && mvn package && mvn install:install-file -Dfile=target/googlecalendar-0.5.jar -DgroupId=com.rezhub.reservation -DartifactId=googlecalendar  -Dversion=0.5 -Dpackaging=jar
+cd ../reservation
 ```
 
 ## Run
-To run the example locally, you must run the Kalix proxy.  
-The included `docker-compose` file contains the configuration required to run the proxy for a locally running application.
-It also contains the configuration to start a local Google Pub/Sub emulator that the Kalix proxy will connect to.
-To start the proxy, run the following command from this directory:
 
-```shell
-docker-compose up
+```bash
+# Production (default): uses real Google Calendar API
+mvn exec:java
+
+# Local dev / testing: uses FakeCalendarSender (no Google API calls)
+mvn exec:java -Plocal
 ```
 
-To start the application locally, the `spring-boot-maven-plugin` is used. Use the following command:
+Service starts on `http://localhost:9000`.
 
-```shell
-mvn spring-boot:run
+### Environment variables
+
+| Variable | Required | Description |
+|---|---|---|
+| `OPENAI_API_KEY` | Yes | OpenAI API key (used by BookingAgent) |
+
+To switch LLM provider, change `model-provider` in `application.conf`.
+
+### Google Calendar credentials
+
+Place the service account key at `secrets/credentials.json` (relative to
+`reservation/reservation/`). The file is gitignored. The service account is
+`kalix-rez@rezcal.iam.gserviceaccount.com` and must have write access to both
+court calendars.
+
+## Provisioning
+
+State is in-memory — the facility and courts must be reprovisioned on every
+restart. The facility ID must match `FACILITY_ID` in the Matrix bot config.
+
+```bash
+# Create facility (ID must match bot's FACILITY_ID)
+curl -X POST http://localhost:9000/facility/4463962 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Erster Tennisclub Edingen-Neckarhausen","address":{"street":"Mannheimer Str. 50","city":"68535 Edingen-Neckarhausen"}}'
+
+# Register courts (creates resource entity AND links it to the facility)
+curl -X POST http://localhost:9000/facility/4463962/resource/court-1 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Court 1"}'
+
+curl -X POST http://localhost:9000/facility/4463962/resource/court-2 \
+  -H "Content-Type: application/json" \
+  -d '{"name":"Court 2"}'
 ```
 
-With both the proxy and your application running, once you have defined endpoints they should be available at `http://localhost:9000`.
+> Use `POST /facility/{id}/resource/{rid}` (not the two-step
+> `POST /resource` + `PUT /facility/.../resources/...`) — only this endpoint
+> sets `facilityId` correctly in the ResourceView, which is required for
+> availability checks.
 
+## Matrix bot
 
-To deploy your service, install the `kalix` CLI as documented in
-[Setting up a local development environment](https://docs.kalix.io/setting-up/)
-and configure a Docker Registry to upload your docker image to.
+The bot lives in `mini-dc/stacks/matrix/` and runs on CT 113 (lurch,
+`192.168.178.50`). It forwards every room message to `POST /matrix/message` on
+Rez. No trigger prefix — every message in the booking room is sent to the agent.
 
-You will need to update the `dockerImage` property in the `pom.xml` and refer to
-[Configuring registries](https://docs.kalix.io/projects/container-registries.html)
-for more information on how to make your docker image available to Kalix.
+Key env vars in `mini-dc/env/prod/matrix.env` (gitignored):
 
-Finally, you can use the [Kalix Console](https://console.kalix.io)
-to create a project and then deploy your service into the project either by using `mvn deploy kalix:deploy` which
-will conveniently package, publish your docker image, and deploy your service to Kalix, or by first packaging and
-publishing the docker image through `mvn deploy` and then deploying the image
-through the `kalix` CLI.
+| Variable | Description |
+|---|---|
+| `REZ_URL` | Base URL of the Rez service, e.g. `http://192.168.178.82:9000` |
+| `FACILITY_ID` | Facility ID without `f_` prefix, e.g. `4463962` |
+| `MATRIX_USER_ID` | Bot's Matrix ID, e.g. `@ollama:fritz.box` |
+| `MATRIX_PASSWORD` | Bot's Matrix password |
+
+### LAN-only workaround (socat)
+
+Akka binds to `localhost` by default. When running on your Mac and the bot runs
+on a separate container, use socat to expose the service on the LAN interface:
+
+```bash
+socat TCP-LISTEN:9000,bind=192.168.178.82,fork TCP:127.0.0.1:9000 &
+```
+
+Replace `192.168.178.82` with your Mac's LAN IP. This goes away when Rez is
+deployed behind a reverse proxy (nginx/caddy) or configured to bind to
+`0.0.0.0`.
+
+## Deployment
+
+Rez is deployed on lurch as a Docker service alongside Matrix. See the
+`stacks/matrix/` stack in the [mini-dc](https://gitea-ssh.fritz.box/max/mini-dc)
+repo for the full deployment setup, including:
+- `compose.yaml` — the `rez` service definition
+- `env/prod/matrix.env` — environment variables (OPENAI_API_KEY, paths)
+- Instructions for placing `secrets/credentials.json` on the host
+
+## Google Calendar embed
+
+Both court calendars can be embedded together as an iframe:
+
+```html
+<iframe id="rezCal"
+  src="https://calendar.google.com/calendar/u/0/embed?src=3d228lvsdmdjmj79662t8r1fh4%40group.calendar.google.com&ctz=Europe%2FBerlin&src=63hd39cd9ppt8tajp76vglt394%40group.calendar.google.com"
+  style="border:0" width="800" height="600" frameborder="0" scrolling="no">
+</iframe>
+<script>
+  // Reload the calendar iframe every 2 minutes
+  setInterval(() => { const c = document.getElementById('rezCal'); c.src = c.src; }, 120000);
+</script>
+```
+
+Both calendars must be set to **public** in Google Calendar settings.
+Note: Google Calendar typically takes 1–5 minutes to reflect new events after
+they are created via the API.
 
 ## Integration Tests
-Integration Tests are present inside `src/it/java`.  
-They are run by the maven failsafe plugin.  
-Run them with:
-```
+
+```bash
 mvn verify -Pit
-```
-
-## Deploy
-```shell
-kalix secret create generic msg-creds --literal INSTALL_TOKEN=xxxxxxxxxxxxx
-mvn deploy
-# grab correct tag (i.e. 0.5) and paste it here:
-kalix service deploy reservation registry.hub.docker.com/max8github/reservation:0.5 --secret-env INSTALL_TOKEN=msg-creds/INSTALL_TOKEN
-kalix services list           # to check status
-kalix services get reservation   # to check status
-```
-
-## Prod
-To expose the service, do:
-```shell
-kalix services expose reservation  # --enable-cors
-   The service 'reservation' was successfully exposed at: name1.name2.kalix.app
 ```

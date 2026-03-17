@@ -141,7 +141,7 @@ public class DelegatingServiceAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.ReservationCancelled event) throws IOException {
-        String calendarId = event.resourceId() + "@group.calendar.google.com";
+        String calendarId = CalendarSender.calendarIdForResource(event.resourceId());
         String calEventId = event.reservationId();
         var stageGoogle = calendarSender.deleteFromGoogle(calendarId, calEventId);
         stageGoogle.thenCompose(c -> messageCancelToTwist(c, event.resourceIds()))

@@ -22,21 +22,27 @@ public interface CalendarSender {
 
     CompletionStage<CalendarEventDeletionResult> deleteFromGoogle(String calendarId, String calEventId);
 
-    //todo: This could be part of FacilityEntity's state: makes sense to have a facility calendar there
+    static String calendarUrl() {
+        Config calendarMap = ConfigFactory.parseResources("application.conf").getConfig("google.resource-calendars");
+        return calendarUrl(new java.util.HashSet<>(calendarMap.root().keySet()));
+    }
+
     static String calendarUrl(Set<String> resourceIds) {
         String urlString = "http://example.com";
         if (resourceIds != null && !resourceIds.isEmpty()) {
-            Config googleConfig = ConfigFactory.defaultApplication().getConfig("google");
+            Config googleConfig = ConfigFactory.parseResources("application.conf").getConfig("google");
             String host = googleConfig.getString("host");
             String scheme = googleConfig.getString("scheme");
             String path = googleConfig.getString("path");
             String countryZone = googleConfig.getString("ctz");
-            String srcTail = googleConfig.getString("srcTail");
+            Config calendarMap = googleConfig.getConfig("resource-calendars");
 
             try {
                 String srcParams = resourceIds.stream()
-                    .map(e -> "src=" + URLEncoder.encode(e + srcTail, StandardCharsets.UTF_8))
+                    .filter(calendarMap::hasPath)
+                    .map(id -> "src=" + URLEncoder.encode(calendarMap.getString(id), StandardCharsets.UTF_8))
                     .collect(Collectors.joining("&"));
+                if (srcParams.isEmpty()) return urlString;
                 String query = "ctz=" + URLEncoder.encode(countryZone, StandardCharsets.UTF_8) + "&" + srcParams;
                 URI uri = new URI(scheme, host, path, query, null);
                 urlString = uri.toURL().toString();
@@ -46,6 +52,11 @@ public interface CalendarSender {
             }
         }
         return urlString;
+    }
+
+    static String calendarIdForResource(String resourceId) {
+        Config calendarMap = ConfigFactory.parseResources("application.conf").getConfig("google.resource-calendars");
+        return calendarMap.hasPath(resourceId) ? calendarMap.getString(resourceId) : resourceId;
     }
 
     record ReservationResult(EventDetails eventDetails, String result, String url) {}

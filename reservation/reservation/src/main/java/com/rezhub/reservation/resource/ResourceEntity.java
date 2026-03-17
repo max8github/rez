@@ -32,7 +32,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             case ResourceEvent.FacilityResourceCreated e -> ResourceState.initialize(e.name());
             case ResourceEvent.ResourceCreated e -> ResourceState.initialize(e.resourceName());
             case ResourceEvent.AvalabilityChecked e -> currentState();
-            case ResourceEvent.ReservationAccepted e -> currentState().set(e.reservation().dateTime(), e.reservationId());
+            case ResourceEvent.ReservationAccepted e -> currentState().set(ResourceState.roundToValidTime(e.reservation().dateTime()), e.reservationId());
             case ResourceEvent.ReservationRejected e -> currentState();
             case ResourceEvent.ReservationCanceled e -> currentState().cancel(e.dateTime(), e.reservationId());
         };

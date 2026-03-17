@@ -10,6 +10,7 @@ import com.google.api.services.calendar.model.EventReminder;
 import com.rezhub.reservation.spi.CalendarSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.stereotype.Component;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -18,6 +19,7 @@ import java.util.Arrays;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
+@Component
 public class GoogleCalendar implements CalendarSender {
 
     private final Calendar service;
@@ -31,7 +33,7 @@ public class GoogleCalendar implements CalendarSender {
     @Override
     public CompletionStage<ReservationResult> saveToGoogle(EventDetails eventDetails) throws IOException {
         String facilityCalendarUrl = CalendarSender.calendarUrl(eventDetails.resourceIds());
-        String calendarId = eventDetails.resourceId() + "@group.calendar.google.com";
+        String calendarId = CalendarSender.calendarIdForResource(eventDetails.resourceId());
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
         String found = isFound(service, calendarId, calEventId);
@@ -53,15 +55,16 @@ public class GoogleCalendar implements CalendarSender {
                 .setUseDefault(false)
                 .setOverrides(Arrays.asList(reminderOverrides));
 
+        String players = String.join(", ", eventDetails.emails());
+        String courtLabel = eventDetails.resourceId().replace("court-", "Court ");
         Event event = new Event()
-//                .setSummary(eventDetails.reservationId()) // if I set it to "" it will say "(No Title)"
-                .setSummary("Reserved")
+                .setSummary(courtLabel + " · " + players)
                 .setId(calEventId)
-                .setLocation("Tennisclub Ladenburg e.V., Römerstadion, Ladenburg, Germany")//todo: facility address here
-                .setDescription("Reservation " + eventDetails.reservationId()
-                        + "\nfor: " + String.join(",", eventDetails.emails())
-                        + "\n"
-                        + "resource: " + eventDetails.resourceId()) //todo: type of resource here instead of just 'resource'
+                .setLocation("Mannheimer Str. 50, 68535 Edingen-Neckarhausen")//todo: read from FacilityEntity state via EventDetails
+                .setDescription("Court: " + courtLabel
+                        + "\nPlayers: " + players
+                        + "\nCalendar: " + facilityCalendarUrl
+                        + "\nReservation ID: " + eventDetails.reservationId())
                 .setStart(interval[0])
                 .setEnd(interval[1])
                 .setAttendees(Arrays.asList(attendees));
@@ -139,15 +142,16 @@ public class GoogleCalendar implements CalendarSender {
 
     private static EventDateTime[] toEventDateTimeInterval(LocalDateTime dateTime) {
         // todo: end time depends on the timeSlot, which is in Reservation/Resource
-        DateTime dateTimeStart = new DateTime(dateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        ZoneId berlin = ZoneId.of("Europe/Berlin");
+        DateTime dateTimeStart = new DateTime(dateTime.atZone(berlin).toInstant().toEpochMilli());
         LocalDateTime endDateTime = dateTime.toLocalDate().atTime(dateTime.toLocalTime().plusHours(1L));
-        DateTime dateTimeEnd = new DateTime(endDateTime.atZone(ZoneId.systemDefault()).toInstant().toEpochMilli());
+        DateTime dateTimeEnd = new DateTime(endDateTime.atZone(berlin).toInstant().toEpochMilli());
         EventDateTime start = new EventDateTime()
                 .setDateTime(dateTimeStart)
-                .setTimeZone("Europe/Zurich");//America/Los_Angeles, which is GMT -7
+                .setTimeZone("Europe/Berlin");
         EventDateTime end = new EventDateTime()
                 .setDateTime(dateTimeEnd)
-                .setTimeZone("Europe/Zurich");//America/Los_Angeles, which is GMT -7
+                .setTimeZone("Europe/Berlin");
         return new EventDateTime[] {start, end};
     }
 }
