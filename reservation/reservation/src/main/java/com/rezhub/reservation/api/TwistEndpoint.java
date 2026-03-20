@@ -7,6 +7,7 @@ import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.AbstractHttpEndpoint;
 import com.rezhub.reservation.agent.BookingAgent;
+import com.rezhub.reservation.spi.NotificationSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -29,9 +30,11 @@ public class TwistEndpoint extends AbstractHttpEndpoint {
     private static final Logger log = LoggerFactory.getLogger(TwistEndpoint.class);
 
     private final ComponentClient componentClient;
+    private final NotificationSender notificationSender;
 
-    public TwistEndpoint(ComponentClient componentClient) {
+    public TwistEndpoint(ComponentClient componentClient, NotificationSender notificationSender) {
         this.componentClient = componentClient;
+        this.notificationSender = notificationSender;
     }
 
     // ---- Twist outgoing-webhook payload (subset of fields we use) ----
@@ -61,14 +64,14 @@ public class TwistEndpoint extends AbstractHttpEndpoint {
 
     /**
      * Twist posts each new comment in the configured thread here.
-     * Returns the agent's immediate reply; the final booking outcome
-     * is sent asynchronously by DelegatingServiceAction via TwistNotifier.
+     * Returns 200 immediately; the agent reply and final booking outcome
+     * are both sent back via NotificationSender (TwistNotifier).
      */
     @Post("/webhook")
-    public String onMessage(TwistMessage msg) {
+    public void onMessage(TwistMessage msg) {
         if (msg.system_message() != null) {
             log.debug("Dropping Twist system message");
-            return "";
+            return;
         }
 
         String facilityId = msg.thread_id();
@@ -78,11 +81,15 @@ public class TwistEndpoint extends AbstractHttpEndpoint {
 
         log.info("Twist message from {} (creator {}) in thread {}: {}", senderName, recipientId, facilityId, msg.content());
 
-        return componentClient
+        componentClient
             .forAgent()
             .inSession(sessionId)
             .method(BookingAgent::chat)
-            .invoke(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, msg.content()));
+            .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, msg.content()))
+            .thenAccept(reply -> notificationSender.send(recipientId, reply))
+            .whenComplete((v, error) -> {
+                if (error != null) log.error("Agent error for Twist creator {}: {}", recipientId, error.getMessage());
+            });
     }
 
     private static String sanitize(String s) {
