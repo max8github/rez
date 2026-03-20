@@ -17,11 +17,6 @@
   <dependencies>
     <dependency>
       <groupId>com.rezhub.reservation</groupId>
-      <artifactId>notifierstub</artifactId>
-      <version>0.5</version>
-    </dependency>
-    <dependency>
-      <groupId>com.rezhub.reservation</groupId>
       <artifactId>spi</artifactId>
       <version>0.5</version>
     </dependency>
@@ -40,7 +35,7 @@
   </dependencies>
 
   <profiles>
-    <!-- Production (default): real Google Calendar -->
+    <!-- Production (default): real Google Calendar + real notification senders -->
     <profile>
       <id>google</id>
       <activation>
@@ -52,16 +47,26 @@
           <artifactId>googlecalendar</artifactId>
           <version>0.5</version>
         </dependency>
+        <dependency>
+          <groupId>com.rezhub.reservation</groupId>
+          <artifactId>telegramnotifier</artifactId>
+          <version>0.5</version>
+        </dependency>
       </dependencies>
     </profile>
 
-    <!-- Local dev / testing: fake calendar (no Google API calls) -->
+    <!-- Local dev / testing: fake calendar + fake notifier (no external API calls) -->
     <profile>
       <id>local</id>
       <dependencies>
         <dependency>
           <groupId>com.rezhub.reservation</groupId>
           <artifactId>calendarstub</artifactId>
+          <version>0.5</version>
+        </dependency>
+        <dependency>
+          <groupId>com.rezhub.reservation</groupId>
+          <artifactId>notifierstub</artifactId>
           <version>0.5</version>
         </dependency>
       </dependencies>
