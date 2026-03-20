@@ -13,7 +13,6 @@ import com.rezhub.reservation.resource.dto.Resource;
 import com.rezhub.reservation.spi.CalendarSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.time.Duration;
 import java.time.LocalDateTime;
@@ -28,7 +27,6 @@ import java.util.UUID;
  * Provides booking-related function tools for BookingAgent.
  * Each @FunctionTool method is callable by the LLM during a conversation.
  */
-@Component
 public class BookingService {
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);

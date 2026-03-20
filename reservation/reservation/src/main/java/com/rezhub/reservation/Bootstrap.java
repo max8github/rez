@@ -6,9 +6,9 @@ import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timer.TimerScheduler;
+import com.rezhub.reservation.agent.BookingService;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 
 @Setup
 @Acl(allow = @Acl.Matcher(service = "*"))
@@ -31,12 +31,15 @@ public class Bootstrap implements ServiceSetup {
 
     @Override
     public DependencyProvider createDependencyProvider() {
-        AnnotationConfigApplicationContext context = new AnnotationConfigApplicationContext();
-        // Register Akka-managed types as Spring singletons so @Component classes can autowire them
-        context.getBeanFactory().registerSingleton("componentClient", componentClient);
-        context.getBeanFactory().registerSingleton("timerScheduler", timerScheduler);
-        context.scan("com.rezhub.reservation");
-        context.refresh();
-        return context::getBean;
+        var bookingService = new BookingService(componentClient, timerScheduler);
+        return new DependencyProvider() {
+            @Override
+            public <T> T getDependency(Class<T> clazz) {
+                if (clazz == BookingService.class) {
+                    return clazz.cast(bookingService);
+                }
+                throw new RuntimeException("No dependency registered for: " + clazz);
+            }
+        };
     }
 }
