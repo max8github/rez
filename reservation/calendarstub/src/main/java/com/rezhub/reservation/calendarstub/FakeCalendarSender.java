@@ -1,12 +1,10 @@
 package com.rezhub.reservation.calendarstub;
 
 import com.rezhub.reservation.spi.CalendarSender;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CompletionStage;
 
-@Component
 public class FakeCalendarSender implements CalendarSender {
 
     @Override

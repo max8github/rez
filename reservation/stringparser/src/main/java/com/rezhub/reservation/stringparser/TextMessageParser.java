@@ -4,7 +4,6 @@ import com.rezhub.reservation.spi.Parser;
 import com.rezhub.reservation.spi.Nlp;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -14,13 +13,12 @@ import java.util.StringTokenizer;
 
 /**
  */
-@Component
 public class TextMessageParser implements Parser {
     private static final Logger log = LoggerFactory.getLogger(TextMessageParser.class);
     private final Nlp nlp;
 
-    public TextMessageParser(Nlp nlp) {
-        this.nlp = nlp;
+    public TextMessageParser() {
+        this.nlp = new StringNlpParser();
     }
 
     @Override

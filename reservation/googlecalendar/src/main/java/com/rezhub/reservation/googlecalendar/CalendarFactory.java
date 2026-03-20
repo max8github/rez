@@ -16,8 +16,6 @@ import com.google.api.services.calendar.Calendar;
 import com.google.api.services.calendar.CalendarScopes;
 import com.google.auth.http.HttpCredentialsAdapter;
 import com.google.auth.oauth2.GoogleCredentials;
-import org.springframework.context.annotation.Bean;
-import org.springframework.stereotype.Component;
 
 import java.io.FileInputStream;
 import java.io.FileNotFoundException;
@@ -30,7 +28,6 @@ import java.security.GeneralSecurityException;
 import java.util.Collections;
 import java.util.List;
 
-@Component
 public class CalendarFactory {
 
     /**
@@ -51,7 +48,6 @@ public class CalendarFactory {
      * @return the Calendar
      * service
      */
-    @Bean
     public Calendar create() {
         HttpTransport httpTransport;
         try {

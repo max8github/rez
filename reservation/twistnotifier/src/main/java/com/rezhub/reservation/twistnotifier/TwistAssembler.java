@@ -9,8 +9,8 @@ import com.rezhub.reservation.spi.Parser;
 public class TwistAssembler implements Assembler {
     private final ObjectMapper objectMapper;
 
-    public TwistAssembler(ObjectMapper objectMapper) {
-        this.objectMapper = objectMapper;
+    public TwistAssembler() {
+        this.objectMapper = new ObjectMapper();
     }
 
     /**

@@ -6,11 +6,9 @@ import com.typesafe.config.Config;
 import com.typesafe.config.ConfigFactory;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.stereotype.Component;
 
 import java.util.concurrent.CompletableFuture;
 
-@Component
 public class TwistNotifier implements NotificationSender {
 
     private static final Logger log = LoggerFactory.getLogger(TwistNotifier.class);
