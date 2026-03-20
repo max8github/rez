@@ -40,11 +40,7 @@ The parent POM switched from `spring-boot-starter-parent` (Spring Boot 3.1.0) to
 
 **Consumers (ex-Actions):**
 
-`ReservationAction`, `ResourceAction`, `RezAction`, `TimerAction`, and `WebhookAction` were all renamed conceptually to "consumers" (they extend `Consumer` now). The main behavioral change: they used to return `effects().forward(deferredCall)` to chain calls; now they invoke `componentClient` directly and return `effects().done()`. This is fire-and-forget at the consumer level — the downstream call is made but the consumer doesn't wait on or propagate its result.
-
-**Main → Bootstrap:**
-
-`Main.java` (Spring Boot entry point with `SpringApplication.run()`) was deleted. Replaced by `Bootstrap.java` which implements `ServiceSetup` and provides `createDependencyProvider()` — a Spring `AnnotationConfigApplicationContext` that Akka uses to resolve constructor-injected dependencies. This is the boundary between Akka's DI and Spring's DI.
+`ReservationAction`, `ResourceAction`, `RezAction`, `TimerAction` were all renamed conceptually to "consumers" (they extend `Consumer` now). The main behavioral change: they used to return `effects().forward(deferredCall)` to propagate the downstream call within the same transaction context. The new consumers call `componentClient.invoke()` fire-and-forget and then return `effects().done()`. This changes the error semantics: if the downstream call fails, the consumer has already ack'd the event.
 
 ---
 
@@ -52,13 +48,11 @@ The parent POM switched from `spring-boot-starter-parent` (Spring Boot 3.1.0) to
 
 Three new endpoints were added: `FacilityEndpoint`, `ResourceEndpoint`, `UserEndpoint` — all under `com.rezhub.reservation.api`. Previously the entities were exposed directly via `@RequestMapping` annotations (Kalix-style). Now the entities have no HTTP mapping at all; the endpoints are separate classes that use `ComponentClient` to call them.
 
-This is the correct Akka pattern (endpoint → component client → entity), but it means the old curl provisioning commands against `/facility/{id}/create` etc. still work because the paths were preserved.
-
 ---
 
 ## Integration Tests
 
-Old integration tests (`IntegrationTest.java`, `WebClientUtil.java`) were deleted — they used the Kalix test harness and raw HTTP calls. Replaced by `ReservationIntegrationTest.java` which extends `TestKitSupport` (Akka 3) and uses `componentClient` directly. This is the correct pattern per the coding guidelines.
+Old integration tests (`IntegrationTest.java`, `WebClientUtil.java`) were deleted — they used the Kalix test harness and raw HTTP calls. Replaced by `ReservationIntegrationTest.java` which extends `TestKitSupport` (Akka 3) and uses `componentClient` directly.
 
 ---
 
@@ -72,15 +66,11 @@ Old integration tests (`IntegrationTest.java`, `WebClientUtil.java`) were delete
 
 ## Open questions on the migration
 
-**`effects().done()` vs `effects().forward()` in consumers:** The old Kalix consumers used `forward()` to propagate the downstream call within the same transaction context. The new consumers call `componentClient.invoke()` fire-and-forget and then return `effects().done()`. This changes the error semantics: if the downstream call fails, the consumer has already ack'd the event. Is this acceptable? The consumer will not retry on downstream failure.
-
-**Spring context scan scope:** `Bootstrap` scans `com.rezhub.reservation`. The sub-modules (`googlecalendar`, `notifierstub`) live in the same base package, so they are picked up if on the classpath. This means the Maven profile (google vs. local) directly controls which beans get registered — a somewhat implicit mechanism.
+**`effects().done()` vs `effects().forward()` in consumers:** The old Kalix consumers used `forward()` to propagate the downstream call within the same transaction context. If the downstream call fails, the consumer has already ack'd the event and will not retry. Is this acceptable?
 
 ---
 
 # Commit 9587409b — telegram-mvp squash
-
-Open questions and concerns to address post-demo. Not urgent fixes, just recorded for clarity.
 
 ---
 
@@ -95,14 +85,6 @@ The concern: if Rez state is wiped (it happened before — in-memory store resta
 The current setup is not a View in the Akka sense — it is an outbound notification, not a projection from Rez's event log.
 
 **Possible alternative**: instead of pushing events to Google Calendar on booking, model the calendar as a true Akka View (projecting from reservation events), and simply send out `.ics` email attachments so members can import events into their own calendars. This decouples Rez from Google Calendar entirely and avoids the stale-data problem.
-
----
-
-## Bootstrap
-
-**Is Spring DI working correctly after the changes?**
-
-`Bootstrap.java` was modified to manually register `ComponentClient` and `TimerScheduler` as Spring singletons before `context.refresh()`, so that `BookingService` (a `@Component`) can `@Autowired` them. This is a non-standard pattern — worth verifying that it works correctly under all startup conditions (e.g. after a crash/restart, or if Akka initializes these beans lazily).
 
 ---
 
@@ -127,45 +109,21 @@ Worth reviewing whether the build can be simplified, and whether the settings.xm
 
 ---
 
-# Architecture: Messaging layer refactoring (backlog)
+# Architecture: Messaging layer (backlog)
 
-## Telegram module
+## MatrixEndpoint should be fully async
 
-`TelegramEndpoint` currently lives in the main `reservation` module and hardwires the Telegram transport (bot token, `sendMessage` API call). To make messaging pluggable the same way `CalendarSender` is, Telegram should become its own module like `twistnotifier`.
+`MatrixEndpoint` currently returns the agent reply synchronously in the HTTP response body, which `bot.py` then posts to the Matrix room. The other two endpoints (Telegram, Twist) are fully async: they ack immediately and send all replies — both conversational and final booking outcomes — via `NotificationSender`.
 
-**Target architecture:**
-
-- Main module contains thin HTTP endpoints that receive messages from any service, call `BookingAgent`, then delegate the reply to `NotificationSender`.
-- A `telegram` module implements `NotificationSender` for Telegram (calls `api.telegram.org/sendMessage`). Can use standard `java.net.http.HttpClient` — no Akka SDK dependency needed.
-- `notifierstub` serves as the local/test implementation (logs instead of sending).
-- Which implementation is active is controlled purely by what's on the classpath (Maven profile or module inclusion), exactly like `CalendarSender`.
-
-**What to remove:**
-
-- `Assembler` SPI — obsolete. The LLM understands raw natural-language text directly. `TwistAssembler` and `TextMessageParser`/`StringNlpParser` were only needed when the old `WebhookAction` had to parse text manually.
-- `Parser` SPI — same reason. Both can be deleted along with the `stringparser` module once `WebhookAction` is updated to call `BookingAgent` instead of `Parser`.
-- `Nlp` interface from `spi` — already agreed to remove.
-
-**`NotificationSender` signature needs generalising:**
-
-Current signature is Twist-specific (`messageTwist(HttpClient, String body)` with Twist JSON). Should become something like:
-
-```java
-CompletableFuture<String> send(String recipientId, String text);
-```
-
-Where `recipientId` is whatever identifies the destination in that service (Telegram chat_id, Twist thread_id, etc.).
-
-**`WebhookAction` (Twist inbound) needs updating:**
-
-Currently bypasses the AI entirely — it parses the text with `Parser`/`Assembler` and creates a `ReservationEntity` directly. Should be updated to call `BookingAgent` like `TelegramEndpoint` does, then use `NotificationSender` to send the reply back to Twist.
+To make Matrix consistent:
+- Create a `matrixnotifier` module implementing `NotificationSender` that calls the Matrix homeserver Client-Server API (`PUT /_matrix/client/v3/rooms/{roomId}/send/m.room.message`). Needs a Matrix access token and the room ID as `recipientId`.
+- Update `MatrixEndpoint` to use `invokeAsync` + `notificationSender.send()` and return `void`, same as `TelegramEndpoint` and `TwistEndpoint`.
+- The Matrix bot (`bot.py`) no longer needs to handle the reply — it just fires the POST and forgets.
 
 ---
 
-## Premature booking confirmation (correctness issue)
+## Move messaging endpoints out of the `reservation` module
 
-`BookingService.bookCourt()` returns `"Booking confirmed! Reservation ID: ..."` after `ReservationEntity::init` completes — but `init` only persists the `Inited` event, putting the reservation in state `COLLECTING`. **No court has been assigned yet.**
+`TelegramEndpoint`, `MatrixEndpoint`, and `TwistEndpoint` currently live in the main `reservation` module. This means the module has compile-time knowledge of three external messaging protocols. Longer term, each should move to its own module (`telegramendpoint`, `matrixendpoint`, `twistendpoint`) the same way the notification senders live in `telegramnotifier`, `twistnotifier`, and `notifierstub`.
 
-The actual court assignment (availability broadcast protocol across `ResourceEntity` instances) happens asynchronously afterward, driven by `ReservationAction` (Consumer). Only when `ReservationEvent.Fulfilled` is emitted is the court truly reserved. If all courts are busy, `SearchExhausted` is emitted instead — and the user was already told "Booking confirmed."
-
-**In practice**: the protocol runs fast (in-memory, milliseconds) so the lie is short-lived. For the MVP it is acceptable. For production, `bookCourt` should ideally wait for the `Fulfilled` event before returning — or at minimum the reply should say "Booking initiated, ID: abc123" rather than "confirmed."
+This would make the `reservation` module completely agnostic to which messaging services are in use, with transport wiring controlled entirely by which modules are on the classpath.
