@@ -71,7 +71,7 @@ public class WebhookAction extends AbstractHttpEndpoint {
                     .invokeAsync();
             } else {
                 Reservation r = new Reservation(rDto.emails(), rDto.dateTime());
-                ReservationEntity.Init body = new ReservationEntity.Init(r, Set.of(facilityId));
+                ReservationEntity.Init body = new ReservationEntity.Init(r, Set.of(facilityId), "");
 
                 // Register timer then init reservation (same as RezAction)
                 timerScheduler.createSingleTimer(

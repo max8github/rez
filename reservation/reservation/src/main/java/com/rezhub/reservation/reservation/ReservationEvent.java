@@ -9,15 +9,16 @@ import java.util.Set;
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record Inited(String reservationId, Reservation reservation,
-                  Set<String> selection) implements ReservationEvent {}
+                  Set<String> selection, String recipientId) implements ReservationEvent {}
     @TypeName("reservation-cancelled")
     record ReservationCancelled(String reservationId, Reservation reservation, String resourceId,
-                                Set<String> resourceIds) implements ReservationEvent {}
+                                Set<String> resourceIds, String recipientId) implements ReservationEvent {}
     @TypeName("cancel-requested")
     record CancelRequested(String reservationId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
 
     @TypeName("search-exhausted")
-    record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
+    record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds,
+                           String recipientId) implements ReservationEvent {}
 
     @TypeName("rejectedWithNext")
     record RejectedWithNext(String reservationId, String resourceId, String nextResourceId) implements ReservationEvent {}
@@ -30,5 +31,6 @@ public sealed interface ReservationEvent {
     record ResourceSelected(String resourceId, String reservationId, Reservation reservation) implements ReservationEvent {}
 
     @TypeName("booked")
-    record Fulfilled(String resourceId, String reservationId, Reservation reservation, Set<String> resourceIds) implements ReservationEvent {}
+    record Fulfilled(String resourceId, String reservationId, Reservation reservation, Set<String> resourceIds,
+                     String recipientId) implements ReservationEvent {}
 }

@@ -49,7 +49,7 @@ public class MatrixEndpoint {
             .forAgent()
             .inSession(sessionId)
             .method(BookingAgent::chat)
-            .invoke(new BookingAgent.BookingRequest(msg.facility_id(), msg.sender_name(), msg.message()));
+            .invoke(new BookingAgent.BookingRequest(msg.facility_id(), msg.sender_name(), msg.sender(), msg.message()));
 
         return new Reply(reply);
     }

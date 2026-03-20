@@ -39,7 +39,8 @@ public class BookingAgent extends Agent {
         - For bookCourt, use the sender's display name for the person making the request.
           If a partner is mentioned by name (e.g. "with John"), use that name as-is.
         - If no courts are free at the requested time, suggest the nearest available slot.
-        - When a booking is confirmed, clearly state the reservation ID so the member can cancel later.
+        - When bookCourt is called, always pass the recipientId exactly as it appears in the [recipient:X] prefix of the message.
+        - After calling bookCourt, tell the member their reference ID so they can cancel later.
         - Date/times passed to tools must be in ISO-8601 format: YYYY-MM-DDTHH:MM:SS
         - Today is %s. Use this to resolve relative days like "Thursday" or "next Tuesday" to exact dates.
 
@@ -62,7 +63,8 @@ public class BookingAgent extends Agent {
         return effects()
             .systemMessage(systemMsg)
             .tools(bookingService)
-            .userMessage("[facility:" + request.facilityId() + "] " + request.senderName() + ": " + request.message())
+            .userMessage("[facility:" + request.facilityId() + "] [recipient:" + request.recipientId() + "] "
+                + request.senderName() + ": " + request.message())
             .thenReply();
     }
 
@@ -73,5 +75,5 @@ public class BookingAgent extends Agent {
      * @param senderName  display name of the sender, for personalisation
      * @param message     raw natural-language text from the player
      */
-    public record BookingRequest(String facilityId, String senderName, String message) {}
+    public record BookingRequest(String facilityId, String senderName, String recipientId, String message) {}
 }

@@ -98,9 +98,10 @@ public class BookingService {
         Always call checkAvailability first to confirm a slot is free.
         playerNames must be a comma-separated list of the players' display names (e.g. "Max,John").
         Use the sender's name for the person making the request.
+        recipientId is the notification recipient identifier found in the [recipient:X] message prefix — always pass it unchanged.
         Returns a reservation ID on success.
         """)
-    public String bookCourt(String facilityId, String dateTimeIso, String playerNames) {
+    public String bookCourt(String facilityId, String dateTimeIso, String playerNames, String recipientId) {
         String internalFacilityId = toInternalFacilityId(facilityId);
         log.info("bookCourt: facilityId={}, dateTime={}, players={}", internalFacilityId, dateTimeIso, playerNames);
         LocalDateTime dateTime;
@@ -121,7 +122,7 @@ public class BookingService {
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Reservation reservation = new Reservation(players, dateTime);
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation, Set.of(internalFacilityId));
+        ReservationEntity.Init command = new ReservationEntity.Init(reservation, Set.of(internalFacilityId), recipientId);
 
         timerScheduler.createSingleTimer(
             RezAction.timerName(reservationId),
@@ -135,10 +136,8 @@ public class BookingService {
             .invoke(command);
 
         log.info("Booking initiated, reservationId={}", result.reservationId());
-        return "Booking confirmed! Reservation ID: `" + result.reservationId() + "`"
-            + ". Court booked for " + String.join(", ", players)
-            + " on " + dateTimeIso + "."
-            + " Check the calendar: " + CalendarSender.calendarUrl();
+        return "Got it! I'm checking availability — I'll let you know shortly. Reference ID: `" + result.reservationId() + "`"
+            + " for " + String.join(", ", players) + " on " + dateTimeIso + ".";
     }
 
     /**

@@ -79,7 +79,7 @@ public class TelegramEndpoint {
                 .forAgent()
                 .inSession(sessionId)
                 .method(BookingAgent::chat)
-                .invoke(new BookingAgent.BookingRequest(facilityId, senderName, msg.text()));
+                .invoke(new BookingAgent.BookingRequest(facilityId, senderName, String.valueOf(chatId), msg.text()));
 
         telegramClient
                 .POST("/bot" + botToken + "/sendMessage")
