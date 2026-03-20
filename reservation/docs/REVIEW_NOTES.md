@@ -124,3 +124,48 @@ The multi-stage build has several steps that feel fragile:
 - Explicit `-Pgoogle` profile activation
 
 Worth reviewing whether the build can be simplified, and whether the settings.xml approach is the right way to handle Akka repo credentials in CI/CD.
+
+---
+
+# Architecture: Messaging layer refactoring (backlog)
+
+## Telegram module
+
+`TelegramEndpoint` currently lives in the main `reservation` module and hardwires the Telegram transport (bot token, `sendMessage` API call). To make messaging pluggable the same way `CalendarSender` is, Telegram should become its own module like `twistnotifier`.
+
+**Target architecture:**
+
+- Main module contains thin HTTP endpoints that receive messages from any service, call `BookingAgent`, then delegate the reply to `NotificationSender`.
+- A `telegram` module implements `NotificationSender` for Telegram (calls `api.telegram.org/sendMessage`). Can use standard `java.net.http.HttpClient` — no Akka SDK dependency needed.
+- `notifierstub` serves as the local/test implementation (logs instead of sending).
+- Which implementation is active is controlled purely by what's on the classpath (Maven profile or module inclusion), exactly like `CalendarSender`.
+
+**What to remove:**
+
+- `Assembler` SPI — obsolete. The LLM understands raw natural-language text directly. `TwistAssembler` and `TextMessageParser`/`StringNlpParser` were only needed when the old `WebhookAction` had to parse text manually.
+- `Parser` SPI — same reason. Both can be deleted along with the `stringparser` module once `WebhookAction` is updated to call `BookingAgent` instead of `Parser`.
+- `Nlp` interface from `spi` — already agreed to remove.
+
+**`NotificationSender` signature needs generalising:**
+
+Current signature is Twist-specific (`messageTwist(HttpClient, String body)` with Twist JSON). Should become something like:
+
+```java
+CompletableFuture<String> send(String recipientId, String text);
+```
+
+Where `recipientId` is whatever identifies the destination in that service (Telegram chat_id, Twist thread_id, etc.).
+
+**`WebhookAction` (Twist inbound) needs updating:**
+
+Currently bypasses the AI entirely — it parses the text with `Parser`/`Assembler` and creates a `ReservationEntity` directly. Should be updated to call `BookingAgent` like `TelegramEndpoint` does, then use `NotificationSender` to send the reply back to Twist.
+
+---
+
+## Premature booking confirmation (correctness issue)
+
+`BookingService.bookCourt()` returns `"Booking confirmed! Reservation ID: ..."` after `ReservationEntity::init` completes — but `init` only persists the `Inited` event, putting the reservation in state `COLLECTING`. **No court has been assigned yet.**
+
+The actual court assignment (availability broadcast protocol across `ResourceEntity` instances) happens asynchronously afterward, driven by `ReservationAction` (Consumer). Only when `ReservationEvent.Fulfilled` is emitted is the court truly reserved. If all courts are busy, `SearchExhausted` is emitted instead — and the user was already told "Booking confirmed."
+
+**In practice**: the protocol runs fast (in-memory, milliseconds) so the lie is short-lived. For the MVP it is acceptable. For production, `bookCourt` should ideally wait for the `Fulfilled` event before returning — or at minimum the reply should say "Booking initiated, ID: abc123" rather than "confirmed."
