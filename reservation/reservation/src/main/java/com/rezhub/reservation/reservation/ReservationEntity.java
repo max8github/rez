@@ -1,6 +1,7 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.dto.SelectionItem;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
 import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -129,7 +130,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case SELECTING -> effects()
                 .persist(new ReservationEvent.Fulfilled(command.resourceId(),
-                    entityId, command.reservation(), currentState().selection(), currentState().recipientId()))
+                    entityId, command.reservation(), currentState().selectionIds(), currentState().recipientId()))
                 .thenReply(newState -> "OK, picked resource " + command.resourceId());
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
@@ -169,7 +170,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     .persist(new ReservationEvent.ReservationCancelled(
                         entityId,
                         fromReservationState(currentState()),
-                        resourceId, currentState().selection(), currentState().recipientId()))
+                        resourceId, currentState().selectionIds(), currentState().recipientId()))
                     .thenReply(newState -> entityId);
             }
             default -> {
@@ -185,7 +186,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 .persist(new ReservationEvent.SearchExhausted(
                     entityId,
                     new Reservation(currentState().emails(), currentState().dateTime()),
-                    currentState().selection(), currentState().recipientId()))
+                    currentState().selectionIds(), currentState().recipientId()))
                 .thenReply(newState -> entityId);
             case FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("OK");
         };
@@ -216,7 +217,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
-    public record Init(Reservation reservation, Set<String> selection, String recipientId) {}
+    public record Init(Reservation reservation, Set<SelectionItem> selection, String recipientId) {}
     public record ReservationId(String reservationId) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}

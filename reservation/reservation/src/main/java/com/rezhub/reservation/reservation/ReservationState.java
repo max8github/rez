@@ -1,17 +1,24 @@
 package com.rezhub.reservation.reservation;
 
+import com.rezhub.reservation.dto.SelectionItem;
+
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 
 public record ReservationState(State state, String reservationId, List<String> emails,
-                               Set<String> availableResources, Set<String> selection,
+                               Set<String> availableResources, Set<SelectionItem> selection,
                                LocalDateTime dateTime, String resourceId, String recipientId) {
 
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
         return new ReservationState(INIT, entityId, empty, new HashSet<>(), new HashSet<>(), LocalDateTime.now(), "", "");
+    }
+
+    public Set<String> selectionIds() {
+        return selection.stream().map(SelectionItem::id).collect(Collectors.toUnmodifiableSet());
     }
 
     public ReservationState withState(State state) {
@@ -26,7 +33,7 @@ public record ReservationState(State state, String reservationId, List<String> e
         return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId, recipientId);
     }
 
-    public ReservationState withSelection(Set<String> selection) {
+    public ReservationState withSelection(Set<SelectionItem> selection) {
         return new ReservationState(state, reservationId, emails, availableResources, selection, dateTime, resourceId, recipientId);
     }
 

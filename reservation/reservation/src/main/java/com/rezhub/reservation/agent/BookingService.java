@@ -5,7 +5,9 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timer.TimerScheduler;
 import com.rezhub.reservation.actions.RezAction;
 import com.rezhub.reservation.actions.TimerAction;
+import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.dto.SelectionItem;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
@@ -122,7 +124,8 @@ public class BookingService {
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Reservation reservation = new Reservation(players, dateTime);
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation, Set.of(internalFacilityId), recipientId);
+        ReservationEntity.Init command = new ReservationEntity.Init(reservation,
+            Set.of(new SelectionItem(internalFacilityId, EntityType.FACILITY)), recipientId);
 
         timerScheduler.createSingleTimer(
             RezAction.timerName(reservationId),

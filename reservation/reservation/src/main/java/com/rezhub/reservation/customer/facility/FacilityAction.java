@@ -1,6 +1,8 @@
 package com.rezhub.reservation.customer.facility;
 
+import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.dto.SelectionItem;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.dto.Resource;
 import akka.javasdk.annotations.Component;
@@ -10,12 +12,8 @@ import akka.javasdk.consumer.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
-
-import static com.rezhub.reservation.dto.Reservation.*;
 
 @SuppressWarnings("unused")
 @Component(id = "facility-events-consumer")
@@ -42,54 +40,40 @@ public class FacilityAction extends Consumer {
     @SuppressWarnings("unused")
     public Effect on(FacilityEvent.AvalabilityRequested event) {
         log.info("Facility fans out, continuing the broadcast");
-        broadcast(componentClient, event.reservationId(), event.reservation(), event.resources());
+        Set<SelectionItem> items = event.resources().stream()
+            .map(id -> new SelectionItem(id, EntityType.RESOURCE))
+            .collect(Collectors.toUnmodifiableSet());
+        broadcast(componentClient, event.reservationId(), event.reservation(), items);
         return effects().done();
     }
 
     public static void broadcast(ComponentClient componentClient,
                                  String reservationId, Reservation reservation,
-                                 Set<String> resources) {
-        resources.stream().sorted().forEach(id -> {
+                                 Set<SelectionItem> items) {
+        items.stream().sorted(java.util.Comparator.comparing(SelectionItem::id)).forEach(item -> {
             var command = new ResourceEntity.CheckAvailability(reservationId, reservation);
             //Note: cannot use inheritance. If it were possible, checkAvailability() would
             //be a method (of a super entity) with polymorphic behavior.
-            String type = extractPrefix(id);
-            switch (type) {
+            switch (item.type()) {
                 case FACILITY -> componentClient
-                    .forEventSourcedEntity(id)
+                    .forEventSourcedEntity(item.id())
                     .method(FacilityEntity::checkAvailability)
                     .invokeAsync(command)
                     .whenComplete((result, error) -> {
                         if (error != null) {
-                            log.error("Error checking availability for facility {}: {}", id, error.getMessage());
+                            log.error("Error checking availability for facility {}: {}", item.id(), error.getMessage());
                         }
                     });
                 case RESOURCE -> componentClient
-                    .forEventSourcedEntity(id)
+                    .forEventSourcedEntity(item.id())
                     .method(ResourceEntity::checkAvailability)
                     .invokeAsync(command)
                     .whenComplete((result, error) -> {
                         if (error != null) {
-                            log.error("Error checking availability for resource {}: {}", id, error.getMessage());
-                        }
-                    });
-                default -> componentClient
-                    .forEventSourcedEntity(id)
-                    .method(ResourceEntity::checkAvailability)
-                    .invokeAsync(command)
-                    .whenComplete((result, error) -> {
-                        if (error != null) {
-                            log.error("Error checking availability for {}: {}", id, error.getMessage());
+                            log.error("Error checking availability for resource {}: {}", item.id(), error.getMessage());
                         }
                     });
             }
         });
-    }
-
-    public static String extractPrefix(String id) {
-        int index = id.indexOf(DELIMITER);
-        if (index > -1) {
-            return id.substring(0, index) + DELIMITER;
-        } else return "";
     }
 }
