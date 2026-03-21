@@ -23,7 +23,7 @@ public class ReservationIntegrationTest extends TestKitSupport {
     public void testCreateFacility() {
         String facilityId = "f_test-facility";
         Address address = new Address("Test Street 123", "Test City");
-        Facility facility = new Facility("Test Facility", address, Collections.emptySet());
+        Facility facility = new Facility("Test Facility", address, Collections.emptySet(), "Europe/Berlin", null, null);
 
         // Create the facility
         String result = componentClient
@@ -46,7 +46,7 @@ public class ReservationIntegrationTest extends TestKitSupport {
     @Test
     public void testCreateResource() {
         String resourceId = "resource-test-1";
-        Resource resource = new Resource(resourceId, "Tennis Court 1");
+        Resource resource = new Resource(resourceId, "Tennis Court 1", null);
 
         // Create the resource
         String result = componentClient
@@ -72,7 +72,7 @@ public class ReservationIntegrationTest extends TestKitSupport {
 
         // Create the facility
         Address address = new Address("Main Street", "Berlin");
-        Facility facility = new Facility("Tennis Club", address, Collections.emptySet());
+        Facility facility = new Facility("Tennis Club", address, Collections.emptySet(), "Europe/Berlin", null, null);
 
         componentClient
             .forEventSourcedEntity(facilityId)

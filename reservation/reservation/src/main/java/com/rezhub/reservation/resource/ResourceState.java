@@ -30,10 +30,10 @@ import java.util.*;
  * and transformed to 2023-09-28T08:00.
  * The datetime needs to be also within the timeframe allowed for reservations.
  */
-public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, Period period) {
+public record ResourceState(String name, String calendarId, Map<LocalDateTime, String> timeWindow, Period period) {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
-    public static ResourceState initialize(String name) {
-        return new ResourceState(name, new TreeMap<>(), Period.ofMonths(3));
+    public static ResourceState initialize(String name, String calendarId) {
+        return new ResourceState(name, calendarId, new TreeMap<>(), Period.ofMonths(3));
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
@@ -62,6 +62,7 @@ public record ResourceState(String name, Map<LocalDateTime, String> timeWindow, 
     public String toString() {
         return "ResourceState{" +
                 "name='" + name + '\'' +
+                ", calendarId='" + calendarId + '\'' +
                 ", timeWindow=" + timeWindow +
                 ", period=" + period +
                 '}';

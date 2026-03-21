@@ -6,21 +6,20 @@ import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.agent.BookingAgent;
 import com.rezhub.reservation.spi.NotificationSender;
+import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Optional;
 
 /**
  * Receives Telegram webhook updates and dispatches them to the BookingAgent.
  *
- * Setup (one-time after deploy):
- *   curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url=https://{your-service}/telegram/webhook"
+ * Setup (one-time after deploy, per bot):
+ *   curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url=https://{your-service}/telegram/{TOKEN}/webhook"
  *
- * Each incoming message is acknowledged immediately (HTTP 200) and the agent
- * is invoked asynchronously. All replies — both conversational and final booking
- * outcomes — are sent back to the chat via NotificationSender (TelegramNotifier).
- *
- * facilityId is read from the FACILITY_ID env var (one club per bot token for MVP).
- * Session is scoped per chat: private DMs get their own session, group chats share one.
+ * The bot token in the path is used to look up the facility via FacilityByBotTokenView,
+ * so one deployment can serve N facilities — no FACILITY_ID env var needed.
  */
 @HttpEndpoint("/telegram")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -30,12 +29,10 @@ public class TelegramEndpoint {
 
     private final ComponentClient componentClient;
     private final NotificationSender notificationSender;
-    private final String facilityId;
 
     public TelegramEndpoint(ComponentClient componentClient, NotificationSender notificationSender) {
         this.componentClient = componentClient;
         this.notificationSender = notificationSender;
-        this.facilityId = System.getenv("FACILITY_ID");
     }
 
     // ---- Telegram Update payload (subset of fields we need) ----
@@ -53,12 +50,25 @@ public class TelegramEndpoint {
      * Returns 200 OK immediately; the agent reply is sent back asynchronously
      * via NotificationSender so Telegram never has to wait for the LLM.
      */
-    @Post("/webhook")
-    public void onUpdate(Update update) {
+    @Post("/{botToken}/webhook")
+    public void onUpdate(String botToken, Update update) {
         if (update.message() == null || update.message().text() == null) {
             log.debug("Ignoring Telegram update without text (e.g. join/leave event)");
             return;
         }
+
+        Optional<FacilityByBotTokenView.Entry> facilityOpt = componentClient.forView()
+            .method(FacilityByBotTokenView::getByBotToken)
+            .invoke(botToken);
+
+        if (facilityOpt.isEmpty()) {
+            log.warn("No facility found for bot token (first 8 chars): {}...", botToken.substring(0, Math.min(8, botToken.length())));
+            return;
+        }
+
+        FacilityByBotTokenView.Entry facility = facilityOpt.get();
+        String facilityId = facility.facilityId();
+        String timezone = facility.timezone() != null ? facility.timezone() : "Europe/Berlin";
 
         var msg = update.message();
         long chatId = msg.chat().id();
@@ -67,7 +77,7 @@ public class TelegramEndpoint {
                 ? msg.from().first_name()
                 : "Player";
 
-        log.info("Telegram message from {} (chat {}): {}", senderName, chatId, msg.text());
+        log.info("Telegram message from {} (chat {}) for facility {}: {}", senderName, chatId, facilityId, msg.text());
 
         String sessionId = sanitize(facilityId + ":" + chatId);
 
@@ -75,7 +85,7 @@ public class TelegramEndpoint {
                 .forAgent()
                 .inSession(sessionId)
                 .method(BookingAgent::chat)
-                .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, msg.text()))
+                .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, timezone, msg.text()))
                 .thenAccept(reply -> { if (reply != null && !reply.isBlank()) notificationSender.send(recipientId, reply); })
                 .whenComplete((v, error) -> {
                     if (error != null) log.error("Agent error for chat {}: {}", chatId, error.getMessage());

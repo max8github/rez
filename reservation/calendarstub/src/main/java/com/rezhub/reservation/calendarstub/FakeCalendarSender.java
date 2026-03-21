@@ -10,8 +10,7 @@ public class FakeCalendarSender implements CalendarSender {
     @Override
     public CompletionStage<ReservationResult> saveToGoogle(EventDetails eventDetails) {
         CalendarSender.log.info("fake save to Google for reservation id {}", eventDetails.reservationId());
-        String facilityCalendarUrl = CalendarSender.calendarUrl(eventDetails.resourceIds());
-        return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", facilityCalendarUrl));
+        return CompletableFuture.completedStage(new ReservationResult(eventDetails, "DONE", ""));
     }
 
     @Override

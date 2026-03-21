@@ -23,14 +23,14 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     @Override
     public ResourceState emptyState() {
-        return ResourceState.initialize(FORBIDDEN_NAME);
+        return ResourceState.initialize(FORBIDDEN_NAME, null);
     }
 
     @Override
     public ResourceState applyEvent(ResourceEvent event) {
         return switch (event) {
-            case ResourceEvent.FacilityResourceCreated e -> ResourceState.initialize(e.name());
-            case ResourceEvent.ResourceCreated e -> ResourceState.initialize(e.resourceName());
+            case ResourceEvent.FacilityResourceCreated e -> ResourceState.initialize(e.name(), e.calendarId());
+            case ResourceEvent.ResourceCreated e -> ResourceState.initialize(e.resourceName(), e.calendarId());
             case ResourceEvent.AvalabilityChecked e -> currentState();
             case ResourceEvent.ReservationAccepted e -> currentState().set(ResourceState.roundToValidTime(e.reservation().dateTime()), e.reservationId());
             case ResourceEvent.ReservationRejected e -> currentState();
@@ -42,7 +42,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         String id = commandContext().entityId();
         String assetName = resCommand.resource().resourceName();
         return effects()
-            .persist(new ResourceEvent.FacilityResourceCreated(id, assetName, resCommand.facilityId()))
+            .persist(new ResourceEvent.FacilityResourceCreated(id, assetName, resCommand.facilityId(), resCommand.resource().calendarId()))
             .thenReply(newState -> id);
     }
 
@@ -60,7 +60,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         }
 
         return effects()
-            .persist(new ResourceEvent.ResourceCreated(id, command.resourceName()))
+            .persist(new ResourceEvent.ResourceCreated(id, command.resourceName(), command.calendarId()))
             .thenReply(newState -> id);
     }
 

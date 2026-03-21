@@ -8,9 +8,9 @@ import java.time.LocalDateTime;
 public sealed interface ResourceEvent {
 
     @TypeName("facility-resource-created")
-    record FacilityResourceCreated(String resourceId, String name, String parentId) implements ResourceEvent {}
+    record FacilityResourceCreated(String resourceId, String name, String parentId, String calendarId) implements ResourceEvent {}
     @TypeName("resource-created")
-    record ResourceCreated(String resourceId, String resourceName) implements ResourceEvent {}
+    record ResourceCreated(String resourceId, String resourceName, String calendarId) implements ResourceEvent {}
     @TypeName("availability-checked")
     record AvalabilityChecked(String resourceId, String reservationId, boolean available) implements ResourceEvent {}
     @TypeName("reservation-accepted")

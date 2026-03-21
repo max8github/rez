@@ -18,7 +18,7 @@ public sealed interface FacilityEvent {
   record AddressChanged(AddressState addressState) implements FacilityEvent {}
 
   @TypeName("resource-create-register-requested")
-  record ResourceCreateAndRegisterRequested(String facilityId, String resourceName, String resourceId) implements FacilityEvent {}
+  record ResourceCreateAndRegisterRequested(String facilityId, String resourceName, String resourceId, String calendarId) implements FacilityEvent {}
 
   @TypeName("resource-registered")
   record ResourceRegistered(String resourceId) implements FacilityEvent {}

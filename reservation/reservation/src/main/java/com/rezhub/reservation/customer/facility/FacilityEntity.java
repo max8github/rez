@@ -35,7 +35,10 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 yield FacilityState.create(e.entityId())
                     .withName(dto.name())
                     .withAddressState(new AddressState(dto.address().street(), dto.address().city()))
-                    .withResourceIds(dto.resourceIds());
+                    .withResourceIds(dto.resourceIds())
+                    .withTimezone(dto.timezone())
+                    .withBotToken(dto.botToken())
+                    .withAdminUserIds(dto.adminUserIds());
             }
             case FacilityEvent.Renamed e -> currentState().withName(e.newName());
             case FacilityEvent.AddressChanged e -> {
@@ -86,7 +89,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
     public Effect<String> requestResourceCreateAndRegister(CreateAndRegisterResource command) {
         return effects()
-            .persist(new FacilityEvent.ResourceCreateAndRegisterRequested(currentState().facilityId(), command.resourceName(), command.resourceId()))
+            .persist(new FacilityEvent.ResourceCreateAndRegisterRequested(currentState().facilityId(), command.resourceName(), command.resourceId(), command.calendarId()))
             .thenReply(newState -> command.resourceId());
     }
 
@@ -109,7 +112,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public ReadOnlyEffect<Facility> getFacility() {
         FacilityState state = currentState();
         Address address = new Address(state.addressState().street(), state.addressState().city());
-        return effects().reply(new Facility(state.name(), address, state.resourceIds()));
+        return effects().reply(new Facility(state.name(), address, state.resourceIds(),
+                state.timezone(), state.botToken(), state.adminUserIds()));
     }
 
     public Effect<String> checkAvailability(ResourceEntity.CheckAvailability command) {
@@ -121,5 +125,5 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
 
     public record FacilityResourceRequest(String resourceName) {}
 
-    public record CreateAndRegisterResource(String resourceName, String resourceId) {}
+    public record CreateAndRegisterResource(String resourceName, String resourceId, String calendarId) {}
 }

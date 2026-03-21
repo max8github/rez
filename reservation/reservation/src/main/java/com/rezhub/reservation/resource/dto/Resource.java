@@ -3,7 +3,7 @@ package com.rezhub.reservation.resource.dto;
 import java.util.Comparator;
 import java.util.Objects;
 
-public record Resource(String resourceId, String resourceName) {
+public record Resource(String resourceId, String resourceName, String calendarId) {
     public static final String FORBIDDEN_NAME = "noname";
 
     public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {

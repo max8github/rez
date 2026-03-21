@@ -12,17 +12,19 @@ import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
 
+import java.util.UUID;
+
 /**
  * HTTP endpoint for Facility operations.
  *
- * Callers supply plain names (e.g. "padel-club", "court-1") with no prefixes.
- * The endpoint prepends the required internal "f_" prefix before routing to
- * entities, keeping the prefix convention invisible externally.
+ * IDs are generated internally — callers never supply or see the internal "f_" prefix.
  *
- * Provisioning a facility with its courts (one-step per court):
- *   POST /facility/padel-club                        { "name": "Padel Club", "address": {...} }
- *   POST /facility/padel-club/resource/court-1       { "name": "Court 1" }
- *   POST /facility/padel-club/resource/court-2       { "name": "Court 2" }
+ * Provisioning a facility with its courts:
+ *   POST /facility                                    { "name": "Padel Club", "address": {...}, "timezone": "Europe/Berlin", "botToken": "..." }
+ *   → returns generated facilityId, e.g. "abc123"
+ *
+ *   POST /facility/abc123/resource                   { "name": "Court 1", "calendarId": "xxx@group.calendar.google.com" }
+ *   POST /facility/abc123/resource                   { "name": "Court 2", "calendarId": "yyy@group.calendar.google.com" }
  */
 @HttpEndpoint("/facility")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -34,12 +36,14 @@ public class FacilityEndpoint {
         this.componentClient = componentClient;
     }
 
-    @Post("/{facilityId}")
-    public String createFacility(String facilityId, Facility facility) {
-        return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+    @Post("/")
+    public String createFacility(Facility facility) {
+        String id = UUID.randomUUID().toString().replace("-", "");
+        componentClient
+            .forEventSourcedEntity(toFacilityId(id))
             .method(FacilityEntity::create)
             .invoke(facility);
+        return id;
     }
 
     @Get("/{facilityId}")
@@ -68,16 +72,17 @@ public class FacilityEndpoint {
 
     /**
      * Create a resource (court) and register it with the facility in one step.
-     * This is the recommended provisioning method — it correctly sets the facilityId
-     * on the resource so it appears in availability checks.
+     * The resource ID is generated internally and returned to the caller.
      */
-    @Post("/{facilityId}/resource/{resourceId}")
-    public String createAndRegisterResource(String facilityId, String resourceId, CreateResourceRequest request) {
-        var command = new FacilityEntity.CreateAndRegisterResource(request.name(), resourceId);
-        return componentClient
+    @Post("/{facilityId}/resource")
+    public String createAndRegisterResource(String facilityId, CreateResourceRequest request) {
+        String resourceId = UUID.randomUUID().toString().replace("-", "");
+        var command = new FacilityEntity.CreateAndRegisterResource(request.name(), resourceId, request.calendarId());
+        componentClient
             .forEventSourcedEntity(toFacilityId(facilityId))
             .method(FacilityEntity::requestResourceCreateAndRegister)
             .invoke(command);
+        return resourceId;
     }
 
     /** Register an already-existing resource with a facility. */
@@ -98,20 +103,11 @@ public class FacilityEndpoint {
     }
 
     public record RenameRequest(String name) {}
-    public record CreateResourceRequest(String name) {}
+    public record CreateResourceRequest(String name, String calendarId) {}
 
     // --- internal helpers ---
 
-    static String toFacilityId(String name) {
-        rejectReservedPrefix(name);
-        return Reservation.FACILITY + name;
-    }
-
-    private static void rejectReservedPrefix(String name) {
-        if (name.startsWith(Reservation.FACILITY) || name.startsWith(Reservation.RESOURCE)) {
-            throw new IllegalArgumentException(
-                "Name '" + name + "' must not start with reserved prefixes '" +
-                Reservation.FACILITY + "' or '" + Reservation.RESOURCE + "'");
-        }
+    static String toFacilityId(String id) {
+        return Reservation.FACILITY + id;
     }
 }

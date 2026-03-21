@@ -7,6 +7,7 @@ import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
 
 import java.util.List;
+import java.util.Optional;
 
 @Component(id = "view_resources_by_container_id")
 public class ResourceView extends View {
@@ -41,6 +42,11 @@ public class ResourceView extends View {
 
     @Query("SELECT * AS resources FROM resources_by_container_id WHERE facilityId = :container_id")
     public QueryEffect<Resources> getResource(String container_id) {
+        return queryResult();
+    }
+
+    @Query("SELECT * FROM resources_by_container_id WHERE resourceId = :resource_id LIMIT 1")
+    public QueryEffect<Optional<ResourceV>> getResourceById(String resource_id) {
         return queryResult();
     }
 }

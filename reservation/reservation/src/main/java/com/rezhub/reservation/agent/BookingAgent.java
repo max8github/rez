@@ -57,8 +57,9 @@ public class BookingAgent extends Agent {
      * The LLM will use bookingService tools to check availability, book, or cancel.
      */
     public Effect<String> chat(BookingRequest request) {
+        String tz = request.timezone() != null ? request.timezone() : "Europe/Berlin";
         String systemMsg = SYSTEM_MESSAGE.formatted(
-            java.time.LocalDate.now(java.time.ZoneId.of("Europe/Berlin"))
+            java.time.LocalDate.now(java.time.ZoneId.of(tz))
                 .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", java.util.Locale.ENGLISH)));
         return effects()
             .systemMessage(systemMsg)
@@ -73,7 +74,8 @@ public class BookingAgent extends Agent {
      *
      * @param facilityId  Akka entity ID of the facility (maps to the MS room/channel)
      * @param senderName  display name of the sender, for personalisation
+     * @param timezone    IANA timezone ID for the facility, e.g. "Europe/Berlin"
      * @param message     raw natural-language text from the player
      */
-    public record BookingRequest(String facilityId, String senderName, String recipientId, String message) {}
+    public record BookingRequest(String facilityId, String senderName, String recipientId, String timezone, String message) {}
 }

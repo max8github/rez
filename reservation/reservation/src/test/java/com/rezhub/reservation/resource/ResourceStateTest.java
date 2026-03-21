@@ -13,7 +13,7 @@ class ResourceStateTest {
 
     @Test
     void testPrint() {
-        ResourceState r = ResourceState.initialize("hotel1");
+        ResourceState r = ResourceState.initialize("hotel1", null);
         LocalDateTime now = LocalDateTime.now();
         r.set(now, "1000");
         r.set(now.plusHours(1), "2000");
@@ -23,7 +23,7 @@ class ResourceStateTest {
 
     @Test
     void testSet() {
-        ResourceState r = ResourceState.initialize("hotel1");
+        ResourceState r = ResourceState.initialize("hotel1", null);
         LocalDateTime now = LocalDateTime.now();
         LocalDateTime nowPlus1 = now.plusHours(1);
 
@@ -38,7 +38,7 @@ class ResourceStateTest {
 
     @Test
     void testFits() {
-        ResourceState r = ResourceState.initialize("hotel1");
+        ResourceState r = ResourceState.initialize("hotel1", null);
         LocalDateTime now = LocalDateTime.now();
         String reservationId = "1000";
         r.set(now, reservationId);

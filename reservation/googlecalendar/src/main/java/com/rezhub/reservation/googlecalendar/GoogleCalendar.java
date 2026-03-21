@@ -30,8 +30,8 @@ public class GoogleCalendar implements CalendarSender {
 
     @Override
     public CompletionStage<ReservationResult> saveToGoogle(EventDetails eventDetails) throws IOException {
-        String facilityCalendarUrl = CalendarSender.calendarUrl();
-        String calendarId = CalendarSender.calendarIdForResource(eventDetails.resourceId());
+        String facilityCalendarUrl = ""; // provided by caller via EventDetails
+        String calendarId = eventDetails.calendarId() != null ? eventDetails.calendarId() : eventDetails.resourceId();
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
         String found = isFound(service, calendarId, calEventId);
@@ -40,7 +40,7 @@ public class GoogleCalendar implements CalendarSender {
             return CompletableFuture.completedStage(
                     new ReservationResult(eventDetails, "ALREADY_BOOKED", facilityCalendarUrl));
         }
-        var interval = toEventDateTimeInterval(eventDetails.dateTime());
+        var interval = toEventDateTimeInterval(eventDetails.dateTime(), eventDetails.timezone());
         EventAttendee[] attendees = getAttendees(eventDetails);
 
         //        String[] recurrence = new String[]{"RRULE:FREQ=DAILY;COUNT=3"};
@@ -137,9 +137,9 @@ public class GoogleCalendar implements CalendarSender {
                 .isEmpty();
     }
 
-    private static EventDateTime[] toEventDateTimeInterval(LocalDateTime dateTime) {
+    private static EventDateTime[] toEventDateTimeInterval(LocalDateTime dateTime, String timezone) {
         // todo: end time depends on the timeSlot, which is in Reservation/Resource
-        ZoneId berlin = ZoneId.of("Europe/Berlin");
+        ZoneId berlin = ZoneId.of(timezone != null ? timezone : "Europe/Berlin");
         DateTime dateTimeStart = new DateTime(dateTime.atZone(berlin).toInstant().toEpochMilli());
         LocalDateTime endDateTime = dateTime.toLocalDate().atTime(dateTime.toLocalTime().plusHours(1L));
         DateTime dateTimeEnd = new DateTime(endDateTime.atZone(berlin).toInstant().toEpochMilli());

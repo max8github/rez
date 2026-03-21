@@ -1,15 +1,21 @@
 package com.rezhub.reservation.reservation;
 
+import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.resource.ResourceV;
+import com.rezhub.reservation.resource.ResourceView;
 import com.rezhub.reservation.spi.CalendarSender;
 import com.rezhub.reservation.spi.NotificationSender;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
+import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Set;
+import java.util.List;
+import java.util.Optional;
 
 @Component(id = "delegating-service-consumer")
 @Consume.FromEventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
@@ -19,26 +25,53 @@ public class DelegatingServiceAction extends Consumer {
 
     private final CalendarSender calendarSender;
     private final NotificationSender notificationSender;
+    private final ComponentClient componentClient;
 
-    public DelegatingServiceAction(CalendarSender calendarSender, NotificationSender notificationSender) {
+    public DelegatingServiceAction(CalendarSender calendarSender, NotificationSender notificationSender,
+                                   ComponentClient componentClient) {
         this.calendarSender = calendarSender;
         this.notificationSender = notificationSender;
+        this.componentClient = componentClient;
     }
 
     public Effect on(ReservationEvent.Fulfilled event) throws Exception {
         Reservation reservationDto = event.reservation();
         String reservationId = event.reservationId();
-        Set<String> resourceIds = event.resourceIds();
         String resourceId = event.resourceId();
         String recipientId = event.recipientId();
 
-        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, "facilityId", resourceIds,
-                reservationDto.emails(), reservationDto.dateTime());
+        Optional<ResourceV> resourceOpt = componentClient.forView()
+            .method(ResourceView::getResourceById)
+            .invoke(resourceId);
+
+        String calendarId = resourceOpt.map(ResourceV::calendarId).orElse(resourceId);
+        String facilityId = resourceOpt.map(ResourceV::facilityId).orElse(null);
+
+        List<String> facilityCalendarIds = List.of();
+        String timezone = "Europe/Berlin";
+        if (facilityId != null) {
+            ResourceView.Resources facilityResources = componentClient.forView()
+                .method(ResourceView::getResource)
+                .invoke(facilityId);
+            facilityCalendarIds = facilityResources.resources().stream()
+                .map(ResourceV::calendarId)
+                .filter(id -> id != null && !id.isBlank())
+                .toList();
+
+            Facility facility = componentClient.forEventSourcedEntity(facilityId)
+                .method(FacilityEntity::getFacility)
+                .invoke();
+            if (facility.timezone() != null) timezone = facility.timezone();
+        }
+
+        String calUrl = CalendarSender.calendarUrlFromIds(facilityCalendarIds);
+
+        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, calendarId, timezone,
+                event.resourceIds(), reservationDto.emails(), reservationDto.dateTime());
         calendarSender.saveToGoogle(eventDetails)
             .thenCompose(result -> {
                 String attendees = String.join(", ", reservationDto.emails());
                 String courtLabel = resourceId.replace("court-", "Court ");
-                String calUrl = CalendarSender.calendarUrl();
                 String text = ("✅ Court booked!\n\n"
                     + "🎾 %s\n"
                     + "📅 %s\n"
@@ -67,7 +100,12 @@ public class DelegatingServiceAction extends Consumer {
 
     public Effect on(ReservationEvent.ReservationCancelled event) {
         String recipientId = event.recipientId();
-        String calendarId = CalendarSender.calendarIdForResource(event.resourceId());
+
+        Optional<ResourceV> resourceOpt = componentClient.forView()
+            .method(ResourceView::getResourceById)
+            .invoke(event.resourceId());
+        String calendarId = resourceOpt.map(ResourceV::calendarId).orElse(event.resourceId());
+
         calendarSender.deleteFromGoogle(calendarId, event.reservationId())
             .thenCompose(result -> {
                 String text = "Reservation %s has been cancelled.".formatted(event.reservationId());

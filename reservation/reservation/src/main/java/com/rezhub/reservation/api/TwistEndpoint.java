@@ -85,7 +85,7 @@ public class TwistEndpoint extends AbstractHttpEndpoint {
             .forAgent()
             .inSession(sessionId)
             .method(BookingAgent::chat)
-            .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, msg.content()))
+            .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, null, msg.content()))
             .thenAccept(reply -> notificationSender.send(recipientId, reply))
             .whenComplete((v, error) -> {
                 if (error != null) log.error("Agent error for Twist creator {}: {}", recipientId, error.getMessage());

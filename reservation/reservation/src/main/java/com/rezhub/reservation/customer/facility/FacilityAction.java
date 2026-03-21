@@ -29,7 +29,7 @@ public class FacilityAction extends Consumer {
     @SuppressWarnings("unused")
     public Effect on(FacilityEvent.ResourceCreateAndRegisterRequested event) {
         var resourceId = event.resourceId();
-        var command = new ResourceEntity.CreateChildResource(event.facilityId(), new Resource(event.resourceId(), event.resourceName()));
+        var command = new ResourceEntity.CreateChildResource(event.facilityId(), new Resource(event.resourceId(), event.resourceName(), event.calendarId()));
         componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::createFacilityResource)
