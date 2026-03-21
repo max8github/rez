@@ -10,6 +10,7 @@ COPY pom.xml ./pom.xml
 COPY spi ./spi
 COPY notifierstub ./notifierstub
 COPY googlecalendar ./googlecalendar
+COPY telegramnotifier ./telegramnotifier
 COPY reservation ./reservation
 
 # Install parent POM so sub-modules can resolve it as their parent
@@ -19,6 +20,7 @@ RUN mvn -q install -N
 RUN cd spi         && mvn -q package && mvn -q install:install-file -Dfile=target/spi-0.5.jar          -DgroupId=com.rezhub.reservation -DartifactId=spi          -Dversion=0.5 -Dpackaging=jar
 RUN cd notifierstub && mvn -q package && mvn -q install:install-file -Dfile=target/notifierstub-0.5.jar -DgroupId=com.rezhub.reservation -DartifactId=notifierstub  -Dversion=0.5 -Dpackaging=jar
 RUN cd googlecalendar && mvn -q package && mvn -q install:install-file -Dfile=target/googlecalendar-0.5.jar -DgroupId=com.rezhub.reservation -DartifactId=googlecalendar -Dversion=0.5 -Dpackaging=jar
+RUN cd telegramnotifier && mvn -q package && mvn -q install:install-file -Dfile=target/telegramnotifier-0.5.jar -DgroupId=com.rezhub.reservation -DartifactId=telegramnotifier -Dversion=0.5 -Dpackaging=jar
 
 # Compile main app and copy all runtime dependencies
 RUN cd reservation && mvn -q compile dependency:copy-dependencies -DoutputDirectory=target/dependency -Pgoogle

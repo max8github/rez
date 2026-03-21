@@ -76,7 +76,7 @@ public class TelegramEndpoint {
                 .inSession(sessionId)
                 .method(BookingAgent::chat)
                 .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, msg.text()))
-                .thenAccept(reply -> notificationSender.send(recipientId, reply))
+                .thenAccept(reply -> { if (reply != null && !reply.isBlank()) notificationSender.send(recipientId, reply); })
                 .whenComplete((v, error) -> {
                     if (error != null) log.error("Agent error for chat {}: {}", chatId, error.getMessage());
                 });

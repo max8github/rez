@@ -33,7 +33,7 @@ public class TelegramNotifier implements NotificationSender {
     @Override
     public CompletableFuture<String> send(String recipientId, String text) {
         log.info("Sending to Telegram chat {}: {}", recipientId, text);
-        String body = "{\"chat_id\": " + recipientId + ", \"text\": \"" + escape(text) + "\"}";
+        String body = "{\"chat_id\": " + recipientId + ", \"text\": \"" + escape(text) + "\", \"parse_mode\": \"HTML\"}";
         HttpRequest request = HttpRequest.newBuilder()
             .uri(URI.create(API_BASE + "/bot" + botToken + "/sendMessage"))
             .header("Content-Type", "application/json")

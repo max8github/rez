@@ -30,7 +30,7 @@ public class GoogleCalendar implements CalendarSender {
 
     @Override
     public CompletionStage<ReservationResult> saveToGoogle(EventDetails eventDetails) throws IOException {
-        String facilityCalendarUrl = CalendarSender.calendarUrl(eventDetails.resourceIds());
+        String facilityCalendarUrl = CalendarSender.calendarUrl();
         String calendarId = CalendarSender.calendarIdForResource(eventDetails.resourceId());
         String calEventId = eventDetails.reservationId();
         log.info("reservationId = " + calEventId);
@@ -61,7 +61,6 @@ public class GoogleCalendar implements CalendarSender {
                 .setLocation("Mannheimer Str. 50, 68535 Edingen-Neckarhausen")//todo: read from FacilityEntity state via EventDetails
                 .setDescription("Court: " + courtLabel
                         + "\nPlayers: " + players
-                        + "\nCalendar: " + facilityCalendarUrl
                         + "\nReservation ID: " + eventDetails.reservationId())
                 .setStart(interval[0])
                 .setEnd(interval[1])

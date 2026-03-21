@@ -6,9 +6,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.IOException;
-import java.net.URI;
-import java.net.URLEncoder;
-import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -37,19 +34,12 @@ public interface CalendarSender {
             String countryZone = googleConfig.getString("ctz");
             Config calendarMap = googleConfig.getConfig("resource-calendars");
 
-            try {
-                String srcParams = resourceIds.stream()
-                    .filter(calendarMap::hasPath)
-                    .map(id -> "src=" + URLEncoder.encode(calendarMap.getString(id), StandardCharsets.UTF_8))
-                    .collect(Collectors.joining("&"));
-                if (srcParams.isEmpty()) return urlString;
-                String query = "ctz=" + URLEncoder.encode(countryZone, StandardCharsets.UTF_8) + "&" + srcParams;
-                URI uri = new URI(scheme, host, path, query, null);
-                urlString = uri.toURL().toString();
-            } catch (Exception e) {
-                log.error("URL parsing failed", e);
-                return urlString;
-            }
+            String srcParams = resourceIds.stream()
+                .filter(calendarMap::hasPath)
+                .map(id -> "src=" + calendarMap.getString(id))
+                .collect(Collectors.joining("&"));
+            if (srcParams.isEmpty()) return urlString;
+            urlString = scheme + "://" + host + path + "?ctz=" + countryZone + "&" + srcParams;
         }
         return urlString;
     }

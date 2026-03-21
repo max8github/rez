@@ -136,8 +136,7 @@ public class BookingService {
             .invoke(command);
 
         log.info("Booking initiated, reservationId={}", result.reservationId());
-        return "Got it! I'm checking availability — I'll let you know shortly. Reference ID: `" + result.reservationId() + "`"
-            + " for " + String.join(", ", players) + " on " + dateTimeIso + ".";
+        return "";
     }
 
     /**
@@ -157,7 +156,7 @@ public class BookingService {
                 .forEventSourcedEntity(reservationId)
                 .method(ReservationEntity::cancelRequest)
                 .invoke();
-            return "Reservation " + reservationId + " has been cancelled.";
+            return "";
         } catch (Exception e) {
             log.warn("Cancel failed for reservationId={}: {}", reservationId, e.getMessage());
             return "Could not cancel reservation " + reservationId + ": " + e.getMessage();
