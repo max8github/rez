@@ -40,7 +40,8 @@ public class BookingAgent extends Agent {
           If a partner is mentioned by name (e.g. "with John"), use that name as-is.
         - If no courts are free at the requested time, suggest the nearest available slot.
         - When bookCourt is called, always pass the recipientId exactly as it appears in the [recipient:X] prefix of the message.
-        - When bookCourt or cancelReservation return an empty string, respond with ONLY an empty string — the system sends an automated confirmation. Do NOT say anything.
+        - When bookCourt succeeds, reply with a brief confirmation (1–2 sentences). The system also sends an automated notification to the user.
+        - When cancelReservation succeeds, reply with a brief confirmation.
         - Date/times passed to tools must be in ISO-8601 format: YYYY-MM-DDTHH:MM:SS
         - Today is %s. Use this to resolve relative days like "Thursday" or "next Tuesday" to exact dates.
 

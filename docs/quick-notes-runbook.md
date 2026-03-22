@@ -4,52 +4,56 @@ For cloud deployment steps see [docs/deployment.md](deployment.md).
 
 # CLI - LOCAL
 
-Provision facility and courts for local test
+Start local (stub calendar + notifier, no external API calls):
 
 ```shell
 cd /Users/max/code/rez/reservation/reservation
-mvn exec:java -Plocal
+mvn compile exec:java -Plocal
 ```
 
+## Provision facility and courts
+
+Create facility — returns a bare UUID (the `f_` prefix is added internally):
+
 ```shell
-curl -s -X POST http://localhost:9000/facility/test \
+FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
   -H "Content-Type: application/json" \
-  -d '{"name":"Test Club","address":{"street":"Test St 1","city":"12345 Test"}}'
-
-curl -s -X POST http://localhost:9000/facility/test/resource/court-1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Court 1"}'
-
-curl -s -X POST http://localhost:9000/facility/test/resource/court-2 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Court 2"}'
+  -d '{
+    "name": "Test Club",
+    "address": {"street": "Test St 1", "city": "12345 Test"},
+    "timezone": "Europe/Berlin",
+    "botToken": "bot:local-test",
+    "adminUserIds": ["123456"]
+  }')
+echo "Facility ID: $FACILITY_ID"
 ```
 
-Then use f_test as the facility_id in the agent messages (that's what gets stored internally).
+Create courts — each returns a bare UUID for the resource:
 
-Book with Matrix:
 ```shell
-curl -s -X POST http://localhost:9000/matrix/message \
+COURT1=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
   -H "Content-Type: application/json" \
-  -d '{"facility_id":"f_test","sender":"@max:local","sender_name":"Max","message":"Book a court tomorrow at 10am for Max and Anna"}'
+  -d '{"name": "Court 1", "calendarId": "local-cal-1@group.calendar.google.com"}')
+echo "Court 1 ID: $COURT1"
+
+COURT2=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Court 2", "calendarId": "local-cal-2@group.calendar.google.com"}')
+echo "Court 2 ID: $COURT2"
 ```
 
-Check the court was booked:
+Verify facility state:
+
 ```shell
-curl -s http://localhost:9000/facility/test
-
-curl -s http://localhost:9000/resource/r_court-1
-
-
-curl -s http://localhost:9000/facility/f_test/reservations
-
-curl -s http://localhost:9000/facility/f_test/resource/r_court-1/reservations
-
+curl -s http://localhost:9000/facility/$FACILITY_ID
 ```
 
-Book with Telegram:
+## Book with Telegram
+
+The bot token in the path must match what was stored on the facility:
+
 ```shell
-curl -s -X POST http://localhost:9000/telegram/webhook \
+curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -59,4 +63,53 @@ curl -s -X POST http://localhost:9000/telegram/webhook \
       "text": "Book a court tomorrow at 10am for Max and Anna"
     }
   }'
+```
+
+Wrong/unknown bot token (should log a warning and return 200 with no action):
+
+```shell
+curl -s -X POST "http://localhost:9000/telegram/bot:unknown/webhook" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {
+      "message_id": 2,
+      "from": {"id": 999, "first_name": "Ghost", "username": "ghost"},
+      "chat": {"id": 999, "type": "private"},
+      "text": "Book something"
+    }
+  }'
+```
+
+## Book with Matrix (still uses facilityId directly)
+
+```shell
+curl -s -X POST http://localhost:9000/matrix/message \
+  -H "Content-Type: application/json" \
+  -d "{\"facility_id\":\"$FACILITY_ID\",\"sender\":\"@max:local\",\"sender_name\":\"Max\",\"message\":\"Book a court tomorrow at 10am for Max and Anna\"}"
+```
+The above will produce, say, reservation `7bcdf6d0`.
+
+### Cancel the reservation
+
+```shell
+curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
+  -H "Content-Type: application/json" \
+  -d '{
+    "message": {
+      "message_id": 2,
+      "from": {"id": 123456, "first_name": "Max", "username": "max"},
+      "chat": {"id": 123456, "type": "private"},
+      "text": "Cancel reservation 7bcdf6d0"
+    }
+  }'
+```
+
+## Check bookings
+
+```shell
+# All reservations for the facility
+curl -s http://localhost:9000/facility/$FACILITY_ID/reservations
+
+# Resource view (calendarId should be present)
+curl -s http://localhost:9000/resource/$COURT1
 ```

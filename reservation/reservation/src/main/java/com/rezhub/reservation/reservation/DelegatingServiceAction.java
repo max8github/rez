@@ -71,7 +71,7 @@ public class DelegatingServiceAction extends Consumer {
         calendarSender.saveToGoogle(eventDetails)
             .thenCompose(result -> {
                 String attendees = String.join(", ", reservationDto.emails());
-                String courtLabel = resourceId.replace("court-", "Court ");
+                String courtLabel = resourceOpt.map(ResourceV::resourceName).orElse(resourceId);
                 String text = ("✅ Court booked!\n\n"
                     + "🎾 %s\n"
                     + "📅 %s\n"

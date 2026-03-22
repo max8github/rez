@@ -45,14 +45,17 @@ mvn clean compile
 ```
 
 The `googlecalendar` and other stub modules must be installed in the local Maven
-repository first (one-time setup, or after a `clean`):
+repository first (one-time setup, or after a version bump). Run from `reservation/`
+(the parent module) — **not** from `reservation/reservation/` to avoid triggering
+the Docker image build:
 
 ```bash
-cd ../../spi          && mvn package && mvn install:install-file -Dfile=target/spi-0.5.jar            -DgroupId=com.rezhub.reservation -DartifactId=spi            -Dversion=0.5 -Dpackaging=jar
-cd ../notifierstub    && mvn package && mvn install:install-file -Dfile=target/notifierstub-0.5.jar   -DgroupId=com.rezhub.reservation -DartifactId=notifierstub    -Dversion=0.5 -Dpackaging=jar
-cd ../googlecalendar  && mvn package && mvn install:install-file -Dfile=target/googlecalendar-0.5.jar -DgroupId=com.rezhub.reservation -DartifactId=googlecalendar  -Dversion=0.5 -Dpackaging=jar
-cd ../reservation
+cd /path/to/reservation  # the parent module, not reservation/reservation
+mvn install -pl spi,calendarstub,notifierstub,googlecalendar,telegramnotifier,twistnotifier -DskipTests
 ```
+
+Do **not** run `mvn install` from the parent root or from `reservation/reservation/` for
+local development — it triggers the Docker image build via the Akka Maven plugin.
 
 ## Run
 
@@ -61,7 +64,7 @@ cd ../reservation
 mvn exec:java
 
 # Local dev / testing: uses FakeCalendarSender (no Google API calls)
-mvn exec:java -Plocal
+mvn compile exec:java -Plocal
 ```
 
 Service starts on `http://localhost:9000`.

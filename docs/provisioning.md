@@ -36,14 +36,11 @@ Akka Cloud uses persistent storage. **Provisioning is one-time** — entities su
 restarts and redeployments. Do not re-run provisioning unless you are explicitly
 resetting/recreating a facility.
 
-### ID conventions (current)
+### ID conventions
 
-Caller supplies plain names (e.g. `etc1en`, `court-1`). Internally:
-- Facility entity ID: `f_{name}` (e.g. `f_etc1en`)
-- Resource entity ID: `r_{resourceId}` (e.g. `r_court-1`)
-
-> **Note:** ID generation will be internalized in a future release (backlog #3).
-> After that, endpoints will generate and return IDs — callers will not supply them.
+Callers never supply entity IDs. The API generates them internally:
+- `POST /facility` → returns a bare UUID; facility is stored as `f_{uuid}`
+- `POST /facility/{id}/resource` → returns a bare UUID; resource is stored as `r_{uuid}`
 
 ---
 
@@ -67,31 +64,9 @@ Create one Google Calendar per court in the club's Google account:
 4. Note the **Calendar ID** from Settings → Integrate calendar
    (format: `abc123@group.calendar.google.com`)
 
-> **Note:** Calendar IDs are currently stored in `application.conf` and require a rebuild
-> to add a new court. After backlog #7 is implemented, calendar IDs will be stored on
-> the resource entity and passed in via the provisioning API — no rebuild needed.
-
-### 3. Configure application.conf (current approach — pre backlog #7)
-
-Add entries to `reservation/reservation/src/main/resources/application.conf`:
-
-```
-google.resource-calendars {
-  "court-1" = "<calendar-id>"
-  "court-2" = "<calendar-id>"
-  "court-3" = "<calendar-id>"
-  "court-4" = "<calendar-id>"
-}
-```
-
-Then rebuild and redeploy (see [deployment.md](deployment.md)).
-
-### 4. Set Akka Cloud secrets (once per project — already done for rez-prod)
+### 3. Set Akka Cloud secrets (once per project — already done for rez-prod)
 
 ```shell
-akka secret create generic telegram-secret \
-  --literal token=<BOT_TOKEN> --project rez-prod
-
 akka secret create generic openai-secret \
   --literal api-key=<OPENAI_KEY> --project rez-prod
 
@@ -99,39 +74,17 @@ akka secret create generic google-service-account \
   --from-file credentials.json=<path-to-credentials.json> --project rez-prod
 ```
 
+> No `telegram-secret` needed — the bot token is stored on the facility entity and
+> routed dynamically via `FacilityByBotTokenView`.
+
 ---
 
 ## Provision a new facility (Rez Admin)
 
-### Current approach (pre bot-token-routing)
-
-Set environment variable before deploying:
-```
-FACILITY_ID=etc1en
-```
-
-Then provision the facility entity:
-
 ```shell
 HOST=https://damp-mud-7270.gcp-us-east1.akka.services
 
-curl -s -X POST $HOST/facility/etc1en \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Erster Tennisclub Edingen-Neckarhausen",
-    "address": {
-      "street": "Mannheimer Str. 50",
-      "city": "68535 Edingen-Neckarhausen"
-    }
-  }'
-```
-
-### Target approach (after bot-token-routing backlog item)
-
-No `FACILITY_ID` env var. Pass the bot token and Facility Admin user IDs at creation time:
-
-```shell
-curl -s -X POST $HOST/facility/etc1en \
+FACILITY_ID=$(curl -s -X POST $HOST/facility \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Erster Tennisclub Edingen-Neckarhausen",
@@ -139,41 +92,31 @@ curl -s -X POST $HOST/facility/etc1en \
       "street": "Mannheimer Str. 50",
       "city": "68535 Edingen-Neckarhausen"
     },
+    "timezone": "Europe/Berlin",
     "botToken": "123456789:ABCdef...",
     "adminUserIds": ["987654321"]
-  }'
+  }')
+echo "Facility ID: $FACILITY_ID"
 ```
 
-The deployment automatically routes incoming messages to the correct facility by bot token.
+The returned `FACILITY_ID` is the bare UUID. Use it for all subsequent commands.
 
 ---
 
 ## Provision courts (Facility Admin or Rez Admin)
 
-### Current approach (pre backlog #7)
-
-Calendar IDs are in `application.conf` (see Prerequisites above). Court entities are created
-without a calendarId parameter:
-
-```shell
-HOST=https://damp-mud-7270.gcp-us-east1.akka.services
-FACILITY=etc1en
-
-for i in 1 2 3 4; do
-  curl -s -X POST $HOST/facility/$FACILITY/resource/court-$i \
-    -H "Content-Type: application/json" \
-    -d "{\"name\": \"Court $i\"}"
-done
-```
-
-### Target approach (after backlog #7)
-
 Pass `calendarId` directly — no config change, no redeploy needed:
 
 ```shell
-curl -s -X POST $HOST/facility/$FACILITY/resource/court-1 \
+COURT1=$(curl -s -X POST $HOST/facility/$FACILITY_ID/resource \
   -H "Content-Type: application/json" \
-  -d '{"name": "Court 1", "calendarId": "abc123@group.calendar.google.com"}'
+  -d '{"name": "Court 1", "calendarId": "abc123@group.calendar.google.com"}')
+
+COURT2=$(curl -s -X POST $HOST/facility/$FACILITY_ID/resource \
+  -H "Content-Type: application/json" \
+  -d '{"name": "Court 2", "calendarId": "def456@group.calendar.google.com"}')
+
+# ...repeat for additional courts
 ```
 
 ---
@@ -186,10 +129,6 @@ Must be run once after initial deployment, and again after any hostname change:
 TOKEN=<bot-token>
 HOST=damp-mud-7270.gcp-us-east1.akka.services
 
-# Current (pre bot-token-routing)
-curl "https://api.telegram.org/bot$TOKEN/setWebhook?url=https://$HOST/telegram/webhook"
-
-# Target (after bot-token-routing)
 curl "https://api.telegram.org/bot$TOKEN/setWebhook?url=https://$HOST/telegram/$TOKEN/webhook"
 
 # Verify
@@ -201,14 +140,15 @@ curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"
 ## Verify provisioning
 
 ```shell
-# Check facility entity
-curl -s $HOST/facility/etc1en
+# Check facility entity (use the UUID returned at creation time)
+curl -s $HOST/facility/$FACILITY_ID
 
-# Check a resource entity (note the r_ prefix in the URL)
-curl -s $HOST/resource/r_court-1
+# Check a resource entity (use the UUID returned at creation time, r_ prefix added internally)
+curl -s $HOST/resource/$COURT1
 ```
 
-Expected: facility response includes `resourceIds: ["r_court-1", "r_court-2", ...]`
+Expected: facility response includes `resourceIds` with the registered court IDs,
+`botToken`, `timezone`, and `adminUserIds`.
 
 ---
 
@@ -222,7 +162,7 @@ Each facility has a `BookingPolicy`: `OPEN` (anyone can book) or `MEMBERS_ONLY`.
 Toggle via API:
 
 ```shell
-curl -s -X PUT $HOST/facility/etc1en/policy \
+curl -s -X PUT $HOST/facility/$FACILITY_ID/policy \
   -H "Content-Type: application/json" \
   -d '{"policy": "MEMBERS_ONLY"}'
 ```
@@ -230,7 +170,7 @@ curl -s -X PUT $HOST/facility/etc1en/policy \
 ### Add a member directly (Facility Admin)
 
 ```shell
-curl -s -X POST $HOST/facility/etc1en/members/987654321
+curl -s -X POST $HOST/facility/$FACILITY_ID/members/987654321
 ```
 
 ### Member self-registration flow
@@ -252,44 +192,19 @@ cd /Users/max/code/rez/reservation/reservation
 mvn exec:java -Plocal
 ```
 
-In a second terminal, provision and test:
-
-```shell
-# Provision
-curl -s -X POST http://localhost:9000/facility/test \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Test Club","address":{"street":"Test St 1","city":"12345 Test"}}'
-
-curl -s -X POST http://localhost:9000/facility/test/resource/court-1 \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Court 1"}'
-
-# Send a booking (requires OPENAI_API_KEY in env)
-curl -s -X POST http://localhost:9000/telegram/webhook \
-  -H "Content-Type: application/json" \
-  -d '{
-    "message": {
-      "message_id": 1,
-      "from": {"id": 123456, "first_name": "Max", "username": "max"},
-      "chat": {"id": 123456, "type": "private"},
-      "text": "Book a court tomorrow at 10am for Max and Anna"
-    }
-  }'
-
-# Verify the booking was stored
-curl -s http://localhost:9000/resource/r_court-1
-```
-
-> The local smoke run uses the real OpenAI API. After backlog #13 (test infra) is done,
-> `BookingAgentIntegrationTest` will cover the same flow without requiring an API key.
+See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl commands.
 
 ---
 
 ## ETC Edingen — current provisioned state (as of 2026-03-19)
 
+> **Note:** The existing `f_etc1en` facility and its courts (court-1…4) were provisioned
+> before the provisioning sprint. They lack `calendarId` on resources, and lack `timezone`,
+> `botToken`, `adminUserIds` on the facility. Re-provisioning is required to use the new API.
+
 | Item | Value |
 |------|-------|
-| Facility ID | `etc1en` |
+| Facility ID (old) | `etc1en` (stored as `f_etc1en`) |
 | Name | Erster Tennisclub Edingen-Neckarhausen |
 | Address | Mannheimer Str. 50, 68535 Edingen-Neckarhausen |
 | Courts | court-1, court-2, court-3, court-4 |

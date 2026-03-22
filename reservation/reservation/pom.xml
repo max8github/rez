@@ -4,12 +4,12 @@
   <parent>
     <groupId>com.rezhub.reservation</groupId>
     <artifactId>reservation-parent</artifactId>
-    <version>0.4</version>
+    <version>1.0</version>
   </parent>
 
   <groupId>com.rezhub</groupId>
   <artifactId>reservation</artifactId>
-  <version>0.9</version>
+  <version>1.0</version>
   <packaging>jar</packaging>
 
   <name>reservation</name>
@@ -18,7 +18,7 @@
     <dependency>
       <groupId>com.rezhub.reservation</groupId>
       <artifactId>spi</artifactId>
-      <version>0.5</version>
+      <version>1.0</version>
     </dependency>
 <dependency>
       <groupId>org.projectlombok</groupId>
@@ -45,12 +45,12 @@
         <dependency>
           <groupId>com.rezhub.reservation</groupId>
           <artifactId>googlecalendar</artifactId>
-          <version>0.5</version>
+          <version>1.0</version>
         </dependency>
         <dependency>
           <groupId>com.rezhub.reservation</groupId>
           <artifactId>telegramnotifier</artifactId>
-          <version>0.5</version>
+          <version>1.0</version>
         </dependency>
       </dependencies>
     </profile>
@@ -62,12 +62,12 @@
         <dependency>
           <groupId>com.rezhub.reservation</groupId>
           <artifactId>calendarstub</artifactId>
-          <version>0.5</version>
+          <version>1.0</version>
         </dependency>
         <dependency>
           <groupId>com.rezhub.reservation</groupId>
           <artifactId>notifierstub</artifactId>
-          <version>0.5</version>
+          <version>1.0</version>
         </dependency>
       </dependencies>
     </profile>

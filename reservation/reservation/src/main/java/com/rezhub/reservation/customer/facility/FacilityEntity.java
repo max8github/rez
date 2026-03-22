@@ -10,7 +10,6 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static com.rezhub.reservation.dto.Reservation.FACILITY;
 
 @Component(id = "facility")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
@@ -64,15 +63,9 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
         } else if (!stateName.equals(Resource.FORBIDDEN_NAME) && !name.equals(stateName)) {
             return effects().error("Entity with id " + commandContext().entityId() + " is already created");
         }
-        if (!id.startsWith(FACILITY) && !id.startsWith("stub")) {
-            String message = "The id provided, '" + id + "', is not valid for a Pool: it must start with the prefix '" + FACILITY + "' (or 'stub' for tests)";
-            log.error(message);
-            return effects().error(message);
-        } else {
-            return effects()
-                .persist(new FacilityEvent.Created(id, facility))
-                .thenReply(newState -> id);
-        }
+        return effects()
+            .persist(new FacilityEvent.Created(id, facility))
+            .thenReply(newState -> id);
     }
 
     public Effect<String> rename(String newName) {

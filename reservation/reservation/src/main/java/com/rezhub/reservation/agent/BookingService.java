@@ -139,7 +139,7 @@ public class BookingService {
             .invoke(command);
 
         log.info("Booking initiated, reservationId={}", result.reservationId());
-        return "";
+        return "Booking request submitted. Reservation ID: " + result.reservationId() + ". The system is processing it.";
     }
 
     /**
@@ -159,7 +159,7 @@ public class BookingService {
                 .forEventSourcedEntity(reservationId)
                 .method(ReservationEntity::cancelRequest)
                 .invoke();
-            return "";
+            return "Cancellation request submitted for reservation " + reservationId + ".";
         } catch (Exception e) {
             log.warn("Cancel failed for reservationId={}: {}", reservationId, e.getMessage());
             return "Could not cancel reservation " + reservationId + ": " + e.getMessage();
@@ -168,9 +168,8 @@ public class BookingService {
 
     // --- helpers ---
 
-    /** Ensures the facilityId has the internal "f_" prefix, regardless of what the caller supplied. */
     private String toInternalFacilityId(String facilityId) {
-        return facilityId.startsWith(Reservation.FACILITY) ? facilityId : Reservation.FACILITY + facilityId;
+        return facilityId;
     }
 
     private boolean isAvailableAt(ResourceV resource, LocalDateTime requestedTime) {

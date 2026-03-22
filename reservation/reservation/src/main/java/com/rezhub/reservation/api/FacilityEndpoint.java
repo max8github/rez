@@ -10,14 +10,13 @@ import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.AddressState;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.Reservation;
 
 import java.util.UUID;
 
 /**
  * HTTP endpoint for Facility operations.
  *
- * IDs are generated internally — callers never supply or see the internal "f_" prefix.
+ * IDs are generated internally — callers never supply entity IDs.
  *
  * Provisioning a facility with its courts:
  *   POST /facility                                    { "name": "Padel Club", "address": {...}, "timezone": "Europe/Berlin", "botToken": "..." }
@@ -40,7 +39,7 @@ public class FacilityEndpoint {
     public String createFacility(Facility facility) {
         String id = UUID.randomUUID().toString().replace("-", "");
         componentClient
-            .forEventSourcedEntity(toFacilityId(id))
+            .forEventSourcedEntity(id)
             .method(FacilityEntity::create)
             .invoke(facility);
         return id;
@@ -49,7 +48,7 @@ public class FacilityEndpoint {
     @Get("/{facilityId}")
     public Facility getFacility(String facilityId) {
         return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::getFacility)
             .invoke();
     }
@@ -57,7 +56,7 @@ public class FacilityEndpoint {
     @Put("/{facilityId}/name")
     public String renameFacility(String facilityId, RenameRequest request) {
         return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::rename)
             .invoke(request.name());
     }
@@ -65,7 +64,7 @@ public class FacilityEndpoint {
     @Put("/{facilityId}/address")
     public String changeAddress(String facilityId, AddressState address) {
         return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::changeAddress)
             .invoke(address);
     }
@@ -79,7 +78,7 @@ public class FacilityEndpoint {
         String resourceId = UUID.randomUUID().toString().replace("-", "");
         var command = new FacilityEntity.CreateAndRegisterResource(request.name(), resourceId, request.calendarId());
         componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::requestResourceCreateAndRegister)
             .invoke(command);
         return resourceId;
@@ -89,7 +88,7 @@ public class FacilityEndpoint {
     @Post("/{facilityId}/resources/{resourceId}")
     public String registerResource(String facilityId, String resourceId) {
         return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::registerResource)
             .invoke(resourceId);
     }
@@ -97,7 +96,7 @@ public class FacilityEndpoint {
     @Delete("/{facilityId}/resources/{resourceId}")
     public String unregisterResource(String facilityId, String resourceId) {
         return componentClient
-            .forEventSourcedEntity(toFacilityId(facilityId))
+            .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::unregisterResource)
             .invoke(resourceId);
     }
@@ -105,9 +104,4 @@ public class FacilityEndpoint {
     public record RenameRequest(String name) {}
     public record CreateResourceRequest(String name, String calendarId) {}
 
-    // --- internal helpers ---
-
-    static String toFacilityId(String id) {
-        return Reservation.FACILITY + id;
-    }
 }
