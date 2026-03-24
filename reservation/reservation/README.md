@@ -1,20 +1,24 @@
 # Rez — AI-Powered Court Booking
 
 Rez lets tennis club members book courts by sending a natural language message
-via [Matrix/Element](https://matrix.org). An AI agent interprets the request,
-checks availability, books the court, and replies conversationally. Confirmed
-bookings appear automatically in Google Calendar.
+via a chat app. An AI agent interprets the request, checks availability, books
+the court, and replies conversationally. Confirmed bookings appear automatically
+in Google Calendar.
+
+The messaging layer is pluggable. The current production integration is
+[Telegram](https://telegram.org). [Matrix/Element](https://matrix.org) support
+is partially implemented (`MatrixEndpoint`) but not active in production.
 
 ## Architecture
 
 ```
-Member (Element app)
+Member (chat app)
   │  natural language message
   ▼
-Matrix bot (bot.py, CT 113)
-  │  POST /matrix/message
+Messaging service (currently: Telegram)
+  │  POST /telegram/{botToken}/webhook  (or /matrix/message for Matrix)
   ▼
-MatrixEndpoint  (Akka HTTP)
+MessagingEndpoint  (Akka HTTP, e.g. TelegramEndpoint)
   │
   ▼
 BookingAgent    (Akka Agent, GPT-4o-mini)
@@ -54,8 +58,17 @@ cd /path/to/reservation  # the parent module, not reservation/reservation
 mvn install -pl spi,calendarstub,notifierstub,googlecalendar,telegramnotifier,twistnotifier -DskipTests
 ```
 
-Do **not** run `mvn install` from the parent root or from `reservation/reservation/` for
-local development — it triggers the Docker image build via the Akka Maven plugin.
+To build and push a production image to the Gitea registry, run from `reservation/reservation/`:
+
+```bash
+mvn clean install -DskipTests -Pstandalone
+docker tag reservation:1.0-<timestamp> gitea-reg.fritz.box:3000/max/rez:latest
+docker push gitea-reg.fritz.box:3000/max/rez:latest
+```
+
+The `-Pstandalone` profile (from `akka-javasdk-parent`) builds a production JIB image —
+dev-mode disabled, correct main class. The timestamp suffix is printed at the end of the
+Maven build output. There is no Dockerfile; the image is built entirely by the Maven plugin.
 
 ## Run
 
@@ -87,7 +100,8 @@ court calendars.
 ## Provisioning
 
 State is in-memory — the facility and courts must be reprovisioned on every
-restart. The facility ID must match `FACILITY_ID` in the Matrix bot config.
+restart. The facility ID must match the one registered against the Telegram bot
+token (via `FacilityByBotTokenView`).
 
 ```bash
 # Create facility (ID must match bot's FACILITY_ID)
@@ -110,20 +124,39 @@ curl -X POST http://localhost:9000/facility/4463962/resource/court-2 \
 > sets `facilityId` correctly in the ResourceView, which is required for
 > availability checks.
 
-## Matrix bot
+## Messaging integration
 
-The bot lives in `mini-dc/stacks/matrix/` and runs on CT 113 (lurch,
-`192.168.178.50`). It forwards every room message to `POST /matrix/message` on
-Rez. No trigger prefix — every message in the booking room is sent to the agent.
+Rez exposes one HTTP endpoint per supported messaging service. All endpoints
+follow the same pattern: receive an incoming message, invoke the BookingAgent
+asynchronously, and send the reply back via the corresponding `NotificationSender`
+implementation.
 
-Key env vars in `mini-dc/env/prod/matrix.env` (gitignored):
+### Telegram (current production integration)
+
+`TelegramEndpoint` receives webhook POSTs from Telegram at
+`POST /telegram/{botToken}/webhook`. The bot token in the path is used to look
+up the facility via `FacilityByBotTokenView`, so one Rez deployment can serve
+multiple facilities with different bots — no `FACILITY_ID` env var needed.
+
+**Required env var:**
 
 | Variable | Description |
 |---|---|
-| `REZ_URL` | Base URL of the Rez service, e.g. `http://192.168.178.82:9000` |
-| `FACILITY_ID` | Facility ID without `f_` prefix, e.g. `4463962` |
-| `MATRIX_USER_ID` | Bot's Matrix ID, e.g. `@ollama:fritz.box` |
-| `MATRIX_PASSWORD` | Bot's Matrix password |
+| `TELEGRAM_BOT_TOKEN` | Bot token from [@BotFather](https://t.me/botfather), used by `TelegramNotifier` to send replies |
+
+**One-time webhook registration** (run after each deploy):
+
+```bash
+curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url=https://{rez-host}/telegram/{TOKEN}/webhook"
+```
+
+Rez must be reachable from the public internet over HTTPS for Telegram to deliver webhooks.
+
+### Matrix (partial implementation, not active in production)
+
+`MatrixEndpoint` at `POST /matrix/message` exists but is synchronous and lacks
+a `matrixnotifier` module. See `REVIEW_NOTES.md` for what remains to be done.
+Matrix worked on LAN but was not successfully exposed externally.
 
 ### LAN-only workaround (socat)
 
@@ -140,11 +173,11 @@ deployed behind a reverse proxy (nginx/caddy) or configured to bind to
 
 ## Deployment
 
-Rez is deployed on lurch as a Docker service alongside Matrix. See the
-`stacks/matrix/` stack in the [mini-dc](https://gitea-ssh.fritz.box/max/mini-dc)
-repo for the full deployment setup, including:
+Rez is deployed on lurch (CT 113, `192.168.178.50`) as a Docker service. See the
+[mini-dc](https://gitea-ssh.fritz.box/max/mini-dc) repo for the full deployment
+setup, including:
 - `compose.yaml` — the `rez` service definition
-- `env/prod/matrix.env` — environment variables (OPENAI_API_KEY, paths)
+- `env/prod/rez.env` (or equivalent) — environment variables (`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.)
 - Instructions for placing `secrets/credentials.json` on the host
 
 ## Google Calendar embed
