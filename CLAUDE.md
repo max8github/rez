@@ -5,9 +5,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 See the respective README.md files for each project overview, and how to build, test and run the applications:
 - `reservation` (see @reservation/README.md)
-- `helloworld-agent` (see @helloworld-agent/README.md)
-- `multi-agent` (see @multi-agent/README.md)
-- `shopping-cart-quickstart` (see @shopping-cart-quickstart/README.md)
+- `helloworld-agent` (see @akka-samples/helloworld-agent/README.md)
+- `multi-agent` (see @akka-samples/multi-agent/README.md)
+- `shopping-cart-quickstart` (see @akka-samples/shopping-cart-quickstart/README.md)
 
 ## Coding guidelines
 
