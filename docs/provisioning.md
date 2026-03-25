@@ -38,9 +38,8 @@ resetting/recreating a facility.
 
 ### ID conventions
 
-Callers never supply entity IDs. The API generates them internally:
-- `POST /facility` → returns a bare UUID; facility is stored as `f_{uuid}`
-- `POST /facility/{id}/resource` → returns a bare UUID; resource is stored as `r_{uuid}`
+Callers never supply entity IDs. The API generates and returns bare UUIDs.
+Keep the returned IDs — they are needed for subsequent resource provisioning.
 
 ---
 
@@ -64,7 +63,13 @@ Create one Google Calendar per court in the club's Google account:
 4. Note the **Calendar ID** from Settings → Integrate calendar
    (format: `abc123@group.calendar.google.com`)
 
-### 3. Set Akka Cloud secrets (once per project — already done for rez-prod)
+### 3. Ensure secrets are in place
+
+**Standalone (lurch):** secrets are in `/Users/max/code/mini-dc/env/prod/rez.env`
+and mounted into the container. `OPENAI_API_KEY` and the Google credentials file
+(`secrets/credentials.json`) must be present.
+
+**Akka Cloud:** set once per project:
 
 ```shell
 akka secret create generic openai-secret \
@@ -82,7 +87,8 @@ akka secret create generic google-service-account \
 ## Provision a new facility (Rez Admin)
 
 ```shell
-HOST=https://damp-mud-7270.gcp-us-east1.akka.services
+HOST=https://maxdc.duckdns.org          # standalone (lurch)
+# HOST=https://<akka-cloud-hostname>    # Akka Cloud
 
 FACILITY_ID=$(curl -s -X POST $HOST/facility \
   -H "Content-Type: application/json" \
@@ -127,7 +133,7 @@ Must be run once after initial deployment, and again after any hostname change:
 
 ```shell
 TOKEN=<bot-token>
-HOST=damp-mud-7270.gcp-us-east1.akka.services
+HOST=maxdc.duckdns.org
 
 curl "https://api.telegram.org/bot$TOKEN/setWebhook?url=https://$HOST/telegram/$TOKEN/webhook"
 
@@ -196,19 +202,18 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 
 ---
 
-## ETC Edingen — current provisioned state (as of 2026-03-19)
+## ETC Edingen — current provisioned state (as of 2026-03-25)
 
-> **Note:** The existing `f_etc1en` facility and its courts (court-1…4) were provisioned
-> before the provisioning sprint. They lack `calendarId` on resources, and lack `timezone`,
-> `botToken`, `adminUserIds` on the facility. Re-provisioning is required to use the new API.
+Provisioned on standalone (lurch). **Note:** views/consumers not yet processing
+events — see [deployment.md](deployment.md) for the current blocker.
 
 | Item | Value |
 |------|-------|
-| Facility ID (old) | `etc1en` (stored as `f_etc1en`) |
+| Facility ID | `5fd6338d3a034593b4d368e0155b2d5e` |
 | Name | Erster Tennisclub Edingen-Neckarhausen |
 | Address | Mannheimer Str. 50, 68535 Edingen-Neckarhausen |
-| Courts | court-1, court-2, court-3, court-4 |
-| Akka Cloud host | `damp-mud-7270.gcp-us-east1.akka.services` |
+| Timezone | Europe/Berlin |
+| Host | `https://maxdc.duckdns.org` |
 | Google Calendar — court-1 | `3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com` |
 | Google Calendar — court-2 | `63hd39cd9ppt8tajp76vglt394@group.calendar.google.com` |
 | Google Calendar — court-3 | `42cf1e8db6c37f2a7c8f02dbf9b6fc9d497008ecd92a30892ea7b1a380c8e130@group.calendar.google.com` |

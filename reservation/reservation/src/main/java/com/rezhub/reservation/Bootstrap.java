@@ -31,6 +31,36 @@ public class Bootstrap implements ServiceSetup {
     @Override
     public void onStartup() {
         logger.info("Starting Reservation Application");
+
+        // Diagnose license/env: print key fingerprint and relevant env vars
+        String licenseKey = System.getenv("AKKA_LICENSE_KEY");
+        if (licenseKey == null || licenseKey.isBlank()) {
+            logger.warn("DIAG: AKKA_LICENSE_KEY is not set");
+        } else {
+            logger.info("DIAG: AKKA_LICENSE_KEY length={} first8={} last8={}",
+                licenseKey.length(),
+                licenseKey.substring(0, Math.min(8, licenseKey.length())),
+                licenseKey.substring(Math.max(0, licenseKey.length() - 8)));
+        }
+        logger.info("DIAG: DB_HOST={} DB_PORT={} DB_DATABASE={} DB_USER={}",
+            System.getenv("DB_HOST"),
+            System.getenv("DB_PORT"),
+            System.getenv("DB_DATABASE"),
+            System.getenv("DB_USER"));
+
+        // Print resolved HOCON values for the r2dbc connection factory
+        com.typesafe.config.Config cfg = com.typesafe.config.ConfigFactory.load();
+        String cfgPath = "akka.persistence.r2dbc.connection-factory";
+        if (cfg.hasPath(cfgPath)) {
+            com.typesafe.config.Config cf = cfg.getConfig(cfgPath);
+            logger.info("DIAG: r2dbc connection-factory host={} port={} database={} user={}",
+                cf.getString("host"),
+                cf.getString("port"),
+                cf.getString("database"),
+                cf.getString("user"));
+        } else {
+            logger.warn("DIAG: {} not found in config", cfgPath);
+        }
     }
 
     @Override

@@ -13,6 +13,10 @@ See the respective README.md files for each project overview, and how to build, 
 
 Use the guidelines in @akka-context/sdk/ai-coding-assistant-guidelines.html.md when writing code for projects `reservation` or `helloworld-agent` or `multi-agent` or `shopping-cart-quickstart`
 
+## Development plan
+
+See @docs/DEVELOPMENT_PLAN.md for the current blocker, backlog, and completed sprints.
+
 ## Akka documentation
 
 You find the reference documentation of Akka in the `akka-context` directory and sub-directories.

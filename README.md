@@ -88,5 +88,5 @@ the HTTP API and survive restarts. See [docs/provisioning.md](docs/provisioning.
 | [docs/provisioning.md](docs/provisioning.md) | How to onboard a new club |
 | [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md) | Local dev copy-paste commands |
 | [docs/user-onboarding.md](docs/user-onboarding.md) | End-user booking guide |
-| [reservation/docs/DEVELOPMENT_PLAN.md](reservation/docs/DEVELOPMENT_PLAN.md) | Development plan: current blocker, backlog, completed work |
+| [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) | Development plan: current blocker, backlog, completed work |
 | [reservation/reservation/README.md](reservation/reservation/README.md) | Module-level build and run reference |
