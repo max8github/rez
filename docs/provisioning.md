@@ -114,6 +114,24 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 
 ---
 
+## Eppelheimer Tennisclub — current provisioned state (as of 2026-03-26)
+
+Provisioned on standalone (lurch) via Cloudflare tunnel. Views/consumers pending projection throttling fix.
+
+| Item | Value |
+|------|-------|
+| Facility ID | `f1012c256e21484bbb31dbb32e1339c9` |
+| Name | Eppelheimer Tennisclub |
+| Address | Peter-Böhm-Straße 50, 69214 Eppelheim |
+| Timezone | Europe/Berlin |
+| Host | `https://rez.rezbotapp.com` |
+| Court 1 ID | `fb24a25dd48d44f7bdf2c8e2f05d9f40` |
+| Court 2 ID | `4efa98e770084434b3bc4c0c8738b4d5` |
+| Google Calendar — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
+| Google Calendar — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |
+
+---
+
 ## ETC Edingen — current provisioned state (as of 2026-03-25)
 
 Provisioned on standalone (lurch).

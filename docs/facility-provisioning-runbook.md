@@ -33,6 +33,12 @@ Create **one Google Calendar per court** in the club's Google account:
 
 Repeat for every court. Note all calendar IDs before continuing.
 
+> **Note — calendar ownership:** When creating calendars manually via the UI, your personal Google account is the owner and the service account is a shared editor. The older ETC calendars (`Tennis Court #1` etc.) have the service account (`kalix-rez@rezcal.iam.gserviceaccount.com`) as **owner** because they were originally created via the Calendar API authenticated as the service account.
+>
+> **Future improvement:** automate Step 2 by calling `POST https://www.googleapis.com/calendar/v3/calendars` with the service account credentials — the script can create, name, and return calendar IDs without touching the Google Calendar UI. This would make the provisioning script fully automated.
+>
+> **Fixing existing calendars:** if you want the service account to own a manually-created calendar, use **Settings → Sharing → Transfer ownership** (the option is visible in the sharing dropdown). After transfer, the service account becomes owner and you retain "Make changes and manage sharing".
+
 ---
 
 ## Step 3 — Run the provisioning script
@@ -41,28 +47,29 @@ The script creates the facility entity, registers each court, and registers the 
 
 ```shell
 ./scripts/provision-facility.sh \
-  --host     https://maxdc.duckdns.org \
-  --name     "Erster Tennisclub Edingen-Neckarhausen" \
-  --street   "Mannheimer Str. 50" \
-  --city     "68535 Edingen-Neckarhausen" \
-  --timezone "Europe/Berlin" \
-  --token    "123456789:ABCdef..." \
-  --admins   "987654321" \
-  --courts   "Court 1:abc123@group.calendar.google.com,Court 2:def456@group.calendar.google.com"
+  --name    "Erster Tennisclub Edingen-Neckarhausen" \
+  --street  "Mannheimer Str. 50" \
+  --city    "68535 Edingen-Neckarhausen" \
+  --token   "123456789:ABCdef..." \
+  --admins  "987654321" \
+  --courts  "Court 1:abc123@group.calendar.google.com,Court 2:def456@group.calendar.google.com"
 ```
+
+`--host`, `--webhook-host`, and `--timezone` all have sensible defaults and can be omitted for the standard deployment.
 
 **Arguments:**
 
-| Argument | Required | Description |
+| Argument | Default | Description |
 |---|---|---|
-| `--host` | yes | Base URL of the Rez service |
-| `--name` | yes | Full facility name |
-| `--street` | yes | Street address |
-| `--city` | yes | City and postal code |
-| `--timezone` | no | IANA timezone (default: `Europe/Berlin`) |
-| `--token` | yes | Telegram bot token |
-| `--admins` | no | Comma-separated Telegram user IDs for facility admins |
-| `--courts` | yes | Comma-separated `"Court Name:calendarId"` pairs |
+| `--host` | `https://rez.rezbotapp.com` | Base URL for Rez API calls |
+| `--webhook-host` | same as `--host` | Public URL Telegram sends webhooks to (Cloudflare tunnel) |
+| `--name` | required | Full facility name |
+| `--street` | required | Street address |
+| `--city` | required | City and postal code |
+| `--timezone` | `Europe/Berlin` | IANA timezone |
+| `--token` | required | Telegram bot token |
+| `--admins` | — | Comma-separated Telegram user IDs for facility admins |
+| `--courts` | required | Comma-separated `"Court Name:calendarId"` pairs |
 
 The script prints a summary with all generated IDs at the end.
 

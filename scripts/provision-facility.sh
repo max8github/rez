@@ -3,15 +3,20 @@
 #
 # Usage:
 #   ./scripts/provision-facility.sh \
-#     --host     https://maxdc.duckdns.org \
-#     --name     "Erster Tennisclub Edingen-Neckarhausen" \
-#     --street   "Mannheimer Str. 50" \
-#     --city     "68535 Edingen-Neckarhausen" \
-#     --timezone "Europe/Berlin" \
-#     --token    "123456789:ABCdef..." \
-#     --admins   "987654321,111222333" \
-#     --courts   "Court 1:abc@group.calendar.google.com,Court 2:def@group.calendar.google.com"
+#     --host          https://rez.rezbotapp.com \
+#     --webhook-host  https://rez.rezbotapp.com \
+#     --name          "Erster Tennisclub Edingen-Neckarhausen" \
+#     --street        "Mannheimer Str. 50" \
+#     --city          "68535 Edingen-Neckarhausen" \
+#     --timezone      "Europe/Berlin" \
+#     --token         "123456789:ABCdef..." \
+#     --admins        "987654321,111222333" \
+#     --courts        "Court 1:abc@group.calendar.google.com,Court 2:def@group.calendar.google.com"
 #
+# --host         Base URL for the Rez API (entity creation, verification).
+# --webhook-host Base URL Telegram should call for webhooks. Defaults to --host.
+#                Set this separately when the API is on an internal host but webhooks
+#                must go through a public tunnel (e.g. https://rez.rezbotapp.com).
 # --courts is a comma-separated list of "name:calendarId" pairs.
 # --admins is a comma-separated list of Telegram user IDs.
 #
@@ -19,18 +24,20 @@
 set -euo pipefail
 
 # ---- parse arguments --------------------------------------------------------
-HOST=""
+HOST="https://rez.rezbotapp.com"
+WEBHOOK_HOST="https://rez.rezbotapp.com"
 NAME=""
 STREET=""
 CITY=""
-TIMEZONE="Europe/Berlin"
+TIMEZONE="Europe/Berlin"   # can be overridden with --timezone
 BOT_TOKEN=""
 ADMINS=""
 COURTS=""
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --host)     HOST="$2";     shift 2 ;;
+    --host)          HOST="$2";         shift 2 ;;
+    --webhook-host)  WEBHOOK_HOST="$2"; shift 2 ;;
     --name)     NAME="$2";     shift 2 ;;
     --street)   STREET="$2";   shift 2 ;;
     --city)     CITY="$2";     shift 2 ;;
@@ -43,8 +50,10 @@ while [[ $# -gt 0 ]]; do
 done
 
 # ---- validate ---------------------------------------------------------------
+# default webhook host to api host if not specified
+[[ -z "$WEBHOOK_HOST" ]] && WEBHOOK_HOST="$HOST"
+
 missing=()
-[[ -z "$HOST" ]]      && missing+=("--host")
 [[ -z "$NAME" ]]      && missing+=("--name")
 [[ -z "$STREET" ]]    && missing+=("--street")
 [[ -z "$CITY" ]]      && missing+=("--city")
@@ -103,7 +112,7 @@ done
 # ---- 3. register Telegram webhook -------------------------------------------
 echo ""
 echo "==> Registering Telegram webhook"
-WEBHOOK_URL="https://${HOST#https://}/telegram/$BOT_TOKEN/webhook"
+WEBHOOK_URL="${WEBHOOK_HOST}/telegram/$BOT_TOKEN/webhook"
 WEBHOOK_RESULT=$(curl -sf "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=$WEBHOOK_URL")
 echo "    $WEBHOOK_RESULT"
 
