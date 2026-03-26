@@ -1,5 +1,9 @@
 # Deploying Rez
 
+---
+
+# Deploying Rez — Standalone (lurch, CT 115)
+
 ## Current status (2026-03-25) — standalone projections blocked
 
 Rez is deployed self-managed on lurch (CT 115, `https://maxdc.duckdns.org`).
@@ -32,7 +36,83 @@ If confirmed: either get a paid standalone license or switch back to Akka Cloud.
 
 ---
 
-# Deploying Rez to Akka Cloud
+## Deployment layout
+
+```
+deploy/standalone/compose.yaml      # Docker Compose stack (synced to lurch on deploy)
+deploy/standalone/rez.env.template  # Secret variable template — copy to .env and fill in
+deploy/standalone/.env              # Actual secrets (gitignored, lives on lurch at /home/rez/.env)
+```
+
+## Build and deploy
+
+```shell
+./deploy.sh standalone          # build, push to Gitea, sync compose.yaml, redeploy on lurch
+./deploy.sh standalone --no-deploy  # build + push only
+```
+
+## First-time setup on lurch (after CT 115 is provisioned)
+
+```shell
+# 1. Secrets file
+cp deploy/standalone/rez.env.template deploy/standalone/.env
+# edit .env with real values, then push to lurch:
+scp deploy/standalone/.env lurch:/tmp/rez.env
+ssh lurch "pct push 115 /tmp/rez.env /home/rez/.env && rm /tmp/rez.env"
+
+# 2. Google service account credentials
+scp /path/to/credentials.json lurch:/tmp/credentials.json
+ssh lurch "pct exec 115 -- mkdir -p /home/rez/secrets && \
+           pct push 115 /tmp/credentials.json /home/rez/secrets/credentials.json && \
+           rm /tmp/credentials.json"
+
+# 3. Register Telegram webhook (after cloudflared is running — see below)
+curl "https://api.telegram.org/bot<TOKEN>/setWebhook?url=https://rez.rezbotapp.com/telegram/<TOKEN>/webhook"
+curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
+```
+
+## Cloudflare Tunnel (CT 115)
+
+Telegram is effectively IPv4-only and the home connection is DS-Lite CGNAT (no IPv4
+inbound). A Cloudflare Tunnel runs outbound from CT 115, bypassing the NAT entirely.
+
+```
+Telegram → Cloudflare edge (IPv4/HTTPS) → cloudflared (CT 115) → localhost:9000 → Rez
+```
+
+**Current tunnel state:**
+- Domain: `rez.rezbotapp.com` (registered via Cloudflare Registrar)
+- Tunnel name: `rez`, ID: `70d2e39f-6cdb-44fc-9462-5c2a99e1ef11`
+- DNS: `rez.rezbotapp.com` CNAME → tunnel (managed by Cloudflare)
+- Service: `cloudflared.service` enabled and running in CT 115
+- Webhook: `https://rez.rezbotapp.com/telegram/{TOKEN}/webhook` ✓
+
+**Credentials** (backed up to Mac):
+- `/root/.cloudflared/70d2e39f-6cdb-44fc-9462-5c2a99e1ef11.json` (tunnel credentials)
+- `/root/.cloudflared/cert.pem` (origin cert)
+
+**If CT 115 needs to be rebuilt**, reinstall cloudflared, restore the two credential
+files, write `/root/.cloudflared/config.yml`:
+```yaml
+tunnel: 70d2e39f-6cdb-44fc-9462-5c2a99e1ef11
+credentials-file: /root/.cloudflared/70d2e39f-6cdb-44fc-9462-5c2a99e1ef11.json
+ingress:
+  - service: http://localhost:9000
+```
+Then `cloudflared service install && systemctl start cloudflared`.
+
+## Known quirk: single-node mode
+
+`STANDALONE_SINGLE_NODE=true` env var is silently ignored by runtime 1.5.35.
+Single-node mode must be set via JVM system property instead — already done in
+`compose.yaml`:
+```
+JAVA_TOOL_OPTIONS=-Dakka.runtime.standalone.single-node=true
+```
+
+---
+
+# Deploying Rez — Akka Cloud
 
 ## Critical: build with `mvn install`, not a custom Dockerfile
 
@@ -49,44 +129,19 @@ Remove these blocks before deploying to the cloud — the platform manages them:
 - `akka.actor.provider = cluster`
 - `akka.persistence.r2dbc { ... }`
 
-## Deployment layout
-
-```
-deploy/standalone/compose.yaml      # Docker Compose stack (synced to lurch on deploy)
-deploy/standalone/rez.env.template  # Secret variable template — copy to .env and fill in
-deploy/standalone/.env              # Actual secrets (gitignored, lives on lurch at /home/rez/.env)
-```
-
-First-time setup on lurch:
-```shell
-cp deploy/standalone/rez.env.template deploy/standalone/.env
-# edit .env with real values, then:
-scp deploy/standalone/.env lurch:/tmp/rez.env
-ssh lurch "pct push 115 /tmp/rez.env /home/rez/.env && rm /tmp/rez.env"
-# credentials.json: scp to lurch then pct push into /home/rez/secrets/credentials.json
-```
-
-## Build and push image
-
-Use `deploy.sh` from the repo root — it wraps `reservation/build-push.sh`:
+## Build and deploy
 
 ```shell
-./deploy.sh standalone          # build, push to Gitea, sync compose.yaml, redeploy on lurch
 ./deploy.sh cloud               # build, push to Docker Hub, deploy to Akka Cloud
-./deploy.sh standalone --no-deploy  # build + push only
+./deploy.sh cloud --no-deploy   # build + push only
 ```
 
-Manual steps (cloud):
+Manual steps:
 
 ```shell
 mvn install -DskipTests --settings settings.xml -Pgoogle
 docker tag reservation:1.0 max8github/rez:1.0
 docker push max8github/rez:1.0
-```
-
-## Deploy / redeploy
-
-```shell
 akka service deploy rez max8github/rez:0.x --project rez-prod
 ```
 
