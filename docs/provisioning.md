@@ -1,9 +1,10 @@
-# Rez Provisioning Guide
+# Rez Provisioning — Reference
 
-This document describes how to onboard a new facility (club) onto the Rez platform —
-from creating the Telegram bot to provisioning courts and managing members.
+This document covers one-time platform setup and keeps a record of provisioned facilities.
 
-For deployment mechanics (build, push, deploy to Akka Cloud) see [deployment.md](deployment.md).
+For the step-by-step runbook to onboard a new facility, see [facility-provisioning-runbook.md](facility-provisioning-runbook.md).
+
+For deployment mechanics (build, push, deploy) see [deployment.md](deployment.md).
 
 ---
 
@@ -32,9 +33,8 @@ facility for each:
 
 ### Persistent state
 
-Akka Cloud uses persistent storage. **Provisioning is one-time** — entities survive
-restarts and redeployments. Do not re-run provisioning unless you are explicitly
-resetting/recreating a facility.
+Akka uses persistent storage. **Provisioning is one-time** — entities survive restarts and
+redeployments. Do not re-run provisioning unless you are explicitly resetting/recreating a facility.
 
 ### ID conventions
 
@@ -43,33 +43,19 @@ Keep the returned IDs — they are needed for subsequent resource provisioning.
 
 ---
 
-## Prerequisites (one-time per club)
+## One-time infrastructure setup
 
-### 1. Create Telegram bot
+### Secrets (standalone — lurch)
 
-1. Open Telegram, start a chat with `@BotFather`
-2. Send `/newbot` and follow the prompts — provide a name and username
-3. Save the **bot token** (format: `123456789:ABCdef...`)
-4. Optionally set bot commands via `/setcommands`
+Secrets live in `/Users/max/code/mini-dc/env/prod/rez.env` and are mounted into the container.
+Required:
+- `OPENAI_API_KEY`
+- `AKKA_LICENSE_KEY`
+- Google credentials file at `secrets/credentials.json`
 
-### 2. Create Google Calendars
+### Secrets (Akka Cloud)
 
-Create one Google Calendar per court in the club's Google account:
-
-1. Go to Google Calendar → Settings → Add calendar → Create new calendar
-2. Name it clearly (e.g. "ETC Court 1")
-3. Share it with the Rez service account email (from `credentials.json`) with
-   "Make changes to events" permission
-4. Note the **Calendar ID** from Settings → Integrate calendar
-   (format: `abc123@group.calendar.google.com`)
-
-### 3. Ensure secrets are in place
-
-**Standalone (lurch):** secrets are in `/Users/max/code/mini-dc/env/prod/rez.env`
-and mounted into the container. `OPENAI_API_KEY` and the Google credentials file
-(`secrets/credentials.json`) must be present.
-
-**Akka Cloud:** set once per project:
+Set once per project:
 
 ```shell
 akka secret create generic openai-secret \
@@ -81,80 +67,6 @@ akka secret create generic google-service-account \
 
 > No `telegram-secret` needed — the bot token is stored on the facility entity and
 > routed dynamically via `FacilityByBotTokenView`.
-
----
-
-## Provision a new facility (Rez Admin)
-
-```shell
-HOST=https://maxdc.duckdns.org          # standalone (lurch)
-# HOST=https://<akka-cloud-hostname>    # Akka Cloud
-
-FACILITY_ID=$(curl -s -X POST $HOST/facility \
-  -H "Content-Type: application/json" \
-  -d '{
-    "name": "Erster Tennisclub Edingen-Neckarhausen",
-    "address": {
-      "street": "Mannheimer Str. 50",
-      "city": "68535 Edingen-Neckarhausen"
-    },
-    "timezone": "Europe/Berlin",
-    "botToken": "123456789:ABCdef...",
-    "adminUserIds": ["987654321"]
-  }')
-echo "Facility ID: $FACILITY_ID"
-```
-
-The returned `FACILITY_ID` is the bare UUID. Use it for all subsequent commands.
-
----
-
-## Provision courts (Facility Admin or Rez Admin)
-
-Pass `calendarId` directly — no config change, no redeploy needed:
-
-```shell
-COURT1=$(curl -s -X POST $HOST/facility/$FACILITY_ID/resource \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Court 1", "calendarId": "abc123@group.calendar.google.com"}')
-
-COURT2=$(curl -s -X POST $HOST/facility/$FACILITY_ID/resource \
-  -H "Content-Type: application/json" \
-  -d '{"name": "Court 2", "calendarId": "def456@group.calendar.google.com"}')
-
-# ...repeat for additional courts
-```
-
----
-
-## Register the Telegram webhook
-
-Must be run once after initial deployment, and again after any hostname change:
-
-```shell
-TOKEN=<bot-token>
-HOST=maxdc.duckdns.org
-
-curl "https://api.telegram.org/bot$TOKEN/setWebhook?url=https://$HOST/telegram/$TOKEN/webhook"
-
-# Verify
-curl "https://api.telegram.org/bot$TOKEN/getWebhookInfo"
-```
-
----
-
-## Verify provisioning
-
-```shell
-# Check facility entity (use the UUID returned at creation time)
-curl -s $HOST/facility/$FACILITY_ID
-
-# Check a resource entity (use the UUID returned at creation time, r_ prefix added internally)
-curl -s $HOST/resource/$COURT1
-```
-
-Expected: facility response includes `resourceIds` with the registered court IDs,
-`botToken`, `timezone`, and `adminUserIds`.
 
 ---
 
@@ -204,8 +116,7 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 
 ## ETC Edingen — current provisioned state (as of 2026-03-25)
 
-Provisioned on standalone (lurch). **Note:** views/consumers not yet processing
-events — see [deployment.md](deployment.md) for the current blocker.
+Provisioned on standalone (lurch).
 
 | Item | Value |
 |------|-------|
