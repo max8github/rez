@@ -33,6 +33,11 @@ case "$TARGET" in
     docker push "$IMAGE"
 
     if [[ "$DEPLOY" == "true" ]]; then
+      COMPOSE_SRC="$SCRIPT_DIR/../deploy/standalone/compose.yaml"
+      echo "==> Syncing compose.yaml to lurch ..."
+      scp "$COMPOSE_SRC" lurch:/tmp/rez-compose.yaml
+      ssh lurch "pct push 115 /tmp/rez-compose.yaml /home/rez/compose.yaml && rm /tmp/rez-compose.yaml"
+
       echo "==> Redeploying on lurch ..."
       ssh lurch "pct exec 115 -- docker compose \
         --env-file /home/rez/.env \

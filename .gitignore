@@ -1,3 +1,5 @@
 secrets/
 **/resources/credentials.json
 reservation/settings.xml
+deploy/standalone/.env
+.claude/settings.local.json

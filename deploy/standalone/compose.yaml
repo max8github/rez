@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:15-alpine
+    container_name: rez-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: rez
+      POSTGRES_USER: rez
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U rez"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  rez:
+    image: gitea-reg.fritz.box:3000/max/rez:latest
+    container_name: rez
+    restart: unless-stopped
+    ports:
+      - "9000:9000"
+    environment:
+      - STANDALONE_SINGLE_NODE=true
+      - JAVA_TOOL_OPTIONS=-Dakka.runtime.standalone.single-node=true
+      - AKKA_LICENSE_KEY=${AKKA_LICENSE_KEY}
+      - OPENAI_API_KEY=${OPENAI_API_KEY}
+      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_DATABASE=rez
+      - DB_USER=rez
+      - DB_PASSWORD=${DB_PASSWORD}
+    volumes:
+      - ./secrets/credentials.json:/app/secrets/credentials.json:ro
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  postgres-data:

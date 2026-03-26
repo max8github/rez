@@ -49,15 +49,31 @@ Remove these blocks before deploying to the cloud — the platform manages them:
 - `akka.actor.provider = cluster`
 - `akka.persistence.r2dbc { ... }`
 
+## Deployment layout
+
+```
+deploy/standalone/compose.yaml      # Docker Compose stack (synced to lurch on deploy)
+deploy/standalone/rez.env.template  # Secret variable template — copy to .env and fill in
+deploy/standalone/.env              # Actual secrets (gitignored, lives on lurch at /home/rez/.env)
+```
+
+First-time setup on lurch:
+```shell
+cp deploy/standalone/rez.env.template deploy/standalone/.env
+# edit .env with real values, then:
+scp deploy/standalone/.env lurch:/tmp/rez.env
+ssh lurch "pct push 115 /tmp/rez.env /home/rez/.env && rm /tmp/rez.env"
+# credentials.json: scp to lurch then pct push into /home/rez/secrets/credentials.json
+```
+
 ## Build and push image
 
-Use the build script — it handles both standalone (lurch) and cloud targets:
+Use `deploy.sh` from the repo root — it wraps `reservation/build-push.sh`:
 
 ```shell
-cd /Users/max/code/rez/reservation
-./build-push.sh standalone          # build, push to Gitea, redeploy on lurch
-./build-push.sh cloud               # build, push to Docker Hub, deploy to Akka Cloud
-./build-push.sh standalone --no-deploy  # build + push only
+./deploy.sh standalone          # build, push to Gitea, sync compose.yaml, redeploy on lurch
+./deploy.sh cloud               # build, push to Docker Hub, deploy to Akka Cloud
+./deploy.sh standalone --no-deploy  # build + push only
 ```
 
 Manual steps (cloud):
