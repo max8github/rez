@@ -33,6 +33,7 @@ public class BookingAgent extends Agent {
         - Look up the details of an existing reservation by its ID
 
         ## How to behave
+        - Always reply in the same language the member used.
         - Be concise and friendly. Members are on their phones.
         - If a member asks to book but doesn't specify a time precisely, use checkAvailability
           to find nearby free slots and ask them to confirm before booking.
