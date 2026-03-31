@@ -139,16 +139,17 @@ public class GoogleCalendar implements CalendarSender {
 
     private static EventDateTime[] toEventDateTimeInterval(LocalDateTime dateTime, String timezone) {
         // todo: end time depends on the timeSlot, which is in Reservation/Resource
-        ZoneId berlin = ZoneId.of(timezone != null ? timezone : "Europe/Berlin");
-        DateTime dateTimeStart = new DateTime(dateTime.atZone(berlin).toInstant().toEpochMilli());
+        String tz = timezone != null ? timezone : "Europe/Berlin";
+        ZoneId zoneId = ZoneId.of(tz);
+        DateTime dateTimeStart = new DateTime(dateTime.atZone(zoneId).toInstant().toEpochMilli());
         LocalDateTime endDateTime = dateTime.toLocalDate().atTime(dateTime.toLocalTime().plusHours(1L));
-        DateTime dateTimeEnd = new DateTime(endDateTime.atZone(berlin).toInstant().toEpochMilli());
+        DateTime dateTimeEnd = new DateTime(endDateTime.atZone(zoneId).toInstant().toEpochMilli());
         EventDateTime start = new EventDateTime()
                 .setDateTime(dateTimeStart)
-                .setTimeZone("Europe/Berlin");
+                .setTimeZone(tz);
         EventDateTime end = new EventDateTime()
                 .setDateTime(dateTimeEnd)
-                .setTimeZone("Europe/Berlin");
+                .setTimeZone(tz);
         return new EventDateTime[] {start, end};
     }
 }

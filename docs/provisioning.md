@@ -153,7 +153,7 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 | Google Calendar — campo-2 | `2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776@group.calendar.google.com` |
 | Google Calendar — campo-3 | `dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96@group.calendar.google.com` |
 | Google Calendar — campo-4 | `40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f@group.calendar.google.com` |
-| Aggregated calendar | [CTC calendar](https://calendar.google.com/calendar/embed?src=a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a%40group.calendar.google.com&src=2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776%40group.calendar.google.com&src=dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96%40group.calendar.google.com&src=40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f%40group.calendar.google.com) |
+| Aggregated calendar | [CTC calendar](https://calendar.google.com/calendar/embed?ctz=Europe%2FRome&src=a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a%40group.calendar.google.com&src=2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776%40group.calendar.google.com&src=dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96%40group.calendar.google.com&src=40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f%40group.calendar.google.com) |
 
 ---
 
