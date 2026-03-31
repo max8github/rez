@@ -72,7 +72,7 @@ public class TelegramEndpoint {
 
         var msg = update.message();
         long chatId = msg.chat().id();
-        String recipientId = String.valueOf(chatId);
+        String recipientId = botToken + ":" + chatId;
         String senderName = msg.from() != null && msg.from().first_name() != null
                 ? msg.from().first_name()
                 : "Player";

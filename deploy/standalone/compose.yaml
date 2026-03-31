@@ -26,7 +26,6 @@ services:
       - JAVA_TOOL_OPTIONS=-Dakka.runtime.standalone.single-node=true
       - AKKA_LICENSE_KEY=${AKKA_LICENSE_KEY}
       - OPENAI_API_KEY=${OPENAI_API_KEY}
-      - TELEGRAM_BOT_TOKEN=${TELEGRAM_BOT_TOKEN}
       - DB_HOST=postgres
       - DB_PORT=5432
       - DB_DATABASE=rez

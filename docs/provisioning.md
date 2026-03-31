@@ -114,36 +114,38 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 
 ---
 
-## Eppelheimer Tennisclub — current provisioned state (as of 2026-03-26)
-
-Provisioned on standalone (lurch) via Cloudflare tunnel. Views/consumers pending projection throttling fix.
+## ETC Edingen — current provisioned state (as of 2026-03-31, Akka Cloud)
 
 | Item | Value |
 |------|-------|
-| Facility ID | `f1012c256e21484bbb31dbb32e1339c9` |
-| Name | Eppelheimer Tennisclub |
-| Address | Peter-Böhm-Straße 50, 69214 Eppelheim |
-| Timezone | Europe/Berlin |
-| Host | `https://rez.rezbotapp.com` |
-| Court 1 ID | `fb24a25dd48d44f7bdf2c8e2f05d9f40` |
-| Court 2 ID | `4efa98e770084434b3bc4c0c8738b4d5` |
-| Google Calendar — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
-| Google Calendar — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |
-
----
-
-## ETC Edingen — current provisioned state (as of 2026-03-25)
-
-Provisioned on standalone (lurch).
-
-| Item | Value |
-|------|-------|
-| Facility ID | `5fd6338d3a034593b4d368e0155b2d5e` |
+| Facility ID | `3e03bc92f67b47ceac75a59122c0cb78` |
 | Name | Erster Tennisclub Edingen-Neckarhausen |
 | Address | Mannheimer Str. 50, 68535 Edingen-Neckarhausen |
 | Timezone | Europe/Berlin |
-| Host | `https://maxdc.duckdns.org` |
+| Bot | @EtcEnBookingBot (`86752466...`) |
+| Host | `https://small-frog-0557.europe-west1.akka.services` |
+| Court 1 ID | `2c5180fb87ab45b397a3273e011f3041` |
+| Court 2 ID | `0db28f44fb64460fbb85d2b959e4e858` |
+| Court 3 ID | `6409c1a9ec5941a0b9daa923d9e90d1d` |
+| Court 4 ID | `2810ce2d52c0408296deb01a169e59b8` |
 | Google Calendar — court-1 | `3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com` |
 | Google Calendar — court-2 | `63hd39cd9ppt8tajp76vglt394@group.calendar.google.com` |
 | Google Calendar — court-3 | `42cf1e8db6c37f2a7c8f02dbf9b6fc9d497008ecd92a30892ea7b1a380c8e130@group.calendar.google.com` |
 | Google Calendar — court-4 | `2bba1d7802c29ab3a4455cadaebc68b0bf79370ac009b053664c9a2decb2ea1a@group.calendar.google.com` |
+
+---
+
+## Eppelheimer Tennis-Club — current provisioned state (as of 2026-03-31, Akka Cloud)
+
+| Item | Value |
+|------|-------|
+| Facility ID | `9495ef3bb207422c875c0cea13b7addd` |
+| Name | Eppelheimer Tennis-Club e.V. |
+| Address | Peter-Böhm-Straße 50, 69214 Eppelheim |
+| Timezone | Europe/Berlin |
+| Bot | @EtcBookBot (`84181241...`) |
+| Host | `https://small-frog-0557.europe-west1.akka.services` |
+| Court 1 ID | `5846a631faea4dc89eacb3bd34507e70` |
+| Court 2 ID | `ba3ba76425254555883c0ece12806513` |
+| Google Calendar — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
+| Google Calendar — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |

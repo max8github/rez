@@ -163,9 +163,7 @@ akka secret create generic google-service-account --from-file credentials.json=<
 ## Environment variables
 
 ```
-FACILITY_ID=etc1en
 OPENAI_API_KEY        (from openai-secret)
-TELEGRAM_BOT_TOKEN    (from telegram-secret)
 GOOGLE_APPLICATION_CREDENTIALS  (from google-service-account)
 ```
 

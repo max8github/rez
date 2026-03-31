@@ -128,12 +128,6 @@ implementation.
 up the facility via `FacilityByBotTokenView`, so one Rez deployment can serve
 multiple facilities with different bots — no `FACILITY_ID` env var needed.
 
-**Required env var:**
-
-| Variable | Description |
-|---|---|
-| `TELEGRAM_BOT_TOKEN` | Bot token from [@BotFather](https://t.me/botfather), used by `TelegramNotifier` to send replies |
-
 **One-time webhook registration** (run after each deploy):
 
 ```bash
@@ -167,7 +161,7 @@ Rez is deployed on lurch (CT 113, `192.168.178.50`) as a Docker service. See the
 [mini-dc](https://gitea-ssh.fritz.box/max/mini-dc) repo for the full deployment
 setup, including:
 - `compose.yaml` — the `rez` service definition
-- `env/prod/rez.env` (or equivalent) — environment variables (`OPENAI_API_KEY`, `TELEGRAM_BOT_TOKEN`, etc.)
+- `env/prod/rez.env` (or equivalent) — environment variables (`OPENAI_API_KEY`, etc.)
 - Instructions for placing `secrets/credentials.json` on the host
 
 ## Google Calendar embed

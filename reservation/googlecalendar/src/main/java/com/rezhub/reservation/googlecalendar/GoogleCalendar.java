@@ -54,7 +54,7 @@ public class GoogleCalendar implements CalendarSender {
                 .setOverrides(Arrays.asList(reminderOverrides));
 
         String players = String.join(", ", eventDetails.emails());
-        String courtLabel = eventDetails.resourceId().replace("court-", "Court ");
+        String courtLabel = eventDetails.resourceName();
         Event event = new Event()
                 .setSummary(courtLabel + " · " + players)
                 .setId(calEventId)

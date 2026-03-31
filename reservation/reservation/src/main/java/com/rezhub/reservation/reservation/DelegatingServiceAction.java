@@ -65,13 +65,13 @@ public class DelegatingServiceAction extends Consumer {
         }
 
         String calUrl = CalendarSender.calendarUrlFromIds(facilityCalendarIds);
+        String courtLabel = resourceOpt.map(ResourceV::resourceName).orElse(resourceId);
 
-        var eventDetails = new CalendarSender.EventDetails(resourceId, reservationId, calendarId, timezone,
+        var eventDetails = new CalendarSender.EventDetails(resourceId, courtLabel, reservationId, calendarId, timezone,
                 event.resourceIds(), reservationDto.emails(), reservationDto.dateTime());
         calendarSender.saveToGoogle(eventDetails)
             .thenCompose(result -> {
                 String attendees = String.join(", ", reservationDto.emails());
-                String courtLabel = resourceOpt.map(ResourceV::resourceName).orElse(resourceId);
                 String text = ("✅ Court booked!\n\n"
                     + "🎾 %s\n"
                     + "📅 %s\n"

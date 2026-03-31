@@ -38,7 +38,7 @@ public interface CalendarSender {
 
     record CalendarEventDeletionResult(String calendarId, String calEventId) {}
 
-    record EventDetails(String resourceId, String reservationId, String calendarId, String timezone,
+    record EventDetails(String resourceId, String resourceName, String reservationId, String calendarId, String timezone,
                         java.util.Set<String> resourceIds,
                         List<String> emails,
                         LocalDateTime dateTime) {}
