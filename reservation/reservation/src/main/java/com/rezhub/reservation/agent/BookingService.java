@@ -21,7 +21,9 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -163,6 +165,51 @@ public class BookingService {
         } catch (Exception e) {
             log.warn("Cancel failed for reservationId={}: {}", reservationId, e.getMessage());
             return "Could not cancel reservation " + reservationId + ": " + e.getMessage();
+        }
+    }
+
+    /**
+     * Look up the details of an existing reservation by its ID.
+     *
+     * @param reservationId the reservation ID
+     * @return reservation details including state, players, date/time, court, and a calendar link
+     */
+    @FunctionTool(description = """
+        Look up the details of an existing reservation by its ID.
+        Returns the current state (FULFILLED, CANCELLED, etc.), players, date/time, court, and a Google Calendar link.
+        Use this when a member asks about a specific reservation ID.
+        """)
+    public String getReservationDetails(String reservationId) {
+        log.info("getReservationDetails: reservationId={}", reservationId);
+        try {
+            var state = componentClient
+                .forEventSourcedEntity(reservationId)
+                .method(ReservationEntity::getReservation)
+                .invoke();
+
+            String courtLabel = state.resourceId();
+            String calendarLink = "";
+            if (!state.resourceId().isBlank()) {
+                Optional<ResourceV> resource = componentClient.forView()
+                    .method(ResourceView::getResourceById)
+                    .invoke(state.resourceId());
+                if (resource.isPresent()) {
+                    courtLabel = resource.get().resourceName();
+                    String calendarId = resource.get().calendarId();
+                    if (calendarId != null && !calendarId.isBlank()) {
+                        String eid = Base64.getEncoder().encodeToString(
+                            (reservationId + " " + calendarId).getBytes());
+                        calendarLink = "\nCalendar: https://calendar.google.com/calendar/event?eid=" + eid;
+                    }
+                }
+            }
+
+            return ("Reservation %s\nState: %s\nCourt: %s\nDate/time: %s\nPlayers: %s%s")
+                .formatted(reservationId, state.state(), courtLabel, state.dateTime(),
+                    String.join(", ", state.emails()), calendarLink);
+        } catch (Exception e) {
+            log.warn("getReservationDetails failed for {}: {}", reservationId, e.getMessage());
+            return "Could not find reservation " + reservationId + ": " + e.getMessage();
         }
     }
 

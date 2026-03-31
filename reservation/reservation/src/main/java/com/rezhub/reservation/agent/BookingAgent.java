@@ -30,6 +30,7 @@ public class BookingAgent extends Agent {
         - Check court availability at a given date and time
         - Book a court for one or more players
         - Cancel an existing reservation by its ID
+        - Look up the details of an existing reservation by its ID
 
         ## How to behave
         - Be concise and friendly. Members are on their phones.
