@@ -1,0 +1,477 @@
+{
+  "info": {
+    "_postman_id": "8231a3bb-19b9-4fa2-882a-4d2532fdba8e",
+    "name": "Rez",
+    "description": "Rez reservation system — Akka SDK 3.x",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+    "_exporter_id": "1644939",
+    "_collection_link": "https://go.postman.co/collection/1644939-8231a3bb-19b9-4fa2-882a-4d2532fdba8e?source=collection_link"
+  },
+  "item": [
+    {
+      "name": "Facility",
+      "item": [
+        {
+          "name": "Create facility",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, \"\");",
+                  "pm.environment.set(\"facility_id\", id);",
+                  "console.info(\"facility_id set to: \" + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var facilityName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+                  "var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+                  "var city = pm.variables.replaceIn('{{$randomCity}}');",
+                  "var timezone = pm.variables.get('timezone');",
+                  "var botToken = pm.variables.get('botToken');",
+                  "",
+                  "console.info(\"Facility name is: \"+ facilityName);",
+                  "console.info(\"Street is: \"+ street);",
+                  "console.info(\"City is: \"+ city);",
+                  "console.info(\"Timezone is: \"+ timezone);",
+                  "console.info(\"Bot Token is: \"+ botToken);",
+                  "",
+                  "pm.variables.set(\"facilityName\", facilityName);",
+                  "pm.variables.set(\"street\", street);",
+                  "pm.variables.set(\"city\", city);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"resourceIds\": [],\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": []\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                ""
+              ]
+            },
+            "description": "Creates a facility; ID is auto-generated and returned. Stored in facility_id env var."
+          },
+          "response": []
+        },
+        {
+          "name": "Get facility",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Rename facility",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var newFacilityName = 'TC ' + pm.variables.replaceIn('{{$randomCity}}');",
+                  "pm.variables.set(\"newFacilityName\", newFacilityName);",
+                  "console.info(\"New facility name is: \"+ newFacilityName);",
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newFacilityName}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/name",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "name"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change facility address",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+                  "var city = pm.variables.replaceIn('{{$randomCity}}');",
+                  "",
+                  "console.info(\"Street is: \"+ street);",
+                  "console.info(\"City is: \"+ city);",
+                  "",
+                  "pm.variables.set(\"street\", street);",
+                  "pm.variables.set(\"city\", city);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"{{street}}\",\n  \"city\": \"{{city}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/address",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "address"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Resource",
+      "item": [
+        {
+          "name": "Create and register resource",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, \"\");",
+                  "pm.environment.set(\"resource_id\", id);",
+                  "console.info(\"resource_id set to: \" + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var calendar_id = pm.variables.replaceIn('{{$randomUUID}}');",
+                  "var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
+                  "",
+                  "console.info(\"calendar_id is: \"+ calendar_id);",
+                  "console.info(\"resourceName is: \"+ resourceName);",
+                  "",
+                  "pm.variables.set(\"calendarId\", calendar_id);",
+                  "pm.variables.set(\"resourceName\", resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "resource"
+              ]
+            },
+            "description": "Creates a resource and registers it with the facility. ID is auto-generated and returned. Stored in resource_id env var."
+          },
+          "response": []
+        },
+        {
+          "name": "Get resource",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Register existing resource with facility",
+          "request": {
+            "method": "POST",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "resources",
+                "{{resource_id}}"
+              ]
+            },
+            "description": "Registers an already-existing resource with a facility (no body needed)."
+          },
+          "response": []
+        },
+        {
+          "name": "Unregister resource from facility",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "resources",
+                "{{resource_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "User",
+      "item": [
+        {
+          "name": "Create user",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"name\": \"{{userName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "user",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get user",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "user",
+                "{{user_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change user name",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{newUserName}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/name",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "user",
+                "{{user_id}}",
+                "name"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Change user address",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"street\": \"{{street}}\",\n  \"city\": \"{{city}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/address",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "user",
+                "{{user_id}}",
+                "address"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "Reservation",
+      "item": [
+        {
+          "name": "Get reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "reservation",
+                "{{reservation_id}}"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    }
+  ]
+}
