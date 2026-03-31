@@ -4,25 +4,16 @@
 
 ## Current blocker
 
-### Standalone projections not running
+### Standalone projections not running — allegedly fixed, needs verification
 
 Rez is deployed self-managed on lurch (CT 115, `https://maxdc.duckdns.org`).
 Entities write events to the PostgreSQL journal fine, but **views and consumers
 never process any events** — `projection_offset` stays empty, views stay empty.
 
-**What was ruled out:**
-- DB config: Bootstrap DIAG confirms `r2dbc connection-factory host=postgres` ✓
-- Code: all integration tests pass including `FacilityByBotTokenView` ✓
-- `application.conf` override: `runtime-standalone.conf` already has correct
-  `${?DB_HOST}` substitution; no override needed ✓
+**Fix:** upgrade to the Akka SDK version that includes the patch — see
+[akka/akka-sdk#1349](https://github.com/akka/akka-sdk/issues/1349).
 
-**Suspected cause:** `ProjectionThrottlingController` fires every ~50 s but never
-triggers journal queries. Hypothesis: standalone runtime throttles/disables
-projections with a free/dev key ("Dev use only"). System also crashes every ~15 min
-with "Akka terminated." Email sent to Akka to confirm whether standalone projections
-require a paid license.
-
-**Diagnosis code in `Bootstrap.onStartup()`** — remove once resolved.
+**TODO: verify that projections are running after upgrading (April–May 2026).**
 
 ---
 
