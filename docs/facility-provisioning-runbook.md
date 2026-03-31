@@ -21,23 +21,19 @@ One bot per facility. If a club has distinct court groups with different policie
 
 ---
 
-## Step 2 — Create Google Calendars
+## Step 2 — Google Calendars (automated)
 
-Create **one Google Calendar per court** in the club's Google account:
+The provisioning script creates one Google Calendar per court automatically via the
+Calendar API, authenticated as the service account from `credentials.json`.
+No manual Google Calendar UI steps are needed.
 
-1. Go to [Google Calendar](https://calendar.google.com) → Settings → **Add calendar → Create new calendar**
-2. Name it clearly, e.g. "ETC Court 1"
-3. Share it with the Rez service account email (found in `credentials.json`) with **"Make changes to events"** permission
-4. Open **Settings → Integrate calendar** and copy the **Calendar ID**
-   (format: `abc123@group.calendar.google.com`)
+The service account becomes the **owner** of each created calendar. To also see the
+calendars in your own Google account, go to **Settings → Sharing** and add your
+personal email with "Make changes and manage sharing".
 
-Repeat for every court. Note all calendar IDs before continuing.
-
-> **Note — calendar ownership:** When creating calendars manually via the UI, your personal Google account is the owner and the service account is a shared editor. The older ETC calendars (`Tennis Court #1` etc.) have the service account (`kalix-rez@rezcal.iam.gserviceaccount.com`) as **owner** because they were originally created via the Calendar API authenticated as the service account.
->
-> **Future improvement:** automate Step 2 by calling `POST https://www.googleapis.com/calendar/v3/calendars` with the service account credentials — the script can create, name, and return calendar IDs without touching the Google Calendar UI. This would make the provisioning script fully automated.
->
-> **Fixing existing calendars:** if you want the service account to own a manually-created calendar, use **Settings → Sharing → Transfer ownership** (the option is visible in the sharing dropdown). After transfer, the service account becomes owner and you retain "Make changes and manage sharing".
+> **Using existing calendars:** if calendars already exist (e.g. manually created),
+> pass them as `"Court Name:calendarId"` pairs in `--courts` instead of bare names.
+> You can mix both forms in the same invocation.
 
 ---
 
@@ -47,12 +43,13 @@ The script creates the facility entity, registers each court, and registers the 
 
 ```shell
 ./scripts/provision-facility.sh \
-  --name    "Erster Tennisclub Edingen-Neckarhausen" \
-  --street  "Mannheimer Str. 50" \
-  --city    "68535 Edingen-Neckarhausen" \
-  --token   "123456789:ABCdef..." \
-  --admins  "987654321" \
-  --courts  "Court 1:abc123@group.calendar.google.com,Court 2:def456@group.calendar.google.com"
+  --name        "Erster Tennisclub Edingen-Neckarhausen" \
+  --street      "Mannheimer Str. 50" \
+  --city        "68535 Edingen-Neckarhausen" \
+  --token       "123456789:ABCdef..." \
+  --admins      "987654321" \
+  --credentials path/to/credentials.json \
+  --courts      "Court 1,Court 2,Court 3,Court 4"
 ```
 
 `--host`, `--webhook-host`, and `--timezone` all have sensible defaults and can be omitted for the standard deployment.
@@ -69,7 +66,8 @@ The script creates the facility entity, registers each court, and registers the 
 | `--timezone` | `Europe/Berlin` | IANA timezone |
 | `--token` | required | Telegram bot token |
 | `--admins` | — | Comma-separated Telegram user IDs for facility admins |
-| `--courts` | required | Comma-separated `"Court Name:calendarId"` pairs |
+| `--credentials` | `$GOOGLE_CREDENTIALS_FILE` or `./credentials.json` | Path to service account credentials JSON |
+| `--courts` | required | Comma-separated court names — script creates Google Calendars automatically. Pass `"Name:calendarId"` to use an existing calendar instead. |
 
 The script prints a summary with all generated IDs at the end.
 
