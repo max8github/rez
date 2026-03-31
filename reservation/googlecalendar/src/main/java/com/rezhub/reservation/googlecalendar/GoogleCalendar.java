@@ -58,7 +58,7 @@ public class GoogleCalendar implements CalendarSender {
         Event event = new Event()
                 .setSummary(courtLabel + " · " + players)
                 .setId(calEventId)
-                .setLocation("Mannheimer Str. 50, 68535 Edingen-Neckarhausen")//todo: read from FacilityEntity state via EventDetails
+                .setLocation(eventDetails.facilityAddress())
                 .setDescription("Court: " + courtLabel
                         + "\nPlayers: " + players
                         + "\nReservation ID: " + eventDetails.reservationId())

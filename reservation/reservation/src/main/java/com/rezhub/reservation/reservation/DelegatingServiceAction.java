@@ -49,6 +49,7 @@ public class DelegatingServiceAction extends Consumer {
 
         List<String> facilityCalendarIds = List.of();
         String timezone = "Europe/Berlin";
+        String facilityAddress = "";
         if (facilityId != null) {
             ResourceView.Resources facilityResources = componentClient.forView()
                 .method(ResourceView::getResource)
@@ -62,13 +63,16 @@ public class DelegatingServiceAction extends Consumer {
                 .method(FacilityEntity::getFacility)
                 .invoke();
             if (facility.timezone() != null) timezone = facility.timezone();
+            if (facility.address() != null) {
+                facilityAddress = facility.address().street() + ", " + facility.address().city();
+            }
         }
 
         String calUrl = CalendarSender.calendarUrlFromIds(facilityCalendarIds);
         String courtLabel = resourceOpt.map(ResourceV::resourceName).orElse(resourceId);
 
         var eventDetails = new CalendarSender.EventDetails(resourceId, courtLabel, reservationId, calendarId, timezone,
-                event.resourceIds(), reservationDto.emails(), reservationDto.dateTime());
+                event.resourceIds(), reservationDto.emails(), reservationDto.dateTime(), facilityAddress);
         calendarSender.saveToGoogle(eventDetails)
             .thenCompose(result -> {
                 String attendees = String.join(", ", reservationDto.emails());

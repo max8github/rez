@@ -135,6 +135,28 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 
 ---
 
+## CTC Circolo Tennistico Cittadellese — current provisioned state (as of 2026-03-31, Akka Cloud)
+
+| Item | Value |
+|------|-------|
+| Facility ID | `0f26e96e62af41479929c58829f560a4` |
+| Name | CTC Circolo Tennistico Cittadellese |
+| Address | Via Giovanni XXIII, 30, 35014 Fontaniva, PD, Italy |
+| Timezone | Europe/Rome |
+| Bot | @CTCBookBot (`75747972...`) |
+| Host | `https://small-frog-0557.europe-west1.akka.services` |
+| Campo 1 ID | `c9e33bc68d264d4ca15f1e5ddd816ace` |
+| Campo 2 ID | `1e08e2baee424624880b327c41c22228` |
+| Campo 3 ID | `b1404978279b48faa2d7c4fc1381ba59` |
+| Campo 4 ID | `8ba1ede262c940cc84de91393ceaff42` |
+| Google Calendar — campo-1 | `a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a@group.calendar.google.com` |
+| Google Calendar — campo-2 | `2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776@group.calendar.google.com` |
+| Google Calendar — campo-3 | `dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96@group.calendar.google.com` |
+| Google Calendar — campo-4 | `40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f@group.calendar.google.com` |
+| Aggregated calendar | [CTC calendar](https://calendar.google.com/calendar/embed?src=a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a%40group.calendar.google.com&src=2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776%40group.calendar.google.com&src=dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96%40group.calendar.google.com&src=40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f%40group.calendar.google.com) |
+
+---
+
 ## Eppelheimer Tennis-Club — current provisioned state (as of 2026-03-31, Akka Cloud)
 
 | Item | Value |

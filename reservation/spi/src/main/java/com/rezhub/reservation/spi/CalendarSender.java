@@ -41,5 +41,6 @@ public interface CalendarSender {
     record EventDetails(String resourceId, String resourceName, String reservationId, String calendarId, String timezone,
                         java.util.Set<String> resourceIds,
                         List<String> emails,
-                        LocalDateTime dateTime) {}
+                        LocalDateTime dateTime,
+                        String facilityAddress) {}
 }
