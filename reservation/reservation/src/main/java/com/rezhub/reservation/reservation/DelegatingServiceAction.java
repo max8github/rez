@@ -76,12 +76,11 @@ public class DelegatingServiceAction extends Consumer {
         calendarSender.saveToGoogle(eventDetails)
             .thenCompose(result -> {
                 String attendees = String.join(", ", reservationDto.emails());
-                String text = ("✅ Court booked!\n\n"
-                    + "🎾 %s\n"
+                String text = ("🎾 %s\n"
                     + "📅 %s\n"
                     + "👥 %s\n\n"
-                    + "🆔 ID: <code>%s</code>\n\n"
-                    + "<a href=\"%s\">Click here to see the club calendar</a>")
+                    + "🆔 <code>%s</code>\n\n"
+                    + "<a href=\"%s\">📆 Calendar</a>")
                     .formatted(courtLabel, reservationDto.dateTime(), attendees, reservationId, calUrl);
                 return notificationSender.send(recipientId, text);
             })
