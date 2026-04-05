@@ -112,6 +112,14 @@ mvn exec:java -Plocal
 
 See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl commands.
 
+Once a facility exists, its Rez calendar can be opened at:
+
+```text
+http://localhost:9000/calendar?facilityId=<FACILITY_ID>
+```
+
+This is Rez’s own read-only calendar view, separate from any Google Calendar embed.
+
 ---
 
 ## ETC Edingen — current provisioned state (as of 2026-03-31, Akka Cloud)

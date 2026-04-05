@@ -3,7 +3,7 @@
 Rez lets tennis club members book courts by sending a natural language message
 via a chat app. An AI agent interprets the request, checks availability, books
 the court, and replies conversationally. Confirmed bookings appear automatically
-in Google Calendar.
+in Google Calendar. Rez also serves a read-only calendar built from reservation events.
 
 The messaging layer is pluggable. The current production integration is
 [Telegram](https://telegram.org). [Matrix/Element](https://matrix.org) support
@@ -31,6 +31,19 @@ BookingService  (Spring @Component)
   └──▶ FacilityEntity    – broadcast to courts
           │
           ▼
+       ResourceEntity (court-1, court-2)
+          │  FULFILLED event
+          ▼
+       ReservationCalendarView
+          │
+          ▼
+       CalendarEndpoint  (GET /calendar, GET /api/calendar/events)
+          │
+          ▼
+       Rez Calendar UI
+          │
+          └──▶ read-only, state-derived calendar
+
        ResourceEntity (court-1, court-2)
           │  FULFILLED event
           ▼
@@ -96,6 +109,25 @@ Place the service account key at `secrets/credentials.json` (relative to
 `reservation/reservation/`). The file is gitignored. The service account is
 `kalix-rez@rezcal.iam.gserviceaccount.com` and must have write access to both
 court calendars.
+
+## Rez Calendar
+
+Rez exposes a read-only calendar page directly from the service:
+
+```text
+GET /calendar
+GET /api/calendar/events?facilityId=...&start=...&end=...
+```
+
+Open it like this:
+
+```text
+http://localhost:9000/calendar?facilityId=<FACILITY_ID>
+```
+
+This calendar is built from reservation events via `ReservationCalendarView`, so
+it can be rebuilt from Rez state. Google Calendar remains available in parallel
+as the existing external side-effect integration.
 
 ## Provisioning
 
