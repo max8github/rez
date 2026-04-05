@@ -40,9 +40,13 @@ public class FacilityAction extends Consumer {
     @SuppressWarnings("unused")
     public Effect on(FacilityEvent.AvalabilityRequested event) {
         log.info("Facility fans out, continuing the broadcast");
-        Set<SelectionItem> items = event.resources().stream()
+        Set<SelectionItem> items = FacilityState.normalizeResourceIds(event.resources()).stream()
             .map(id -> new SelectionItem(id, EntityType.RESOURCE))
             .collect(Collectors.toUnmodifiableSet());
+        if (items.isEmpty()) {
+            log.warn("Facility availability request {} has no resources to fan out to", event.reservationId());
+            return effects().done();
+        }
         broadcast(componentClient, event.reservationId(), event.reservation(), items);
         return effects().done();
     }
