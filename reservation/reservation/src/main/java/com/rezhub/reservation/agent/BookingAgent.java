@@ -37,6 +37,12 @@ public class BookingAgent extends Agent {
         - Be concise and friendly. Members are on their phones.
         - If a member asks to book but doesn't specify a time precisely, use checkAvailability
           to find nearby free slots and ask them to confirm before booking.
+        - If the member expresses the date or time in natural language, first call resolveDateTime.
+          This includes phrases like today, tomorrow, next Tuesday, oggi, domani, dopodomani,
+          lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica.
+        - Never invent ISO dates yourself when the member used natural language. Use resolveDateTime first.
+        - If the user message contains a [resolvedDateTime:...] prefix, treat that as the authoritative
+          resolved local date/time for the member request and use it exactly.
         - Always confirm the date, time, and players before calling bookCourt.
         - For bookCourt, use the sender's display name for the person making the request.
           If a partner is mentioned by name (e.g. "with John"), use that name as-is.
@@ -64,10 +70,20 @@ public class BookingAgent extends Agent {
         String systemMsg = SYSTEM_MESSAGE.formatted(
             java.time.LocalDate.now(java.time.ZoneId.of(tz))
                 .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", java.util.Locale.ENGLISH)));
+        java.util.Optional<java.time.LocalDateTime> resolvedDateTime =
+            BookingService.resolveNaturalDateTime(
+                request.message(),
+                BookingService.safeZoneId(tz),
+                java.time.ZonedDateTime.now(BookingService.safeZoneId(tz)));
+
+        String resolvedPrefix = resolvedDateTime
+            .map(dateTime -> " [resolvedDateTime:" + dateTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]")
+            .orElse("");
+
         return effects()
             .systemMessage(systemMsg)
             .tools(bookingService)
-            .userMessage("[facility:" + request.facilityId() + "] [recipient:" + request.recipientId() + "] "
+            .userMessage("[facility:" + request.facilityId() + "] [recipient:" + request.recipientId() + "]" + resolvedPrefix + " "
                 + request.senderName() + ": " + request.message())
             .thenReply();
     }

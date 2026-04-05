@@ -1,6 +1,7 @@
 package com.rezhub.reservation;
 
 import akka.javasdk.testkit.TestKitSupport;
+import com.rezhub.reservation.api.FacilityEndpoint;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
@@ -9,11 +10,13 @@ import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.junit.jupiter.api.Test;
 
 import java.util.Collections;
+import java.util.List;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
  * Integration tests for the provisioning sprint changes:
@@ -84,6 +87,16 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         assertThat(entry).isPresent();
         assertThat(entry.get().facilityId()).isEqualTo(facilityId);
         assertThat(entry.get().timezone()).isEqualTo("Europe/Berlin");
+
+        List<FacilityByBotTokenView.Entry> entries = componentClient.forView()
+            .method(FacilityByBotTokenView::getAllByBotToken)
+            .invoke(botToken)
+            .entries();
+
+        assertThat(entries).singleElement().satisfies(found -> {
+            assertThat(found.facilityId()).isEqualTo(facilityId);
+            assertThat(found.timezone()).isEqualTo("Europe/Berlin");
+        });
     }
 
     @Test
@@ -93,6 +106,13 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
             .invoke("bot:nonexistent-" + shortId());
 
         assertThat(entry).isEmpty();
+
+        List<FacilityByBotTokenView.Entry> entries = componentClient.forView()
+            .method(FacilityByBotTokenView::getAllByBotToken)
+            .invoke("bot:nonexistent-" + shortId())
+            .entries();
+
+        assertThat(entries).isEmpty();
     }
 
     @Test
@@ -114,6 +134,61 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
             .invoke("bot:null-should-not-exist");
 
         assertThat(entry).isEmpty();
+    }
+
+    @Test
+    public void clearBotToken_removesViewRow() throws Exception {
+        var facilityId = "f_prov-clear-bottoken-" + shortId();
+        var botToken = "bot:clear-" + shortId();
+        componentClient.forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::create)
+            .invoke(new Facility("Token Club", new Address("Bot St", "Berlin"),
+                Collections.emptySet(), "Europe/Berlin", botToken, null));
+
+        eventually(() ->
+                componentClient.forView()
+                    .method(FacilityByBotTokenView::getByBotToken)
+                    .invoke(botToken),
+            Optional::isPresent);
+
+        FacilityEndpoint endpoint = new FacilityEndpoint(componentClient);
+        assertThat(endpoint.clearBotToken(facilityId)).isEqualTo("OK");
+
+        Optional<FacilityByBotTokenView.Entry> entry = eventually(() ->
+                componentClient.forView()
+                    .method(FacilityByBotTokenView::getByBotToken)
+                    .invoke(botToken),
+            Optional::isEmpty);
+
+        assertThat(entry).isEmpty();
+    }
+
+    @Test
+    public void createFacility_rejectsDuplicateBotToken() throws Exception {
+        String botToken = "bot:duplicate-" + shortId();
+        FacilityEndpoint endpoint = new FacilityEndpoint(componentClient);
+
+        String firstId = endpoint.createFacility(new Facility(
+            "First Club", new Address("One St", "Berlin"),
+            Collections.emptySet(), "Europe/Berlin", botToken, null));
+
+        assertThat(firstId).isNotBlank();
+
+        List<FacilityByBotTokenView.Entry> entries = eventually(() ->
+                componentClient.forView()
+                    .method(FacilityByBotTokenView::getAllByBotToken)
+                    .invoke(botToken)
+                    .entries(),
+            found -> !found.isEmpty());
+
+        assertThat(entries).singleElement().satisfies(found ->
+            assertThat(found.facilityId()).isEqualTo(firstId));
+
+        assertThatThrownBy(() -> endpoint.createFacility(new Facility(
+            "Second Club", new Address("Two St", "Rome"),
+            Collections.emptySet(), "Europe/Rome", botToken, null)))
+            .isInstanceOf(IllegalArgumentException.class)
+            .hasMessageContaining("Bot token is already assigned");
     }
 
     // --- #7: ResourceView.getResourceById with calendarId ---

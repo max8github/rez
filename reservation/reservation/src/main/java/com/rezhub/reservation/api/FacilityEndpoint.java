@@ -10,7 +10,9 @@ import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.AddressState;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.view.FacilityByBotTokenView;
 
+import java.util.List;
 import java.util.UUID;
 
 /**
@@ -37,6 +39,7 @@ public class FacilityEndpoint {
 
     @Post("/")
     public String createFacility(Facility facility) {
+        validateUniqueBotToken(facility.botToken());
         String id = UUID.randomUUID().toString().replace("-", "");
         componentClient
             .forEventSourcedEntity(id)
@@ -67,6 +70,14 @@ public class FacilityEndpoint {
             .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::changeAddress)
             .invoke(address);
+    }
+
+    @Delete("/{facilityId}/botToken")
+    public String clearBotToken(String facilityId) {
+        return componentClient
+            .forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::clearBotToken)
+            .invoke();
     }
 
     /**
@@ -103,5 +114,21 @@ public class FacilityEndpoint {
 
     public record RenameRequest(String name) {}
     public record CreateResourceRequest(String name, String calendarId) {}
+
+    private void validateUniqueBotToken(String botToken) {
+        if (botToken == null || botToken.isBlank()) {
+            return;
+        }
+
+        List<FacilityByBotTokenView.Entry> matches = componentClient.forView()
+            .method(FacilityByBotTokenView::getAllByBotToken)
+            .invoke(botToken)
+            .entries();
+
+        if (!matches.isEmpty()) {
+            throw new IllegalArgumentException(
+                "Bot token is already assigned to facility " + matches.get(0).facilityId());
+        }
+    }
 
 }

@@ -10,7 +10,7 @@ import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.Optional;
+import java.util.List;
 
 /**
  * Receives Telegram webhook updates and dispatches them to the BookingAgent.
@@ -57,16 +57,23 @@ public class TelegramEndpoint {
             return;
         }
 
-        Optional<FacilityByBotTokenView.Entry> facilityOpt = componentClient.forView()
-            .method(FacilityByBotTokenView::getByBotToken)
-            .invoke(botToken);
+        List<FacilityByBotTokenView.Entry> facilities = componentClient.forView()
+            .method(FacilityByBotTokenView::getAllByBotToken)
+            .invoke(botToken)
+            .entries();
 
-        if (facilityOpt.isEmpty()) {
+        if (facilities.isEmpty()) {
             log.warn("No facility found for bot token (first 8 chars): {}...", botToken.substring(0, Math.min(8, botToken.length())));
             return;
         }
+        if (facilities.size() > 1) {
+            log.error("Ambiguous facility mapping for bot token (first 8 chars): {}... matched facilityIds={}",
+                botToken.substring(0, Math.min(8, botToken.length())),
+                facilities.stream().map(FacilityByBotTokenView.Entry::facilityId).toList());
+            return;
+        }
 
-        FacilityByBotTokenView.Entry facility = facilityOpt.get();
+        FacilityByBotTokenView.Entry facility = facilities.get(0);
         String facilityId = facility.facilityId();
         String timezone = facility.timezone() != null ? facility.timezone() : "Europe/Berlin";
 

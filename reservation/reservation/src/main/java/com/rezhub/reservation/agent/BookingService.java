@@ -5,6 +5,8 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timer.TimerScheduler;
 import com.rezhub.reservation.actions.RezAction;
 import com.rezhub.reservation.actions.TimerAction;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.dto.SelectionItem;
@@ -17,15 +19,23 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.DayOfWeek;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Base64;
+import java.util.Locale;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Provides booking-related function tools for BookingAgent.
@@ -35,6 +45,38 @@ public class BookingService {
 
     private static final Logger log = LoggerFactory.getLogger(BookingService.class);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
+    private static final DateTimeFormatter HOUR_ONLY_FMT = DateTimeFormatter.ofPattern("HH:mm");
+    private static final Pattern TIME_PATTERN = Pattern.compile(
+        "\\b(?:alle\\s*)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?\\b",
+        Pattern.CASE_INSENSITIVE);
+    private static final Map<String, DayOfWeek> WEEKDAYS = Map.ofEntries(
+        Map.entry("monday", DayOfWeek.MONDAY),
+        Map.entry("mon", DayOfWeek.MONDAY),
+        Map.entry("lunedi", DayOfWeek.MONDAY),
+        Map.entry("lunedi'", DayOfWeek.MONDAY),
+        Map.entry("martedi", DayOfWeek.TUESDAY),
+        Map.entry("martedi'", DayOfWeek.TUESDAY),
+        Map.entry("tuesday", DayOfWeek.TUESDAY),
+        Map.entry("tue", DayOfWeek.TUESDAY),
+        Map.entry("wednesday", DayOfWeek.WEDNESDAY),
+        Map.entry("wed", DayOfWeek.WEDNESDAY),
+        Map.entry("mercoledi", DayOfWeek.WEDNESDAY),
+        Map.entry("mercoledi'", DayOfWeek.WEDNESDAY),
+        Map.entry("thursday", DayOfWeek.THURSDAY),
+        Map.entry("thu", DayOfWeek.THURSDAY),
+        Map.entry("giovedi", DayOfWeek.THURSDAY),
+        Map.entry("giovedi'", DayOfWeek.THURSDAY),
+        Map.entry("friday", DayOfWeek.FRIDAY),
+        Map.entry("fri", DayOfWeek.FRIDAY),
+        Map.entry("venerdi", DayOfWeek.FRIDAY),
+        Map.entry("venerdi'", DayOfWeek.FRIDAY),
+        Map.entry("saturday", DayOfWeek.SATURDAY),
+        Map.entry("sat", DayOfWeek.SATURDAY),
+        Map.entry("sabato", DayOfWeek.SATURDAY),
+        Map.entry("sunday", DayOfWeek.SUNDAY),
+        Map.entry("sun", DayOfWeek.SUNDAY),
+        Map.entry("domenica", DayOfWeek.SUNDAY)
+    );
 
     private final ComponentClient componentClient;
     private final TimerScheduler timerScheduler;
@@ -64,6 +106,11 @@ public class BookingService {
             requestedTime = LocalDateTime.parse(dateTimeIso, ISO_FMT);
         } catch (DateTimeParseException e) {
             return "Invalid date/time format. Please use ISO-8601, e.g. 2026-03-20T11:00:00";
+        }
+
+        String pastValidation = validateNotInPast(internalFacilityId, requestedTime);
+        if (pastValidation != null) {
+            return pastValidation;
         }
 
         ResourceView.Resources resources = componentClient
@@ -122,6 +169,11 @@ public class BookingService {
 
         if (players.isEmpty()) {
             return "At least one player name is required.";
+        }
+
+        String pastValidation = validateNotInPast(internalFacilityId, dateTime);
+        if (pastValidation != null) {
+            return pastValidation;
         }
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
@@ -213,10 +265,133 @@ public class BookingService {
         }
     }
 
+    @FunctionTool(description = """
+        Resolve a natural-language date/time expression into an ISO-8601 local date-time.
+        Use this before checkAvailability or bookCourt whenever the member used phrases like
+        today, tomorrow, next Tuesday, oggi, domani, dopodomani, or weekday names.
+        timezone must be the facility IANA timezone, for example Europe/Rome.
+        Returns either a single ISO-8601 date-time or a short error asking for missing detail.
+        """)
+    public String resolveDateTime(String text, String timezone) {
+        ZoneId zoneId = safeZoneId(timezone);
+        Optional<LocalDateTime> resolved = resolveNaturalDateTime(text, zoneId, ZonedDateTime.now(zoneId));
+        if (resolved.isEmpty()) {
+            return "Could not resolve an exact date and time. Ask the member for a clearer date/time.";
+        }
+        return resolved.get().format(ISO_FMT);
+    }
+
     // --- helpers ---
 
     private String toInternalFacilityId(String facilityId) {
         return facilityId;
+    }
+
+    private String validateNotInPast(String facilityId, LocalDateTime requestedTime) {
+        ZoneId zoneId = facilityZoneId(facilityId);
+        LocalDateTime now = LocalDateTime.now(zoneId).minusMinutes(1);
+        if (requestedTime.isBefore(now)) {
+            return "The requested date/time is in the past for timezone " + zoneId +
+                ". Ask the member to confirm a future time.";
+        }
+        return null;
+    }
+
+    private ZoneId facilityZoneId(String facilityId) {
+        if (componentClient == null) {
+            return ZoneId.of("Europe/Berlin");
+        }
+        try {
+            Facility facility = componentClient
+                .forEventSourcedEntity(facilityId)
+                .method(FacilityEntity::getFacility)
+                .invoke();
+            return safeZoneId(facility != null ? facility.timezone() : null);
+        } catch (Exception e) {
+            log.warn("Could not resolve timezone for facility {}: {}", facilityId, e.getMessage());
+            return ZoneId.of("Europe/Berlin");
+        }
+    }
+
+    static ZoneId safeZoneId(String timezone) {
+        try {
+            return timezone == null || timezone.isBlank()
+                ? ZoneId.of("Europe/Berlin")
+                : ZoneId.of(timezone);
+        } catch (Exception e) {
+            return ZoneId.of("Europe/Berlin");
+        }
+    }
+
+    static Optional<LocalDateTime> resolveNaturalDateTime(String text, ZoneId zoneId, ZonedDateTime now) {
+        if (text == null || text.isBlank()) {
+            return Optional.empty();
+        }
+
+        String normalized = normalize(text);
+        LocalDate baseDate = null;
+
+        if (normalized.contains("dopodomani") || normalized.contains("day after tomorrow")) {
+            baseDate = now.toLocalDate().plusDays(2);
+        } else if (containsWord(normalized, "domani") || normalized.contains("tomorrow")) {
+            baseDate = now.toLocalDate().plusDays(1);
+        } else if (containsWord(normalized, "oggi") || normalized.contains("today")) {
+            baseDate = now.toLocalDate();
+        } else {
+            for (Map.Entry<String, DayOfWeek> entry : WEEKDAYS.entrySet()) {
+                if (containsWord(normalized, entry.getKey())) {
+                    baseDate = nextOccurrence(now.toLocalDate(), entry.getValue(), normalized);
+                    break;
+                }
+            }
+        }
+
+        if (baseDate == null) {
+            return Optional.empty();
+        }
+
+        Matcher matcher = TIME_PATTERN.matcher(normalized);
+        if (!matcher.find()) {
+            return Optional.empty();
+        }
+
+        int hour = Integer.parseInt(matcher.group(1));
+        int minute = matcher.group(2) != null ? Integer.parseInt(matcher.group(2)) : 0;
+        String meridiem = matcher.group(3);
+        if (meridiem != null) {
+            String lower = meridiem.toLowerCase(Locale.ROOT);
+            if (lower.equals("pm") && hour < 12) hour += 12;
+            if (lower.equals("am") && hour == 12) hour = 0;
+        }
+        if (hour > 23 || minute > 59) {
+            return Optional.empty();
+        }
+
+        return Optional.of(LocalDateTime.of(baseDate, java.time.LocalTime.of(hour, minute)));
+    }
+
+    private static LocalDate nextOccurrence(LocalDate start, DayOfWeek target, String normalizedText) {
+        int current = start.getDayOfWeek().getValue();
+        int wanted = target.getValue();
+        int delta = (wanted - current + 7) % 7;
+        if (delta == 0 || normalizedText.contains("next ") || normalizedText.contains("prossim")) {
+            delta = delta == 0 ? 7 : delta;
+        }
+        return start.plusDays(delta);
+    }
+
+    private static boolean containsWord(String text, String word) {
+        return Pattern.compile("\\b" + Pattern.quote(word) + "\\b").matcher(text).find();
+    }
+
+    private static String normalize(String text) {
+        return text.toLowerCase(Locale.ROOT)
+            .replace('à', 'a')
+            .replace('è', 'e')
+            .replace('é', 'e')
+            .replace('ì', 'i')
+            .replace('ò', 'o')
+            .replace('ù', 'u');
     }
 
     private boolean isAvailableAt(ResourceV resource, LocalDateTime requestedTime) {
@@ -248,7 +423,7 @@ public class BookingService {
                 .filter(r -> r.timeWindow().stream().anyMatch(e -> e.dateTime().equals(key)))
                 .count();
             if (busyCourts < resources.size()) {
-                return "The next available slot is around " + candidate.format(DateTimeFormatter.ofPattern("HH:mm")) + ".";
+                return "The next available slot is around " + candidate.format(HOUR_ONLY_FMT) + ".";
             }
         }
         return "No alternative slots found in the next 4 hours.";

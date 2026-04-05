@@ -25,6 +25,7 @@ public class FacilityByNameView extends View {
                 case FacilityEvent.Renamed e ->
                     effects().updateRow(rowState().withName(e.newName()));
                 case FacilityEvent.AddressChanged e -> effects().ignore();
+                case FacilityEvent.BotTokenUpdated e -> effects().ignore();
                 case FacilityEvent.ResourceCreateAndRegisterRequested e -> effects().ignore();
                 case FacilityEvent.ResourceRegistered e -> effects().ignore();
                 case FacilityEvent.ResourceUnregistered e -> effects().ignore();

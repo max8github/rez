@@ -17,6 +17,9 @@ public sealed interface FacilityEvent {
   @TypeName("facility-address-changed")
   record AddressChanged(AddressState addressState) implements FacilityEvent {}
 
+  @TypeName("facility-bot-token-updated")
+  record BotTokenUpdated(String facilityId, String botToken, String timezone) implements FacilityEvent {}
+
   @TypeName("resource-create-register-requested")
   record ResourceCreateAndRegisterRequested(String facilityId, String resourceName, String resourceId, String calendarId) implements FacilityEvent {}
 

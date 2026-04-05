@@ -1,5 +1,10 @@
 package com.rezhub.reservation.agent;
 
+import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.util.Optional;
+
 import org.junit.jupiter.api.Test;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -46,5 +51,52 @@ class BookingServiceTest {
         String result = service.checkAvailability("facility-1", "tomorrow");
 
         assertThat(result).contains("Invalid date/time format");
+    }
+
+    @Test
+    void resolveDateTime_parsesItalianTomorrow() {
+        Optional<LocalDateTime> result = BookingService.resolveNaturalDateTime(
+            "Puoi prenotarmi un campo domani alle 18 per giocare con Taddeo?",
+            ZoneId.of("Europe/Rome"),
+            ZonedDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Rome")));
+
+        assertThat(result).contains(LocalDateTime.of(2026, 4, 6, 18, 0));
+    }
+
+    @Test
+    void resolveDateTime_parsesEnglishTomorrowWithAmPm() {
+        Optional<LocalDateTime> result = BookingService.resolveNaturalDateTime(
+            "Book tomorrow at 6pm",
+            ZoneId.of("Europe/Rome"),
+            ZonedDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Rome")));
+
+        assertThat(result).contains(LocalDateTime.of(2026, 4, 6, 18, 0));
+    }
+
+    @Test
+    void resolveDateTime_parsesItalianWeekday() {
+        Optional<LocalDateTime> result = BookingService.resolveNaturalDateTime(
+            "martedi alle 19",
+            ZoneId.of("Europe/Rome"),
+            ZonedDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Rome")));
+
+        assertThat(result).contains(LocalDateTime.of(2026, 4, 7, 19, 0));
+    }
+
+    @Test
+    void resolveDateTime_returnsEmptyWhenTimeMissing() {
+        Optional<LocalDateTime> result = BookingService.resolveNaturalDateTime(
+            "domani",
+            ZoneId.of("Europe/Rome"),
+            ZonedDateTime.of(2026, 4, 5, 12, 0, 0, 0, ZoneId.of("Europe/Rome")));
+
+        assertThat(result).isEmpty();
+    }
+
+    @Test
+    void checkAvailability_pastDate_returnsGuardMessage() {
+        String result = service.checkAvailability("facility-1", "2026-04-01T18:00:00");
+
+        assertThat(result).contains("in the past");
     }
 }

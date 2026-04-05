@@ -44,6 +44,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 AddressState addressState = e.addressState();
                 yield currentState().withAddressState(new AddressState(addressState.street(), addressState.city()));
             }
+            case FacilityEvent.BotTokenUpdated e -> currentState().withBotToken(e.botToken());
             case FacilityEvent.ResourceCreateAndRegisterRequested e -> currentState();
             case FacilityEvent.ResourceRegistered e -> currentState().registerResource(e.resourceId());
             case FacilityEvent.ResourceUnregistered e -> currentState().unregisterResource(e.resourceId());
@@ -77,6 +78,12 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public Effect<String> changeAddress(AddressState addressState) {
         return effects()
             .persist(new FacilityEvent.AddressChanged(addressState))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> clearBotToken() {
+        return effects()
+            .persist(new FacilityEvent.BotTokenUpdated(currentState().facilityId(), null, currentState().timezone()))
             .thenReply(newState -> "OK");
     }
 
