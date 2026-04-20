@@ -381,7 +381,162 @@ This needs to be fleshed out before implementation.
 
 Telegram support should keep working, but the Telegram layer should not force Rez to retain domain concepts that properly belong elsewhere.
 
-## 9. Supplier Use Case
+## 9. Target Service Landscape
+
+This section describes the intended multi-service direction using the actual app/service names discussed so far.
+
+### Rez
+
+Rez should become a narrow booking engine.
+
+Owns:
+
+- reservation orchestration
+- resource locking
+- cancellation / release
+- booking timeout behavior
+- booking policies tied directly to booking correctness
+- bookable resource state
+
+Does not own:
+
+- club/facility rich metadata
+- supplier/player rich metadata
+- radius/location search
+- ranking/rating logic
+- user-facing conversational orchestration
+- rich calendar UI
+
+### Hit
+
+Hit is the app for finding coaches / supplier-like player resources.
+
+Known parts:
+
+- `hit-backend`
+- `hit-app`
+
+Responsibilities:
+
+- geolocation/radius search for candidate suppliers/players
+- supplier/player discovery
+- organized tennis session creation among players
+- Stripe account onboarding / related supplier payment setup
+- Hit-specific player level/rating logic
+
+Important clarification:
+
+- Hit rating is not identical to Rank rating.
+- Hit has its own concept of level/rating.
+- Hit can use many credentials, including federation information and other sources, and translate those into a single Hit rating number.
+- Rank match results may contribute to Hit rating in the future, but Hit rating and Rank rating are not currently the same domain concept.
+
+Rez should be called by Hit for booking supplier resources, but Hit should remain owner of supplier discovery and session/business logic.
+
+### Rank / Rakkar
+
+Rank is the player ranking app. The codebase currently uses the name `rAKKAr` / `Rakkar`.
+
+Codebase:
+
+- `/Users/max/code/elo-manager`
+
+Backend services:
+
+- `match-service`
+- `player-service`
+
+Responsibilities:
+
+- player management in the ranking context
+- match submission and match history
+- rating calculation
+- leaderboard / ranking views
+
+Important clarification:
+
+- Rank rating and Hit rating are separate concepts today, even if they share the same rough numeric range.
+- It is still important to know which Hit player corresponds to which Rank player.
+- Rank should stay a separate bounded context from Rez.
+
+### Clubs / Facilities Service
+
+This service does not yet exist as finalized architecture, but is the natural place for:
+
+- clubs / facilities
+- courts as business objects
+- addresses / locations
+- club metadata
+- provisioning of facilities and courts
+- possibly membership/admin associations
+
+This service would be the owner of facility/court catalog information, while Rez would only own booking state for the corresponding resources.
+
+### Booking Orchestration Service
+
+This is the place where the current `BookingService` concept belongs, even if it remains in the Rez repo or deployable for now.
+
+Responsibilities:
+
+- Telegram integration
+- AI orchestration
+- gathering metadata from other services
+- calling Rez as a booking tool
+- enriching booking results for human responses
+
+This should be treated conceptually as outside the Rez core.
+
+### Calendar View Service
+
+This should likely become a dedicated view/read-model service rather than remain embedded in Rez long-term.
+
+Responsibilities:
+
+- rendering calendar UI / HTML
+- serving reservation/resource calendar views
+- optionally enriching calendar display with metadata from external services
+
+Rez should remain the source of booking facts, while the calendar layer should act as a view over that data.
+
+## 10. Player / Identity Boundary Notes
+
+### Minimal Player Data Principle
+
+Player information should remain as minimal as possible to reduce privacy/data-protection burden.
+
+The intended minimal data footprint is roughly:
+
+- email
+- sport age category (`U12`, `U14`, `U16`, ...)
+- gender categorization
+
+Private/sensitive data should be offloaded whenever possible to external platforms such as:
+
+- Google
+- Apple
+- Stripe
+
+### Consequence
+
+Avoid creating a large generic "user service" too early.
+
+Instead:
+
+- keep domain-specific ownership in the relevant apps/services
+- keep shared identity surface minimal
+- use references/mappings where needed
+
+### Important Cross-Service Identity Need
+
+Even if Hit and Rank maintain separate bounded-context meanings of player data, it remains important to know:
+
+- which Hit player corresponds to which Rank player
+
+That mapping should be treated as an explicit cross-service identity concern.
+
+This does not imply that Hit and Rank must share the same rating model, only that they need a reliable way to connect the same human/person across contexts when appropriate.
+
+## 11. Supplier Use Case
 
 The supplier use case is a strong argument for narrowing Rez:
 
@@ -396,7 +551,7 @@ This reinforces the direction:
 - Rez does booking competition and locking
 - external orchestration enriches the booking result
 
-## 10. Recommended Implementation Order
+## 12. Recommended Implementation Order
 
 ### Phase 1: Correctness First
 
@@ -427,7 +582,7 @@ This reinforces the direction:
 2. Redesign calendar responsibilities and decide what remains in Rez versus moves out.
 3. Reassess Google Calendar as import/projection instead of booking side effect.
 
-## 11. Open Questions
+## 13. Open Questions
 
 These remain open and should be answered during implementation planning:
 
@@ -437,13 +592,17 @@ These remain open and should be answered during implementation planning:
 - What minimal metadata, if any, should Rez still cache locally for display and notification purposes?
 - Should the HTML calendar move out of Rez immediately, or later?
 - What is the migration path for Telegram routing and provisioning once facility leaves Rez?
+- What is the minimal but reliable shared identity/mapping strategy between Hit players and Rank players?
 
-## 12. Final Intended Direction
+## 14. Final Intended Direction
 
 The intended architecture after these changes is:
 
 - Rez = booking engine
-- external services = discovery, metadata, orchestration, UI/channel integration
+- Hit = coach/supplier discovery and session domain
+- Rank / Rakkar = ranking and match domain
+- clubs/facilities service = facility/court catalog domain
+- external orchestration services = AI, Telegram, metadata enrichment, UI/channel integration
 - BookingService = application/orchestration layer, conceptually outside Rez
 - reservation input = flat set of candidate resource IDs
 - resource = unified bookable abstraction with richer policy and external references
