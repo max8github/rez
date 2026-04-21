@@ -36,9 +36,7 @@ public class ResourceView extends View {
                 case ResourceEvent.ReservationCanceled e ->
                     rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withoutBooking(e.dateTime()));
-                case ResourceEvent.WeeklyScheduleUpdated e ->
-                    rowState() == null ? effects().ignore() :
-                    effects().updateRow(rowState().withWeeklySchedule(e.schedule()));
+                case ResourceEvent.WeeklyScheduleUpdated e -> effects().ignore();
                 case ResourceEvent.ResourceTypeSet e ->
                     rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withResourceType(e.resourceType()));
