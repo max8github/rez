@@ -194,7 +194,7 @@ public class BookingService {
             .invoke(command);
 
         log.info("Booking initiated, reservationId={}", result.reservationId());
-        return "Booking request submitted. Reservation ID: " + result.reservationId() + ". The system is processing it.";
+        return "Booking request queued (ID: " + result.reservationId() + "). The system is checking availability asynchronously — the member will receive a separate notification with the outcome. Do NOT tell the member the court is confirmed yet.";
     }
 
     /**
