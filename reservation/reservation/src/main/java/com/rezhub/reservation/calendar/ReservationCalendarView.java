@@ -1,3 +1,5 @@
+// TODO: this view projects raw booking facts only. Enrichment with facility name, timezone,
+//       and i18n belongs in a dedicated Calendar service that consumes Rez events externally.
 package com.rezhub.reservation.calendar;
 
 import akka.javasdk.annotations.Component;

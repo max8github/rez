@@ -7,7 +7,6 @@ import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timer.TimerScheduler;
 import com.rezhub.reservation.agent.BookingService;
-import com.rezhub.reservation.spi.CalendarSender;
 import com.rezhub.reservation.spi.NotificationSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -60,8 +59,6 @@ public class Bootstrap implements ServiceSetup {
             public <T> T getDependency(Class<T> clazz) {
                 if (clazz == BookingService.class) {
                     return clazz.cast(bookingService);
-                } else if (clazz == CalendarSender.class) {
-                    return clazz.cast(ServiceLoader.load(CalendarSender.class).iterator().next());
                 } else if (clazz == NotificationSender.class) {
                     return clazz.cast(ServiceLoader.load(NotificationSender.class).iterator().next());
                 }
