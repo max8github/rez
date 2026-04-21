@@ -59,8 +59,18 @@ public class ResourceAction extends Consumer {
             .method(ReservationEntity::fulfill)
             .invokeAsync(command)
             .thenAccept(result -> {
-                // Cancel the timer after successful fulfillment
-                timerScheduler.delete(RezAction.timerName(reservationId));
+                if (result.startsWith("OK")) {
+                    timerScheduler.delete(RezAction.timerName(reservationId));
+                } else {
+                    // Reservation could not fulfill (e.g. expired while resource was locking).
+                    // The resource lock was already persisted — compensate by releasing it.
+                    log.warn("Reservation {} rejected fulfill from resource {} — compensating lock release",
+                        reservationId, resourceId);
+                    componentClient
+                        .forEventSourcedEntity(resourceId)
+                        .method(ResourceEntity::cancel)
+                        .invoke(new ResourceEntity.CancelReservation(reservationId, event.reservation().dateTime()));
+                }
             });
 
         return effects().done();
