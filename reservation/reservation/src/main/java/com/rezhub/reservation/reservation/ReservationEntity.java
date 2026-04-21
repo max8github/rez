@@ -7,6 +7,7 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Optional;
 import java.util.Set;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.*;
@@ -196,9 +197,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         switch (currentState().state()) {
             case SELECTING -> {
                 String resourceId = command.resourceId();
-                if(currentState().hasAvailableResources()) {
-                    String nextResourceId = currentState().pop();
-                    log.info("Reservation {} was rejected (resource {}) and will try another resource", entityId, resourceId);
+                // Exclude the just-rejected resource when looking for the next candidate.
+                // availableResources is a HashSet so pop() without filtering could return
+                // the same ID that was just rejected, creating an infinite retry loop.
+                Optional<String> nextOpt = currentState().availableResources().stream()
+                    .filter(id -> !id.equals(resourceId))
+                    .findFirst();
+                if (nextOpt.isPresent()) {
+                    String nextResourceId = nextOpt.get();
+                    log.info("Reservation {} was rejected (resource {}) and will try another resource: {}", entityId, resourceId, nextResourceId);
                     return effects().persist(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId))
                         .thenReply(newState -> "OK");
                 } else {

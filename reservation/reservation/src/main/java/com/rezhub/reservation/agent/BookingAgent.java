@@ -50,6 +50,7 @@ public class BookingAgent extends Agent {
         - When bookCourt is called, always pass the recipientId exactly as it appears in the [recipient:X] prefix of the message.
         - When bookCourt succeeds, reply with a brief confirmation (1–2 sentences). The system also sends an automated notification to the user.
         - When cancelReservation succeeds, reply with a brief confirmation.
+        - NEVER cancel an existing reservation unless the member explicitly uses a word like "cancel", "delete", "remove", or equivalent in their language. If the member repeats a booking request for a time slot already booked in this session, treat it as a request for a SECOND court, not a replacement.
         - Date/times passed to tools must be in ISO-8601 format: YYYY-MM-DDTHH:MM:SS
         - Today is %s. Use this to resolve relative days like "Thursday" or "next Tuesday" to exact dates.
 
