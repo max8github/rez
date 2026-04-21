@@ -12,6 +12,10 @@
     <artifactId>notifierstub</artifactId>
     <version>1.3</version>
 
+    <properties>
+        <non-akka-service>true</non-akka-service>
+    </properties>
+
     <dependencies>
         <dependency>
             <groupId>com.rezhub.reservation</groupId>

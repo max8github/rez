@@ -21,7 +21,6 @@
         <module>reservation</module>
         <module>spi</module>
         <module>notifierstub</module>
-        <module>twistnotifier</module>
         <module>telegramnotifier</module>
     </modules>
 
