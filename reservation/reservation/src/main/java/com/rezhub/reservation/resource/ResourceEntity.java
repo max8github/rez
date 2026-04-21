@@ -8,7 +8,11 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
+import java.util.Map;
+import java.util.Set;
 
 import static com.rezhub.reservation.resource.dto.Resource.FORBIDDEN_NAME;
 
@@ -35,6 +39,9 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             case ResourceEvent.ReservationAccepted e -> currentState().set(ResourceState.roundToValidTime(e.reservation().dateTime()), e.reservationId());
             case ResourceEvent.ReservationRejected e -> currentState();
             case ResourceEvent.ReservationCanceled e -> currentState().cancel(e.dateTime(), e.reservationId());
+            case ResourceEvent.WeeklyScheduleUpdated e -> currentState().withWeeklySchedule(e.schedule());
+            case ResourceEvent.ResourceTypeSet e -> currentState().withResourceType(e.resourceType());
+            case ResourceEvent.ExternalRefSet e -> currentState().withExternalRef(e.externalRef(), e.externalGroupRef());
         };
     }
 
@@ -104,6 +111,27 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return effects().reply(currentState());
     }
 
+    public Effect<String> setWeeklySchedule(Map<DayOfWeek, Set<LocalTime>> schedule) {
+        log.info("Resource {} updating weekly schedule", entityId);
+        return effects()
+            .persist(new ResourceEvent.WeeklyScheduleUpdated(entityId, schedule))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> setResourceType(String resourceType) {
+        log.info("Resource {} setting resourceType to {}", entityId, resourceType);
+        return effects()
+            .persist(new ResourceEvent.ResourceTypeSet(entityId, resourceType))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> setExternalRef(SetExternalRef command) {
+        log.info("Resource {} setting externalRef={} externalGroupRef={}", entityId, command.externalRef(), command.externalGroupRef());
+        return effects()
+            .persist(new ResourceEvent.ExternalRefSet(entityId, command.externalRef(), command.externalGroupRef()))
+            .thenReply(newState -> "OK");
+    }
+
     public record CreateResourceCommand(String poolId, Resource resourceDto) {}
     public record CreateChildResource(String facilityId, Resource resource) {}
 
@@ -112,4 +140,6 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     public record Reserve(String reservationId, Reservation reservation) {}
 
     public record CancelReservation(String reservationId, LocalDateTime dateTime) {}
+
+    public record SetExternalRef(String externalRef, String externalGroupRef) {}
 }
