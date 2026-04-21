@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Rez Calendar</title>
+  <style>
+    :root {
+      --bg: #f4efe7;
+      --panel: #fffaf2;
+      --panel-strong: #fff;
+      --ink: #1f2937;
+      --muted: #6b7280;
+      --line: #d9cdbd;
+      --accent: #1f6f5f;
+      --accent-soft: #dff2ec;
+      --warn: #b45309;
+      --empty: #f6f1e8;
+      --shadow: 0 18px 40px rgba(63, 47, 30, 0.08);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: "Avenir Next", "Segoe UI", sans-serif;
+      color: var(--ink);
+      background:
+        radial-gradient(circle at top left, rgba(31, 111, 95, 0.18), transparent 28%),
+        linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
+    }
+
+    main {
+      max-width: 1360px;
+      margin: 0 auto;
+      padding: 32px 20px 48px;
+    }
+
+    .hero {
+      display: flex;
+      justify-content: space-between;
+      gap: 24px;
+      align-items: end;
+      margin-bottom: 20px;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(2rem, 3vw, 3rem);
+      line-height: 1;
+      letter-spacing: -0.04em;
+    }
+
+    .subtle {
+      color: var(--muted);
+      margin-top: 10px;
+      max-width: 760px;
+    }
+
+    .toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 12px;
+      align-items: center;
+      background: rgba(255, 250, 242, 0.86);
+      border: 1px solid rgba(217, 205, 189, 0.9);
+      border-radius: 18px;
+      padding: 16px;
+      box-shadow: var(--shadow);
+      backdrop-filter: blur(14px);
+      margin-bottom: 18px;
+    }
+
+    label {
+      font-size: 0.85rem;
+      color: var(--muted);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    input {
+      min-width: 260px;
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 10px 12px;
+      font: inherit;
+      background: var(--panel-strong);
+      color: var(--ink);
+    }
+
+    button {
+      border: 0;
+      border-radius: 999px;
+      padding: 10px 14px;
+      font: inherit;
+      cursor: pointer;
+      background: var(--accent);
+      color: white;
+    }
+
+    button.secondary {
+      background: var(--panel-strong);
+      color: var(--ink);
+      border: 1px solid var(--line);
+    }
+
+    .status {
+      min-height: 24px;
+      color: var(--muted);
+      margin-bottom: 18px;
+    }
+
+    .status.error {
+      color: #991b1b;
+    }
+
+    .week-label {
+      font-weight: 600;
+    }
+
+    .board {
+      display: grid;
+      gap: 14px;
+    }
+
+    .resource-row {
+      background: var(--panel);
+      border: 1px solid rgba(217, 205, 189, 0.95);
+      border-radius: 20px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .resource-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 16px;
+      padding: 16px 18px;
+      background: linear-gradient(90deg, rgba(31, 111, 95, 0.08), rgba(255, 255, 255, 0));
+      border-bottom: 1px solid var(--line);
+    }
+
+    .resource-title {
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+
+    .resource-grid {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(150px, 1fr));
+    }
+
+    .day-column {
+      min-height: 180px;
+      border-right: 1px solid var(--line);
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.55);
+    }
+
+    .day-column:last-child {
+      border-right: 0;
+    }
+
+    .day-label {
+      font-size: 0.85rem;
+      font-weight: 700;
+      margin-bottom: 10px;
+    }
+
+    .day-date {
+      display: block;
+      color: var(--muted);
+      font-weight: 500;
+      margin-top: 2px;
+    }
+
+    .booking {
+      display: block;
+      background: var(--accent-soft);
+      border: 1px solid rgba(31, 111, 95, 0.2);
+      border-left: 4px solid var(--accent);
+      border-radius: 12px;
+      padding: 10px 10px 10px 12px;
+      margin-bottom: 8px;
+    }
+
+    .booking-time {
+      display: block;
+      font-size: 0.78rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 6px;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
+    .booking-title {
+      display: block;
+      font-weight: 600;
+      line-height: 1.3;
+    }
+
+    .empty {
+      height: calc(100% - 36px);
+      min-height: 110px;
+      border: 1px dashed rgba(217, 205, 189, 0.95);
+      border-radius: 12px;
+      display: grid;
+      place-items: center;
+      background: var(--empty);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
+    .hint {
+      color: var(--warn);
+      font-size: 0.9rem;
+      margin-top: 8px;
+    }
+
+    @media (max-width: 980px) {
+      .hero {
+        flex-direction: column;
+        align-items: start;
+      }
+
+      .resource-grid {
+        grid-template-columns: 1fr;
+      }
+
+      .day-column {
+        border-right: 0;
+        border-bottom: 1px solid var(--line);
+      }
+
+      .day-column:last-child {
+        border-bottom: 0;
+      }
+
+      input {
+        min-width: 0;
+        width: 100%;
+      }
+    }
+  </style>
+</head>
+<body>
+<main>
+  <section class="hero">
+    <div>
+      <h1>Rez Calendar</h1>
+      <p class="subtle">Read-only weekly schedule served directly from Rez. It reflects reservation events, so rebuilding Rez state rebuilds this calendar too.</p>
+    </div>
+    <div class="week-label" id="weekLabel"></div>
+  </section>
+
+  <section class="toolbar">
+    <label>
+      Facility ID
+      <input id="facilityIdInput" placeholder="Enter facility id">
+    </label>
+    <button class="secondary" id="prevWeekButton" type="button">Previous</button>
+    <button class="secondary" id="todayButton" type="button">This Week</button>
+    <button class="secondary" id="nextWeekButton" type="button">Next</button>
+    <button id="reloadButton" type="button">Load Calendar</button>
+  </section>
+
+  <div class="status" id="status"></div>
+  <div class="board" id="board"></div>
+</main>
+
+<script>
+  const params = new URLSearchParams(window.location.search);
+  const board = document.getElementById("board");
+  const statusEl = document.getElementById("status");
+  const weekLabelEl = document.getElementById("weekLabel");
+  const facilityIdInput = document.getElementById("facilityIdInput");
+  const prevWeekButton = document.getElementById("prevWeekButton");
+  const todayButton = document.getElementById("todayButton");
+  const nextWeekButton = document.getElementById("nextWeekButton");
+  const reloadButton = document.getElementById("reloadButton");
+
+  facilityIdInput.value = params.get("facilityId") || "";
+
+  let currentWeekStart = readWeekStart(params.get("week"));
+
+  prevWeekButton.addEventListener("click", () => moveWeek(-7));
+  todayButton.addEventListener("click", () => {
+    currentWeekStart = startOfWeek(new Date());
+    void loadCalendar();
+  });
+  nextWeekButton.addEventListener("click", () => moveWeek(7));
+  reloadButton.addEventListener("click", () => void loadCalendar());
+  facilityIdInput.addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+      event.preventDefault();
+      void loadCalendar();
+    }
+  });
+
+  void loadCalendar();
+
+  function moveWeek(days) {
+    currentWeekStart = addDays(currentWeekStart, days);
+    void loadCalendar();
+  }
+
+  function readWeekStart(value) {
+    if (!value) return startOfWeek(new Date());
+    const parsed = new Date(value + "T00:00:00");
+    return Number.isNaN(parsed.getTime()) ? startOfWeek(new Date()) : startOfWeek(parsed);
+  }
+
+  function startOfWeek(date) {
+    const copy = new Date(date);
+    const day = copy.getDay();
+    const diff = (day + 6) % 7;
+    copy.setHours(0, 0, 0, 0);
+    copy.setDate(copy.getDate() - diff);
+    return copy;
+  }
+
+  function addDays(date, amount) {
+    const copy = new Date(date);
+    copy.setDate(copy.getDate() + amount);
+    return copy;
+  }
+
+  function formatDate(date) {
+    return date.toISOString().slice(0, 10);
+  }
+
+  function formatDateTime(date) {
+    const copy = new Date(date);
+    copy.setMinutes(0, 0, 0);
+    return [
+      copy.getFullYear(),
+      String(copy.getMonth() + 1).padStart(2, "0"),
+      String(copy.getDate()).padStart(2, "0")
+    ].join("-") + "T" + [
+      String(copy.getHours()).padStart(2, "0"),
+      String(copy.getMinutes()).padStart(2, "0"),
+      String(copy.getSeconds()).padStart(2, "0")
+    ].join(":");
+  }
+
+  function updateUrl(facilityId) {
+    const nextParams = new URLSearchParams();
+    if (facilityId) nextParams.set("facilityId", facilityId);
+    nextParams.set("week", formatDate(currentWeekStart));
+    window.history.replaceState({}, "", `${window.location.pathname}?${nextParams.toString()}`);
+  }
+
+  function setStatus(message, isError = false) {
+    statusEl.textContent = message;
+    statusEl.className = isError ? "status error" : "status";
+  }
+
+  async function loadCalendar() {
+    const facilityId = facilityIdInput.value.trim();
+    updateUrl(facilityId);
+    renderWeekLabel();
+
+    if (!facilityId) {
+      board.innerHTML = "";
+      setStatus("Add a facility id to load the weekly court schedule.");
+      return;
+    }
+
+    setStatus("Loading reservations...");
+    board.innerHTML = "";
+
+    try {
+      const resources = await fetchResources(facilityId);
+      const events = await fetchEvents(facilityId);
+      renderBoard(resources, events);
+      setStatus(`Showing ${events.length} reservation${events.length === 1 ? "" : "s"} for ${resources.length} court${resources.length === 1 ? "" : "s"}.`);
+    } catch (error) {
+      board.innerHTML = "";
+      setStatus(error.message || "Failed to load calendar.", true);
+    }
+  }
+
+  function renderWeekLabel() {
+    const weekEnd = addDays(currentWeekStart, 6);
+    weekLabelEl.textContent = `${currentWeekStart.toLocaleDateString([], { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+  }
+
+  async function fetchResources(facilityId) {
+    const facilityResponse = await fetch(`/facility/${encodeURIComponent(facilityId)}`);
+    if (!facilityResponse.ok) {
+      throw new Error(`Facility lookup failed (${facilityResponse.status}).`);
+    }
+
+    const facility = await facilityResponse.json();
+    const resourceIds = Array.isArray(facility.resourceIds) ? facility.resourceIds : [];
+
+    if (resourceIds.length === 0) {
+      return [];
+    }
+
+    const resources = await Promise.all(resourceIds.map(async (resourceId) => {
+      const response = await fetch(`/resource/${encodeURIComponent(resourceId)}`);
+      if (!response.ok) {
+        throw new Error(`Resource lookup failed for ${resourceId} (${response.status}).`);
+      }
+      const resource = await response.json();
+      return { resourceId, resourceName: resource.name || resourceId };
+    }));
+
+    return resources.sort((left, right) => left.resourceName.localeCompare(right.resourceName));
+  }
+
+  async function fetchEvents(facilityId) {
+    const start = formatDateTime(currentWeekStart);
+    const end = formatDateTime(addDays(currentWeekStart, 7));
+    const response = await fetch(`/api/calendar/events?facilityId=${encodeURIComponent(facilityId)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Event lookup failed (${response.status}).`);
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload) ? payload : [];
+  }
+
+  function renderBoard(resources, events) {
+    if (resources.length === 0) {
+      board.innerHTML = `<div class="resource-row"><div class="resource-header"><div><div class="resource-title">No courts registered</div><div class="hint">This facility has no resources yet.</div></div></div></div>`;
+      return;
+    }
+
+    const grouped = groupEvents(events);
+    const days = Array.from({ length: 7 }, (_, index) => addDays(currentWeekStart, index));
+
+    board.innerHTML = resources.map((resource) => {
+      const dayColumns = days.map((day) => {
+        const key = `${resource.resourceId}:${formatDate(day)}`;
+        const matches = (grouped.get(key) || []).sort((left, right) => left.start.localeCompare(right.start));
+        const items = matches.length
+          ? matches.map((event) => `
+              <article class="booking">
+                <span class="booking-time">${formatTime(event.start)} - ${formatTime(event.end)}</span>
+                <span class="booking-title">${escapeHtml(event.title || "Reserved")}</span>
+              </article>
+            `).join("")
+          : `<div class="empty">No booking</div>`;
+
+        return `
+          <section class="day-column">
+            <div class="day-label">
+              ${day.toLocaleDateString([], { weekday: "short" })}
+              <span class="day-date">${day.toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+            </div>
+            ${items}
+          </section>
+        `;
+      }).join("");
+
+      return `
+        <section class="resource-row">
+          <div class="resource-header">
+            <div class="resource-title">${escapeHtml(resource.resourceName)}</div>
+            <div class="subtle">${escapeHtml(resource.resourceId)}</div>
+          </div>
+          <div class="resource-grid">${dayColumns}</div>
+        </section>
+      `;
+    }).join("");
+  }
+
+  function groupEvents(events) {
+    const grouped = new Map();
+    events.forEach((event) => {
+      const dateKey = event.start.slice(0, 10);
+      const key = `${event.resourceId}:${dateKey}`;
+      const existing = grouped.get(key) || [];
+      existing.push(event);
+      grouped.set(key, existing);
+    });
+    return grouped;
+  }
+
+  function formatTime(value) {
+    return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function escapeHtml(value) {
+    return value
+      .replaceAll("&", "&amp;")
+      .replaceAll("<", "&lt;")
+      .replaceAll(">", "&gt;")
+      .replaceAll("\"", "&quot;")
+      .replaceAll("'", "&#39;");
+  }
+</script>
+</body>
+</html>

@@ -2,7 +2,8 @@
 
 Rez lets tennis club members book courts by sending a natural language message
 via Telegram. An AI agent interprets the request, checks availability, books the
-court, and replies conversationally. Confirmed bookings appear in Google Calendar.
+court, and replies conversationally. Confirmed bookings appear in Google Calendar,
+and Rez also serves a read-only calendar view derived from reservation events.
 
 ## Architecture
 
@@ -26,6 +27,19 @@ BookingService
          ResourceEntity (court-1, court-2, …)
             │  FULFILLED event
             ▼
+         ReservationCalendarView
+            │
+            ▼
+         CalendarEndpoint   GET /calendar
+            │
+            ▼
+         Rez Calendar UI
+            │
+            └──▶ read-only, state-derived schedule
+         
+         ResourceEntity (court-1, court-2, …)
+            │  FULFILLED event
+            ▼
          DelegatingServiceAction
             │
             ▼
@@ -43,7 +57,7 @@ different bots, no `FACILITY_ID` env var needed.
 - **LLM**: OpenAI GPT-4o-mini (switchable via `application.conf`)
 - **Persistence**: PostgreSQL via R2DBC (standalone) or managed (Akka Cloud)
 - **Messaging**: Telegram (production), Matrix/Twist (partial)
-- **Calendar**: Google Calendar API via service account
+- **Calendar**: Rez read-only calendar view plus Google Calendar API side-effects
 
 ## Modules
 
@@ -74,6 +88,12 @@ mvn compile exec:java -Plocal   # stub calendar + notifier, no external calls
 
 See [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md) for copy-paste
 curl commands to provision a facility and send test bookings.
+
+Rez also exposes a read-only calendar UI at:
+
+```text
+http://localhost:9000/calendar?facilityId=<FACILITY_ID>
+```
 
 ## Provisioning
 

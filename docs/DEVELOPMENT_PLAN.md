@@ -4,16 +4,7 @@
 
 ## Current blocker
 
-### Standalone projections not running — allegedly fixed, needs verification
-
-Rez is deployed self-managed on lurch (CT 115, `https://maxdc.duckdns.org`).
-Entities write events to the PostgreSQL journal fine, but **views and consumers
-never process any events** — `projection_offset` stays empty, views stay empty.
-
-**Fix:** upgrade to the Akka SDK version that includes the patch — see
-[akka/akka-sdk#1349](https://github.com/akka/akka-sdk/issues/1349).
-
-**TODO: verify that projections are running after upgrading (April–May 2026).**
+No single blocker currently tracked here.
 
 ---
 
@@ -40,15 +31,25 @@ Each should move to its own module (`telegramendpoint` etc.), mirroring how
 notification senders already live in `telegramnotifier`, `twistnotifier`, `notifierstub`.
 Transport wiring would then be controlled entirely by classpath.
 
-### Google Calendar consistency gap
+### Provisioning race before bookings
 
-When a booking is created, a calendar event is pushed to Google Calendar as a
-fire-and-forget side-effect. There is no reverse path. If Rez state is wiped,
-the calendar events are **not** deleted — stale bookings will show in the calendar.
+Facility resource registration is asynchronous. If bookings arrive immediately
+after facility creation but before resource registration completes, availability
+fan-out may see an empty resource set and the booking will time out. This is now
+handled safely, but the provisioning flow should eventually expose readiness more clearly.
 
-Alternative: model the calendar as a true Akka View projecting from reservation
-events, and send `.ics` email attachments instead, decoupling Rez from Google
-Calendar entirely.
+### Google Calendar is still not a source of truth
+
+Rez now has a true read-only calendar view built from reservation events, but
+Google Calendar remains a side-effect mirror. If Google API calls fail, Rez and
+Google can still diverge. The internal consistency problem is solved for Rez’s
+own calendar, not for the external Google mirror.
+
+### Reservation duration is still implicit
+
+The Rez calendar currently renders each reservation as a one-hour block because
+Rez persists a single booking timestamp rather than an explicit duration. If
+different slot lengths are needed, duration must become first-class reservation data.
 
 ### `effects().done()` reliability in consumers
 
@@ -71,6 +72,14 @@ becomes a concern.
 - `POST /facility/{id}/resource` auto-generates resource UUID
 - `build-push.sh` — single script for both standalone (lurch) and cloud targets
 - `ProvisioningIntegrationTest` — integration tests for all new fields and the view
+
+### Rez read-only calendar
+
+- `ReservationCalendarView` — Akka View projecting fulfillment/cancellation events
+- `CalendarEndpoint` — serves `GET /calendar` and `GET /api/calendar/events`
+- static `calendar.html` UI served directly from the service
+- integration test coverage for calendar view fulfillment/cancellation behavior
+- Rez now offers a state-derived read-only calendar in parallel with Google Calendar
 
 ### Kalix → Akka SDK 3.x migration
 

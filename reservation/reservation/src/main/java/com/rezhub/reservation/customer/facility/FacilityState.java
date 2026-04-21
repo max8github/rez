@@ -19,7 +19,7 @@ public record FacilityState(String facilityId, String name, AddressState address
   }
 
   public FacilityState withResourceIds(Set<String> resourceIds) {
-    return new FacilityState(facilityId, name, addressState, resourceIds, timezone, botToken, adminUserIds);
+    return new FacilityState(facilityId, name, addressState, normalizeResourceIds(resourceIds), timezone, botToken, adminUserIds);
   }
 
   public FacilityState withTimezone(String timezone) {
@@ -35,14 +35,18 @@ public record FacilityState(String facilityId, String name, AddressState address
   }
 
   public FacilityState registerResource(String resourceId) {
-    Set<String> ids = (resourceIds == null) ? new HashSet<>() : new HashSet<>(resourceIds);
+    Set<String> ids = new HashSet<>(normalizeResourceIds(resourceIds));
     ids.add(resourceId);
     return new FacilityState(facilityId, name, addressState, ids, timezone, botToken, adminUserIds);
   }
 
   public FacilityState unregisterResource(String resourceId) {
-    Set<String> ids = new HashSet<>(resourceIds);
+    Set<String> ids = new HashSet<>(normalizeResourceIds(resourceIds));
     ids.remove(resourceId);
     return new FacilityState(facilityId, name, addressState, ids, timezone, botToken, adminUserIds);
+  }
+
+  public static Set<String> normalizeResourceIds(Set<String> resourceIds) {
+    return resourceIds == null ? Set.of() : Set.copyOf(resourceIds);
   }
 }

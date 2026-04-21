@@ -65,6 +65,23 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         assertThat(state.adminUserIds()).isNull();
     }
 
+    @Test
+    public void getFacility_withNullResourceIds_returnsEmptySet() {
+        var facilityId = "f_prov-null-resource-ids-" + shortId();
+        var facility = new Facility("Seed Club", new Address("Any St", "Town"),
+            null, "Europe/Rome", null, null);
+
+        componentClient.forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::create)
+            .invoke(facility);
+
+        var state = componentClient.forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::getFacility)
+            .invoke();
+
+        assertThat(state.resourceIds()).isEmpty();
+    }
+
     // --- #bot: FacilityByBotTokenView ---
 
     @Test

@@ -34,7 +34,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 yield FacilityState.create(e.entityId())
                     .withName(dto.name())
                     .withAddressState(new AddressState(dto.address().street(), dto.address().city()))
-                    .withResourceIds(dto.resourceIds())
+                    .withResourceIds(FacilityState.normalizeResourceIds(dto.resourceIds()))
                     .withTimezone(dto.timezone())
                     .withBotToken(dto.botToken())
                     .withAdminUserIds(dto.adminUserIds());
@@ -112,14 +112,18 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public ReadOnlyEffect<Facility> getFacility() {
         FacilityState state = currentState();
         Address address = new Address(state.addressState().street(), state.addressState().city());
-        return effects().reply(new Facility(state.name(), address, state.resourceIds(),
+        return effects().reply(new Facility(state.name(), address, FacilityState.normalizeResourceIds(state.resourceIds()),
                 state.timezone(), state.botToken(), state.adminUserIds()));
     }
 
     public Effect<String> checkAvailability(ResourceEntity.CheckAvailability command) {
         log.info("FacilityEntity {} delegates availability check for reservation request {}", entityId, command.reservationId());
         return effects()
-            .persist(new FacilityEvent.AvalabilityRequested(command.reservationId(), command.reservation(), currentState().resourceIds()))
+            .persist(new FacilityEvent.AvalabilityRequested(
+                command.reservationId(),
+                command.reservation(),
+                FacilityState.normalizeResourceIds(currentState().resourceIds())
+            ))
             .thenReply(newState -> "OK");
     }
 
