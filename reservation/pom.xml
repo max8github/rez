@@ -19,9 +19,7 @@
 
     <modules>
         <module>reservation</module>
-        <module>calendarstub</module>
         <module>spi</module>
-        <module>googlecalendar</module>
         <module>notifierstub</module>
         <module>twistnotifier</module>
         <module>telegramnotifier</module>
