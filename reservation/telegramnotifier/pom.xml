@@ -5,18 +5,18 @@
     <parent>
         <groupId>com.rezhub.reservation</groupId>
         <artifactId>reservation-parent</artifactId>
-        <version>1.1</version>
+        <version>1.2</version>
     </parent>
     <modelVersion>4.0.0</modelVersion>
 
     <artifactId>telegramnotifier</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
 
     <dependencies>
         <dependency>
             <groupId>com.rezhub.reservation</groupId>
             <artifactId>spi</artifactId>
-            <version>1.1</version>
+            <version>1.2</version>
         </dependency>
     </dependencies>
 </project>
