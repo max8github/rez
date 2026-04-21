@@ -1,9 +1,7 @@
 package com.rezhub.reservation.reservation;
 
 import akka.javasdk.testkit.EventSourcedTestKit;
-import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.dto.SelectionItem;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
@@ -26,8 +24,7 @@ class ReservationEntityTest {
     private EventSourcedTestKit<ReservationState, ReservationEvent, ReservationEntity> inCollecting() {
         var kit = freshKit();
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
-        var selection = Set.of(new SelectionItem(RESOURCE_ID, EntityType.RESOURCE));
-        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, selection, "recipient-1"));
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1"));
         return kit;
     }
 

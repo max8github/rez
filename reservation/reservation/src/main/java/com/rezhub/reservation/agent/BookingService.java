@@ -7,9 +7,7 @@ import com.rezhub.reservation.actions.TimerAction;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.FacilityState;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.dto.SelectionItem;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
@@ -33,7 +31,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
-import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -182,10 +179,8 @@ public class BookingService {
             .forEventSourcedEntity(internalFacilityId)
             .method(FacilityEntity::getFacility)
             .invoke();
-        Set<SelectionItem> selection = FacilityState.normalizeResourceIds(facility.resourceIds()).stream()
-            .map(id -> new SelectionItem(id, EntityType.RESOURCE))
-            .collect(Collectors.toUnmodifiableSet());
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation, selection, recipientId);
+        ReservationEntity.Init command = new ReservationEntity.Init(reservation,
+            FacilityState.normalizeResourceIds(facility.resourceIds()), recipientId);
 
         timerScheduler.createSingleTimer(
             TimerAction.timerName(reservationId),

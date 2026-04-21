@@ -4,9 +4,7 @@ import akka.javasdk.testkit.TestKitSupport;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.dto.SelectionItem;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceView;
 import org.junit.jupiter.api.Test;
@@ -36,7 +34,7 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .method(ReservationEntity::init)
             .invoke(new ReservationEntity.Init(
                 reservation,
-                Set.of(new SelectionItem(resourceId, EntityType.RESOURCE)),
+                Set.of(resourceId),
                 "telegram-user"
             ));
         componentClient.forEventSourcedEntity(reservationId)
@@ -80,7 +78,7 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .method(ReservationEntity::init)
             .invoke(new ReservationEntity.Init(
                 reservation,
-                Set.of(new SelectionItem(resourceId, EntityType.RESOURCE)),
+                Set.of(resourceId),
                 "telegram-user"
             ));
         componentClient.forEventSourcedEntity(reservationId)
