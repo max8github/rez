@@ -8,9 +8,15 @@ import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
+import com.typesafe.config.Config;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DayOfWeek;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
+import java.time.temporal.TemporalAdjusters;
+import java.util.Locale;
 import java.util.Optional;
 
 // TODO: notification responsibilities belong in a dedicated Booking Orchestration service.
@@ -20,13 +26,17 @@ import java.util.Optional;
 @SuppressWarnings("unused")
 public class DelegatingServiceAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(DelegatingServiceAction.class);
+    private static final DateTimeFormatter DATE_FMT = DateTimeFormatter.ofPattern("EEE d MMM, HH:mm", Locale.ENGLISH);
+    private static final DateTimeFormatter WEEK_FMT = DateTimeFormatter.ofPattern("yyyy-MM-dd");
 
     private final NotificationSender notificationSender;
     private final ComponentClient componentClient;
+    private final String calendarBaseUrl;
 
-    public DelegatingServiceAction(NotificationSender notificationSender, ComponentClient componentClient) {
+    public DelegatingServiceAction(NotificationSender notificationSender, ComponentClient componentClient, Config config) {
         this.notificationSender = notificationSender;
         this.componentClient = componentClient;
+        this.calendarBaseUrl = config.getString("rez.calendar.base-url");
     }
 
     public Effect on(ReservationEvent.Fulfilled event) {
@@ -38,11 +48,18 @@ public class DelegatingServiceAction extends Consumer {
         Optional<ResourceV> resourceOpt = componentClient.forView()
             .method(ResourceView::getResourceById)
             .invoke(resourceId);
+
         String courtLabel = resourceOpt.map(ResourceV::resourceName).orElse(resourceId);
+        String facilityId = resourceOpt.map(ResourceV::facilityId).orElse("");
+
+        LocalDateTime dt = reservation.dateTime();
+        String formattedDate = dt.format(DATE_FMT);
+        String weekStart = dt.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).format(WEEK_FMT);
+        String calendarUrl = calendarBaseUrl + "/calendar?facilityId=" + facilityId + "&week=" + weekStart;
 
         String attendees = String.join(", ", reservation.emails());
-        String text = ("\uD83C\uDFBE %s\n\uD83D\uDCC5 %s\n\uD83D\uDC65 %s\n\n\uD83C\uDD94 <code>%s</code>")
-            .formatted(courtLabel, reservation.dateTime(), attendees, reservationId);
+        String text = ("\uD83C\uDFBE %s\n\uD83D\uDCC5 %s\n\uD83D\uDC65 %s\n\uD83D\uDCC6 %s\n\n\uD83C\uDD94 <code>%s</code>")
+            .formatted(courtLabel, formattedDate, attendees, calendarUrl, reservationId);
         notificationSender.send(recipientId, text)
             .whenComplete((result, error) -> {
                 if (error != null) log.error("Error sending booking confirmation: {}", error.getMessage());
@@ -52,7 +69,7 @@ public class DelegatingServiceAction extends Consumer {
 
     public Effect on(ReservationEvent.SearchExhausted event) {
         String recipientId = event.recipientId();
-        String time = event.reservation().dateTime().toString();
+        String time = event.reservation().dateTime().format(DATE_FMT);
         String text = "Sorry, no court was available for %s. Please try a different time.".formatted(time);
         notificationSender.send(recipientId, text)
             .whenComplete((res, error) -> {
