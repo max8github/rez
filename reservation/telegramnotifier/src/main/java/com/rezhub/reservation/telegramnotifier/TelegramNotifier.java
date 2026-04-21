@@ -27,6 +27,10 @@ public class TelegramNotifier implements NotificationSender {
         // Format: <botToken>:<chatId> where botToken itself contains a colon (e.g. 12345:ABCdef)
         // Split on the LAST colon to separate chatId from botToken
         int lastColon = recipientId.lastIndexOf(':');
+        if (lastColon <= 0) {
+            log.warn("TelegramNotifier: malformed recipientId '{}' — expected botToken:chatId, skipping send", recipientId);
+            return CompletableFuture.completedFuture("SKIPPED");
+        }
         String botToken = recipientId.substring(0, lastColon);
         String chatId = recipientId.substring(lastColon + 1);
         log.info("Sending to Telegram chat {}: {}", chatId, text);
