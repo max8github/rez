@@ -3,7 +3,6 @@ package com.rezhub.reservation.customer.facility;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.resource.dto.Resource;
-import com.rezhub.reservation.resource.ResourceEntity;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
 import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
@@ -12,14 +11,10 @@ import org.slf4j.LoggerFactory;
 
 
 /**
- * Compatibility shim for the Telegram / BookingService booking path.
- *
- * <p>Provisioning operations (create, rename, registerResource, etc.) remain active.
- * The booking-dispatch path ({@link #checkAvailability}) is deprecated: Rez no longer
- * treats Facility as a first-class booking entity. New callers use
- * {@code BookingEndpoint} with a flat set of resourceIds resolved externally.
- * {@code checkAvailability} and the {@code FacilityEvent.AvalabilityRequested} event
- * will be removed once BookingService is migrated.
+ * Manages facility provisioning (create, rename, registerResource, etc.).
+ * Rez no longer treats Facility as a first-class booking entity; new callers use
+ * {@code BookingEndpoint} with a flat set of resourceIds resolved externally via
+ * {@link #getFacility}.
  */
 @Component(id = "facility")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
@@ -124,22 +119,6 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
         Address address = new Address(state.addressState().street(), state.addressState().city());
         return effects().reply(new Facility(state.name(), address, FacilityState.normalizeResourceIds(state.resourceIds()),
                 state.timezone(), state.botToken(), state.adminUserIds()));
-    }
-
-    /**
-     * @deprecated Booking no longer flows through Facility. Use {@code BookingEndpoint}
-     * with a flat set of resourceIds. Will be removed with {@code FacilityEvent.AvalabilityRequested}.
-     */
-    @Deprecated
-    public Effect<String> checkAvailability(ResourceEntity.CheckAvailability command) {
-        log.info("FacilityEntity {} delegates availability check for reservation request {}", entityId, command.reservationId());
-        return effects()
-            .persist(new FacilityEvent.AvalabilityRequested(
-                command.reservationId(),
-                command.reservation(),
-                FacilityState.normalizeResourceIds(currentState().resourceIds())
-            ))
-            .thenReply(newState -> "OK");
     }
 
     public record FacilityResourceRequest(String resourceName) {}

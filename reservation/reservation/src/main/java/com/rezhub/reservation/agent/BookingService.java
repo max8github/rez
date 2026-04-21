@@ -5,6 +5,7 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.timer.TimerScheduler;
 import com.rezhub.reservation.actions.TimerAction;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.FacilityState;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
+import java.util.stream.Collectors;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -176,8 +178,14 @@ public class BookingService {
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Reservation reservation = new Reservation(players, dateTime);
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation,
-            Set.of(new SelectionItem(internalFacilityId, EntityType.FACILITY)), recipientId);
+        Facility facility = componentClient
+            .forEventSourcedEntity(internalFacilityId)
+            .method(FacilityEntity::getFacility)
+            .invoke();
+        Set<SelectionItem> selection = FacilityState.normalizeResourceIds(facility.resourceIds()).stream()
+            .map(id -> new SelectionItem(id, EntityType.RESOURCE))
+            .collect(Collectors.toUnmodifiableSet());
+        ReservationEntity.Init command = new ReservationEntity.Init(reservation, selection, recipientId);
 
         timerScheduler.createSingleTimer(
             TimerAction.timerName(reservationId),

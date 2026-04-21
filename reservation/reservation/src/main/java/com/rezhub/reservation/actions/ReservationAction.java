@@ -1,6 +1,6 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.customer.facility.FacilityAction;
+import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationEvent;
 import com.rezhub.reservation.resource.ResourceEntity;
@@ -22,15 +22,22 @@ public class ReservationAction extends Consumer {
         this.componentClient = componentClient;
     }
 
-    /**
-     * @deprecated Drives the legacy /selection → FacilityAction.broadcast path.
-     * Will be removed once BookingService is migrated to BookingEndpoint.
-     */
-    @Deprecated
     public Effect on(ReservationEvent.Inited event) {
-        log.info("Broadcast starts to selection {}", event.selection());
-        FacilityAction.broadcast(componentClient, event.reservationId(),
-          event.reservation(), event.selection());
+        log.info("Fanning out checkAvailability for reservation {} to {} resources",
+            event.reservationId(), event.selection().size());
+        event.selection().stream()
+            .filter(item -> item.type() == EntityType.RESOURCE)
+            .forEach(item -> {
+                var command = new ResourceEntity.CheckAvailability(event.reservationId(), event.reservation());
+                componentClient.forEventSourcedEntity(item.id())
+                    .method(ResourceEntity::checkAvailability)
+                    .invokeAsync(command)
+                    .whenComplete((result, error) -> {
+                        if (error != null) {
+                            log.error("Error checking availability for resource {}: {}", item.id(), error.getMessage());
+                        }
+                    });
+            });
         return effects().done();
     }
 

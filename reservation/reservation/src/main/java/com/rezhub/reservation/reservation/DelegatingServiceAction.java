@@ -17,6 +17,8 @@ import org.slf4j.LoggerFactory;
 import java.util.List;
 import java.util.Optional;
 
+// TODO: calendar and notification responsibilities belong in a dedicated Notification service.
+//       Move CalendarSender / NotificationSender calls out of this consumer once that service exists.
 @Component(id = "delegating-service-consumer")
 @Consume.FromEventSourcedEntity(value = ReservationEntity.class, ignoreUnknown = true)
 @SuppressWarnings("unused")
