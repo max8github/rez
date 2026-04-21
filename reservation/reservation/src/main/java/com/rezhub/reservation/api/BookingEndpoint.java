@@ -1,6 +1,5 @@
 package com.rezhub.reservation.api;
 
-import com.rezhub.reservation.actions.RezAction;
 import com.rezhub.reservation.actions.TimerAction;
 import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
@@ -46,17 +45,21 @@ public class BookingEndpoint {
      * Create a reservation from a flat set of resource IDs.
      * The caller is responsible for providing a unique reservationId (e.g. its own session/request ID).
      */
+    @SuppressWarnings("deprecation")
     @Post("")
     public BookingResult book(BookingRequest request) {
         log.info("BookingEndpoint: creating reservation {} for resources {}", request.reservationId(), request.resourceIds());
 
+        // SelectionItem is the internal wire type for ReservationEntity.Init.
+        // BookingEndpoint translates the public flat-resourceId API to it here so
+        // callers never need to know about SelectionItem.
         Set<SelectionItem> selection = request.resourceIds().stream()
             .map(id -> new SelectionItem(id, EntityType.RESOURCE))
             .collect(Collectors.toUnmodifiableSet());
 
         timerScheduler.createSingleTimer(
-            RezAction.timerName(request.reservationId()),
-            Duration.ofSeconds(RezAction.TIMEOUT),
+            TimerAction.timerName(request.reservationId()),
+            Duration.ofSeconds(TimerAction.TIMEOUT_SECONDS),
             componentClient.forTimedAction().method(TimerAction::expire).deferred(request.reservationId())
         );
 

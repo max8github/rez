@@ -60,7 +60,7 @@ public class ResourceAction extends Consumer {
             .invokeAsync(command)
             .thenAccept(result -> {
                 if (result.startsWith("OK")) {
-                    timerScheduler.delete(RezAction.timerName(reservationId));
+                    timerScheduler.delete(TimerAction.timerName(reservationId));
                 } else {
                     // Reservation could not fulfill (e.g. expired while resource was locking).
                     // The resource lock was already persisted — compensate by releasing it.

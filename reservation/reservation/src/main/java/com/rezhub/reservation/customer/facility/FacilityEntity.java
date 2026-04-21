@@ -11,6 +11,16 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 
+/**
+ * Compatibility shim for the Telegram / BookingService booking path.
+ *
+ * <p>Provisioning operations (create, rename, registerResource, etc.) remain active.
+ * The booking-dispatch path ({@link #checkAvailability}) is deprecated: Rez no longer
+ * treats Facility as a first-class booking entity. New callers use
+ * {@code BookingEndpoint} with a flat set of resourceIds resolved externally.
+ * {@code checkAvailability} and the {@code FacilityEvent.AvalabilityRequested} event
+ * will be removed once BookingService is migrated.
+ */
 @Component(id = "facility")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
     private static final Logger log = LoggerFactory.getLogger(FacilityEntity.class);
@@ -116,6 +126,11 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 state.timezone(), state.botToken(), state.adminUserIds()));
     }
 
+    /**
+     * @deprecated Booking no longer flows through Facility. Use {@code BookingEndpoint}
+     * with a flat set of resourceIds. Will be removed with {@code FacilityEvent.AvalabilityRequested}.
+     */
+    @Deprecated
     public Effect<String> checkAvailability(ResourceEntity.CheckAvailability command) {
         log.info("FacilityEntity {} delegates availability check for reservation request {}", entityId, command.reservationId());
         return effects()

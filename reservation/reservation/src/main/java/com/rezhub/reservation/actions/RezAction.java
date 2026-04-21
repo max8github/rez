@@ -11,12 +11,19 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 
+/**
+ * @deprecated Legacy booking entry point used by the Telegram / BookingService path.
+ * New callers should use {@code BookingEndpoint} (POST /bookings) which accepts a flat
+ * set of resourceIds without any Facility or SelectionItem knowledge.
+ * This endpoint and the FacilityEntity booking path it drives will be removed once
+ * BookingService is migrated to resolve facility → resourceIds externally.
+ */
+@Deprecated
 @HttpEndpoint("/selection")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 public class RezAction {
 
   private static final Logger log = LoggerFactory.getLogger(RezAction.class);
-  public static final int TIMEOUT = 14;
   private final ComponentClient componentClient;
   private final TimerScheduler timerScheduler;
 
@@ -25,28 +32,20 @@ public class RezAction {
     this.timerScheduler = timerScheduler;
   }
 
+  @Deprecated
   @Post("/{reservationId}")
   public ReservationEntity.ReservationId requestReservation(String reservationId, ReservationEntity.Init command) {
     log.info("---------- RezAction initiating reservation request {}", reservationId);
 
-    // Register the timer first (before placing the reservation)
     timerScheduler.createSingleTimer(
-      timerName(reservationId),
-      Duration.ofSeconds(TIMEOUT),
-      componentClient
-        .forTimedAction()
-        .method(TimerAction::expire)
-        .deferred(reservationId)
+      TimerAction.timerName(reservationId),
+      Duration.ofSeconds(TimerAction.TIMEOUT_SECONDS),
+      componentClient.forTimedAction().method(TimerAction::expire).deferred(reservationId)
     );
 
-    // Now init the reservation
     return componentClient
       .forEventSourcedEntity(reservationId)
       .method(ReservationEntity::init)
       .invoke(command);
-  }
-
-  public static String timerName(String reservationId) {
-    return "timer-" + reservationId;
   }
 }

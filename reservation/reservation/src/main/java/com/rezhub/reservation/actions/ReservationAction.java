@@ -22,6 +22,11 @@ public class ReservationAction extends Consumer {
         this.componentClient = componentClient;
     }
 
+    /**
+     * @deprecated Drives the legacy /selection → FacilityAction.broadcast path.
+     * Will be removed once BookingService is migrated to BookingEndpoint.
+     */
+    @Deprecated
     public Effect on(ReservationEvent.Inited event) {
         log.info("Broadcast starts to selection {}", event.selection());
         FacilityAction.broadcast(componentClient, event.reservationId(),

@@ -26,7 +26,6 @@ public class FacilityAction extends Consumer {
         this.componentClient = componentClient;
     }
 
-    @SuppressWarnings("unused")
     public Effect on(FacilityEvent.ResourceCreateAndRegisterRequested event) {
         var resourceId = event.resourceId();
         var command = new ResourceEntity.CreateChildResource(event.facilityId(), new Resource(event.resourceId(), event.resourceName(), event.calendarId()));
@@ -37,7 +36,12 @@ public class FacilityAction extends Consumer {
         return effects().done();
     }
 
-    @SuppressWarnings("unused")
+    /**
+     * @deprecated Legacy booking fan-out. Facility availability requests will be removed
+     * once BookingService resolves facility → resourceIds externally.
+     */
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public Effect on(FacilityEvent.AvalabilityRequested event) {
         log.info("Facility fans out, continuing the broadcast");
         Set<SelectionItem> items = FacilityState.normalizeResourceIds(event.resources()).stream()
@@ -51,13 +55,17 @@ public class FacilityAction extends Consumer {
         return effects().done();
     }
 
+    /**
+     * @deprecated Legacy broadcast used by the /selection endpoint path. New bookings go
+     * through {@code BookingEndpoint} which calls resources directly via flat resourceIds.
+     */
+    @Deprecated
+    @SuppressWarnings("deprecation")
     public static void broadcast(ComponentClient componentClient,
                                  String reservationId, Reservation reservation,
                                  Set<SelectionItem> items) {
         items.stream().sorted(java.util.Comparator.comparing(SelectionItem::id)).forEach(item -> {
             var command = new ResourceEntity.CheckAvailability(reservationId, reservation);
-            //Note: cannot use inheritance. If it were possible, checkAvailability() would
-            //be a method (of a super entity) with polymorphic behavior.
             switch (item.type()) {
                 case FACILITY -> componentClient
                     .forEventSourcedEntity(item.id())

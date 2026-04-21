@@ -29,6 +29,11 @@ public sealed interface FacilityEvent {
   @TypeName("resource-id-removed")
   record ResourceUnregistered(String resourceId) implements FacilityEvent {}
 
+  /**
+   * @deprecated Part of the legacy facility-fan-out booking path. Will be removed once
+   * BookingService resolves facility → resourceIds externally and calls BookingEndpoint directly.
+   */
+  @Deprecated
   @TypeName("facility-availability-requested")
   record AvalabilityRequested(String reservationId, Reservation reservation, Set<String> resources) implements FacilityEvent {}
 }
