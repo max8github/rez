@@ -1,12 +1,12 @@
 # How Reservation Locking Works in Rez
 
-This document explains exactly when a reservation becomes locked on a `Resource`, based on the current implementation.
+This document explains when a reservation becomes locked on a `Resource`, based on the current implementation after the timer-removal refactor.
 
 Short version:
 
-- Rez does not lock a resource during the broadcast availability check.
+- Rez does not lock a resource during the availability fan-out.
 - Rez locks a resource only when `ResourceEntity` persists `ReservationAccepted`.
-- That event writes the rounded booking time into the resource's `timeWindow`.
+- Search completion is deterministic from the known candidate `resourceId` set. A business timeout is no longer part of normal booking completion.
 
 The relevant code is:
 
@@ -15,11 +15,10 @@ The relevant code is:
 - [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java)
 - [ReservationAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ReservationAction.java)
 - [ResourceAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ResourceAction.java)
-- [FacilityAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/FacilityAction.java)
 
-## The Core State
+## The Core Lock State
 
-The lock lives in `ResourceState`.
+The lock lives in `ResourceState.timeWindow`.
 
 `ResourceState` stores:
 
@@ -27,12 +26,9 @@ The lock lives in `ResourceState`.
 - `calendarId`
 - `timeWindow: Map<LocalDateTime, String>`
 - `period: Period`
+- optional booking policy / metadata fields
 
-See:
-
-- [ResourceState.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceState.java:33)
-
-`timeWindow` is the important piece. It maps a rounded booking start time to the `reservationId` that owns that slot.
+`timeWindow` maps a rounded booking start time to the `reservationId` that owns that slot.
 
 Example:
 
@@ -40,79 +36,55 @@ Example:
 2026-05-01T18:00 -> "a1b2c3d4"
 ```
 
-That entry is the lock.
+That map entry is the lock.
 
 ## Step-by-Step Locking Flow
 
 ### 1. A reservation is initialized
 
-`BookingService.bookCourt()` creates a reservation ID, starts a 14-second timer, and calls `ReservationEntity::init()`.
+The caller creates a reservation and passes the full candidate `resourceId` set up front.
 
-See:
+Examples:
 
-- [BookingService.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/agent/BookingService.java:156)
-- [RezAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/RezAction.java:17)
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:78)
+- `BookingService.bookCourt(...)`
+- `POST /bookings`
 
-After `Inited`, the reservation enters `COLLECTING`.
+`ReservationEntity::init()` persists `Inited` and moves the reservation into the search phase.
 
-### 2. Facility fan-out asks resources for availability
+Important detail:
 
-`ReservationAction` reacts to `Inited` and calls `FacilityAction.broadcast()`.
+- the reservation already knows the full candidate set at initialization time
+- Rez no longer depends on a timer to conclude that a reservation is `UNAVAILABLE`
 
-See:
+### 2. Availability is fanned out to all known candidate resources
 
-- [ReservationAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ReservationAction.java:25)
-- [FacilityAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/FacilityAction.java:54)
+`ReservationAction` reacts to `Inited` and sends `ResourceEntity.CheckAvailability` to each candidate resource.
 
-For each resource, Rez sends `ResourceEntity.CheckAvailability`.
+This is an advisory check only. It does not lock anything.
 
 ### 3. `checkAvailability()` does not lock anything
 
 Inside `ResourceEntity::checkAvailability()`:
 
-- the requested time is rounded to the hour
+- the requested time is rounded to the valid booking slot
 - `currentState().isReservableAt(validTime)` is evaluated
 - Rez persists only `AvalabilityChecked`
 
-See:
+No slot is inserted into `timeWindow` here.
 
-- [ResourceEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEntity.java:67)
-
-`isReservableAt()` returns `true` only if:
-
-- the time is within the booking horizon
-- `timeWindow` does not already contain that time key
-
-See:
-
-- [ResourceState.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceState.java:48)
-
-Important: this is only a read-like check plus an emitted event. No slot is inserted into `timeWindow` here.
-
-### 4. First positive answer selects a candidate
+### 4. A positive answer may select a candidate
 
 `ResourceAction` forwards `AvalabilityChecked` to `ReservationEntity::replyAvailability()`.
 
-See:
+If the reservation is not currently reserving another candidate and the answer is positive, the reservation persists `ResourceSelected` and moves into the reserve-in-flight phase.
 
-- [ResourceAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ResourceAction.java:39)
+This still does not lock the resource. It only means:
 
-If the reservation is still in `COLLECTING` and the answer is `true`, `ReservationEntity` persists `ResourceSelected` and moves to `SELECTING`.
-
-See:
-
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:92)
-
-This still does not lock the resource. It only means "this resource is the current candidate to attempt".
+- "this resource is the current candidate to attempt"
 
 ### 5. `reserve()` is the actual lock attempt
 
 `ReservationAction` reacts to `ResourceSelected` and sends `ResourceEntity::reserve()`.
-
-See:
-
-- [ReservationAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ReservationAction.java:32)
 
 Inside `ResourceEntity::reserve()`:
 
@@ -121,22 +93,14 @@ Inside `ResourceEntity::reserve()`:
 - if still free, Rez persists `ReservationAccepted`
 - if no longer free, Rez persists `ReservationRejected`
 
-See:
-
-- [ResourceEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEntity.java:77)
-
-This second check is essential. It closes the race window between:
+This second check is the real correctness point. It closes the race window between:
 
 - "resource looked free when checked"
 - "resource is still free when we actually try to lock it"
 
-## The Exact Moment The Lock Is Acquired
+## The Exact Moment the Lock Is Acquired
 
 The lock is acquired when `ReservationAccepted` is applied to the `ResourceEntity` state.
-
-That happens here:
-
-- [ResourceEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEntity.java:35)
 
 On `ReservationAccepted`, the entity executes:
 
@@ -155,7 +119,7 @@ From then on:
 
 - `timeWindow.containsKey(validTime)` becomes `true`
 - `isReservableAt(validTime)` becomes `false`
-- later availability checks and reserve attempts for the same slot on the same resource will fail
+- later availability checks and reserve attempts for the same slot on the same resource fail
 
 ## What "Locked" Means in Practice
 
@@ -170,7 +134,7 @@ It is not locked when:
 - the reservation exists in `ReservationEntity`
 - availability was checked
 - the resource answered `available=true`
-- the reservation entered `SELECTING`
+- the reservation selected a candidate but the `reserve()` call has not yet accepted
 
 Those are all pre-lock stages.
 
@@ -182,19 +146,13 @@ Rez normalizes the requested time before both checking and locking:
 - seconds are removed
 - nanos are removed
 
-See:
-
-- [ResourceState.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceState.java:71)
-
 So:
 
 - `2026-05-01T18:07:12` is treated as `2026-05-01T18:00:00`
 
 That means the lock is hourly, not minute-precise.
 
-## What Happens If Two Reservations Race For The Same Resource
-
-This is the important concurrency story.
+## What Happens If Two Reservations Race For the Same Resource
 
 Assume reservations `R1` and `R2` both target the same resource and time.
 
@@ -207,46 +165,37 @@ Assume reservations `R1` and `R2` both target the same resource and time.
 
 This is why the actual correctness point is the second check in `reserve()`, not the first check in `checkAvailability()`.
 
-## What Happens After The Lock
+## What Happens After the Lock
 
 After `ReservationAccepted`:
 
 - `ResourceAction` reacts to the event
 - it calls `ReservationEntity::fulfill()`
 - `ReservationEntity` persists `Fulfilled`
-- the timer is deleted
-- `DelegatingServiceAction` mirrors the booking to Google Calendar and sends the user notification
+- `DelegatingServiceAction` later handles notification/calendar side effects
 
-See:
+Important:
 
-- [ResourceAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ResourceAction.java:50)
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:128)
-- [DelegatingServiceAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/DelegatingServiceAction.java:33)
+- external side effects happen after the internal lock
+- the resource lock does not depend on Google Calendar succeeding
 
-Important: Google Calendar write is after the internal lock. The lock does not depend on Google succeeding.
-
-## What Happens If The Candidate Rejects
+## What Happens If the Candidate Rejects
 
 If the selected resource rejects during `reserve()`:
 
 - `ResourceEntity` persists `ReservationRejected`
 - `ResourceAction` calls `ReservationEntity::reject()`
-- if `availableResources` already contains another candidate, Rez emits `RejectedWithNext`
-- `ReservationAction` feeds that next candidate back into `replyAvailability(..., true)`
-- the reservation tries the next available resource
+- if another already-known available candidate exists, the reservation selects it immediately
+- otherwise, if availability replies are still pending, the reservation goes back to waiting
+- if there are no available candidates and no pending replies left, the reservation persists `SearchExhausted` and becomes `UNAVAILABLE`
 
-See:
+That means `UNAVAILABLE` is now determined by candidate exhaustion, not by timeout.
 
-- [ResourceAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ResourceAction.java:69)
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:195)
+## How the Lock Is Released
 
-So a rejected candidate does not fail the whole reservation immediately. Rez can fall back to other already-known available resources.
+The lock is released during cancellation or compensation.
 
-## How The Lock Is Released
-
-The lock is released during cancellation.
-
-Flow:
+Normal cancellation flow:
 
 1. `ReservationEntity::cancelRequest()` persists `CancelRequested`
 2. `ReservationAction` calls `ResourceEntity::cancel(reservationId, dateTime)`
@@ -254,12 +203,11 @@ Flow:
 4. applying that event calls `currentState().cancel(dateTime, reservationId)`
 5. `ResourceState.cancel()` removes the `(time, reservationId)` pair if it matches exactly
 
-See:
+Compensation flow:
 
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:144)
-- [ReservationAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/ReservationAction.java:55)
-- [ResourceEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEntity.java:95)
-- [ResourceState.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceState.java:56)
+- if a resource has already accepted and locked
+- but the reservation can no longer fulfill
+- `ResourceAction` compensates by issuing `ResourceEntity::cancel(...)`
 
 Two details matter here:
 
@@ -267,27 +215,6 @@ Two details matter here:
 - the slot is removed only if the stored reservation ID matches the cancelling reservation ID
 
 That prevents one reservation from deleting another reservation's lock for the same hour.
-
-## What The Timer Does And Does Not Do
-
-Rez starts a 14-second timer when the reservation is created.
-
-See:
-
-- [BookingService.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/agent/BookingService.java:171)
-- [RezAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/RezAction.java:20)
-
-If the reservation is not fulfilled in time:
-
-- `TimerAction::expire()` calls `ReservationEntity::expire()`
-- the reservation becomes `UNAVAILABLE`
-
-See:
-
-- [TimerAction.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/actions/TimerAction.java:19)
-- [ReservationEntity.java](/Users/max/code/rez/reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java:182)
-
-The timer does not release a resource lock, because no lock exists unless a resource already accepted. Once a resource accepts and fulfillment completes, the timer is deleted.
 
 ## Precise Answer
 

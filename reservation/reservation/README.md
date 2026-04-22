@@ -21,14 +21,17 @@ Messaging service (currently: Telegram)
 MessagingEndpoint  (Akka HTTP, e.g. TelegramEndpoint)
   │
   ▼
-BookingAgent    (Akka Agent, GPT-4o-mini)
+BookingAgent    (Akka Agent)
   │  tool calls
   ▼
 BookingService  (Spring @Component)
   │  ComponentClient calls
-  ├──▶ ResourceView      – check availability
-  ├──▶ ReservationEntity – initiate booking
-  └──▶ FacilityEntity    – broadcast to courts
+  ├──▶ ResourceView      – check availability helper
+  ├──▶ FacilityEntity    – resolve candidate resources for Telegram/agent path
+  └──▶ ReservationEntity – initiate booking with flat resource IDs
+          │
+          ▼
+       ReservationAction
           │
           ▼
        ResourceEntity (court-1, court-2)
@@ -52,6 +55,16 @@ BookingService  (Spring @Component)
           ▼
        GoogleCalendar (Google Calendar API)
 ```
+
+For non-AI callers, Rez also exposes a direct booking API:
+
+```text
+POST   /bookings
+GET    /bookings/{reservationId}
+DELETE /bookings/{reservationId}
+```
+
+That path starts a reservation from a flat set of candidate `resourceId`s and does not rely on the Telegram/agent flow.
 
 ## Build
 
@@ -129,6 +142,17 @@ This calendar is built from reservation events via `ReservationCalendarView`, so
 it can be rebuilt from Rez state. Google Calendar remains available in parallel
 as the existing external side-effect integration.
 
+## Reservation Lookup
+
+Rez also exposes a lightweight lookup API for recent reservation discovery by recipient:
+
+```text
+GET /reservation-lookup/recipient/{recipientId}
+GET /reservation-lookup/recipient/{recipientId}/latest
+```
+
+This is intended for operational tooling and QA, especially for asynchronous agent-driven booking flows where the initial webhook response does not contain the reservation ID.
+
 ## Provisioning
 
 State is persistent (PostgreSQL). Provision once; entities survive restarts.
@@ -144,6 +168,22 @@ FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
 curl -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
   -H "Content-Type: application/json" \
   -d '{"name":"Court 1","calendarId":"local-cal-1@group.calendar.google.com"}'
+```
+
+Direct booking example:
+
+```bash
+RESERVATION_ID=$(uuidgen | tr -d '-' | cut -c1-8)
+
+curl -X POST http://localhost:9000/bookings \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"reservationId\": \"$RESERVATION_ID\",
+    \"dateTime\": \"2026-04-23T10:00:00\",
+    \"emails\": [\"Max\", \"Anna\"],
+    \"resourceIds\": [\"<RESOURCE_ID_1>\", \"<RESOURCE_ID_2>\"],
+    \"recipientId\": \"qa:local\"
+  }"
 ```
 
 ## Messaging integration

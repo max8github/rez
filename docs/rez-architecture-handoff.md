@@ -4,6 +4,15 @@ Date: 2026-04-20
 
 This document consolidates the current analysis and the architectural changes that should be implemented in follow-up work.
 
+Status note as of 2026-04-22:
+
+- this document is now partly historical
+- the timer-driven reservation completion flow described below is no longer current implementation
+- Rez now completes normal booking search by exhausting the known candidate `resourceId` set rather than by business timeout
+- the external `/bookings` API now exists
+
+Use this document mainly for architectural rationale and long-term direction, not as an exact description of current code paths.
+
 The goal is to make Rez a narrower booking engine, reduce domain leakage from other bounded contexts, and fix correctness issues in the current booking flow.
 
 ## Executive Summary
@@ -20,6 +29,12 @@ The main conclusions are:
 - Telegram and calendar responsibilities need to be re-evaluated in light of the narrower Rez boundary.
 
 ## 1. Urgent Correctness Fix
+
+Historical note:
+
+- the timer/lock inconsistency described in this section was the urgent issue at the time of writing
+- that exact timer-driven flow is no longer the current implementation after the timer-removal refactor
+- the remaining important risk is still cross-entity partial failure / compensation, not timeout-driven completion
 
 ### Problem
 
@@ -54,17 +69,19 @@ Relevant code:
 
 ### Required Immediate Mitigation
 
-Implement compensation:
+Implemented direction:
 
 - if a `ResourceEntity` has accepted and locked a slot
 - but `ReservationEntity` can no longer fulfill
 - then Rez must immediately release the resource lock by issuing compensating cancellation to the resource
 
-This is the most urgent change and should be implemented first.
-
 ### Timer Semantics Revisit
 
-Current timeout behavior is too coarse because `expire()` can move a reservation to `UNAVAILABLE` from:
+This section is now historical.
+
+Current code no longer uses business timeout as the normal mechanism that decides `UNAVAILABLE`.
+
+At the time of writing, timeout behavior was too coarse because `expire()` could move a reservation to `UNAVAILABLE` from:
 
 - `INIT`
 - `COLLECTING`
@@ -72,11 +89,7 @@ Current timeout behavior is too coarse because `expire()` can move a reservation
 
 That is suspicious from a state-machine perspective. `SELECTING` already means a candidate resource has been chosen and an actual reserve attempt is in progress or about to be in progress.
 
-Recommended follow-up:
-
-- re-evaluate timeout behavior for `SELECTING`
-- likely do not allow `expire()` to finalize `UNAVAILABLE` from `SELECTING`
-- handle `SELECTING` with different watchdog semantics than pure search
+That specific follow-up has effectively been superseded by the timer-removal refactor.
 
 ### Other Race / Reliability Issue To Document
 
@@ -319,6 +332,11 @@ The result should be minimal and booking-centric:
 
 Metadata enrichment can happen outside Rez.
 
+Status:
+
+- implemented in principle via `/bookings`
+- additional operational lookup endpoints now also exist for recipient-based reservation discovery
+
 ## 7. Calendar Responsibilities Need Rework
 
 ### Rez HTML Calendar
@@ -555,14 +573,20 @@ This reinforces the direction:
 
 ### Phase 1: Correctness First
 
-1. Implement immediate compensation if resource accepted but reservation cannot fulfill.
-2. Rework timeout semantics around `SELECTING`.
-3. Add tests specifically for timer/acceptance race conditions.
+Status:
+
+- immediate compensation was implemented
+- timer-driven completion was removed from the normal booking flow
+- tests were added around deterministic exhaustion / rejection behavior
 
 ### Phase 2: Narrow Rez Booking API
 
 1. Design and add an external API that starts reservations from flat `resourceId` sets.
 2. Keep existing BookingService path working while introducing the direct API.
+
+Status:
+
+- largely implemented
 
 ### Phase 3: Resource Model Expansion
 
@@ -575,6 +599,11 @@ This reinforces the direction:
 1. Stop making reservation flow depend on facility as a first-class booking entity.
 2. Reassess whether `FacilityEntity` remains as a temporary compatibility helper or is removed entirely.
 3. Remove `SelectionItem` if reservation input becomes resource-only.
+
+Status:
+
+- core reservation initiation now starts from flat `resourceId` sets
+- facility still remains in the codebase as a compatibility/helper concept for provisioning, Telegram routing, and some calendar/UI paths
 
 ### Phase 5: Rework Integrations
 
