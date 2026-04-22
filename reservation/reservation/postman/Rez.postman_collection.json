@@ -335,120 +335,6 @@
       ]
     },
     {
-      "name": "User",
-      "item": [
-        {
-          "name": "Create user",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"name\": \"{{userName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get user",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change user name",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"name\": \"{{newUserName}}\"\n}"
-            },
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/name",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}",
-                "name"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change user address",
-          "request": {
-            "method": "PUT",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"street\": \"{{street}}\",\n  \"city\": \"{{city}}\"\n}"
-            },
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/address",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}",
-                "address"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
       "name": "Reservation",
       "item": [
         {
@@ -858,10 +744,13 @@
                   "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
                   "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
                   "var messageText = 'Book a court tomorrow at 10am for ' + player1 + ' and ' + player2;",
+                  "var recipientId = (pm.environment.get('botToken') || '') + ':' + (pm.environment.get('admin_user_id') || '');",
                   "pm.environment.set('player_1', player1);",
                   "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
                   "pm.environment.set('telegram_message_text', messageText);",
-                  "console.info('telegram message: ' + messageText);"
+                  "console.info('telegram message: ' + messageText);",
+                  "console.info('telegram recipient_id: ' + recipientId);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -894,6 +783,99 @@
                 "webhook"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "Get latest reservation by recipient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.reservationId) {",
+                  "  pm.environment.set('reservation_id', json.reservationId);",
+                  "  if (json.resourceId) pm.environment.set('booked_resource_id', json.resourceId);",
+                  "  console.info('reservation_id set to: ' + json.reservationId);",
+                  "} else {",
+                  "  console.warn('No reservation found for recipient_id=' + pm.environment.get('recipient_id'));",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/reservation-lookup/recipient/{{recipient_id}}/latest",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "reservation-lookup",
+                "recipient",
+                "{{recipient_id}}",
+                "latest"
+              ]
+            },
+            "description": "Finds the most recent reservation for the Telegram recipient and stores reservation_id for later cancel calls."
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook cancel",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var reservationId = pm.environment.get('reservation_id');",
+                  "if (!reservationId) {",
+                  "  throw new Error('reservation_id is required for Telegram cancel. Set it first from a previous booking result, notification, or logs.');",
+                  "}",
+                  "var cancelText = 'Cancel reservation ' + reservationId;",
+                  "pm.environment.set('telegram_message_text', cancelText);",
+                  "console.info('telegram cancel message: ' + cancelText);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 2,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            },
+            "description": "Requires reservation_id to be set manually or from another API response before sending the cancel message."
           },
           "response": []
         }
