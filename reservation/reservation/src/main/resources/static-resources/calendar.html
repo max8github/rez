@@ -331,7 +331,12 @@
   }
 
   function formatDate(date) {
-    return date.toISOString().slice(0, 10);
+    const copy = new Date(date);
+    return [
+      copy.getFullYear(),
+      String(copy.getMonth() + 1).padStart(2, "0"),
+      String(copy.getDate()).padStart(2, "0")
+    ].join("-");
   }
 
   function formatDateTime(date) {
