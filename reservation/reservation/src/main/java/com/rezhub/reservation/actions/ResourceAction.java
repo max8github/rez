@@ -8,7 +8,6 @@ import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
-import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,11 +18,9 @@ public class ResourceAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(ResourceAction.class);
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public ResourceAction(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public ResourceAction(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
     }
 
     @SuppressWarnings("unused")
@@ -59,9 +56,7 @@ public class ResourceAction extends Consumer {
             .method(ReservationEntity::fulfill)
             .invokeAsync(command)
             .thenAccept(result -> {
-                if (result.startsWith("OK")) {
-                    timerScheduler.delete(TimerAction.timerName(reservationId));
-                } else {
+                if (!result.startsWith("OK")) {
                     // Reservation could not fulfill (e.g. expired while resource was locking).
                     // The resource lock was already persisted — compensate by releasing it.
                     log.warn("Reservation {} rejected fulfill from resource {} — compensating lock release",

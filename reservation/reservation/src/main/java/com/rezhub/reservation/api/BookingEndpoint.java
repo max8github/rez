@@ -1,6 +1,5 @@
 package com.rezhub.reservation.api;
 
-import com.rezhub.reservation.actions.TimerAction;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationState;
@@ -10,11 +9,9 @@ import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Set;
@@ -30,11 +27,9 @@ public class BookingEndpoint {
     private static final Logger log = LoggerFactory.getLogger(BookingEndpoint.class);
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public BookingEndpoint(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public BookingEndpoint(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
     }
 
     /**
@@ -44,12 +39,6 @@ public class BookingEndpoint {
     @Post("")
     public BookingResult book(BookingRequest request) {
         log.info("BookingEndpoint: creating reservation {} for resources {}", request.reservationId(), request.resourceIds());
-
-        timerScheduler.createSingleTimer(
-            TimerAction.timerName(request.reservationId()),
-            Duration.ofSeconds(TimerAction.TIMEOUT_SECONDS),
-            componentClient.forTimedAction().method(TimerAction::expire).deferred(request.reservationId())
-        );
 
         var reservation = new Reservation(request.emails(), request.dateTime());
         var init = new ReservationEntity.Init(reservation, request.resourceIds(), request.recipientId());

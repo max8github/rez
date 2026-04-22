@@ -20,8 +20,6 @@ public sealed interface ReservationEvent {
     record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds,
                            String recipientId) implements ReservationEvent {}
 
-    @TypeName("rejectedWithNext")
-    record RejectedWithNext(String reservationId, String resourceId, String nextResourceId) implements ReservationEvent {}
     @TypeName("rejected")
     record Rejected(String reservationId, String resourceId) implements ReservationEvent {}
 

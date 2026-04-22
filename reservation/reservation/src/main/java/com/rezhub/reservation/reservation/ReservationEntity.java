@@ -42,18 +42,30 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 yield ReservationState.initiate(e.reservationId())
                     .withState(COLLECTING)
                     .withResourceIds(e.resourceIds())
+                    .withPendingResourceIds(e.resourceIds())
                     .withDateTime(reservation.dateTime())
                     .withEmails(reservation.emails())
                     .withRecipientId(e.recipientId());
             }
-            case ReservationEvent.AvailabilityReplied e -> e.available()
-                ? currentState().withAdded(e.resourceId())
-                : currentState().withRemoved(e.resourceId());
-            case ReservationEvent.ResourceSelected e ->
-                currentState().withAdded(e.resourceId()).withState(SELECTING);
+            case ReservationEvent.AvailabilityReplied e -> {
+                ReservationState next = currentState().withPendingRemoved(e.resourceId());
+                yield e.available()
+                    ? next.withAdded(e.resourceId())
+                    : next.withRemoved(e.resourceId());
+            }
+            case ReservationEvent.ResourceSelected e -> currentState()
+                .withPendingRemoved(e.resourceId())
+                .withRemoved(currentState().resourceId())
+                .withAdded(e.resourceId())
+                .withResourceId(e.resourceId())
+                .withState(SELECTING);
             case ReservationEvent.SearchExhausted e -> {
                 log.info("Search exhausted for reservation {}: UNAVAILABLE ", e.reservationId());
-                yield currentState().withState(UNAVAILABLE);
+                yield currentState()
+                    .withPendingRemoved(currentState().resourceId())
+                    .withRemoved(currentState().resourceId())
+                    .withResourceId("")
+                    .withState(UNAVAILABLE);
             }
             case ReservationEvent.Fulfilled e -> {
                 log.info("Reservation {} FULFILLED with resource {}", e.reservationId(), e.resourceId());
@@ -64,13 +76,9 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 log.info("Reservation {} cancelled from resource {}", e.reservationId(), e.resourceId());
                 yield currentState().withState(CANCELLED);
             }
-            case ReservationEvent.RejectedWithNext e -> {
-                log.info("Reservation was rejected => next availability");
-                yield currentState().withRemoved(e.resourceId()).withState(COLLECTING);
-            }
             case ReservationEvent.Rejected e -> {
                 log.info("Reservation was rejected, waiting for availability");
-                yield currentState().withRemoved(e.resourceId()).withState(COLLECTING);
+                yield currentState().withRemoved(e.resourceId()).withResourceId("").withState(COLLECTING);
             }
         };
     }
@@ -100,6 +108,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                         .persist(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation))
                         .thenReply(newState -> "OK");
                 } else {
+                    if (isLastPendingWithoutCandidates(command.resourceId())) {
+                        return effects()
+                            .persist(new ReservationEvent.SearchExhausted(
+                                entityId, reservation, currentState().resourceIds(), currentState().recipientId()))
+                            .thenReply(newState -> "OK");
+                    }
                     return effects()
                         .persist(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
                             reservation, false))
@@ -179,38 +193,31 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
-    public Effect<String> expire() {
-        log.info("Reservation {} is asked to expire for timeout", entityId);
-        return switch (currentState().state()) {
-            case INIT, COLLECTING, SELECTING -> effects()
-                .persist(new ReservationEvent.SearchExhausted(
-                    entityId,
-                    new Reservation(currentState().emails(), currentState().dateTime()),
-                    currentState().resourceIds(), currentState().recipientId()))
-                .thenReply(newState -> entityId);
-            case FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("OK");
-        };
-    }
-
     public Effect<String> reject(Reject command) {
 
         switch (currentState().state()) {
             case SELECTING -> {
                 String resourceId = command.resourceId();
-                // Exclude the just-rejected resource when looking for the next candidate.
-                // availableResources is a HashSet so pop() without filtering could return
-                // the same ID that was just rejected, creating an infinite retry loop.
                 Optional<String> nextOpt = currentState().availableResources().stream()
                     .filter(id -> !id.equals(resourceId))
                     .findFirst();
                 if (nextOpt.isPresent()) {
                     String nextResourceId = nextOpt.get();
                     log.info("Reservation {} was rejected (resource {}) and will try another resource: {}", entityId, resourceId, nextResourceId);
-                    return effects().persist(new ReservationEvent.RejectedWithNext(entityId, resourceId, nextResourceId))
+                    Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
+                    return effects().persist(new ReservationEvent.ResourceSelected(nextResourceId, entityId, reservation))
+                        .thenReply(newState -> "OK");
+                } else if (currentState().hasPendingResources()) {
+                    log.info("Reservation {} was rejected (resource {}) and will keep waiting for pending availability replies", entityId, resourceId);
+                    return effects().persist(new ReservationEvent.Rejected(entityId, resourceId))
                         .thenReply(newState -> "OK");
                 } else {
                     log.info("Reservation {} was rejected (resource {}) but there is nothing left available to reserve", entityId, resourceId);
-                    return effects().persist(new ReservationEvent.Rejected(entityId, resourceId))
+                    return effects().persist(new ReservationEvent.SearchExhausted(
+                            entityId,
+                            fromReservationState(currentState()),
+                            currentState().resourceIds(),
+                            currentState().recipientId()))
                         .thenReply(newState -> "OK");
                 }
             }
@@ -230,4 +237,11 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     public record Reject(String resourceId) {}
 
     public record Fulfill(String resourceId, String reservationId, Reservation reservation) {}
+
+    private boolean isLastPendingWithoutCandidates(String resourceId) {
+        return currentState().pendingResourceIds().size() == 1
+            && currentState().pendingResourceIds().contains(resourceId)
+            && !currentState().hasAvailableResources()
+            && currentState().resourceId().isEmpty();
+    }
 }

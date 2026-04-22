@@ -2,8 +2,6 @@ package com.rezhub.reservation.agent;
 
 import akka.javasdk.annotations.FunctionTool;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.timer.TimerScheduler;
-import com.rezhub.reservation.actions.TimerAction;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.FacilityState;
 import com.rezhub.reservation.customer.facility.dto.Facility;
@@ -15,7 +13,6 @@ import com.rezhub.reservation.resource.dto.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.time.Duration;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -76,11 +73,9 @@ public class BookingService {
     );
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public BookingService(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public BookingService(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
     }
 
     /**
@@ -181,12 +176,6 @@ public class BookingService {
             .invoke();
         ReservationEntity.Init command = new ReservationEntity.Init(reservation,
             FacilityState.normalizeResourceIds(facility.resourceIds()), recipientId);
-
-        timerScheduler.createSingleTimer(
-            TimerAction.timerName(reservationId),
-            Duration.ofSeconds(TimerAction.TIMEOUT_SECONDS),
-            componentClient.forTimedAction().method(TimerAction::expire).deferred(reservationId)
-        );
 
         ReservationEntity.ReservationId result = componentClient
             .forEventSourcedEntity(reservationId)

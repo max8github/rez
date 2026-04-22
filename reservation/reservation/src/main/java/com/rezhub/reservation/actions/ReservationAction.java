@@ -48,19 +48,6 @@ public class ReservationAction extends Consumer {
         return effects().done();
     }
 
-    public Effect on(ReservationEvent.RejectedWithNext event) {
-        var reservationId = event.reservationId();
-        var resourceId = event.resourceId();
-        var nextResourceId = event.nextResourceId();
-        log.info("Reservation {} had a candidate ({}), but that got subsequently rejected. Now to try: {}.",
-          reservationId, resourceId, nextResourceId);
-        var command = new ReservationEntity.ReplyAvailability(reservationId, event.nextResourceId(), true);
-        componentClient.forEventSourcedEntity(reservationId)
-            .method(ReservationEntity::replyAvailability)
-            .invoke(command);
-        return effects().done();
-    }
-
     public Effect on(ReservationEvent.CancelRequested event) {
         log.info("Cancel reservation {} in resource {}", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();

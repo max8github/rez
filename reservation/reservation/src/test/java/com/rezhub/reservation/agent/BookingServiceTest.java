@@ -13,15 +13,15 @@ import static org.assertj.core.api.Assertions.assertThat;
  * Unit tests for BookingService validation logic.
  *
  * These tests cover the fast early-exit paths that return before any
- * ComponentClient or TimerScheduler calls, so nulls are safe to pass.
+ * ComponentClient calls, so nulls are safe to pass.
  *
  * Note: sender-must-be-player rule tests (admin bypass, non-admin rejection)
  * will be added in the member sprint when BoundBookingService is introduced.
  */
 class BookingServiceTest {
 
-    // Early-exit paths never reach componentClient / timerScheduler, so nulls are safe.
-    private final BookingService service = new BookingService(null, null);
+    // Early-exit paths never reach componentClient, so nulls are safe.
+    private final BookingService service = new BookingService(null);
 
     @Test
     void bookCourt_invalidDateFormat_returnsErrorMessage() {

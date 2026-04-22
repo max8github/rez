@@ -5,7 +5,6 @@ import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.timer.TimerScheduler;
 import com.rezhub.reservation.agent.BookingService;
 import com.rezhub.reservation.spi.NotificationSender;
 import org.slf4j.Logger;
@@ -20,11 +19,9 @@ public class Bootstrap implements ServiceSetup {
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public Bootstrap(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public Bootstrap(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
     }
 
     @Override
@@ -53,7 +50,7 @@ public class Bootstrap implements ServiceSetup {
 
     @Override
     public DependencyProvider createDependencyProvider() {
-        var bookingService = new BookingService(componentClient, timerScheduler);
+        var bookingService = new BookingService(componentClient);
         return new DependencyProvider() {
             @Override
             public <T> T getDependency(Class<T> clazz) {
