@@ -472,6 +472,432 @@
           "response": []
         }
       ]
+    },
+    {
+      "name": "QA Flow",
+      "item": [
+        {
+          "name": "Create QA facility",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var facilityName = 'QA Club ' + suffix;",
+                  "var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+                  "var city = pm.variables.replaceIn('{{$randomCity}}');",
+                  "var botToken = 'bot:local-test-' + suffix;",
+                  "var adminUserId = String(Math.floor(Math.random() * 900000) + 100000);",
+                  "",
+                  "pm.environment.set('qa_suffix', suffix);",
+                  "pm.environment.set('facilityName', facilityName);",
+                  "pm.environment.set('street', street);",
+                  "pm.environment.set('city', city);",
+                  "pm.environment.set('botToken', botToken);",
+                  "pm.environment.set('admin_user_id', adminUserId);",
+                  "pm.environment.unset('facility_id');",
+                  "pm.environment.unset('resource_id');",
+                  "pm.environment.unset('resource_id_1');",
+                  "pm.environment.unset('resource_id_2');",
+                  "pm.environment.unset('reservation_id');",
+                  "",
+                  "console.info('QA suffix: ' + suffix);",
+                  "console.info('QA botToken: ' + botToken);",
+                  "console.info('QA admin_user_id: ' + adminUserId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, '');",
+                  "pm.environment.set('facility_id', id);",
+                  "console.info('facility_id set to: ' + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"resourceIds\": [],\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": [\"{{admin_user_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceName = 'Court A ' + suffix;",
+                  "var calendarId = 'local-cal-' + suffix + '-1@group.calendar.google.com';",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 1 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, '');",
+                  "pm.environment.set('resource_id_1', id);",
+                  "pm.environment.set('resource_id', id);",
+                  "console.info('resource_id_1 set to: ' + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "resource"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceName = 'Court B ' + suffix;",
+                  "var calendarId = 'local-cal-' + suffix + '-2@group.calendar.google.com';",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 2 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, '');",
+                  "pm.environment.set('resource_id_2', id);",
+                  "pm.environment.set('resource_id', id);",
+                  "console.info('resource_id_2 set to: ' + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "resource"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA facility",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function pad(n) { return String(n).padStart(2, '0'); }",
+                  "var dt = new Date();",
+                  "dt.setDate(dt.getDate() + 1);",
+                  "dt.setHours(10, 0, 0, 0);",
+                  "var bookingDateTime = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes()) + ':' + pad(dt.getSeconds());",
+                  "var reservationId = pm.variables.replaceIn('{{$randomUUID}}').replace(/-/g, '').substring(0, 8);",
+                  "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var recipientId = 'postman:' + (pm.environment.get('botToken') || 'qa');",
+                  "",
+                  "pm.environment.set('booking_date_time', bookingDateTime);",
+                  "pm.environment.set('reservation_id', reservationId);",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "",
+                  "console.info('reservation_id: ' + reservationId);",
+                  "console.info('booking_date_time: ' + bookingDateTime);",
+                  "console.info('players: ' + player1 + ', ' + player2);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.reservationId) pm.environment.set('reservation_id', json.reservationId);",
+                  "if (json && json.resourceId) pm.environment.set('booked_resource_id', json.resourceId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{reservation_id}}\",\n  \"dateTime\": \"{{booking_date_time}}\",\n  \"emails\": [\"{{player_1}}\", \"{{player_2}}\"],\n  \"resourceIds\": [\"{{resource_id_1}}\", \"{{resource_id_2}}\"],\n  \"recipientId\": \"{{recipient_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA booking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings",
+                "{{reservation_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "reservation",
+                "{{reservation_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA resource 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA resource 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook book",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var messageText = 'Book a court tomorrow at 10am for ' + player1 + ' and ' + player2;",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('telegram_message_text', messageText);",
+                  "console.info('telegram message: ' + messageText);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 1,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
     }
   ]
 }
