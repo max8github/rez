@@ -54,19 +54,7 @@ public class ResourceAction extends Consumer {
         componentClient
             .forEventSourcedEntity(reservationId)
             .method(ReservationEntity::fulfill)
-            .invokeAsync(command)
-            .thenAccept(result -> {
-                if (!result.startsWith("OK")) {
-                    // Reservation could not fulfill (e.g. expired while resource was locking).
-                    // The resource lock was already persisted — compensate by releasing it.
-                    log.warn("Reservation {} rejected fulfill from resource {} — compensating lock release",
-                        reservationId, resourceId);
-                    componentClient
-                        .forEventSourcedEntity(resourceId)
-                        .method(ResourceEntity::cancel)
-                        .invoke(new ResourceEntity.CancelReservation(reservationId, event.reservation().dateTime()));
-                }
-            });
+            .invoke(command);
 
         return effects().done();
     }

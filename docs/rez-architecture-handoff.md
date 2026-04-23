@@ -575,7 +575,6 @@ This reinforces the direction:
 
 Status:
 
-- immediate compensation was implemented
 - timer-driven completion was removed from the normal booking flow
 - tests were added around deterministic exhaustion / rejection behavior
 

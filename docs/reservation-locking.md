@@ -193,7 +193,7 @@ That means `UNAVAILABLE` is now determined by candidate exhaustion, not by timeo
 
 ## How the Lock Is Released
 
-The lock is released during cancellation or compensation.
+The lock is released during cancellation.
 
 Normal cancellation flow:
 
@@ -202,12 +202,6 @@ Normal cancellation flow:
 3. `ResourceEntity` persists `ReservationCanceled`
 4. applying that event calls `currentState().cancel(dateTime, reservationId)`
 5. `ResourceState.cancel()` removes the `(time, reservationId)` pair if it matches exactly
-
-Compensation flow:
-
-- if a resource has already accepted and locked
-- but the reservation can no longer fulfill
-- `ResourceAction` compensates by issuing `ResourceEntity::cancel(...)`
 
 Two details matter here:
 
