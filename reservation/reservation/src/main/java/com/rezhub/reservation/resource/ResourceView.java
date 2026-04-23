@@ -40,7 +40,10 @@ public class ResourceView extends View {
                 case ResourceEvent.ResourceTypeSet e ->
                     rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withResourceType(e.resourceType()));
-                case ResourceEvent.ExternalRefSet e -> effects().ignore();
+                case ResourceEvent.ExternalRefSet e ->
+                    rowState() == null ? effects().ignore() :
+                    effects().updateRow(rowState().withFacilityId(
+                        e.externalGroupRef() != null ? e.externalGroupRef() : rowState().facilityId()));
             };
         }
     }

@@ -34,6 +34,10 @@ public record ResourceV(
         return this;
     }
 
+    ResourceV withFacilityId(String facilityId) {
+        return new ResourceV(resourceId, resourceName, facilityId, calendarId, timeWindow, resourceType);
+    }
+
     ResourceV withResourceType(String type) {
         return new ResourceV(resourceId, resourceName, facilityId, calendarId, timeWindow, type);
     }

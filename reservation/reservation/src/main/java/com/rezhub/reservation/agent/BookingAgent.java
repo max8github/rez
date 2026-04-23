@@ -15,10 +15,10 @@ import akka.javasdk.annotations.Component;
 @Component(id = "booking-agent")
 public class BookingAgent extends Agent {
 
-    private final BookingService bookingService;
+    private final BookingTools bookingTools;
 
-    public BookingAgent(BookingService bookingService) {
-        this.bookingService = bookingService;
+    public BookingAgent(BookingTools bookingTools) {
+        this.bookingTools = bookingTools;
     }
 
     private static final String SYSTEM_MESSAGE = """
@@ -72,10 +72,10 @@ public class BookingAgent extends Agent {
             java.time.LocalDate.now(java.time.ZoneId.of(tz))
                 .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", java.util.Locale.ENGLISH)));
         java.util.Optional<java.time.LocalDateTime> resolvedDateTime =
-            BookingService.resolveNaturalDateTime(
+            BookingTools.resolveNaturalDateTime(
                 request.message(),
-                BookingService.safeZoneId(tz),
-                java.time.ZonedDateTime.now(BookingService.safeZoneId(tz)));
+                BookingTools.safeZoneId(tz),
+                java.time.ZonedDateTime.now(BookingTools.safeZoneId(tz)));
 
         String resolvedPrefix = resolvedDateTime
             .map(dateTime -> " [resolvedDateTime:" + dateTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]")
@@ -83,7 +83,7 @@ public class BookingAgent extends Agent {
 
         return effects()
             .systemMessage(systemMsg)
-            .tools(bookingService)
+            .tools(bookingTools)
             .userMessage("[facility:" + request.facilityId() + "] [recipient:" + request.recipientId() + "]" + resolvedPrefix + " "
                 + request.senderName() + ": " + request.message())
             .thenReply();

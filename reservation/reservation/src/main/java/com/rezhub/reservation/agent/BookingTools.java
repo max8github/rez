@@ -4,42 +4,43 @@ import akka.javasdk.annotations.FunctionTool;
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.view.ResourcesByFacilityView;
-import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.reservation.ReservationEntity;
+import com.rezhub.reservation.orchestration.AvailabilityResult;
+import com.rezhub.reservation.orchestration.BookingApplicationServiceImpl;
+import com.rezhub.reservation.orchestration.BookingIntent;
+import com.rezhub.reservation.orchestration.CancelIntent;
+import com.rezhub.reservation.orchestration.OriginRequestContext;
+import com.rezhub.reservation.orchestration.ReservationDetails;
+import com.rezhub.reservation.orchestration.ReservationGatewayAkka;
+import com.rezhub.reservation.orchestration.ReservationHandle;
 import com.rezhub.reservation.resource.ResourceV;
-import com.rezhub.reservation.resource.ResourceView;
-import com.rezhub.reservation.resource.dto.Resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
-import java.time.DayOfWeek;
 import java.time.format.DateTimeFormatter;
 import java.time.format.DateTimeParseException;
 import java.util.Arrays;
 import java.util.Base64;
-import java.util.Locale;
 import java.util.List;
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
-import java.util.UUID;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Provides booking-related function tools for BookingAgent.
- * Each @FunctionTool method is callable by the LLM during a conversation.
+ * Agent-facing @FunctionTool surface for booking operations.
+ * Delegates domain logic to BookingApplicationServiceImpl; keeps only
+ * parameter validation, LLM-specific string formatting, and utility helpers.
  */
-public class BookingService {
+public class BookingTools {
 
-    private static final Logger log = LoggerFactory.getLogger(BookingService.class);
+    private static final Logger log = LoggerFactory.getLogger(BookingTools.class);
     private static final DateTimeFormatter ISO_FMT = DateTimeFormatter.ISO_LOCAL_DATE_TIME;
-    private static final DateTimeFormatter HOUR_ONLY_FMT = DateTimeFormatter.ofPattern("HH:mm");
     private static final Pattern TIME_PATTERN = Pattern.compile(
         "\\b(?:alle\\s*)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?\\b",
         Pattern.CASE_INSENSITIVE);
@@ -72,27 +73,25 @@ public class BookingService {
         Map.entry("domenica", DayOfWeek.SUNDAY)
     );
 
+    private final BookingApplicationServiceImpl bookingService;
+    private final ReservationGatewayAkka reservationGateway;
     private final ComponentClient componentClient;
 
-    public BookingService(ComponentClient componentClient) {
+    public BookingTools(BookingApplicationServiceImpl bookingService,
+                        ReservationGatewayAkka reservationGateway,
+                        ComponentClient componentClient) {
+        this.bookingService = bookingService;
+        this.reservationGateway = reservationGateway;
         this.componentClient = componentClient;
     }
 
-    /**
-     * Check which courts are free at a facility for a given date/time.
-     *
-     * @param facilityId  the facility entity ID
-     * @param dateTimeIso the requested date/time in ISO-8601 format, e.g. "2026-03-20T11:00:00"
-     * @return human-readable description of available courts, or "no courts available"
-     */
     @FunctionTool(description = """
         Check court availability at a facility for a specific date and time.
         Returns a list of available courts or states that none are free.
         Call this before booking to know what slots exist.
         """)
     public String checkAvailability(String facilityId, String dateTimeIso) {
-        String internalFacilityId = toInternalFacilityId(facilityId);
-        log.info("checkAvailability: facilityId={}, dateTime={}", internalFacilityId, dateTimeIso);
+        log.info("checkAvailability: facilityId={}, dateTime={}", facilityId, dateTimeIso);
         LocalDateTime requestedTime;
         try {
             requestedTime = LocalDateTime.parse(dateTimeIso, ISO_FMT);
@@ -100,42 +99,29 @@ public class BookingService {
             return "Invalid date/time format. Please use ISO-8601, e.g. 2026-03-20T11:00:00";
         }
 
-        String pastValidation = validateNotInPast(internalFacilityId, requestedTime);
+        String pastValidation = validateNotInPast(facilityId, requestedTime);
         if (pastValidation != null) {
             return pastValidation;
         }
 
-        ResourceView.Resources resources = componentClient
-            .forView()
-            .method(ResourceView::getResource)
-            .invoke(internalFacilityId);
+        OriginRequestContext origin = directOrigin("", facilityId);
+        BookingIntent intent = new BookingIntent(
+            BookingIntent.BookingAction.CHECK_AVAILABILITY,
+            requestedTime, null, List.of(), List.of(), null, Map.of());
 
-        if (resources.resources().isEmpty()) {
-            return "No courts registered for this facility.";
-        }
+        AvailabilityResult result = bookingService.checkAvailability(origin, intent);
 
-        List<String> available = resources.resources().stream()
-            .filter(r -> isAvailableAt(r, requestedTime))
-            .map(r -> r.resourceName() + " (id: " + r.resourceId() + ")")
-            .toList();
+        String noRoomsMsg = result.attributes().get("message");
+        if (noRoomsMsg != null) return noRoomsMsg;
 
-        if (available.isEmpty()) {
-            // Also surface nearby available slots to help the LLM suggest alternatives
-            String alternatives = findNearbySlots(resources.resources(), requestedTime);
+        if (result.availableSlots().isEmpty()) {
+            String alternatives = result.attributes().getOrDefault("alternatives", "");
             return "No courts available at " + dateTimeIso + ". " + alternatives;
         }
 
-        return "Available courts at " + dateTimeIso + ": " + String.join(", ", available);
+        return "Available courts at " + dateTimeIso + ": " + String.join(", ", result.availableSlots());
     }
 
-    /**
-     * Book a court at a facility.
-     *
-     * @param facilityId   the facility entity ID
-     * @param dateTimeIso  the booking date/time in ISO-8601, e.g. "2026-03-20T11:00:00"
-     * @param playerNames  comma-separated display names of the players (e.g. "Max,John")
-     * @return confirmation message with reservation ID, or error description
-     */
     @FunctionTool(description = """
         Book a court at a facility for specific players at a specific date and time.
         Always call checkAvailability first to confirm a slot is free.
@@ -145,8 +131,7 @@ public class BookingService {
         Returns a reservation ID on success.
         """)
     public String bookCourt(String facilityId, String dateTimeIso, String playerNames, String recipientId) {
-        String internalFacilityId = toInternalFacilityId(facilityId);
-        log.info("bookCourt: facilityId={}, dateTime={}, players={}", internalFacilityId, dateTimeIso, playerNames);
+        log.info("bookCourt: facilityId={}, dateTime={}, players={}", facilityId, dateTimeIso, playerNames);
         LocalDateTime dateTime;
         try {
             dateTime = LocalDateTime.parse(dateTimeIso, ISO_FMT);
@@ -163,37 +148,22 @@ public class BookingService {
             return "At least one player name is required.";
         }
 
-        String pastValidation = validateNotInPast(internalFacilityId, dateTime);
+        String pastValidation = validateNotInPast(facilityId, dateTime);
         if (pastValidation != null) {
             return pastValidation;
         }
 
-        String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
-        Reservation reservation = new Reservation(players, dateTime);
-        Set<String> resourceIds = componentClient
-            .forView()
-            .method(ResourcesByFacilityView::getByFacilityId)
-            .invoke(internalFacilityId)
-            .rows().stream()
-            .map(ResourcesByFacilityView.Row::resourceId)
-            .collect(java.util.stream.Collectors.toSet());
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation, resourceIds, recipientId);
+        OriginRequestContext origin = directOrigin(recipientId, facilityId);
+        BookingIntent intent = new BookingIntent(
+            BookingIntent.BookingAction.BOOK,
+            dateTime, null, players, List.of(), null, Map.of());
 
-        ReservationEntity.ReservationId result = componentClient
-            .forEventSourcedEntity(reservationId)
-            .method(ReservationEntity::init)
-            .invoke(command);
+        ReservationHandle handle = bookingService.book(origin, intent);
 
-        log.info("Booking initiated, reservationId={}", result.reservationId());
-        return "Booking request queued (ID: " + result.reservationId() + "). The system is checking availability asynchronously — the member will receive a separate notification with the outcome. Do NOT tell the member the court is confirmed yet.";
+        log.info("Booking initiated, reservationId={}", handle.reservationId());
+        return "Booking request queued (ID: " + handle.reservationId() + "). The system is checking availability asynchronously — the member will receive a separate notification with the outcome. Do NOT tell the member the court is confirmed yet.";
     }
 
-    /**
-     * Cancel an existing reservation.
-     *
-     * @param reservationId the reservation ID returned when the court was booked
-     * @return confirmation or error message
-     */
     @FunctionTool(description = """
         Cancel an existing court reservation by its reservation ID.
         The reservation ID was returned when the booking was originally made.
@@ -201,10 +171,7 @@ public class BookingService {
     public String cancelReservation(String reservationId) {
         log.info("cancelReservation: reservationId={}", reservationId);
         try {
-            componentClient
-                .forEventSourcedEntity(reservationId)
-                .method(ReservationEntity::cancelRequest)
-                .invoke();
+            bookingService.cancel(directOrigin("", ""), new CancelIntent(reservationId));
             return "Cancellation request submitted for reservation " + reservationId + ".";
         } catch (Exception e) {
             log.warn("Cancel failed for reservationId={}: {}", reservationId, e.getMessage());
@@ -212,12 +179,6 @@ public class BookingService {
         }
     }
 
-    /**
-     * Look up the details of an existing reservation by its ID.
-     *
-     * @param reservationId the reservation ID
-     * @return reservation details including state, players, date/time, court, and a calendar link
-     */
     @FunctionTool(description = """
         Look up the details of an existing reservation by its ID.
         Returns the current state (FULFILLED, CANCELLED, etc.), players, date/time, court, and a Google Calendar link.
@@ -226,17 +187,13 @@ public class BookingService {
     public String getReservationDetails(String reservationId) {
         log.info("getReservationDetails: reservationId={}", reservationId);
         try {
-            var state = componentClient
-                .forEventSourcedEntity(reservationId)
-                .method(ReservationEntity::getReservation)
-                .invoke();
-
-            String courtLabel = state.resourceId();
+            ReservationDetails details = reservationGateway.get(reservationId);
+            String courtLabel = details.resourceId();
             String calendarLink = "";
-            if (!state.resourceId().isBlank()) {
+            if (details.resourceId() != null && !details.resourceId().isBlank()) {
                 Optional<ResourceV> resource = componentClient.forView()
-                    .method(ResourceView::getResourceById)
-                    .invoke(state.resourceId());
+                    .method(com.rezhub.reservation.resource.ResourceView::getResourceById)
+                    .invoke(details.resourceId());
                 if (resource.isPresent()) {
                     courtLabel = resource.get().resourceName();
                     String calendarId = resource.get().calendarId();
@@ -247,10 +204,8 @@ public class BookingService {
                     }
                 }
             }
-
-            return ("Reservation %s\nState: %s\nCourt: %s\nDate/time: %s\nPlayers: %s%s")
-                .formatted(reservationId, state.state(), courtLabel, state.dateTime(),
-                    String.join(", ", state.emails()), calendarLink);
+            return ("Reservation %s\nState: %s\nCourt: %s\nDate/time: %s%s")
+                .formatted(reservationId, details.status(), courtLabel, details.dateTime(), calendarLink);
         } catch (Exception e) {
             log.warn("getReservationDetails failed for {}: {}", reservationId, e.getMessage());
             return "Could not find reservation " + reservationId + ": " + e.getMessage();
@@ -275,8 +230,9 @@ public class BookingService {
 
     // --- helpers ---
 
-    private String toInternalFacilityId(String facilityId) {
-        return facilityId;
+    private OriginRequestContext directOrigin(String recipientId, String facilityId) {
+        return new OriginRequestContext("direct", "", "", recipientId, facilityId,
+            Map.of("facilityId", facilityId));
     }
 
     private String validateNotInPast(String facilityId, LocalDateTime requestedTime) {
@@ -384,40 +340,5 @@ public class BookingService {
             .replace('ì', 'i')
             .replace('ò', 'o')
             .replace('ù', 'u');
-    }
-
-    private boolean isAvailableAt(ResourceV resource, LocalDateTime requestedTime) {
-        String isoKey = requestedTime.format(ISO_FMT);
-        return resource.timeWindow().stream()
-            .noneMatch(entry -> entry.dateTime().equals(isoKey));
-    }
-
-    private String findNearbySlots(List<ResourceV> resources, LocalDateTime around) {
-        // Collect all booked times across all courts, find first gap
-        List<LocalDateTime> bookedTimes = resources.stream()
-            .flatMap(r -> r.timeWindow().stream())
-            .map(Resource.Entry::dateTime)
-            .map(s -> { try { return LocalDateTime.parse(s, ISO_FMT); } catch (Exception e) { return null; } })
-            .filter(t -> t != null && !t.isBefore(around.minusHours(2)) && !t.isAfter(around.plusHours(4)))
-            .distinct()
-            .sorted()
-            .toList();
-
-        if (bookedTimes.isEmpty()) {
-            return "The facility appears to have open slots — try a slightly different time.";
-        }
-
-        // Suggest the next whole hour after the requested time that isn't fully booked
-        for (int offset = 1; offset <= 4; offset++) {
-            LocalDateTime candidate = around.plusHours(offset).withMinute(0).withSecond(0).withNano(0);
-            String key = candidate.format(ISO_FMT);
-            long busyCourts = resources.stream()
-                .filter(r -> r.timeWindow().stream().anyMatch(e -> e.dateTime().equals(key)))
-                .count();
-            if (busyCourts < resources.size()) {
-                return "The next available slot is around " + candidate.format(HOUR_ONLY_FMT) + ".";
-            }
-        }
-        return "No alternative slots found in the next 4 hours.";
     }
 }
