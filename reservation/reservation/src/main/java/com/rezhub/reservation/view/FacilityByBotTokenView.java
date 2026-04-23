@@ -32,10 +32,6 @@ public class FacilityByBotTokenView extends View {
                     e.botToken() == null || e.botToken().isBlank()
                         ? effects().deleteRow()
                         : effects().updateRow(new Entry(e.facilityId(), e.botToken(), e.timezone()));
-                case FacilityEvent.ResourceCreateAndRegisterRequested e -> effects().ignore();
-                case FacilityEvent.ResourceRegistered e -> effects().ignore();
-                case FacilityEvent.ResourceUnregistered e -> effects().ignore();
-                case FacilityEvent.AvalabilityRequested e -> effects().ignore();
             };
         }
     }

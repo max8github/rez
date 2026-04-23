@@ -1,6 +1,5 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceEvent;
@@ -21,16 +20,6 @@ public class ResourceAction extends Consumer {
 
     public ResourceAction(ComponentClient componentClient) {
         this.componentClient = componentClient;
-    }
-
-    @SuppressWarnings("unused")
-    public Effect on(ResourceEvent.FacilityResourceCreated event) {
-        log.debug("Facility Asset was Created with id {}", event.resourceId());
-        componentClient
-            .forEventSourcedEntity(event.parentId())
-            .method(FacilityEntity::registerResource)
-            .invoke(event.resourceId());
-        return effects().done();
     }
 
     @SuppressWarnings("unused")

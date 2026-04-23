@@ -8,7 +8,6 @@ import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -61,8 +60,7 @@ public class BookingAgentIntegrationTest extends TestKitSupport {
         // Provision facility so the entity exists (agent may call FacilityEntity via tools)
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility("Agent Test Club", new Address("Test St", "Berlin"),
-                Collections.emptySet(), "Europe/Berlin", null, null));
+            .invoke(new Facility("Agent Test Club", new Address("Test St", "Berlin"), "Europe/Berlin", null, null));
 
         // Model says no slots free — relayed directly without tool calls
         bookingModel.fixedResponse("Sorry, no courts available at 11:00. The next free slot is 13:00.");

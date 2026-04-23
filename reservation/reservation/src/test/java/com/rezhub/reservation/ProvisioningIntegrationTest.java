@@ -5,11 +5,13 @@ import com.rezhub.reservation.api.FacilityEndpoint;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceView;
+import com.rezhub.reservation.resource.dto.Resource;
 import com.rezhub.reservation.view.FacilityByBotTokenView;
+import com.rezhub.reservation.view.ResourcesByFacilityView;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.Set;
@@ -30,7 +32,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
     public void getFacility_returnsTimezoneAndBotToken() {
         var facilityId = "f_prov-timezone-" + shortId();
         var facility = new Facility("Timezone Club", new Address("Sport St", "Berlin"),
-            Collections.emptySet(), "Europe/London", "bot:timezone-test", Set.of("admin1"));
+            "Europe/London", "bot:timezone-test", Set.of("admin1"));
 
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
@@ -49,8 +51,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
     @Test
     public void getFacility_withNullFields_doesNotThrow() {
         var facilityId = "f_prov-nullfields-" + shortId();
-        var facility = new Facility("Bare Club", new Address("Any St", "Town"),
-            Collections.emptySet(), null, null, null);
+        var facility = new Facility("Bare Club", new Address("Any St", "Town"), null, null, null);
 
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
@@ -65,23 +66,6 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         assertThat(state.adminUserIds()).isNull();
     }
 
-    @Test
-    public void getFacility_withNullResourceIds_returnsEmptySet() {
-        var facilityId = "f_prov-null-resource-ids-" + shortId();
-        var facility = new Facility("Seed Club", new Address("Any St", "Town"),
-            null, "Europe/Rome", null, null);
-
-        componentClient.forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::create)
-            .invoke(facility);
-
-        var state = componentClient.forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::getFacility)
-            .invoke();
-
-        assertThat(state.resourceIds()).isEmpty();
-    }
-
     // --- #bot: FacilityByBotTokenView ---
 
     @Test
@@ -89,7 +73,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         var facilityId = "f_prov-bottoken-" + shortId();
         var botToken = "bot:test-" + shortId();
         var facility = new Facility("Bot Club", new Address("Bot St", "Berlin"),
-            Collections.emptySet(), "Europe/Berlin", botToken, null);
+            "Europe/Berlin", botToken, null);
 
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
@@ -134,18 +118,13 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
 
     @Test
     public void facilityByBotTokenView_noBotToken_createsNoViewRow() throws Exception {
-        // A facility created without a botToken must not produce a view schema error
-        // (the view should silently ignore it, not try to insert a null botToken row).
         var facilityId = "f_prov-nobottoken-" + shortId();
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility("No-Bot Club", new Address("Quiet St", "Berlin"),
-                Collections.emptySet(), "Europe/Berlin", null, null));
+            .invoke(new Facility("No-Bot Club", new Address("Quiet St", "Berlin"), "Europe/Berlin", null, null));
 
-        // Give the runtime a moment to process the event
         Thread.sleep(200);
 
-        // Confirm: querying for the entity's (non-existent) botToken returns nothing
         Optional<FacilityByBotTokenView.Entry> entry = componentClient.forView()
             .method(FacilityByBotTokenView::getByBotToken)
             .invoke("bot:null-should-not-exist");
@@ -159,8 +138,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         var botToken = "bot:clear-" + shortId();
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility("Token Club", new Address("Bot St", "Berlin"),
-                Collections.emptySet(), "Europe/Berlin", botToken, null));
+            .invoke(new Facility("Token Club", new Address("Bot St", "Berlin"), "Europe/Berlin", botToken, null));
 
         eventually(() ->
                 componentClient.forView()
@@ -186,8 +164,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
         FacilityEndpoint endpoint = new FacilityEndpoint(componentClient);
 
         String firstId = endpoint.createFacility(new Facility(
-            "First Club", new Address("One St", "Berlin"),
-            Collections.emptySet(), "Europe/Berlin", botToken, null));
+            "First Club", new Address("One St", "Berlin"), "Europe/Berlin", botToken, null));
 
         assertThat(firstId).isNotBlank();
 
@@ -202,42 +179,42 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
             assertThat(found.facilityId()).isEqualTo(firstId));
 
         assertThatThrownBy(() -> endpoint.createFacility(new Facility(
-            "Second Club", new Address("Two St", "Rome"),
-            Collections.emptySet(), "Europe/Rome", botToken, null)))
+            "Second Club", new Address("Two St", "Rome"), "Europe/Rome", botToken, null)))
             .isInstanceOf(IllegalArgumentException.class)
             .hasMessageContaining("Bot token is already assigned");
     }
 
-    // --- #7: ResourceView.getResourceById with calendarId ---
+    // --- Two-step resource provisioning via ResourceEndpoint ---
 
     @Test
-    public void resourceView_getResourceById_returnsCalendarId() throws Exception {
+    public void resourcesByFacilityView_returnsResourceAfterExternalRefSet() throws Exception {
         var facilityId = "f_prov-res-" + shortId();
         var resourceId = "court-" + shortId();
         var calendarId = "cal-" + shortId() + "@group.calendar.google.com";
 
-        // Create facility first so it exists
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility("Court Club", new Address("Court Rd", "Berlin"),
-                Collections.emptySet(), "Europe/Berlin", null, null));
+            .invoke(new Facility("Court Club", new Address("Court Rd", "Berlin"), "Europe/Berlin", null, null));
 
-        // Create and register the resource (triggers FacilityAction → ResourceEntity)
-        componentClient.forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::requestResourceCreateAndRegister)
-            .invoke(new com.rezhub.reservation.customer.facility.FacilityEntity.CreateAndRegisterResource(
-                "Court 1", resourceId, calendarId));
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::create)
+            .invoke(new Resource(resourceId, "Court 1", calendarId));
 
-        // Wait for the view to reflect the new resource
-        Optional<com.rezhub.reservation.resource.ResourceV> resourceV = eventually(() ->
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setExternalRef)
+            .invoke(new ResourceEntity.SetExternalRef(resourceId, facilityId));
+
+        List<ResourcesByFacilityView.Row> rows = eventually(() ->
             componentClient.forView()
-                .method(ResourceView::getResourceById)
-                .invoke(resourceId),
-            opt -> opt.isPresent());
+                .method(ResourcesByFacilityView::getByFacilityId)
+                .invoke(facilityId)
+                .rows(),
+            found -> !found.isEmpty());
 
-        assertThat(resourceV).isPresent();
-        assertThat(resourceV.get().calendarId()).isEqualTo(calendarId);
-        assertThat(resourceV.get().facilityId()).isEqualTo(facilityId);
+        assertThat(rows).singleElement().satisfies(row -> {
+            assertThat(row.resourceId()).isEqualTo(resourceId);
+            assertThat(row.facilityId()).isEqualTo(facilityId);
+        });
     }
 
     @Test
@@ -251,7 +228,6 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
 
     // --- helpers ---
 
-    /** Polls until the predicate holds (up to 2 seconds), then returns the last value. */
     private <T> T eventually(CheckedSupplier<T> query, java.util.function.Predicate<T> until) throws Exception {
         T last = null;
         for (int i = 0; i < 40; i++) {

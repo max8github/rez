@@ -3,8 +3,8 @@ package com.rezhub.reservation.agent;
 import akka.javasdk.annotations.FunctionTool;
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
-import com.rezhub.reservation.customer.facility.FacilityState;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.view.ResourcesByFacilityView;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceV;
@@ -170,12 +170,14 @@ public class BookingService {
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Reservation reservation = new Reservation(players, dateTime);
-        Facility facility = componentClient
-            .forEventSourcedEntity(internalFacilityId)
-            .method(FacilityEntity::getFacility)
-            .invoke();
-        ReservationEntity.Init command = new ReservationEntity.Init(reservation,
-            FacilityState.normalizeResourceIds(facility.resourceIds()), recipientId);
+        Set<String> resourceIds = componentClient
+            .forView()
+            .method(ResourcesByFacilityView::getByFacilityId)
+            .invoke(internalFacilityId)
+            .rows().stream()
+            .map(ResourcesByFacilityView.Row::resourceId)
+            .collect(java.util.stream.Collectors.toSet());
+        ReservationEntity.Init command = new ReservationEntity.Init(reservation, resourceIds, recipientId);
 
         ReservationEntity.ReservationId result = componentClient
             .forEventSourcedEntity(reservationId)

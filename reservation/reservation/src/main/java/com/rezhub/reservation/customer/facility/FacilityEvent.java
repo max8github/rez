@@ -1,10 +1,7 @@
 package com.rezhub.reservation.customer.facility;
 
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.Reservation;
 import akka.javasdk.annotations.TypeName;
-
-import java.util.Set;
 
 public sealed interface FacilityEvent {
 
@@ -19,21 +16,4 @@ public sealed interface FacilityEvent {
 
   @TypeName("facility-bot-token-updated")
   record BotTokenUpdated(String facilityId, String botToken, String timezone) implements FacilityEvent {}
-
-  @TypeName("resource-create-register-requested")
-  record ResourceCreateAndRegisterRequested(String facilityId, String resourceName, String resourceId, String calendarId) implements FacilityEvent {}
-
-  @TypeName("resource-registered")
-  record ResourceRegistered(String resourceId) implements FacilityEvent {}
-
-  @TypeName("resource-id-removed")
-  record ResourceUnregistered(String resourceId) implements FacilityEvent {}
-
-  /**
-   * @deprecated Part of the legacy facility-fan-out booking path. Will be removed once
-   * BookingService resolves facility → resourceIds externally and calls BookingEndpoint directly.
-   */
-  @Deprecated
-  @TypeName("facility-availability-requested")
-  record AvalabilityRequested(String reservationId, Reservation reservation, Set<String> resources) implements FacilityEvent {}
 }

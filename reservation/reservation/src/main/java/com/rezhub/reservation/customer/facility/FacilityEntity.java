@@ -9,12 +9,10 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-
 /**
- * Manages facility provisioning (create, rename, registerResource, etc.).
- * Rez no longer treats Facility as a first-class booking entity; new callers use
- * {@code BookingEndpoint} with a flat set of resourceIds resolved externally via
- * {@link #getFacility}.
+ * Manages facility provisioning (create, rename, botToken).
+ * Resource grouping is no longer owned here — each ResourceEntity declares its
+ * facility via externalGroupRef; ResourcesByFacilityView provides the reverse lookup.
  */
 @Component(id = "facility")
 public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEvent> {
@@ -39,7 +37,6 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 yield FacilityState.create(e.entityId())
                     .withName(dto.name())
                     .withAddressState(new AddressState(dto.address().street(), dto.address().city()))
-                    .withResourceIds(FacilityState.normalizeResourceIds(dto.resourceIds()))
                     .withTimezone(dto.timezone())
                     .withBotToken(dto.botToken())
                     .withAdminUserIds(dto.adminUserIds());
@@ -50,10 +47,6 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 yield currentState().withAddressState(new AddressState(addressState.street(), addressState.city()));
             }
             case FacilityEvent.BotTokenUpdated e -> currentState().withBotToken(e.botToken());
-            case FacilityEvent.ResourceCreateAndRegisterRequested e -> currentState();
-            case FacilityEvent.ResourceRegistered e -> currentState().registerResource(e.resourceId());
-            case FacilityEvent.ResourceUnregistered e -> currentState().unregisterResource(e.resourceId());
-            case FacilityEvent.AvalabilityRequested e -> currentState();
         };
     }
 
@@ -92,36 +85,9 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
             .thenReply(newState -> "OK");
     }
 
-    public Effect<String> requestResourceCreateAndRegister(CreateAndRegisterResource command) {
-        return effects()
-            .persist(new FacilityEvent.ResourceCreateAndRegisterRequested(currentState().facilityId(), command.resourceName(), command.resourceId(), command.calendarId()))
-            .thenReply(newState -> command.resourceId());
-    }
-
-    public Effect<String> registerResource(String resourceId) {
-        log.info("registering resource with id {}", resourceId);
-        return effects()
-            .persist(new FacilityEvent.ResourceRegistered(resourceId))
-            .thenReply(newState -> resourceId);
-    }
-
-    public Effect<String> unregisterResource(String resourceId) {
-        if (!currentState().resourceIds().contains(resourceId)) {
-            return effects().error("Cannot remove resource " + resourceId + " because it is not in the facility.");
-        }
-        return effects()
-            .persist(new FacilityEvent.ResourceUnregistered(resourceId))
-            .thenReply(newState -> "OK");
-    }
-
     public ReadOnlyEffect<Facility> getFacility() {
         FacilityState state = currentState();
         Address address = new Address(state.addressState().street(), state.addressState().city());
-        return effects().reply(new Facility(state.name(), address, FacilityState.normalizeResourceIds(state.resourceIds()),
-                state.timezone(), state.botToken(), state.adminUserIds()));
+        return effects().reply(new Facility(state.name(), address, state.timezone(), state.botToken(), state.adminUserIds()));
     }
-
-    public record FacilityResourceRequest(String resourceName) {}
-
-    public record CreateAndRegisterResource(String resourceName, String resourceId, String calendarId) {}
 }
