@@ -12,10 +12,10 @@ This architecture is motivated by the need to support multiple kinds of booking 
 
 The concrete drivers are:
 - the same reservation core should support multiple interaction surfaces, such as Telegram, Twist, mobile app, and web app
-- different booking domains need different orchestration, for example court booking versus coach booking
+- different booking domains need different orchestration, for example court booking versus supplier booking
 - some booking flows depend on facility metadata, while others do not
 - user/member metadata may affect booking behavior, eligibility, and participant identity
-- future composite requests, such as coach + court, require deterministic saga-style orchestration
+- future composite requests, such as supplier + court, require deterministic saga-style orchestration
 - facility and user ownership may move to another service, while Rez should remain the generic booking engine
 
 In short:
@@ -66,8 +66,8 @@ The booking domain is the business meaning of the request.
 
 Examples:
 - court booking
-- coach booking
-- coach + court booking
+- supplier booking
+- supplier + court booking
 - future hotel room booking
 - future meeting room booking
 
@@ -86,7 +86,7 @@ It should only care about:
 
 It should not care whether a resource is:
 - a tennis court
-- a coach
+- a supplier
 - a hotel room
 - a flight seat
 
@@ -243,19 +243,7 @@ These two concepts may share the same lookup key, but they are different things:
 
 The agent session id can be used as the key for application-side lookup if a lookup is needed.
 
-### Important Recommendation
-
-Do not introduce a distributed ephemeral store by default just to avoid passing a few parameters.
-
-Prefer these options in order:
-
-1. Put stable routing facts directly in the tool input or in the agent message context.
-2. Re-resolve cheap deterministic context on each tool call through a resolver/gateway.
-3. Only introduce a separate application-side session context store if repeated external resolution becomes materially expensive or the tool surface becomes unreasonably noisy.
-
-In other words:
-- conversational memory naturally belongs in the agent session
-- deterministic booking context should only become separately stored state if there is a clear operational reason
+Stable routing facts belong directly in the tool input or in the agent message context. Cheap deterministic context should be re-resolved on each tool call through a resolver or gateway. Conversational memory belongs in the agent session; deterministic booking context does not need to become separately stored state.
 
 ### 3. Booking Orchestration Layer
 
@@ -278,7 +266,7 @@ Examples of metadata this layer may need:
 - user/member id
 - membership status
 - canonical player full name
-- coach eligibility / coach catalog data
+- supplier eligibility / supplier catalog data
 - location/radius filters
 
 ### 4. Reservation Core Layer
@@ -320,14 +308,14 @@ For courts, this may depend on:
 - user/member data
 - facility resource set
 
-For coaches, this may depend on:
-- requested coach name or filters
+For suppliers, this may depend on:
+- requested supplier name or filters
 - user/member data
-- coach catalog/profile service
+- supplier catalog/profile service
 - geography / radius filters
-- coach availability resource set
+- supplier availability resource set
 
-For coach + court, this becomes a composite workflow.
+For supplier + court, this becomes a composite workflow.
 
 ## Proposed Core Interfaces
 
@@ -346,7 +334,7 @@ public record BookingContext(
 
 Examples:
 - court booking: facility id
-- coach booking: coach pool id, club id, or organization id
+- supplier booking: supplier pool id, club id, or organization id
 - future domains: another catalog/group identifier
 
 ```java
@@ -359,9 +347,9 @@ This resolves the initial context for a request based on origin / interaction-su
 
 Examples:
 - Telegram bot token -> `bookingDomain = courts`, `scopeId = facilityId`
-- another Telegram bot token -> `bookingDomain = coaches`, `scopeId = clubId`
+- another Telegram bot token -> `bookingDomain = suppliers`, `scopeId = clubId`
 - web route `/courts/...` -> `bookingDomain = courts`
-- mobile app coach section -> `bookingDomain = coaches`
+- mobile app supplier section -> `bookingDomain = suppliers`
 
 ### Agent Intent Input
 
@@ -381,7 +369,7 @@ public record BookingIntent(
 
 Examples:
 - specific court names
-- specific coach names
+- specific supplier names
 - room names
 - tags or filters represented as text
 
@@ -398,12 +386,18 @@ public record ReservationSubmission(
 ```
 
 ```java
+public record ReservationHandle(String reservationId) {}
+```
+
+```java
 public interface ReservationGateway {
-    BookingSubmission submit(ReservationSubmission submission);
-    CancelResult cancel(String reservationId);
+    ReservationHandle submit(ReservationSubmission submission);
+    void cancel(String reservationId);
     ReservationDetails get(String reservationId);
 }
 ```
+
+`submit()` returns a `ReservationHandle` acknowledging receipt of the booking initiation. The booking outcome is delivered asynchronously via the notification path — no synchronous booking result is returned. `cancel()` dispatches a cancellation command and returns immediately. `get()` is a synchronous query for reservation details by ID.
 
 This hides the current Akka reservation core behind a stable application-facing interface.
 
@@ -418,12 +412,12 @@ public interface BookingWorkflow {
         BookingContext context,
         BookingIntent intent);
 
-    BookingSubmission book(
+    ReservationHandle book(
         OriginRequestContext origin,
         BookingContext context,
         BookingIntent intent);
 
-    CancelResult cancel(
+    void cancel(
         OriginRequestContext origin,
         BookingContext context,
         CancelIntent intent);
@@ -432,16 +426,16 @@ public interface BookingWorkflow {
 
 Implementations could include:
 - `CourtBookingWorkflow`
-- `CoachBookingWorkflow`
-- `CoachAndCourtBookingWorkflow`
+- `SupplierBookingWorkflow`
+- `SupplierAndCourtBookingWorkflow`
 
 ### Deterministic Application Service
 
 ```java
 public interface BookingApplicationService {
     AvailabilityResult checkAvailability(OriginRequestContext origin, BookingIntent intent);
-    BookingSubmission book(OriginRequestContext origin, BookingIntent intent);
-    CancelResult cancel(OriginRequestContext origin, CancelIntent intent);
+    ReservationHandle book(OriginRequestContext origin, BookingIntent intent);
+    void cancel(OriginRequestContext origin, CancelIntent intent);
 }
 ```
 
@@ -479,29 +473,29 @@ It may look up:
 - membership policy
 - member identity and status
 
-### Coaches
+### Suppliers
 
 ```java
-public record CoachBookingScope(
+public record SupplierBookingScope(
     String timezone,
-    Set<String> candidateCoachResourceIds,
+    Set<String> candidateSupplierResourceIds,
     Map<String, String> attributes
 ) {}
 ```
 
 ```java
-public interface CoachDirectory {
-    CoachBookingScope resolveScope(OriginRequestContext origin, BookingContext context, BookingIntent intent);
+public interface SupplierDirectory {
+    SupplierBookingScope resolveScope(OriginRequestContext origin, BookingContext context, BookingIntent intent);
 }
 ```
 
-This is where the orchestration layer can use user/profile/catalog services to find eligible coach resources.
+This is where the orchestration layer can use user/profile/catalog services to find eligible supplier resources.
 
 It may look up:
-- named coach matches
-- coaches in a radius
-- club/organization coach pools
-- coach metadata relevant to booking
+- named supplier matches
+- suppliers in a radius
+- club/organization supplier pools
+- supplier metadata relevant to booking
 
 ### Users / Members
 
@@ -519,11 +513,13 @@ public interface MemberDirectory {
 }
 ```
 
-This may be used by court and coach workflows alike.
+This may be used by court and supplier workflows alike.
+
+`MemberDirectory` implementations resolve the minimal canonical identity needed for booking. Personal data is kept minimal by design: wherever possible, identity and payment data is delegated to Apple, Google, or Stripe. Only what is operationally required for booking and notifications (such as email or display name) needs to be held locally.
 
 Examples:
 - resolve membership status
-- resolve canonical full name
+- resolve canonical display name
 - resolve club member id
 - enforce member-only booking rules
 
@@ -545,27 +541,28 @@ Target flow:
 
 This means that the current direct dependency from `BookingService` to `FacilityEntity` should disappear.
 
-## Coach Booking Workflow
+## Supplier Booking Workflow
 
 Target flow:
 
 1. interaction-surface adapter builds `OriginRequestContext`
-2. `BookingContextResolver` resolves `bookingDomain = coaches`
+2. `BookingContextResolver` resolves `bookingDomain = suppliers`
 3. agent extracts intent and calls a high-level booking tool
-4. `BookingApplicationService` dispatches to `CoachBookingWorkflow`
-5. `CoachBookingWorkflow` resolves candidate coach resources via `CoachDirectory`
+4. `BookingApplicationService` dispatches to `SupplierBookingWorkflow`
+5. `SupplierBookingWorkflow` resolves candidate supplier resources via `SupplierDirectory`
 6. workflow builds a `ReservationSubmission`
 7. workflow calls `ReservationGateway.submit(...)`
+8. booking outcome is delivered asynchronously via the notification path
 
 No facility is required in this model.
 
-A coach is simply another reservation resource whose descriptive metadata lives outside the reservation core.
+A supplier is simply another reservation resource whose descriptive metadata lives outside the reservation core.
 
-## Composite Workflow: Coach + Court
+## Composite Workflow: Supplier + Court
 
 A request such as:
 
-> book me a coach available within 10 km of Townville on Sunday at 10am and book a court for me
+> book me a supplier available within 10 km of Townville on Sunday at 10am and book a court for me
 
 should be handled as a composite deterministic workflow, not as a chain of low-level tool calls orchestrated by the LLM.
 
@@ -582,11 +579,11 @@ That logic must be deterministic and testable.
 ### Target Model
 
 Use a dedicated workflow such as:
-- `CoachAndCourtBookingWorkflow`
+- `SupplierAndCourtBookingWorkflow`
 
 It can:
 1. resolve user/member context
-2. resolve candidate coach resources
+2. resolve candidate supplier resources
 3. resolve candidate court resources
 4. choose booking order according to policy
 5. submit first reservation
@@ -635,12 +632,12 @@ Target split:
   - wrapper around current reservation entities / endpoint
 - domain-specific workflows
   - `CourtBookingWorkflow`
-  - `CoachBookingWorkflow`
-  - later `CoachAndCourtBookingWorkflow`
+  - `SupplierBookingWorkflow`
+  - later `SupplierAndCourtBookingWorkflow`
 - supporting directories
   - `CourtDirectoryAkka` now, remote facility-service client later
   - `MemberDirectory...`
-  - `CoachDirectory...`
+  - `SupplierDirectory...`
 
 ## Migration Sequence
 
@@ -696,14 +693,14 @@ with service clients to the extracted facility/user service.
 
 At that point, the reservation core should not depend directly on `FacilityEntity` or `UserEntity`.
 
-### Phase 7: Add coach workflows
+### Phase 7: Add supplier workflows
 
 Add:
-- `CoachBookingWorkflow`
-- `CoachDirectory`
+- `SupplierBookingWorkflow`
+- `SupplierDirectory`
 
 Later add:
-- `CoachAndCourtBookingWorkflow`
+- `SupplierAndCourtBookingWorkflow`
 
 ## Practical Consequences
 
@@ -727,7 +724,7 @@ This design preserves the generic meaning of a reservation resource.
 
 A reservation resource may be:
 - a court
-- a coach
+- a supplier
 - a room
 - a seat
 - any other bookable unit
@@ -741,7 +738,7 @@ Rez only needs the booking-relevant representation and stable identifiers.
 1. Should a single service own both facility and user/member metadata, or should those remain separate services?
 2. How should `BookingContextResolver` map Telegram bots or mobile app areas to booking domains?
 3. What canonical data should `MemberDirectory` return for booking rules and human display?
-4. What should be the exact ordering/compensation policy in `CoachAndCourtBookingWorkflow`?
+4. What should be the exact ordering/compensation policy in `SupplierAndCourtBookingWorkflow`?
 5. Should notification sending remain inside Rez during migration, or also move into a separate orchestration service?
 
 ## Recommendation Summary
@@ -755,8 +752,8 @@ The recommended target architecture is:
 
 That architecture supports:
 - courts
-- coaches
-- composite coach + court booking
+- suppliers
+- composite supplier + court booking
 - Telegram
 - Twist
 - mobile app

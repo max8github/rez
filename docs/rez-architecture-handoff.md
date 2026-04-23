@@ -427,7 +427,7 @@ Does not own:
 
 ### Hit
 
-Hit is the app for finding coaches / supplier-like player resources.
+Hit is the app for finding suppliers (players available for hire as practice partners or hitting partners).
 
 Known parts:
 
@@ -627,7 +627,7 @@ These remain open and should be answered during implementation planning:
 The intended architecture after these changes is:
 
 - Rez = booking engine
-- Hit = coach/supplier discovery and session domain
+- Hit = supplier discovery and session domain
 - Rank / Rakkar = ranking and match domain
 - clubs/facilities service = facility/court catalog domain
 - external orchestration services = AI, Telegram, metadata enrichment, UI/channel integration
