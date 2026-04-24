@@ -21,7 +21,7 @@ public record ResourceV(
 
     public static ResourceV initialize(ResourceEvent.ResourceCreated created) {
         return new ResourceV(created.resourceId(), created.resourceName(), "",
-            created.calendarId(), new TreeSet<>(), "");
+            created.calendarId() != null ? created.calendarId() : "", new TreeSet<>(), "");
     }
 
     ResourceV withBooking(LocalDateTime dateTime, String fill) {

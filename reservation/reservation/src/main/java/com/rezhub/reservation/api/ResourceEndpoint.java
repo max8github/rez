@@ -44,15 +44,24 @@ public class ResourceEndpoint {
     }
 
     /**
+     * Weekly schedule body — wrapped record because Akka SDK cannot deserialize
+     * raw generic types (Map&lt;DayOfWeek, List&lt;LocalTime&gt;&gt;) as endpoint body parameters.
+     *
+     * JSON shape: { "hours": { "MONDAY": ["14:00", "15:00"], "WEDNESDAY": ["09:00"] } }
+     */
+    public record ScheduleRequest(Map<String, List<String>> hours) {}
+
+    /**
      * Set the weekly availability schedule for a resource.
-     * Body: map of day-of-week to list of bookable start hours (full hours only).
-     * Example: { "MONDAY": ["14:00", "15:00", "16:00"], "WEDNESDAY": ["09:00"] }
-     * An empty map clears the schedule (all hours become bookable again).
+     * Body: { "hours": { "MONDAY": ["14:00", "15:00"], "WEDNESDAY": ["09:00"] } }
      */
     @Put("/{resourceId}/schedule")
-    public String setSchedule(String resourceId, Map<DayOfWeek, List<LocalTime>> body) {
-        Map<DayOfWeek, Set<LocalTime>> schedule = body.entrySet().stream()
-            .collect(Collectors.toMap(Map.Entry::getKey, e -> Set.copyOf(e.getValue())));
+    public String setSchedule(String resourceId, ScheduleRequest body) {
+        Map<DayOfWeek, Set<LocalTime>> schedule = body.hours().entrySet().stream()
+            .collect(Collectors.toMap(
+                e -> DayOfWeek.valueOf(e.getKey()),
+                e -> e.getValue().stream().map(LocalTime::parse).collect(Collectors.toSet())
+            ));
         return componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::setWeeklySchedule)
