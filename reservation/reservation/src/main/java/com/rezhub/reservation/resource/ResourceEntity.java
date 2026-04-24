@@ -111,8 +111,16 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         return effects().reply(currentState());
     }
 
-    public Effect<String> setWeeklySchedule(Map<DayOfWeek, Set<LocalTime>> schedule) {
+    /** Command record — Akka SDK cannot deserialize raw generic Map types as command parameters. */
+    public record WeeklyScheduleCommand(Map<String, java.util.List<String>> hours) {}
+
+    public Effect<String> setWeeklySchedule(WeeklyScheduleCommand cmd) {
         log.info("Resource {} updating weekly schedule", entityId);
+        Map<DayOfWeek, Set<LocalTime>> schedule = cmd.hours().entrySet().stream()
+            .collect(java.util.stream.Collectors.toMap(
+                e -> DayOfWeek.valueOf(e.getKey()),
+                e -> e.getValue().stream().map(LocalTime::parse).collect(java.util.stream.Collectors.toSet())
+            ));
         return effects()
             .persist(new ResourceEvent.WeeklyScheduleUpdated(entityId, schedule))
             .thenReply(newState -> "OK");

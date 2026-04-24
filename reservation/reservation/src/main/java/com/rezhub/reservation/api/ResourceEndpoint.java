@@ -57,15 +57,10 @@ public class ResourceEndpoint {
      */
     @Put("/{resourceId}/schedule")
     public String setSchedule(String resourceId, ScheduleRequest body) {
-        Map<DayOfWeek, Set<LocalTime>> schedule = body.hours().entrySet().stream()
-            .collect(Collectors.toMap(
-                e -> DayOfWeek.valueOf(e.getKey()),
-                e -> e.getValue().stream().map(LocalTime::parse).collect(Collectors.toSet())
-            ));
         return componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::setWeeklySchedule)
-            .invoke(schedule);
+            .invoke(new ResourceEntity.WeeklyScheduleCommand(body.hours()));
     }
 
     /**
