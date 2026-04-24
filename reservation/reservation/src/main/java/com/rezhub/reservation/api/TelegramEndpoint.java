@@ -5,12 +5,14 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.agent.BookingAgent;
+import com.rezhub.reservation.orchestration.OriginRequestContext;
 import com.rezhub.reservation.spi.NotificationSender;
 import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 /**
  * Receives Telegram webhook updates and dispatches them to the BookingAgent.
@@ -18,8 +20,8 @@ import java.util.List;
  * Setup (one-time after deploy, per bot):
  *   curl "https://api.telegram.org/bot{TOKEN}/setWebhook?url=https://{your-service}/telegram/{TOKEN}/webhook"
  *
- * The bot token in the path is used to look up the facility via FacilityByBotTokenView,
- * so one deployment can serve N facilities — no FACILITY_ID env var needed.
+ * The bot token in the path is looked up in FacilityByBotTokenView to validate that this
+ * bot is configured. One deployment can serve N facilities — no FACILITY_ID env var needed.
  */
 @HttpEndpoint("/telegram")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -35,14 +37,9 @@ public class TelegramEndpoint {
         this.notificationSender = notificationSender;
     }
 
-    // ---- Telegram Update payload (subset of fields we need) ----
-
     public record Update(Message message) {}
-
     public record Message(long message_id, From from, Chat chat, String text) {}
-
     public record From(long id, String first_name, String username) {}
-
     public record Chat(long id, String type) {}
 
     /**
@@ -57,49 +54,49 @@ public class TelegramEndpoint {
             return;
         }
 
-        List<FacilityByBotTokenView.Entry> facilities = componentClient.forView()
-            .method(FacilityByBotTokenView::getAllByBotToken)
-            .invoke(botToken)
-            .entries();
+        Optional<FacilityByBotTokenView.Entry> facilityOpt = componentClient.forView()
+            .method(FacilityByBotTokenView::getByBotToken)
+            .invoke(botToken);
 
-        if (facilities.isEmpty()) {
+        if (facilityOpt.isEmpty()) {
             log.warn("No facility found for bot token (first 8 chars): {}...", botToken.substring(0, Math.min(8, botToken.length())));
             return;
         }
-        if (facilities.size() > 1) {
-            log.error("Ambiguous facility mapping for bot token (first 8 chars): {}... matched facilityIds={}",
-                botToken.substring(0, Math.min(8, botToken.length())),
-                facilities.stream().map(FacilityByBotTokenView.Entry::facilityId).toList());
-            return;
-        }
 
-        FacilityByBotTokenView.Entry facility = facilities.get(0);
+        FacilityByBotTokenView.Entry facility = facilityOpt.get();
         String facilityId = facility.facilityId();
         String timezone = facility.timezone() != null ? facility.timezone() : "Europe/Berlin";
 
         var msg = update.message();
         long chatId = msg.chat().id();
+        String senderExternalId = msg.from() != null ? String.valueOf(msg.from().id()) : "";
+        String senderDisplayName = msg.from() != null && msg.from().first_name() != null
+            ? msg.from().first_name() : "Player";
         String recipientId = botToken + ":" + chatId;
-        String senderName = msg.from() != null && msg.from().first_name() != null
-                ? msg.from().first_name()
-                : "Player";
+        String conversationId = sanitize(botToken + ":" + chatId);
 
-        log.info("Telegram message from {} (chat {}) for facility {}: {}", senderName, chatId, facilityId, msg.text());
+        log.info("Telegram message from {} (chat {}) for facility {}: {}", senderDisplayName, chatId, facilityId, msg.text());
 
-        String sessionId = sanitize(facilityId + ":" + chatId);
+        OriginRequestContext origin = new OriginRequestContext(
+            "telegram",
+            senderExternalId,
+            senderDisplayName,
+            recipientId,
+            conversationId,
+            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone)
+        );
 
         componentClient
-                .forAgent()
-                .inSession(sessionId)
-                .method(BookingAgent::chat)
-                .invokeAsync(new BookingAgent.BookingRequest(facilityId, senderName, recipientId, timezone, msg.text()))
-                .thenAccept(reply -> { if (reply != null && !reply.isBlank()) notificationSender.send(recipientId, reply); })
-                .whenComplete((v, error) -> {
-                    if (error != null) log.error("Agent error for chat {}: {}", chatId, error.getMessage());
-                });
+            .forAgent()
+            .inSession(conversationId)
+            .method(BookingAgent::chat)
+            .invokeAsync(new BookingAgent.AgentRequest(origin, msg.text()))
+            .thenAccept(reply -> { if (reply != null && !reply.isBlank()) notificationSender.send(recipientId, reply); })
+            .whenComplete((v, error) -> {
+                if (error != null) log.error("Agent error for chat {}: {}", chatId, error.getMessage());
+            });
     }
 
-    /** Strip characters that are invalid in Akka entity/session IDs. */
     private static String sanitize(String s) {
         return s.replaceAll("[^a-zA-Z0-9_\\-.]", "-");
     }
