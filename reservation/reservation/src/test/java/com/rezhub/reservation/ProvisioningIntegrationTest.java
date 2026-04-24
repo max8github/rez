@@ -208,7 +208,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
             componentClient.forView()
                 .method(ResourcesByFacilityView::getByFacilityId)
                 .invoke(facilityId)
-                .rows(),
+                .entries(),
             found -> !found.isEmpty());
 
         assertThat(rows).singleElement().satisfies(row -> {

@@ -19,7 +19,7 @@ import java.util.List;
 public class ResourcesByFacilityView extends View {
 
     public record Row(String resourceId, String facilityId) {}
-    public record Rows(List<Row> rows) {}
+    public record Rows(List<Row> entries) {}
 
     @Consume.FromEventSourcedEntity(ResourceEntity.class)
     public static class ResourcesByFacilityUpdater extends TableUpdater<Row> {
@@ -45,7 +45,7 @@ public class ResourcesByFacilityView extends View {
         }
     }
 
-    @Query("SELECT * AS rows FROM resources_by_facility WHERE facilityId = :facilityId")
+    @Query("SELECT * AS entries FROM resources_by_facility WHERE facilityId = :facilityId")
     public QueryEffect<Rows> getByFacilityId(String facilityId) {
         return queryResult();
     }

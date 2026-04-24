@@ -30,7 +30,7 @@ public class CourtDirectoryAkka implements CourtDirectory {
         Set<String> resourceIds = componentClient.forView()
             .method(ResourcesByFacilityView::getByFacilityId)
             .invoke(facilityId)
-            .rows().stream()
+            .entries().stream()
             .map(ResourcesByFacilityView.Row::resourceId)
             .collect(Collectors.toSet());
 
