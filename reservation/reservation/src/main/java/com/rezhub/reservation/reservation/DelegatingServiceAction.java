@@ -9,6 +9,7 @@ import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
 import com.typesafe.config.Config;
+import com.typesafe.config.ConfigException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -39,8 +40,16 @@ public class DelegatingServiceAction extends Consumer {
         if (config.hasPath("rez.calendar.base-url")) {
             this.calendarBaseUrl = config.getString("rez.calendar.base-url");
         } else {
-            int port = config.getInt("akka.javasdk.dev-mode.http-port");
+            int port = getDevModePort(config);
             this.calendarBaseUrl = "http://localhost:" + port;
+        }
+    }
+
+    private static int getDevModePort(Config config) {
+        try {
+            return config.getInt("akka.javasdk.dev-mode.http-port");
+        } catch (ConfigException.WrongType e) {
+            return Integer.parseInt(config.getString("akka.javasdk.dev-mode.http-port"));
         }
     }
 
