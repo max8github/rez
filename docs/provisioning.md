@@ -115,7 +115,8 @@ See [quick-notes-runbook.md](quick-notes-runbook.md) for copy-paste curl command
 Once a facility exists, its Rez calendar can be opened at:
 
 ```text
-http://localhost:9000/calendar?facilityId=<FACILITY_ID>
+BASE_URL=http://localhost:<PORT>
+$BASE_URL/calendar?facilityId=<FACILITY_ID>
 ```
 
 This is Rez’s own read-only calendar view, separate from any Google Calendar embed.

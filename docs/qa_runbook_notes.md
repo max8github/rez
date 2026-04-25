@@ -10,7 +10,10 @@ mvn -pl reservation -am compile exec:java -Plocal
 # Terminal 2: QA
 ## Create Facility And Courts
 ```shell
-FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
+PORT=9001
+BASE_URL="http://localhost:$PORT"
+
+FACILITY_ID=$(curl -s -X POST "$BASE_URL/facility" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test Club",
@@ -22,14 +25,14 @@ FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
 echo "$FACILITY_ID"
 
 COURT1="court-1"
-curl -s -X POST http://localhost:9000/resource/$COURT1 \
+curl -s -X POST "$BASE_URL/resource/$COURT1" \
   -H "Content-Type: application/json" \
   -d '{
     "resourceId": "court-1",
     "resourceName": "Court 1",
     "calendarId": "local-cal-1@group.calendar.google.com"
   }'
-curl -s -X PUT http://localhost:9000/resource/$COURT1/external-ref \
+curl -s -X PUT "$BASE_URL/resource/$COURT1/external-ref" \
   -H "Content-Type: application/json" \
   -d "{
     \"externalRef\": \"$COURT1\",
@@ -38,14 +41,14 @@ curl -s -X PUT http://localhost:9000/resource/$COURT1/external-ref \
 echo "$COURT1"
 
 COURT2="court-2"
-curl -s -X POST http://localhost:9000/resource/$COURT2 \
+curl -s -X POST "$BASE_URL/resource/$COURT2" \
   -H "Content-Type: application/json" \
   -d '{
     "resourceId": "court-2",
     "resourceName": "Court 2",
     "calendarId": "local-cal-2@group.calendar.google.com"
   }'
-curl -s -X PUT http://localhost:9000/resource/$COURT2/external-ref \
+curl -s -X PUT "$BASE_URL/resource/$COURT2/external-ref" \
   -H "Content-Type: application/json" \
   -d "{
     \"externalRef\": \"$COURT2\",
@@ -54,15 +57,15 @@ curl -s -X PUT http://localhost:9000/resource/$COURT2/external-ref \
 echo "$COURT2"
 
 # test
-curl -s http://localhost:9000/facility/$FACILITY_ID
-curl -s http://localhost:9000/resource/$COURT1 | jq
-curl -s http://localhost:9000/resource/$COURT2 | jq
+curl -s "$BASE_URL/facility/$FACILITY_ID"
+curl -s "$BASE_URL/resource/$COURT1" | jq
+curl -s "$BASE_URL/resource/$COURT2" | jq
 ```
 
 ## Create And Cancel Reservations Through AI Agent
 
 ```shell
-curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
+curl -s -X POST "$BASE_URL/telegram/bot:local-test/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -73,13 +76,13 @@ curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
     }
   }'
 
-curl -s http://localhost:9000/resource/$COURT1 | jq
-curl -s http://localhost:9000/resource/$COURT2 | jq
+curl -s "$BASE_URL/resource/$COURT1" | jq
+curl -s "$BASE_URL/resource/$COURT2" | jq
 
-curl -s http://localhost:9000/reservation-lookup/recipient/bot:local-test:123456/latest | jq
+curl -s "$BASE_URL/reservation-lookup/recipient/bot:local-test:123456/latest" | jq
 
 # cancel:
-curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
+curl -s -X POST "$BASE_URL/telegram/bot:local-test/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {

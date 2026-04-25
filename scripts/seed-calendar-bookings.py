@@ -6,16 +6,19 @@ import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
+import os
+import re
 
-BASE = "http://localhost:9000"
+BASE = os.getenv("REZ_BASE_URL", f"http://localhost:{os.getenv('PORT', '9001')}")
 
 
-def post(path, payload):
+def request(method, path, payload=None):
+    data = None if payload is None else json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
         BASE + path,
-        data=json.dumps(payload).encode("utf-8"),
+        data=data,
         headers={"Content-Type": "application/json"},
-        method="POST",
+        method=method,
     )
     try:
         with urllib.request.urlopen(req) as resp:
@@ -28,6 +31,19 @@ def post(path, payload):
 def get_json(path):
     with urllib.request.urlopen(BASE + path) as resp:
         return json.loads(resp.read().decode("utf-8"))
+
+
+def post(path, payload):
+    return request("POST", path, payload)
+
+
+def put(path, payload):
+    return request("PUT", path, payload)
+
+
+def slugify(value):
+    value = re.sub(r"[^a-z0-9]+", "-", value.strip().lower()).strip("-")
+    return value or "resource"
 
 
 def main():
@@ -44,25 +60,38 @@ def main():
     print("BOT_TOKEN   =", bot_token)
 
     court_names = ["Center Court", "Court 2"]
+    resource_ids = []
     for name in court_names:
+        resource_id = f"{slugify(name)}-{int(time.time())}"
         calendar_id = name.lower().replace(" ", "-") + "@example.test"
-        resource_payload = {"name": name, "calendarId": calendar_id}
-        resource_id = post(f"/facility/{facility_id}/resource", resource_payload).strip().strip('"')
-        print("RESOURCE REQUESTED =", resource_id, name)
+        resource_payload = {
+            "resourceId": resource_id,
+            "resourceName": name,
+            "calendarId": calendar_id,
+        }
+        post(f"/resource/{resource_id}", resource_payload)
+        put(
+            f"/resource/{resource_id}/external-ref",
+            {"externalRef": resource_id, "externalGroupRef": facility_id},
+        )
+        resource_ids.append(resource_id)
+        print("RESOURCE READY =", resource_id, name)
 
-    print("Waiting for facility resourceIds to contain both courts...")
+    print("Waiting for both resources to become readable...")
 
     for i in range(120):
-        facility = get_json(f"/facility/{facility_id}")
-        resource_ids = facility.get("resourceIds") or []
-        print(f"  poll {i + 1:02d}: {len(resource_ids)} resourceIds")
-        if len(resource_ids) == 2:
-            print("Facility resourceIds are ready:", resource_ids)
-            time.sleep(2.0)
+        ready = 0
+        for resource_id in resource_ids:
+            resource = get_json(f"/resource/{resource_id}")
+            if resource.get("externalGroupRef") == facility_id:
+                ready += 1
+        print(f"  poll {i + 1:02d}: {ready}/{len(resource_ids)} resources ready")
+        if ready == len(resource_ids):
+            time.sleep(1.0)
             break
         time.sleep(0.5)
     else:
-        raise RuntimeError("Facility did not finish registering both resources in time")
+        raise RuntimeError("Resources did not finish attaching to the facility in time")
 
     players_pool = [
         "Alice", "Bob", "Max", "John", "Sara", "Leo", "Ana", "Tom",
@@ -96,21 +125,14 @@ def main():
         reservation_id = f"seed{created + 1:02d}{random.randint(1000, 9999)}"
 
         payload = {
-            "reservation": {
-                "emails": players,
-                "dateTime": slot_key,
-            },
-            "selection": [
-                {
-                    "id": facility_id,
-                    "type": "FACILITY",
-                }
-            ],
+            "dateTime": slot_key,
+            "emails": players,
+            "resourceIds": [resource_ids[court_index]],
             "recipientId": "local-seed-user",
         }
 
         try:
-            post(f"/selection/{reservation_id}", payload)
+            post("/bookings", {"reservationId": reservation_id, **payload})
             created += 1
             print(f"BOOKED {created:02d} {reservation_id} {slot_key} {players}")
             time.sleep(0.05)
@@ -119,7 +141,7 @@ def main():
 
     print()
     print(f"Submitted {created} booking requests.")
-    print("Wait ~15 seconds for fulfillment/timeouts, then open:")
+    print("Wait a few seconds for projections, then open:")
     print(f"{BASE}/calendar?facilityId={facility_id}")
 
 
