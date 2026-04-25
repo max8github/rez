@@ -64,7 +64,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"resourceIds\": [],\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": []\n}"
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": []\n}"
             },
             "url": {
               "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
@@ -204,15 +204,14 @@
       "name": "Resource",
       "item": [
         {
-          "name": "Create and register resource",
+          "name": "Create resource",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "var id = pm.response.text().replace(/\"/g, \"\");",
-                  "pm.environment.set(\"resource_id\", id);",
-                  "console.info(\"resource_id set to: \" + id);"
+                  "var id = pm.environment.get(\"resource_id\");",
+                  "console.info(\"resource_id confirmed as: \" + id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -223,12 +222,15 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "var calendar_id = pm.variables.replaceIn('{{$randomUUID}}');",
+                  "var resourceId = 'resource-' + pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var calendar_id = pm.variables.replaceIn('{{$randomUUID}}') + '@group.calendar.google.com';",
                   "var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
                   "",
+                  "console.info(\"resourceId is: \"+ resourceId);",
                   "console.info(\"calendar_id is: \"+ calendar_id);",
                   "console.info(\"resourceName is: \"+ resourceName);",
                   "",
+                  "pm.environment.set(\"resource_id\", resourceId);",
                   "pm.variables.set(\"calendarId\", calendar_id);",
                   "pm.variables.set(\"resourceName\", resourceName);"
                 ],
@@ -248,22 +250,21 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "facility",
-                "{{facility_id}}",
-                "resource"
+                "resource",
+                "{{resource_id}}"
               ]
             },
-            "description": "Creates a resource and registers it with the facility. ID is auto-generated and returned. Stored in resource_id env var."
+            "description": "Creates a resource with an explicit ID. Use the external-ref request to attach it to a facility."
           },
           "response": []
         },
@@ -288,47 +289,33 @@
           "response": []
         },
         {
-          "name": "Register existing resource with facility",
+          "name": "Attach resource to facility",
           "request": {
-            "method": "POST",
-            "header": [],
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/external-ref",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "facility",
-                "{{facility_id}}",
-                "resources",
-                "{{resource_id}}"
+                "resource",
+                "{{resource_id}}",
+                "external-ref"
               ]
             },
-            "description": "Registers an already-existing resource with a facility (no body needed)."
-          },
-          "response": []
-        },
-        {
-          "name": "Unregister resource from facility",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "facility",
-                "{{facility_id}}",
-                "resources",
-                "{{resource_id}}"
-              ]
-            }
+            "description": "Attaches an existing resource to a facility via external references."
           },
           "response": []
         }
@@ -421,7 +408,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"resourceIds\": [],\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": [\"{{admin_user_id}}\"]\n}"
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": [\"{{admin_user_id}}\"]\n}"
             },
             "url": {
               "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
@@ -446,10 +433,14 @@
               "script": {
                 "exec": [
                   "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-a-' + suffix;",
                   "var resourceName = 'Court A ' + suffix;",
                   "var calendarId = 'local-cal-' + suffix + '-1@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_1', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
                   "pm.environment.set('resourceName', resourceName);",
                   "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 1 id: ' + resourceId);",
                   "console.info('resource 1 name: ' + resourceName);"
                 ],
                 "type": "text/javascript",
@@ -461,10 +452,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var id = pm.response.text().replace(/\"/g, '');",
-                  "pm.environment.set('resource_id_1', id);",
-                  "pm.environment.set('resource_id', id);",
-                  "console.info('resource_id_1 set to: ' + id);"
+                  "console.info('resource_id_1 confirmed as: ' + pm.environment.get('resource_id_1'));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -482,19 +470,48 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+              "raw": "{\n  \"resourceId\": \"{{resource_id_1}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "facility",
-                "{{facility_id}}",
-                "resource"
+                "resource",
+                "{{resource_id_1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 1 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_1}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}",
+                "external-ref"
               ]
             }
           },
@@ -508,10 +525,14 @@
               "script": {
                 "exec": [
                   "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-b-' + suffix;",
                   "var resourceName = 'Court B ' + suffix;",
                   "var calendarId = 'local-cal-' + suffix + '-2@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_2', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
                   "pm.environment.set('resourceName', resourceName);",
                   "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 2 id: ' + resourceId);",
                   "console.info('resource 2 name: ' + resourceName);"
                 ],
                 "type": "text/javascript",
@@ -523,10 +544,7 @@
               "listen": "test",
               "script": {
                 "exec": [
-                  "var id = pm.response.text().replace(/\"/g, '');",
-                  "pm.environment.set('resource_id_2', id);",
-                  "pm.environment.set('resource_id', id);",
-                  "console.info('resource_id_2 set to: ' + id);"
+                  "console.info('resource_id_2 confirmed as: ' + pm.environment.get('resource_id_2'));"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -544,19 +562,48 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+              "raw": "{\n  \"resourceId\": \"{{resource_id_2}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "facility",
-                "{{facility_id}}",
-                "resource"
+                "resource",
+                "{{resource_id_2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 2 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_2}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}",
+                "external-ref"
               ]
             }
           },

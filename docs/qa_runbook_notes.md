@@ -1,4 +1,3 @@
-
 # Terminal 1: Rez
 ```shell
 cd /Users/max/code/rez/reservation
@@ -22,22 +21,45 @@ FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
   }')
 echo "$FACILITY_ID"
 
-COURT1=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
+COURT1="court-1"
+curl -s -X POST http://localhost:9000/resource/$COURT1 \
   -H "Content-Type: application/json" \
-  -d '{"name": "Court 1", "calendarId": "local-cal-1@group.calendar.google.com"}')
+  -d '{
+    "resourceId": "court-1",
+    "resourceName": "Court 1",
+    "calendarId": "local-cal-1@group.calendar.google.com"
+  }'
+curl -s -X PUT http://localhost:9000/resource/$COURT1/external-ref \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"externalRef\": \"$COURT1\",
+    \"externalGroupRef\": \"$FACILITY_ID\"
+  }"
 echo "$COURT1"
 
-COURT2=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
+COURT2="court-2"
+curl -s -X POST http://localhost:9000/resource/$COURT2 \
   -H "Content-Type: application/json" \
-  -d '{"name": "Court 2", "calendarId": "local-cal-2@group.calendar.google.com"}')
+  -d '{
+    "resourceId": "court-2",
+    "resourceName": "Court 2",
+    "calendarId": "local-cal-2@group.calendar.google.com"
+  }'
+curl -s -X PUT http://localhost:9000/resource/$COURT2/external-ref \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"externalRef\": \"$COURT2\",
+    \"externalGroupRef\": \"$FACILITY_ID\"
+  }"
 echo "$COURT2"
 
-#test
+# test
 curl -s http://localhost:9000/facility/$FACILITY_ID
 curl -s http://localhost:9000/resource/$COURT1 | jq
+curl -s http://localhost:9000/resource/$COURT2 | jq
 ```
 
-## Create and Cancel Reservations through AI Agent
+## Create And Cancel Reservations Through AI Agent
 
 ```shell
 curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
@@ -52,9 +74,9 @@ curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
   }'
 
 curl -s http://localhost:9000/resource/$COURT1 | jq
-
 curl -s http://localhost:9000/resource/$COURT2 | jq
 
+curl -s http://localhost:9000/reservation-lookup/recipient/bot:local-test:123456/latest | jq
 
 # cancel:
 curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
@@ -67,5 +89,4 @@ curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
       "text": "Cancel reservation 87c24cf9"
     }
   }'
-
 ```
