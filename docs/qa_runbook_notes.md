@@ -4,13 +4,14 @@ cd /Users/max/code/rez/reservation
 mvn clean install
 
 export OPENAI_API_KEY=...
+export REZ_PORT=9001
 mvn -pl reservation -am compile exec:java -Plocal
 ```
 
 # Terminal 2: QA
 ## Create Facility And Courts
 ```shell
-PORT=9001
+PORT="${REZ_PORT:-9001}"
 BASE_URL="http://localhost:$PORT"
 
 FACILITY_ID=$(curl -s -X POST "$BASE_URL/facility" \

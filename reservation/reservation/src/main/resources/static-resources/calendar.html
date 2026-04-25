@@ -396,28 +396,14 @@
   }
 
   async function fetchResources(facilityId) {
-    const facilityResponse = await fetch(`/facility/${encodeURIComponent(facilityId)}`);
-    if (!facilityResponse.ok) {
-      throw new Error(`Facility lookup failed (${facilityResponse.status}).`);
+    const response = await fetch(`/api/calendar/resources?facilityId=${encodeURIComponent(facilityId)}`);
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Resource lookup failed (${response.status}).`);
     }
 
-    const facility = await facilityResponse.json();
-    const resourceIds = Array.isArray(facility.resourceIds) ? facility.resourceIds : [];
-
-    if (resourceIds.length === 0) {
-      return [];
-    }
-
-    const resources = await Promise.all(resourceIds.map(async (resourceId) => {
-      const response = await fetch(`/resource/${encodeURIComponent(resourceId)}`);
-      if (!response.ok) {
-        throw new Error(`Resource lookup failed for ${resourceId} (${response.status}).`);
-      }
-      const resource = await response.json();
-      return { resourceId, resourceName: resource.name || resourceId };
-    }));
-
-    return resources.sort((left, right) => left.resourceName.localeCompare(right.resourceName));
+    const payload = await response.json();
+    return Array.isArray(payload) ? payload : [];
   }
 
   async function fetchEvents(facilityId) {

@@ -17,6 +17,16 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+APP_VERSION=$(sed -n 's|.*<version>\(.*\)</version>.*|\1|p' "$SCRIPT_DIR/reservation/pom.xml" | head -n 1)
+
+find_local_image() {
+  local version="$1"
+  docker images --format '{{.Repository}}:{{.Tag}}' \
+    | awk -v prefix="reservation:" -v version="$version" '
+        index($0, prefix version "-") == 1 || $0 == prefix version { print; exit }
+      '
+}
+
 case "$TARGET" in
   standalone)
     REGISTRY="gitea-reg.fritz.box:3000/max/rez"
@@ -26,8 +36,15 @@ case "$TARGET" in
     echo "==> [standalone] Building (mvn install -DskipTests -Pgoogle,standalone) ..."
     mvn install -DskipTests -Pgoogle,standalone
 
+    LOCAL_IMAGE=$(find_local_image "$APP_VERSION")
+    if [[ -z "${LOCAL_IMAGE:-}" ]]; then
+      echo "ERROR: could not find freshly built local image matching reservation:${APP_VERSION}[-timestamp]"
+      exit 1
+    fi
+    echo "==> Using local image ${LOCAL_IMAGE}"
+
     echo "==> Tagging as ${IMAGE} ..."
-    docker tag reservation:1.0 "$IMAGE"
+    docker tag "$LOCAL_IMAGE" "$IMAGE"
 
     echo "==> Pushing to Gitea ..."
     docker push "$IMAGE"
@@ -60,8 +77,15 @@ case "$TARGET" in
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
     mvn install -DskipTests --settings settings.xml -Pgoogle
 
+    LOCAL_IMAGE=$(find_local_image "$APP_VERSION")
+    if [[ -z "${LOCAL_IMAGE:-}" ]]; then
+      echo "ERROR: could not find freshly built local image matching reservation:${APP_VERSION}[-timestamp]"
+      exit 1
+    fi
+    echo "==> Using local image ${LOCAL_IMAGE}"
+
     echo "==> Tagging as ${IMAGE} ..."
-    docker tag reservation:1.0 "$IMAGE"
+    docker tag "$LOCAL_IMAGE" "$IMAGE"
 
     echo "==> Pushing to Docker Hub ..."
     docker push "$IMAGE"

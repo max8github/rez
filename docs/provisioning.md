@@ -106,6 +106,7 @@ curl -s -X POST $HOST/facility/$FACILITY_ID/members/987654321
 Run with stub calendar and notifier (no external API calls):
 
 ```shell
+export REZ_PORT=9001
 cd /Users/max/code/rez/reservation/reservation
 mvn exec:java -Plocal
 ```

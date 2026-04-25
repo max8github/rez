@@ -36,7 +36,12 @@ public class DelegatingServiceAction extends Consumer {
     public DelegatingServiceAction(NotificationSender notificationSender, ComponentClient componentClient, Config config) {
         this.notificationSender = notificationSender;
         this.componentClient = componentClient;
-        this.calendarBaseUrl = config.getString("rez.calendar.base-url");
+        if (config.hasPath("rez.calendar.base-url")) {
+            this.calendarBaseUrl = config.getString("rez.calendar.base-url");
+        } else {
+            int port = config.getInt("akka.javasdk.dev-mode.http-port");
+            this.calendarBaseUrl = "http://localhost:" + port;
+        }
     }
 
     public Effect on(ReservationEvent.Fulfilled event) {

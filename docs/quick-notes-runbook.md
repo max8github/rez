@@ -7,6 +7,7 @@ For cloud deployment steps see [docs/deployment.md](deployment.md).
 Start local (stub calendar + notifier, no external API calls):
 
 ```shell
+export REZ_PORT=9001
 cd /Users/max/code/rez/reservation/reservation
 mvn compile exec:java -Plocal
 ```
@@ -14,7 +15,7 @@ mvn compile exec:java -Plocal
 Set the local base URL once for all commands below:
 
 ```shell
-PORT=9001
+PORT="${REZ_PORT:-9001}"
 BASE_URL="http://localhost:$PORT"
 ```
 

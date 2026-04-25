@@ -58,6 +58,24 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         }
     }
 
+    @Get("/api/calendar/resources")
+    public Object calendarResources() {
+        try {
+            String facilityId = requiredQueryParam("facilityId");
+
+            ResourceView.Resources resources = componentClient.forView()
+                .method(ResourceView::getResource)
+                .invoke(facilityId);
+
+            return resources.resources().stream()
+                .sorted(java.util.Comparator.comparing(ResourceV::resourceName))
+                .map(resource -> new CalendarResource(resource.resourceId(), resource.resourceName()))
+                .toList();
+        } catch (IllegalArgumentException e) {
+            return HttpResponses.badRequest(e.getMessage());
+        }
+    }
+
     private CalendarEvent toApi(ReservationCalendarView.ReservationEntry entry, ResourceV resource) {
         return new CalendarEvent(
             entry.reservationId(),
@@ -92,5 +110,10 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         String title,
         String start,
         String end
+    ) {}
+
+    public record CalendarResource(
+        String resourceId,
+        String resourceName
     ) {}
 }
