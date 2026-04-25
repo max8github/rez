@@ -17,14 +17,24 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-APP_VERSION=$(sed -n 's|.*<version>\(.*\)</version>.*|\1|p' "$SCRIPT_DIR/reservation/pom.xml" | head -n 1)
+build_and_find_local_image() {
+  local log_file
+  log_file="$(mktemp)"
 
-find_local_image() {
-  local version="$1"
-  docker images --format '{{.Repository}}:{{.Tag}}' \
-    | awk -v prefix="reservation:" -v version="$version" '
-        index($0, prefix version "-") == 1 || $0 == prefix version { print; exit }
-      '
+  "$@" | tee "$log_file"
+
+  local local_image
+  local_image=$(
+    sed -n 's|.*Tagging image \(reservation:[^ ]*\) successful!.*|\1|p' "$log_file" | tail -n 1
+  )
+  rm -f "$log_file"
+
+  if [[ -z "${local_image:-}" ]]; then
+    echo "ERROR: could not find Maven-produced local image tag in build output" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$local_image"
 }
 
 case "$TARGET" in
@@ -34,13 +44,7 @@ case "$TARGET" in
     IMAGE="${REGISTRY}:${TAG}"
 
     echo "==> [standalone] Building (mvn install -DskipTests -Pgoogle,standalone) ..."
-    mvn install -DskipTests -Pgoogle,standalone
-
-    LOCAL_IMAGE=$(find_local_image "$APP_VERSION")
-    if [[ -z "${LOCAL_IMAGE:-}" ]]; then
-      echo "ERROR: could not find freshly built local image matching reservation:${APP_VERSION}[-timestamp]"
-      exit 1
-    fi
+    LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests -Pgoogle,standalone)
     echo "==> Using local image ${LOCAL_IMAGE}"
 
     echo "==> Tagging as ${IMAGE} ..."
@@ -75,13 +79,7 @@ case "$TARGET" in
     IMAGE="${DOCKERHUB_IMAGE}:${TAG}"
 
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
-    mvn install -DskipTests --settings settings.xml -Pgoogle
-
-    LOCAL_IMAGE=$(find_local_image "$APP_VERSION")
-    if [[ -z "${LOCAL_IMAGE:-}" ]]; then
-      echo "ERROR: could not find freshly built local image matching reservation:${APP_VERSION}[-timestamp]"
-      exit 1
-    fi
+    LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests --settings settings.xml -Pgoogle)
     echo "==> Using local image ${LOCAL_IMAGE}"
 
     echo "==> Tagging as ${IMAGE} ..."
