@@ -5,6 +5,8 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Rez Calendar</title>
   <style>
+    @import url("https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&display=swap");
+
     :root {
       --bg: #f4efe7;
       --panel: #fffaf2;
@@ -17,6 +19,20 @@
       --warn: #b45309;
       --empty: #f6f1e8;
       --shadow: 0 18px 40px rgba(63, 47, 30, 0.08);
+    }
+
+    body[data-theme="etc-edingen"] {
+      --bg: #ffffff;
+      --panel: #ffffff;
+      --panel-strong: #ffffff;
+      --ink: #001f21;
+      --muted: #58626f;
+      --line: #c8d7ea;
+      --accent: #23985d;
+      --accent-soft: #dbf7d8;
+      --warn: #d53d2f;
+      --empty: #f8fbff;
+      --shadow: none;
     }
 
     * {
@@ -32,10 +48,20 @@
         linear-gradient(180deg, #f8f4ed 0%, var(--bg) 100%);
     }
 
+    body[data-theme="etc-edingen"] {
+      font-family: "Barlow", "Avenir Next", "Segoe UI", sans-serif;
+      background: #ffffff;
+    }
+
     main {
       max-width: 1360px;
       margin: 0 auto;
       padding: 32px 20px 48px;
+    }
+
+    body[data-theme="etc-edingen"] main {
+      max-width: 1240px;
+      padding: 44px 28px 56px;
     }
 
     .hero {
@@ -53,10 +79,24 @@
       letter-spacing: -0.04em;
     }
 
+    body[data-theme="etc-edingen"] h1 {
+      font-size: clamp(2.25rem, 4vw, 3.25rem);
+      font-weight: 700;
+      letter-spacing: -0.05em;
+    }
+
     .subtle {
       color: var(--muted);
       margin-top: 10px;
       max-width: 760px;
+    }
+
+    body[data-theme="etc-edingen"] .subtle {
+      color: #425466;
+      font-size: 1rem;
+      line-height: 1.45;
+      margin-top: 12px;
+      max-width: 920px;
     }
 
     .toolbar {
@@ -71,6 +111,20 @@
       box-shadow: var(--shadow);
       backdrop-filter: blur(14px);
       margin-bottom: 18px;
+    }
+
+    body[data-theme="etc-edingen"] .toolbar {
+      gap: 14px;
+      align-items: center;
+      background: transparent;
+      border: 0;
+      border-top: 1px solid #eef3f7;
+      border-bottom: 1px solid #eef3f7;
+      border-radius: 0;
+      padding: 18px 0;
+      margin-bottom: 16px;
+      box-shadow: none;
+      backdrop-filter: none;
     }
 
     label {
@@ -91,6 +145,14 @@
       color: var(--ink);
     }
 
+    body[data-theme="etc-edingen"] input {
+      min-width: 320px;
+      border-radius: 10px;
+      border-color: #cbd8e6;
+      padding: 11px 14px;
+      color: #214255;
+    }
+
     button {
       border: 0;
       border-radius: 999px;
@@ -101,10 +163,30 @@
       color: white;
     }
 
+    body[data-theme="etc-edingen"] button {
+      border-radius: 10px;
+      padding: 11px 16px;
+      font-weight: 600;
+      background: #23985d;
+      color: #ffffff;
+    }
+
     button.secondary {
       background: var(--panel-strong);
       color: var(--ink);
       border: 1px solid var(--line);
+    }
+
+    body[data-theme="etc-edingen"] button.secondary {
+      background: #ffffff;
+      color: #42627b;
+      border-color: #cbd8e6;
+    }
+
+    body[data-theme="etc-edingen"] button.secondary:hover,
+    body[data-theme="etc-edingen"] button.secondary:focus-visible {
+      border-color: #2e6cff;
+      color: #2e6cff;
     }
 
     .status {
@@ -113,17 +195,40 @@
       margin-bottom: 18px;
     }
 
+    body[data-theme="etc-edingen"] .status {
+      min-height: 22px;
+      color: #55677d;
+      margin-bottom: 20px;
+    }
+
     .status.error {
       color: #991b1b;
+    }
+
+    body[data-theme="etc-edingen"] .status.error {
+      color: #d53d2f;
     }
 
     .week-label {
       font-weight: 600;
     }
 
+    body[data-theme="etc-edingen"] .week-label {
+      color: #425466;
+      font-size: 1.2rem;
+      font-weight: 500;
+    }
+
     .board {
       display: grid;
       gap: 14px;
+    }
+
+    body[data-theme="etc-edingen"] .board {
+      gap: 0;
+      border-top: 1px solid #dbe6f1;
+      border-left: 1px solid #dbe6f1;
+      background: #ffffff;
     }
 
     .resource-row {
@@ -132,6 +237,17 @@
       border-radius: 20px;
       box-shadow: var(--shadow);
       overflow: hidden;
+    }
+
+    body[data-theme="etc-edingen"] .resource-row {
+      display: grid;
+      grid-template-columns: minmax(210px, 240px) minmax(0, 1fr);
+      border: 0;
+      border-right: 1px solid #dbe6f1;
+      border-bottom: 1px solid #dbe6f1;
+      border-radius: 0;
+      box-shadow: none;
+      overflow: visible;
     }
 
     .resource-header {
@@ -144,9 +260,30 @@
       border-bottom: 1px solid var(--line);
     }
 
+    body[data-theme="etc-edingen"] .resource-header {
+      flex-direction: column;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 18px 16px;
+      background: #ffffff;
+      border-right: 1px solid #dbe6f1;
+      border-bottom: 0;
+      min-height: 100%;
+    }
+
     .resource-title {
       font-weight: 700;
       font-size: 1.05rem;
+    }
+
+    body[data-theme="etc-edingen"] .resource-title {
+      font-size: 1.15rem;
+      font-weight: 600;
+      color: #33465b;
+    }
+
+    body[data-theme="etc-edingen"] .resource-header .subtle {
+      display: none;
     }
 
     .resource-grid {
@@ -154,11 +291,23 @@
       grid-template-columns: repeat(7, minmax(150px, 1fr));
     }
 
+    body[data-theme="etc-edingen"] .resource-grid {
+      grid-template-columns: repeat(7, minmax(112px, 1fr));
+      background: #ffffff;
+    }
+
     .day-column {
       min-height: 180px;
       border-right: 1px solid var(--line);
       padding: 12px;
       background: rgba(255, 255, 255, 0.55);
+    }
+
+    body[data-theme="etc-edingen"] .day-column {
+      min-height: 132px;
+      padding: 10px 12px 14px;
+      border-right-color: #dbe6f1;
+      background: #ffffff;
     }
 
     .day-column:last-child {
@@ -171,11 +320,32 @@
       margin-bottom: 10px;
     }
 
+    body[data-theme="etc-edingen"] .day-label {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 6px;
+      min-height: 58px;
+      margin-bottom: 12px;
+      color: #7d8793;
+      font-size: 0.8rem;
+      font-weight: 500;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+    }
+
     .day-date {
       display: block;
       color: var(--muted);
       font-weight: 500;
       margin-top: 2px;
+    }
+
+    body[data-theme="etc-edingen"] .day-date {
+      margin-top: 0;
+      color: #7a8189;
+      font-size: 1.1rem;
+      font-weight: 600;
     }
 
     .booking {
@@ -188,6 +358,17 @@
       margin-bottom: 8px;
     }
 
+    body[data-theme="etc-edingen"] .booking {
+      background: #24c364;
+      border: 0;
+      border-left: 0;
+      border-radius: 4px;
+      color: #ffffff;
+      padding: 8px 10px;
+      margin-bottom: 6px;
+      box-shadow: none;
+    }
+
     .booking-time {
       display: block;
       font-size: 0.78rem;
@@ -198,10 +379,24 @@
       text-transform: uppercase;
     }
 
+    body[data-theme="etc-edingen"] .booking-time {
+      color: #ffffff;
+      font-size: 0.82rem;
+      margin-bottom: 4px;
+      letter-spacing: 0;
+      text-transform: none;
+    }
+
     .booking-title {
       display: block;
       font-weight: 600;
       line-height: 1.3;
+    }
+
+    body[data-theme="etc-edingen"] .booking-title {
+      font-size: 0.95rem;
+      font-weight: 500;
+      line-height: 1.2;
     }
 
     .empty {
@@ -216,10 +411,24 @@
       font-size: 0.9rem;
     }
 
+    body[data-theme="etc-edingen"] .empty {
+      height: auto;
+      min-height: 52px;
+      border: 1px dashed #e4edf6;
+      border-radius: 12px;
+      background: #fbfdff;
+      color: #a3afbc;
+      font-size: 0.84rem;
+    }
+
     .hint {
       color: var(--warn);
       font-size: 0.9rem;
       margin-top: 8px;
+    }
+
+    body[data-theme="etc-edingen"] .hint {
+      color: #d53d2f;
     }
 
     @media (max-width: 980px) {
@@ -244,6 +453,31 @@
       input {
         min-width: 0;
         width: 100%;
+      }
+
+      body[data-theme="etc-edingen"] main {
+        padding: 32px 16px 40px;
+      }
+
+      body[data-theme="etc-edingen"] .resource-row {
+        grid-template-columns: 1fr;
+      }
+
+      body[data-theme="etc-edingen"] .resource-header {
+        border-right: 0;
+        border-bottom: 1px solid #dbe6f1;
+      }
+
+      body[data-theme="etc-edingen"] .resource-grid {
+        grid-template-columns: 1fr;
+      }
+
+      body[data-theme="etc-edingen"] .day-column {
+        border-bottom: 1px solid #dbe6f1;
+      }
+
+      body[data-theme="etc-edingen"] .day-column:last-child {
+        border-bottom: 0;
       }
     }
   </style>
@@ -283,8 +517,10 @@
   const todayButton = document.getElementById("todayButton");
   const nextWeekButton = document.getElementById("nextWeekButton");
   const reloadButton = document.getElementById("reloadButton");
+  const requestedTheme = readRequestedTheme(params.get("theme"));
 
   facilityIdInput.value = params.get("facilityId") || "";
+  applyTheme(requestedTheme || "default");
 
   let currentWeekStart = readWeekStart(params.get("week"));
 
@@ -356,8 +592,31 @@
   function updateUrl(facilityId) {
     const nextParams = new URLSearchParams();
     if (facilityId) nextParams.set("facilityId", facilityId);
+    if (requestedTheme) nextParams.set("theme", requestedTheme);
     nextParams.set("week", formatDate(currentWeekStart));
     window.history.replaceState({}, "", `${window.location.pathname}?${nextParams.toString()}`);
+  }
+
+  function readRequestedTheme(value) {
+    return value === "etc-edingen" ? value : "";
+  }
+
+  function applyTheme(theme) {
+    document.body.dataset.theme = theme || "default";
+  }
+
+  async function resolveTheme(facilityId) {
+    if (requestedTheme) return requestedTheme;
+    if (!facilityId) return "default";
+
+    try {
+      const response = await fetch(`/api/calendar/theme?facilityId=${encodeURIComponent(facilityId)}`);
+      if (!response.ok) return "default";
+      const payload = await response.json();
+      return payload && payload.theme === "etc-edingen" ? payload.theme : "default";
+    } catch (error) {
+      return "default";
+    }
   }
 
   function setStatus(message, isError = false) {
@@ -367,6 +626,7 @@
 
   async function loadCalendar() {
     const facilityId = facilityIdInput.value.trim();
+    applyTheme(await resolveTheme(facilityId));
     updateUrl(facilityId);
     renderWeekLabel();
 
