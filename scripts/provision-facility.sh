@@ -186,7 +186,8 @@ for ENTRY in "${COURT_LIST[@]}"; do
   fi
 
   COURT_SLUG=$(slugify "$COURT_NAME")
-  COURT_ID="${COURT_SLUG}-${COURT_INDEX}"
+  # Prefix with first 8 chars of facility ID so IDs are unique across facilities.
+  COURT_ID="${FACILITY_ID:0:8}-${COURT_SLUG}-${COURT_INDEX}"
 
   curl -sf -X POST "$HOST/resource/$COURT_ID" \
     -H "Content-Type: application/json" \
