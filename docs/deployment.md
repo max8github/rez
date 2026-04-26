@@ -61,7 +61,7 @@ akka service deploy rez reservation:2.0 --push --project rez-prod
 ## Secrets (set once, survive redeployments)
 
 ```shell
-akka secret create generic openai-secret --literal api-key=<KEY> --project rez-prod
+akka secret create generic openai --literal key=<KEY> --project rez-prod
 ```
 
 > No `telegram-secret` is needed — the bot token is stored on the facility entity and
@@ -72,7 +72,7 @@ akka secret create generic openai-secret --literal api-key=<KEY> --project rez-p
 ## Environment variables
 
 ```
-OPENAI_API_KEY           (from openai-secret)
+OPENAI_API_KEY           (from openai)
 REZ_CALENDAR_BASE_URL    optional — set to the public Akka service hostname
                          (e.g. https://small-frog-0557.europe-west1.akka.services)
                          to include Rez calendar links in booking notifications.
@@ -83,7 +83,7 @@ Set env vars at deploy time:
 
 ```shell
 akka service deploy rez reservation:2.0 --push --project rez-prod \
-  --secret-env OPENAI_API_KEY=openai-secret/api-key \
+  --secret-env OPENAI_API_KEY=openai/key \
   --env REZ_CALENDAR_BASE_URL=https://small-frog-0557.europe-west1.akka.services
 ```
 

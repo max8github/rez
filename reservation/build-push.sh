@@ -75,13 +75,18 @@ case "$TARGET" in
     ;;
 
   cloud)
+    CLOUD_CALENDAR_BASE_URL="${REZ_CALENDAR_BASE_URL:-https://red-shadow-4568.europe-west1.akka.services}"
+
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
     LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests --settings settings.xml -Pgoogle)
     echo "==> Using local image ${LOCAL_IMAGE}"
 
     if [[ "$DEPLOY" == "true" ]]; then
       echo "==> Pushing to Akka registry and deploying ..."
-      akka service deploy rez "$LOCAL_IMAGE" --push --project rez-prod
+      echo "==> Using REZ_CALENDAR_BASE_URL=${CLOUD_CALENDAR_BASE_URL}"
+      akka service deploy rez "$LOCAL_IMAGE" --push --project rez-prod \
+        --secret-env OPENAI_API_KEY=openai/key \
+        --env REZ_CALENDAR_BASE_URL="$CLOUD_CALENDAR_BASE_URL"
       echo "==> Done: deployed ${LOCAL_IMAGE} to Akka Cloud"
     else
       echo "==> Pushing to Akka registry (no deploy) ..."

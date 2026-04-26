@@ -59,8 +59,8 @@ Required:
 Set once per project:
 
 ```shell
-akka secret create generic openai-secret \
-  --literal api-key=<OPENAI_KEY> --project rez-prod
+akka secret create generic openai \
+  --literal key=<OPENAI_KEY> --project rez-prod
 
 akka secret create generic google-service-account \
   --from-file credentials.json=<path-to-credentials.json> --project rez-prod
