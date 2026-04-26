@@ -496,12 +496,7 @@
       gap: 10px;
     }
 
-    .timeline-list {
-      display: grid;
-      gap: 18px;
-    }
-
-    .timeline-card {
+    .shared-timeline {
       background: rgba(255, 250, 242, 0.92);
       border: 1px solid rgba(217, 205, 189, 0.95);
       border-radius: 24px;
@@ -509,37 +504,54 @@
       overflow: hidden;
     }
 
-    .timeline-card-head {
-      display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      gap: 12px;
-      padding: 18px 20px 14px;
-      border-bottom: 1px solid rgba(217, 205, 189, 0.9);
-      background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 250, 242, 0.9));
-    }
-
-    .timeline-card-title {
-      font-size: 1.15rem;
-      font-weight: 700;
-    }
-
-    .timeline-card-meta {
-      color: var(--muted);
-      font-size: 0.9rem;
-      white-space: nowrap;
-    }
-
-    .timeline-frame {
+    .shared-timeline-head {
       display: grid;
-      grid-template-columns: 58px minmax(0, 1fr);
-      gap: 14px;
-      padding: 18px 16px 18px 14px;
+      grid-template-columns: 72px repeat(var(--court-count, 1), minmax(0, 1fr));
+      border-bottom: 1px solid rgba(217, 205, 189, 0.95);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.78), rgba(255, 250, 242, 0.94));
+    }
+
+    .shared-timeline-corner {
+      border-right: 1px solid rgba(217, 205, 189, 0.95);
+    }
+
+    .shared-timeline-resource {
+      padding: 16px 12px;
+      border-right: 1px solid rgba(217, 205, 189, 0.95);
+    }
+
+    .shared-timeline-resource:last-child {
+      border-right: 0;
+    }
+
+    .shared-timeline-resource-name {
+      display: block;
+      font-size: 1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .shared-timeline-resource-meta {
+      display: block;
+      margin-top: 6px;
+      color: var(--muted);
+      font-size: 0.82rem;
+    }
+
+    .shared-timeline-body {
+      display: grid;
+      grid-template-columns: 72px repeat(var(--court-count, 1), minmax(0, 1fr));
+      align-items: start;
     }
 
     .timeline-hours,
-    .timeline-track {
+    .shared-timeline-column {
       position: relative;
+    }
+
+    .timeline-hours {
+      border-right: 1px solid rgba(217, 205, 189, 0.95);
+      background: rgba(255, 255, 255, 0.62);
     }
 
     .timeline-hour-label {
@@ -551,12 +563,15 @@
       font-weight: 600;
     }
 
-    .timeline-track {
-      border: 1px solid rgba(217, 205, 189, 0.95);
-      border-radius: 18px;
+    .shared-timeline-column {
+      border-right: 1px solid rgba(217, 205, 189, 0.95);
       background:
         linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 241, 232, 0.9));
       overflow: hidden;
+    }
+
+    .shared-timeline-column:last-child {
+      border-right: 0;
     }
 
     .timeline-hour-line {
@@ -648,15 +663,21 @@
         flex-direction: column;
       }
 
-      .timeline-card-head {
-        flex-direction: column;
-        align-items: start;
+      .shared-timeline-head,
+      .shared-timeline-body {
+        grid-template-columns: 52px repeat(var(--court-count, 1), minmax(0, 1fr));
       }
 
-      .timeline-frame {
-        grid-template-columns: 44px minmax(0, 1fr);
-        gap: 10px;
-        padding: 16px 12px 16px 10px;
+      .shared-timeline-resource {
+        padding: 12px 8px;
+      }
+
+      .shared-timeline-resource-name {
+        font-size: 0.9rem;
+      }
+
+      .shared-timeline-resource-meta {
+        font-size: 0.76rem;
       }
 
       body[data-theme="etc-edingen"] main {
@@ -720,7 +741,6 @@
   const DAY_START_HOUR = 7;
   const DAY_END_HOUR = 22;
   const HOUR_HEIGHT = 58;
-  const RESOURCES_PER_PAGE = 8;
   const params = new URLSearchParams(window.location.search);
   const board = document.getElementById("board");
   const dayPicker = document.getElementById("dayPicker");
@@ -956,17 +976,14 @@
     }
 
     const grouped = groupEvents(events);
-    const pageCount = Math.max(1, Math.ceil(resources.length / RESOURCES_PER_PAGE));
+    const resourcesPerPage = getResourcesPerPage();
+    const pageCount = Math.max(1, Math.ceil(resources.length / resourcesPerPage));
     currentResourcePage = Math.min(currentResourcePage, pageCount - 1);
-    const pageStart = currentResourcePage * RESOURCES_PER_PAGE;
-    const visibleResources = resources.slice(pageStart, pageStart + RESOURCES_PER_PAGE);
+    const pageStart = currentResourcePage * resourcesPerPage;
+    const visibleResources = resources.slice(pageStart, pageStart + resourcesPerPage);
     const selectedDateKey = formatDate(currentDay);
 
-    board.innerHTML = `
-      <div class="timeline-list">
-        ${visibleResources.map((resource) => renderTimelineCard(resource, grouped.get(`${resource.resourceId}:${selectedDateKey}`) || [])).join("")}
-      </div>
-    `;
+    board.innerHTML = renderSharedTimeline(visibleResources, grouped, selectedDateKey);
 
     renderResourcePager(resources.length, pageCount, visibleResources.length);
   }
@@ -1016,7 +1033,7 @@
     }).join("");
   }
 
-  function renderTimelineCard(resource, events) {
+  function renderSharedTimeline(resources, grouped, selectedDateKey) {
     const totalHours = DAY_END_HOUR - DAY_START_HOUR;
     const timelineHeight = totalHours * HOUR_HEIGHT;
     const hourLines = Array.from({ length: totalHours + 1 }, (_, index) => {
@@ -1034,25 +1051,38 @@
       };
     });
 
-    const bookings = events
-      .sort((left, right) => left.start.localeCompare(right.start))
-      .map((event) => renderTimelineBooking(event))
-      .join("");
-
     return `
-      <section class="timeline-card">
-        <div class="timeline-card-head">
-          <div class="timeline-card-title">${escapeHtml(resource.resourceName)}</div>
-          <div class="timeline-card-meta">${events.length} booking${events.length === 1 ? "" : "s"}</div>
+      <section class="shared-timeline" style="--court-count:${resources.length}">
+        <div class="shared-timeline-head">
+          <div class="shared-timeline-corner"></div>
+          ${resources.map((resource) => {
+            const events = (grouped.get(`${resource.resourceId}:${selectedDateKey}`) || [])
+              .sort((left, right) => left.start.localeCompare(right.start));
+
+            return `
+              <div class="shared-timeline-resource">
+                <span class="shared-timeline-resource-name">${escapeHtml(resource.resourceName)}</span>
+                <span class="shared-timeline-resource-meta">${events.length} booking${events.length === 1 ? "" : "s"}</span>
+              </div>
+            `;
+          }).join("")}
         </div>
-        <div class="timeline-frame">
+        <div class="shared-timeline-body">
           <div class="timeline-hours" style="height:${timelineHeight}px">
             ${hourLines.map((line) => line.label).join("")}
           </div>
-          <div class="timeline-track" style="height:${timelineHeight}px">
-            ${hourLines.map((line) => line.fill + line.line).join("")}
-            ${bookings || `<div class="timeline-empty-note">No bookings on this day</div>`}
-          </div>
+          ${resources.map((resource) => {
+            const events = (grouped.get(`${resource.resourceId}:${selectedDateKey}`) || [])
+              .sort((left, right) => left.start.localeCompare(right.start));
+            const bookings = events.map((event) => renderTimelineBooking(event)).join("");
+
+            return `
+              <div class="shared-timeline-column" style="height:${timelineHeight}px">
+                ${hourLines.map((line) => line.fill + line.line).join("")}
+                ${bookings || `<div class="timeline-empty-note">No bookings</div>`}
+              </div>
+            `;
+          }).join("")}
         </div>
       </section>
     `;
@@ -1097,12 +1127,13 @@
   }
 
   function renderResourcePager(totalResources, pageCount, visibleCount) {
-    if (totalResources <= RESOURCES_PER_PAGE) {
+    if (pageCount <= 1) {
       resourcePager.innerHTML = "";
       return;
     }
 
-    const start = currentResourcePage * RESOURCES_PER_PAGE + 1;
+    const resourcesPerPage = getResourcesPerPage();
+    const start = currentResourcePage * resourcesPerPage + 1;
     const end = start + visibleCount - 1;
     resourcePager.innerHTML = `
       <div class="resource-pager-info">Courts ${start}-${end} of ${totalResources}</div>
@@ -1151,6 +1182,13 @@
     const min = DAY_START_HOUR * 60;
     const max = DAY_END_HOUR * 60;
     return Math.max(min, Math.min(max, minutes));
+  }
+
+  function getResourcesPerPage() {
+    if (window.innerWidth < 720) return 2;
+    if (window.innerWidth < 1100) return 3;
+    if (window.innerWidth < 1500) return 4;
+    return 5;
   }
 
   function buildStatus(theme, resources, events) {
