@@ -124,7 +124,9 @@ public class BookingTools {
 
     @FunctionTool(description = """
         Book a court at a facility for specific players at a specific date and time.
-        Always call checkAvailability first to confirm a slot is free.
+        Use this for direct booking requests when the member has already specified
+        a clear date/time and players. Do not call checkAvailability first unless the
+        member explicitly asks which courts are available or wants alternatives.
         playerNames must be a comma-separated list of the players' display names (e.g. "Max,John").
         Use the sender's name for the person making the request.
         recipientId is the notification recipient identifier found in the [recipient:X] message prefix — always pass it unchanged.
