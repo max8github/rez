@@ -21,7 +21,8 @@ build_and_find_local_image() {
   local log_file
   log_file="$(mktemp)"
 
-  "$@" | tee "$log_file"
+  # Redirect tee output to stderr: visible in terminal but not captured by caller's $()
+  "$@" 2>&1 | tee "$log_file" >&2
 
   local local_image
   local_image=$(
