@@ -2,37 +2,18 @@
 
 ---
 
-# Deploying Rez — Standalone (lurch, CT 115)
+# Deploying Rez — Standalone (lurch, CT 115) — fallback only
 
-## Current status (2026-03-25) — standalone projections blocked
+**Primary deployment is Akka Cloud.** Standalone on lurch is a fallback option.
 
-Rez is deployed self-managed on lurch (CT 115, `https://maxdc.duckdns.org`).
-The service is running and entities work (facility/court provisioning persists fine),
-but **views and consumers never process any events** — `projection_offset` stays empty.
+## Standalone projection status
 
-### What was investigated and ruled out
+Projections were previously blocked in standalone mode with a free/dev license key.
+The root cause was suspected to be a license-tier limitation — free keys caused 15-minute
+crashes before projections could catch up. This was not retested after switching to Akka Cloud,
+so standalone is considered **untested** for the current codebase.
 
-- **DB config** — `runtime-standalone.conf` already contains the correct
-  `${?DB_HOST}` substitution. Bootstrap DIAG confirms:
-  `r2dbc connection-factory host=postgres port=5432 database=rez user=rez` ✓
-- **Code bug** — all integration tests pass, including `FacilityByBotTokenView` ✓
-- **application.conf override** — redundant r2dbc block was added then reverted;
-  the runtime-standalone.conf defaults are sufficient ✓
-- **Serialization / TypeName** — events have correct `@TypeName` annotations ✓
-
-### Suspected root cause
-
-The standalone runtime ships a `ProjectionThrottlingController` that fires every
-~50 seconds but never triggers journal queries. Strong hypothesis: projections are
-**throttled/disabled at the license tier level** when running with a free/dev key
-("Dev use only. Free keys at https://akka.io/key"). The system also crashes every
-~15 minutes with "Akka terminated. Obtain free keys." which prevents projections
-from ever catching up even if they did start.
-
-### Next step
-
-Email sent to Akka asking whether standalone projections require a paid key.
-If confirmed: either get a paid standalone license or switch back to Akka Cloud.
+If activating standalone: obtain a paid Akka standalone license from account.akka.io.
 
 ---
 
@@ -136,20 +117,20 @@ Remove these blocks before deploying to the cloud — the platform manages them:
 ./deploy.sh cloud --no-deploy   # build + push only
 ```
 
-Manual steps:
+Manual steps (version is the `reservation` module version in `reservation/pom.xml`):
 
 ```shell
 mvn install -DskipTests --settings settings.xml -Pgoogle
-docker tag reservation:1.0 max8github/rez:1.0
-docker push max8github/rez:1.0
-akka service deploy rez max8github/rez:0.x --project rez-prod
+docker tag reservation:2.0 max8github/rez:2.0
+docker push max8github/rez:2.0
+akka service deploy rez max8github/rez:2.0 --project rez-prod
 ```
 
 If the service was soft-deleted (2-week restore window):
 
 ```shell
 akka service restore rez --project rez-prod
-akka service deploy rez max8github/rez:0.x --project rez-prod
+akka service deploy rez max8github/rez:2.0 --project rez-prod
 ```
 
 ## Secrets (set once, survive redeployments)
@@ -163,8 +144,11 @@ akka secret create generic google-service-account --from-file credentials.json=<
 ## Environment variables
 
 ```
-OPENAI_API_KEY        (from openai-secret)
-GOOGLE_APPLICATION_CREDENTIALS  (from google-service-account)
+OPENAI_API_KEY           (from openai-secret)
+REZ_CALENDAR_BASE_URL    optional — set to the public Akka service hostname
+                         (e.g. https://small-frog-0557.europe-west1.akka.services)
+                         to include Rez calendar links in booking notifications.
+                         If omitted, calendar links are suppressed from notifications.
 ```
 
 ## Re-register Telegram webhook after each hostname change
@@ -176,15 +160,16 @@ curl "https://api.telegram.org/bot<TOKEN>/getWebhookInfo"
 
 ## Provision facility and courts (one-time after a clean deploy)
 
-```shell
-HOST=https://<akka-hostname>
-curl -s -X POST $HOST/facility/etc1en \
-  -H "Content-Type: application/json" \
-  -d '{"name":"Erster Tennisclub Edingen-Neckarhausen","address":{"street":"Mannheimer Str. 50","city":"68535 Edingen-Neckarhausen"}}'
+Use the provisioning script — it handles facility creation, court registration, and Telegram webhook in one shot:
 
-for i in 1 2 3 4; do
-  curl -s -X POST $HOST/facility/etc1en/resource/court-$i \
-    -H "Content-Type: application/json" \
-    -d "{\"name\":\"Court $i\"}"
-done
+```shell
+./scripts/provision-facility.sh \
+  --host        https://<akka-hostname> \
+  --name        "Erster Tennisclub Edingen-Neckarhausen" \
+  --street      "Mannheimer Str. 50" \
+  --city        "68535 Edingen-Neckarhausen" \
+  --token       "<BOT_TOKEN>" \
+  --courts      "Court 1,Court 2,Court 3,Court 4"
 ```
+
+See [facility-provisioning-runbook.md](facility-provisioning-runbook.md) for the full step-by-step guide.

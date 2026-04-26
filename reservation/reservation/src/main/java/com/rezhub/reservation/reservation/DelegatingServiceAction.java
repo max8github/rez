@@ -37,20 +37,24 @@ public class DelegatingServiceAction extends Consumer {
     public DelegatingServiceAction(NotificationSender notificationSender, ComponentClient componentClient, Config config) {
         this.notificationSender = notificationSender;
         this.componentClient = componentClient;
-        if (config.hasPath("rez.calendar.base-url")) {
-            this.calendarBaseUrl = config.getString("rez.calendar.base-url");
-        } else {
-            int port = getDevModePort(config);
-            this.calendarBaseUrl = "http://localhost:" + port;
-        }
+        this.calendarBaseUrl = resolveCalendarBaseUrl(config);
     }
 
-    private static int getDevModePort(Config config) {
-        try {
-            return config.getInt("akka.javasdk.dev-mode.http-port");
-        } catch (ConfigException.WrongType e) {
-            return Integer.parseInt(config.getString("akka.javasdk.dev-mode.http-port"));
+    private static String resolveCalendarBaseUrl(Config config) {
+        if (config.hasPath("rez.calendar.base-url")) {
+            return config.getString("rez.calendar.base-url");
         }
+        // Dev-mode fallback: derive from local HTTP port.
+        // In Akka Cloud this key may be a service-discovery URL, not a plain port — ignore it.
+        if (config.hasPath("akka.javasdk.dev-mode.http-port")) {
+            try {
+                int port = config.getInt("akka.javasdk.dev-mode.http-port");
+                return "http://localhost:" + port;
+            } catch (ConfigException | NumberFormatException ignored) {
+            }
+        }
+        log.warn("rez.calendar.base-url not set; calendar links will be omitted from notifications");
+        return "";
     }
 
     public Effect on(ReservationEvent.Fulfilled event) {
@@ -68,12 +72,19 @@ public class DelegatingServiceAction extends Consumer {
 
         LocalDateTime dt = reservation.dateTime();
         String formattedDate = dt.format(DATE_FMT);
-        String weekStart = dt.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).format(WEEK_FMT);
-        String calendarUrl = calendarBaseUrl + "/calendar?facilityId=" + facilityId + "&week=" + weekStart;
-
         String attendees = String.join(", ", reservation.emails());
-        String text = ("\uD83C\uDFBE %s\n\uD83D\uDCC5 %s\n\uD83D\uDC65 %s\n\uD83D\uDCC6 %s\n\n\uD83C\uDD94 <code>%s</code>")
-            .formatted(courtLabel, formattedDate, attendees, calendarUrl, reservationId);
+
+        String text;
+        if (calendarBaseUrl.isEmpty()) {
+            text = ("🎾 %s\n📅 %s\n👥 %s\n\n🆔 <code>%s</code>")
+                .formatted(courtLabel, formattedDate, attendees, reservationId);
+        } else {
+            String weekStart = dt.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).format(WEEK_FMT);
+            String calendarUrl = calendarBaseUrl + "/calendar?facilityId=" + facilityId + "&week=" + weekStart;
+            text = ("🎾 %s\n📅 %s\n👥 %s\n📆 %s\n\n🆔 <code>%s</code>")
+                .formatted(courtLabel, formattedDate, attendees, calendarUrl, reservationId);
+        }
+
         notificationSender.send(recipientId, text)
             .whenComplete((result, error) -> {
                 if (error != null) log.error("Error sending booking confirmation: {}", error.getMessage());

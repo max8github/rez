@@ -21,19 +21,15 @@ One bot per facility. If a club has distinct court groups with different policie
 
 ---
 
-## Step 2 — Google Calendars (automated)
+## Step 2 — Google Calendars (optional, future use)
 
-The provisioning script creates one Google Calendar per court automatically via the
-Calendar API, authenticated as the service account from `credentials.json`.
-No manual Google Calendar UI steps are needed.
+Google Calendar integration is currently disabled. The `calendarId` field stored on each court resource is reserved for future re-activation.
 
-The service account becomes the **owner** of each created calendar. To also see the
-calendars in your own Google account, go to **Settings → Sharing** and add your
-personal email with "Make changes and manage sharing".
+The provisioning script can create Google Calendars automatically if you pass `--credentials` with a service account file. If you skip `--credentials`, pass court names as `"Name:placeholder-id"` pairs so the script does not attempt calendar creation:
 
-> **Using existing calendars:** if calendars already exist (e.g. manually created),
-> pass them as `"Court Name:calendarId"` pairs in `--courts` instead of bare names.
-> You can mix both forms in the same invocation.
+```
+--courts "Court 1:court-1,Court 2:court-2,Court 3:court-3,Court 4:court-4"
+```
 
 ---
 
@@ -43,13 +39,13 @@ The script creates the facility entity, registers each court, and registers the 
 
 ```shell
 ./scripts/provision-facility.sh \
+  --host        https://<akka-hostname> \
   --name        "Erster Tennisclub Edingen-Neckarhausen" \
   --street      "Mannheimer Str. 50" \
   --city        "68535 Edingen-Neckarhausen" \
   --token       "123456789:ABCdef..." \
   --admins      "987654321" \
-  --credentials path/to/credentials.json \
-  --courts      "Court 1,Court 2,Court 3,Court 4"
+  --courts      "Court 1:court-1,Court 2:court-2,Court 3:court-3,Court 4:court-4"
 ```
 
 `--host`, `--webhook-host`, and `--timezone` all have sensible defaults and can be omitted for the standard deployment.
@@ -59,15 +55,15 @@ The script creates the facility entity, registers each court, and registers the 
 | Argument | Default | Description |
 |---|---|---|
 | `--host` | `https://rez.rezbotapp.com` | Base URL for Rez API calls |
-| `--webhook-host` | same as `--host` | Public URL Telegram sends webhooks to (Cloudflare tunnel) |
+| `--webhook-host` | same as `--host` | Public URL Telegram sends webhooks to |
 | `--name` | required | Full facility name |
 | `--street` | required | Street address |
 | `--city` | required | City and postal code |
 | `--timezone` | `Europe/Berlin` | IANA timezone |
 | `--token` | required | Telegram bot token |
 | `--admins` | — | Comma-separated Telegram user IDs for facility admins |
-| `--credentials` | `$GOOGLE_CREDENTIALS_FILE` or `./credentials.json` | Path to service account credentials JSON |
-| `--courts` | required | Comma-separated court names — script creates Google Calendars automatically. Pass `"Name:calendarId"` to use an existing calendar instead. |
+| `--credentials` | `$GOOGLE_CREDENTIALS_FILE` or `./credentials.json` | Path to Google service account credentials JSON — only needed if creating Google Calendars |
+| `--courts` | required | Comma-separated court names. Use `"Name:calendarId"` to supply a fixed ID (and skip Google Calendar creation). |
 
 The script prints a summary with all generated IDs at the end.
 
@@ -83,12 +79,15 @@ You will need the facility ID if you ever need to re-provision a court or update
 ## Step 5 — Verify
 
 ```shell
-HOST=https://maxdc.duckdns.org
+HOST=https://<akka-hostname>
 FACILITY_ID=<id from script output>
 BOT_TOKEN=<bot token>
 
-# Check facility entity — should show name, botToken, timezone, resourceIds
+# Check facility entity — should show name, botToken, timezone (no resourceIds — those live on resources)
 curl -s $HOST/facility/$FACILITY_ID | python3 -m json.tool
+
+# Check that courts are associated with the facility
+curl -s "$HOST/resource/by-facility/$FACILITY_ID" | python3 -m json.tool
 
 # Check webhook registration
 curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo" | python3 -m json.tool
@@ -97,7 +96,7 @@ curl -s "https://api.telegram.org/bot$BOT_TOKEN/getWebhookInfo" | python3 -m jso
 Expected webhook response:
 ```json
 {
-  "url": "https://maxdc.duckdns.org/telegram/<token>/webhook",
+  "url": "https://<akka-hostname>/telegram/<token>/webhook",
   "has_custom_certificate": false,
   "pending_update_count": 0
 }
@@ -112,7 +111,7 @@ Send a message to the bot from Telegram:
 > "What courts are available tomorrow at 6pm?"
 
 The bot should reply within a few seconds. If it does not:
-- Check `docker logs rez --tail 50` on lurch for errors
+- Check the Akka Cloud console for errors (`akka service logs rez --project rez-prod`)
 - Look for `"No facility found for bot token"` — this means the `FacilityByBotTokenView` has not populated yet (projection lag)
 - Wait ~30 seconds and retry; projections catch up from the journal on startup
 
@@ -124,7 +123,7 @@ Re-run whenever the hostname changes (e.g. after a DNS update or new deployment 
 
 ```shell
 BOT_TOKEN=<token>
-HOST=maxdc.duckdns.org
+HOST=<akka-hostname>
 
 curl "https://api.telegram.org/bot$BOT_TOKEN/setWebhook?url=https://$HOST/telegram/$BOT_TOKEN/webhook"
 ```
