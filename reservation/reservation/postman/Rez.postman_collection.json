@@ -1152,6 +1152,71 @@
           "response": []
         },
         {
+          "name": "Telegram webhook random daytime booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function pad(n) { return String(n).padStart(2, '0'); }",
+                  "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var dayOffset = Math.floor(Math.random() * 7);",
+                  "var hour = 9 + Math.floor(Math.random() * 11);",
+                  "var minute = 0;",
+                  "var dt = new Date();",
+                  "dt.setDate(dt.getDate() + dayOffset);",
+                  "dt.setHours(hour, minute, 0, 0);",
+                  "if (dt.getTime() <= Date.now() + 30 * 60 * 1000) {",
+                  "  dt.setDate(dt.getDate() + 1);",
+                  "}",
+                  "var dateIso = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());",
+                  "var timeText = pad(dt.getHours()) + ':' + pad(dt.getMinutes());",
+                  "var messageText = 'Book a court on ' + dateIso + ' at ' + timeText + ' for ' + player1 + ' and ' + player2;",
+                  "var recipientId = (pm.environment.get('botToken') || '') + ':' + (pm.environment.get('admin_user_id') || '');",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "pm.environment.set('telegram_message_text', messageText);",
+                  "console.info('telegram random booking message: ' + messageText);",
+                  "console.info('telegram recipient_id: ' + recipientId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 102,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            },
+            "description": "Generates a random daytime booking request within the next 7 days using random player names."
+          },
+          "response": []
+        },
+        {
           "name": "Get latest reservation by recipient",
           "event": [
             {
