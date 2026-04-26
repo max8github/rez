@@ -431,6 +431,190 @@
       color: #d53d2f;
     }
 
+    .calendar-controls {
+      display: grid;
+      gap: 14px;
+      margin-bottom: 18px;
+    }
+
+    .day-picker {
+      display: grid;
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 10px;
+    }
+
+    .day-chip {
+      border: 1px solid rgba(217, 205, 189, 0.95);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.88);
+      color: var(--ink);
+      padding: 10px 12px;
+      text-align: left;
+      box-shadow: var(--shadow);
+    }
+
+    .day-chip.active {
+      background: var(--accent);
+      color: white;
+      border-color: transparent;
+    }
+
+    .day-chip-weekday,
+    .day-chip-date {
+      display: block;
+      pointer-events: none;
+    }
+
+    .day-chip-weekday {
+      font-size: 0.76rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      opacity: 0.8;
+    }
+
+    .day-chip-date {
+      margin-top: 4px;
+      font-size: 1rem;
+      font-weight: 700;
+    }
+
+    .resource-pager {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      min-height: 44px;
+    }
+
+    .resource-pager-info {
+      color: var(--muted);
+      font-size: 0.95rem;
+    }
+
+    .resource-pager-actions {
+      display: flex;
+      gap: 10px;
+    }
+
+    .timeline-list {
+      display: grid;
+      gap: 18px;
+    }
+
+    .timeline-card {
+      background: rgba(255, 250, 242, 0.92);
+      border: 1px solid rgba(217, 205, 189, 0.95);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      overflow: hidden;
+    }
+
+    .timeline-card-head {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+      padding: 18px 20px 14px;
+      border-bottom: 1px solid rgba(217, 205, 189, 0.9);
+      background: linear-gradient(180deg, rgba(255, 255, 255, 0.7), rgba(255, 250, 242, 0.9));
+    }
+
+    .timeline-card-title {
+      font-size: 1.15rem;
+      font-weight: 700;
+    }
+
+    .timeline-card-meta {
+      color: var(--muted);
+      font-size: 0.9rem;
+      white-space: nowrap;
+    }
+
+    .timeline-frame {
+      display: grid;
+      grid-template-columns: 58px minmax(0, 1fr);
+      gap: 14px;
+      padding: 18px 16px 18px 14px;
+    }
+
+    .timeline-hours,
+    .timeline-track {
+      position: relative;
+    }
+
+    .timeline-hour-label {
+      position: absolute;
+      left: 0;
+      transform: translateY(-50%);
+      color: var(--muted);
+      font-size: 0.82rem;
+      font-weight: 600;
+    }
+
+    .timeline-track {
+      border: 1px solid rgba(217, 205, 189, 0.95);
+      border-radius: 18px;
+      background:
+        linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(246, 241, 232, 0.9));
+      overflow: hidden;
+    }
+
+    .timeline-hour-line {
+      position: absolute;
+      left: 0;
+      right: 0;
+      border-top: 1px solid rgba(217, 205, 189, 0.78);
+    }
+
+    .timeline-hour-fill {
+      position: absolute;
+      left: 0;
+      right: 0;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .timeline-booking {
+      position: absolute;
+      left: 10px;
+      right: 10px;
+      border-radius: 16px;
+      background: linear-gradient(180deg, #1f8f71, #1b745c);
+      color: white;
+      padding: 10px 12px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      box-shadow: 0 12px 24px rgba(31, 111, 95, 0.22);
+      overflow: hidden;
+    }
+
+    .timeline-booking-time {
+      font-size: 0.8rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .timeline-booking-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      line-height: 1.25;
+    }
+
+    .timeline-empty-note {
+      position: absolute;
+      inset: 10px 10px auto;
+      border: 1px dashed rgba(217, 205, 189, 0.95);
+      border-radius: 14px;
+      min-height: 56px;
+      display: grid;
+      place-items: center;
+      background: rgba(255, 255, 255, 0.42);
+      color: var(--muted);
+      font-size: 0.9rem;
+    }
+
     @media (max-width: 980px) {
       .hero {
         flex-direction: column;
@@ -453,6 +637,26 @@
       input {
         min-width: 0;
         width: 100%;
+      }
+
+      .day-picker {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+
+      .resource-pager {
+        align-items: start;
+        flex-direction: column;
+      }
+
+      .timeline-card-head {
+        flex-direction: column;
+        align-items: start;
+      }
+
+      .timeline-frame {
+        grid-template-columns: 44px minmax(0, 1fr);
+        gap: 10px;
+        padding: 16px 12px 16px 10px;
       }
 
       body[data-theme="etc-edingen"] main {
@@ -498,9 +702,14 @@
       <input id="facilityIdInput" placeholder="Enter facility id">
     </label>
     <button class="secondary" id="prevWeekButton" type="button">Previous</button>
-    <button class="secondary" id="todayButton" type="button">This Week</button>
+    <button class="secondary" id="todayButton" type="button">Today</button>
     <button class="secondary" id="nextWeekButton" type="button">Next</button>
     <button id="reloadButton" type="button">Load Calendar</button>
+  </section>
+
+  <section class="calendar-controls">
+    <div class="day-picker" id="dayPicker"></div>
+    <div class="resource-pager" id="resourcePager"></div>
   </section>
 
   <div class="status" id="status"></div>
@@ -508,8 +717,14 @@
 </main>
 
 <script>
+  const DAY_START_HOUR = 7;
+  const DAY_END_HOUR = 22;
+  const HOUR_HEIGHT = 58;
+  const RESOURCES_PER_PAGE = 8;
   const params = new URLSearchParams(window.location.search);
   const board = document.getElementById("board");
+  const dayPicker = document.getElementById("dayPicker");
+  const resourcePager = document.getElementById("resourcePager");
   const statusEl = document.getElementById("status");
   const weekLabelEl = document.getElementById("weekLabel");
   const facilityIdInput = document.getElementById("facilityIdInput");
@@ -523,10 +738,14 @@
   applyTheme(requestedTheme || "default");
 
   let currentWeekStart = readWeekStart(params.get("week"));
+  let currentDay = clampDayToWeek(readSelectedDay(params.get("day")), currentWeekStart);
+  let currentResourcePage = readPage(params.get("page"));
 
   prevWeekButton.addEventListener("click", () => moveWeek(-7));
   todayButton.addEventListener("click", () => {
-    currentWeekStart = startOfWeek(new Date());
+    currentDay = startOfDay(new Date());
+    currentWeekStart = startOfWeek(currentDay);
+    currentResourcePage = 0;
     void loadCalendar();
   });
   nextWeekButton.addEventListener("click", () => moveWeek(7));
@@ -541,7 +760,9 @@
   void loadCalendar();
 
   function moveWeek(days) {
+    currentDay = addDays(currentDay, days);
     currentWeekStart = addDays(currentWeekStart, days);
+    currentResourcePage = 0;
     void loadCalendar();
   }
 
@@ -549,6 +770,17 @@
     if (!value) return startOfWeek(new Date());
     const parsed = new Date(value + "T00:00:00");
     return Number.isNaN(parsed.getTime()) ? startOfWeek(new Date()) : startOfWeek(parsed);
+  }
+
+  function readSelectedDay(value) {
+    if (!value) return startOfDay(new Date());
+    const parsed = new Date(value + "T00:00:00");
+    return Number.isNaN(parsed.getTime()) ? startOfDay(new Date()) : startOfDay(parsed);
+  }
+
+  function readPage(value) {
+    const parsed = Number.parseInt(value || "0", 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : 0;
   }
 
   function startOfWeek(date) {
@@ -560,10 +792,24 @@
     return copy;
   }
 
+  function startOfDay(date) {
+    const copy = new Date(date);
+    copy.setHours(0, 0, 0, 0);
+    return copy;
+  }
+
   function addDays(date, amount) {
     const copy = new Date(date);
     copy.setDate(copy.getDate() + amount);
     return copy;
+  }
+
+  function clampDayToWeek(day, weekStart) {
+    const normalizedDay = startOfDay(day);
+    const weekEnd = addDays(weekStart, 6);
+    if (normalizedDay < weekStart) return weekStart;
+    if (normalizedDay > weekEnd) return weekEnd;
+    return normalizedDay;
   }
 
   function formatDate(date) {
@@ -594,6 +840,8 @@
     if (facilityId) nextParams.set("facilityId", facilityId);
     if (requestedTheme) nextParams.set("theme", requestedTheme);
     nextParams.set("week", formatDate(currentWeekStart));
+    nextParams.set("day", formatDate(currentDay));
+    if (currentResourcePage > 0) nextParams.set("page", String(currentResourcePage));
     window.history.replaceState({}, "", `${window.location.pathname}?${nextParams.toString()}`);
   }
 
@@ -626,12 +874,17 @@
 
   async function loadCalendar() {
     const facilityId = facilityIdInput.value.trim();
-    applyTheme(await resolveTheme(facilityId));
+    const theme = await resolveTheme(facilityId);
+    applyTheme(theme);
+    currentDay = clampDayToWeek(currentDay, currentWeekStart);
     updateUrl(facilityId);
-    renderWeekLabel();
+    renderWeekLabel(theme);
+    renderDayPicker(theme);
 
     if (!facilityId) {
       board.innerHTML = "";
+      dayPicker.innerHTML = "";
+      resourcePager.innerHTML = "";
       setStatus("Add a facility id to load the weekly court schedule.");
       return;
     }
@@ -642,17 +895,23 @@
     try {
       const resources = await fetchResources(facilityId);
       const events = await fetchEvents(facilityId);
-      renderBoard(resources, events);
-      setStatus(`Showing ${events.length} reservation${events.length === 1 ? "" : "s"} for ${resources.length} court${resources.length === 1 ? "" : "s"}.`);
+      renderBoard(theme, resources, events);
+      setStatus(buildStatus(theme, resources, events));
     } catch (error) {
       board.innerHTML = "";
+      resourcePager.innerHTML = "";
       setStatus(error.message || "Failed to load calendar.", true);
     }
   }
 
-  function renderWeekLabel() {
+  function renderWeekLabel(theme) {
     const weekEnd = addDays(currentWeekStart, 6);
-    weekLabelEl.textContent = `${currentWeekStart.toLocaleDateString([], { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+    if (theme === "etc-edingen") {
+      weekLabelEl.textContent = `${currentWeekStart.toLocaleDateString([], { month: "short", day: "numeric" })} - ${weekEnd.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}`;
+      return;
+    }
+
+    weekLabelEl.textContent = `${currentDay.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric", year: "numeric" })}`;
   }
 
   async function fetchResources(facilityId) {
@@ -679,7 +938,40 @@
     return Array.isArray(payload) ? payload : [];
   }
 
-  function renderBoard(resources, events) {
+  function renderBoard(theme, resources, events) {
+    if (theme === "etc-edingen") {
+      renderEtcEdingenBoard(resources, events);
+      resourcePager.innerHTML = "";
+      return;
+    }
+
+    renderDefaultBoard(resources, events);
+  }
+
+  function renderDefaultBoard(resources, events) {
+    if (resources.length === 0) {
+      board.innerHTML = `<div class="resource-row"><div class="resource-header"><div><div class="resource-title">No courts registered</div><div class="hint">This facility has no resources yet.</div></div></div></div>`;
+      resourcePager.innerHTML = "";
+      return;
+    }
+
+    const grouped = groupEvents(events);
+    const pageCount = Math.max(1, Math.ceil(resources.length / RESOURCES_PER_PAGE));
+    currentResourcePage = Math.min(currentResourcePage, pageCount - 1);
+    const pageStart = currentResourcePage * RESOURCES_PER_PAGE;
+    const visibleResources = resources.slice(pageStart, pageStart + RESOURCES_PER_PAGE);
+    const selectedDateKey = formatDate(currentDay);
+
+    board.innerHTML = `
+      <div class="timeline-list">
+        ${visibleResources.map((resource) => renderTimelineCard(resource, grouped.get(`${resource.resourceId}:${selectedDateKey}`) || [])).join("")}
+      </div>
+    `;
+
+    renderResourcePager(resources.length, pageCount, visibleResources.length);
+  }
+
+  function renderEtcEdingenBoard(resources, events) {
     if (resources.length === 0) {
       board.innerHTML = `<div class="resource-row"><div class="resource-header"><div><div class="resource-title">No courts registered</div><div class="hint">This facility has no resources yet.</div></div></div></div>`;
       return;
@@ -724,6 +1016,48 @@
     }).join("");
   }
 
+  function renderTimelineCard(resource, events) {
+    const totalHours = DAY_END_HOUR - DAY_START_HOUR;
+    const timelineHeight = totalHours * HOUR_HEIGHT;
+    const hourLines = Array.from({ length: totalHours + 1 }, (_, index) => {
+      const top = index * HOUR_HEIGHT;
+      const hour = DAY_START_HOUR + index;
+      const label = hour <= DAY_END_HOUR ? `
+        <span class="timeline-hour-label" style="top:${top}px">${String(hour).padStart(2, "0")}:00</span>
+      ` : "";
+
+      return {
+        top,
+        label,
+        fill: index < totalHours ? `<div class="timeline-hour-fill" style="top:${top}px;height:${HOUR_HEIGHT}px"></div>` : "",
+        line: `<div class="timeline-hour-line" style="top:${top}px"></div>`
+      };
+    });
+
+    const bookings = events
+      .sort((left, right) => left.start.localeCompare(right.start))
+      .map((event) => renderTimelineBooking(event))
+      .join("");
+
+    return `
+      <section class="timeline-card">
+        <div class="timeline-card-head">
+          <div class="timeline-card-title">${escapeHtml(resource.resourceName)}</div>
+          <div class="timeline-card-meta">${events.length} booking${events.length === 1 ? "" : "s"}</div>
+        </div>
+        <div class="timeline-frame">
+          <div class="timeline-hours" style="height:${timelineHeight}px">
+            ${hourLines.map((line) => line.label).join("")}
+          </div>
+          <div class="timeline-track" style="height:${timelineHeight}px">
+            ${hourLines.map((line) => line.fill + line.line).join("")}
+            ${bookings || `<div class="timeline-empty-note">No bookings on this day</div>`}
+          </div>
+        </div>
+      </section>
+    `;
+  }
+
   function groupEvents(events) {
     const grouped = new Map();
     events.forEach((event) => {
@@ -736,8 +1070,108 @@
     return grouped;
   }
 
+  function renderDayPicker(theme) {
+    if (theme === "etc-edingen") {
+      dayPicker.innerHTML = "";
+      return;
+    }
+
+    const days = Array.from({ length: 7 }, (_, index) => addDays(currentWeekStart, index));
+    dayPicker.innerHTML = days.map((day) => {
+      const isActive = formatDate(day) === formatDate(currentDay);
+      return `
+        <button class="day-chip${isActive ? " active" : ""}" data-day="${formatDate(day)}" type="button">
+          <span class="day-chip-weekday">${day.toLocaleDateString([], { weekday: "short" })}</span>
+          <span class="day-chip-date">${day.toLocaleDateString([], { month: "short", day: "numeric" })}</span>
+        </button>
+      `;
+    }).join("");
+
+    dayPicker.querySelectorAll("[data-day]").forEach((buttonEl) => {
+      buttonEl.addEventListener("click", () => {
+        currentDay = readSelectedDay(buttonEl.dataset.day);
+        currentResourcePage = 0;
+        void loadCalendar();
+      });
+    });
+  }
+
+  function renderResourcePager(totalResources, pageCount, visibleCount) {
+    if (totalResources <= RESOURCES_PER_PAGE) {
+      resourcePager.innerHTML = "";
+      return;
+    }
+
+    const start = currentResourcePage * RESOURCES_PER_PAGE + 1;
+    const end = start + visibleCount - 1;
+    resourcePager.innerHTML = `
+      <div class="resource-pager-info">Courts ${start}-${end} of ${totalResources}</div>
+      <div class="resource-pager-actions">
+        <button class="secondary" id="prevResourcePageButton" type="button"${currentResourcePage === 0 ? " disabled" : ""}>Earlier Courts</button>
+        <button class="secondary" id="nextResourcePageButton" type="button"${currentResourcePage >= pageCount - 1 ? " disabled" : ""}>More Courts</button>
+      </div>
+    `;
+
+    const prevButton = document.getElementById("prevResourcePageButton");
+    const nextButton = document.getElementById("nextResourcePageButton");
+    if (prevButton) {
+      prevButton.addEventListener("click", () => {
+        currentResourcePage = Math.max(0, currentResourcePage - 1);
+        void loadCalendar();
+      });
+    }
+    if (nextButton) {
+      nextButton.addEventListener("click", () => {
+        currentResourcePage = Math.min(pageCount - 1, currentResourcePage + 1);
+        void loadCalendar();
+      });
+    }
+  }
+
+  function renderTimelineBooking(event) {
+    const start = parseLocalDateTime(event.start);
+    const end = parseLocalDateTime(event.end);
+    const startMinutes = clampMinutesWithinTimeline((start.getHours() * 60) + start.getMinutes());
+    const endMinutes = clampMinutesWithinTimeline((end.getHours() * 60) + end.getMinutes());
+    const top = ((startMinutes - (DAY_START_HOUR * 60)) / 60) * HOUR_HEIGHT;
+    const timelineHeight = (DAY_END_HOUR - DAY_START_HOUR) * HOUR_HEIGHT;
+    const rawHeight = Math.max(52, ((Math.max(endMinutes, startMinutes + 30) - startMinutes) / 60) * HOUR_HEIGHT);
+    const maxHeight = Math.max(32, timelineHeight - top - 6);
+    const height = Math.min(maxHeight, rawHeight);
+
+    return `
+      <article class="timeline-booking" style="top:${top}px;height:${height}px">
+        <span class="timeline-booking-time">${formatTime(event.start)} - ${formatTime(event.end)}</span>
+        <span class="timeline-booking-title">${escapeHtml(event.title || "Reserved")}</span>
+      </article>
+    `;
+  }
+
+  function clampMinutesWithinTimeline(minutes) {
+    const min = DAY_START_HOUR * 60;
+    const max = DAY_END_HOUR * 60;
+    return Math.max(min, Math.min(max, minutes));
+  }
+
+  function buildStatus(theme, resources, events) {
+    if (theme === "etc-edingen") {
+      return `Showing ${events.length} reservation${events.length === 1 ? "" : "s"} for ${resources.length} court${resources.length === 1 ? "" : "s"}.`;
+    }
+
+    const selectedDateKey = formatDate(currentDay);
+    const dayEvents = events.filter((event) => event.start.slice(0, 10) === selectedDateKey);
+    return `Showing ${dayEvents.length} reservation${dayEvents.length === 1 ? "" : "s"} on ${currentDay.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric" })} for ${resources.length} court${resources.length === 1 ? "" : "s"}.`;
+  }
+
   function formatTime(value) {
-    return new Date(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+    return parseLocalDateTime(value).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  }
+
+  function parseLocalDateTime(value) {
+    const [datePart, timePart] = value.split("T");
+    const [year, month, day] = datePart.split("-").map(Number);
+    const [hour, minute, second] = timePart.split(":").map(Number);
+    return new Date(year, month - 1, day, hour, minute, second || 0);
   }
 
   function escapeHtml(value) {
