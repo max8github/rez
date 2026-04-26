@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ./build-push.sh standalone          # build, push to Gitea, redeploy on lurch
-#   ./build-push.sh cloud               # build, push to Docker Hub, deploy to Akka Cloud
+#   ./build-push.sh cloud               # build, push to Akka registry, deploy to Akka Cloud
 #   ./build-push.sh standalone --no-deploy
 #   ./build-push.sh cloud    --no-deploy
 set -euo pipefail
@@ -74,23 +74,18 @@ case "$TARGET" in
     ;;
 
   cloud)
-    DOCKERHUB_IMAGE="max8github/rez"
-    TAG="${REZ_TAG:-1.0}"
-    IMAGE="${DOCKERHUB_IMAGE}:${TAG}"
-
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
     LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests --settings settings.xml -Pgoogle)
     echo "==> Using local image ${LOCAL_IMAGE}"
 
-    echo "==> Tagging as ${IMAGE} ..."
-    docker tag "$LOCAL_IMAGE" "$IMAGE"
-
-    echo "==> Pushing to Docker Hub ..."
-    docker push "$IMAGE"
-
     if [[ "$DEPLOY" == "true" ]]; then
-      echo "==> Deploying to Akka Cloud ..."
-      akka service deploy rez "$IMAGE" --project rez-prod
+      echo "==> Pushing to Akka registry and deploying ..."
+      akka service deploy rez "$LOCAL_IMAGE" --push --project rez-prod
+      echo "==> Done: deployed ${LOCAL_IMAGE} to Akka Cloud"
+    else
+      echo "==> Pushing to Akka registry (no deploy) ..."
+      akka container-registry push "$LOCAL_IMAGE" --project rez-prod
+      echo "==> Done: pushed ${LOCAL_IMAGE} to Akka registry"
     fi
     ;;
 
@@ -99,5 +94,3 @@ case "$TARGET" in
     exit 1
     ;;
 esac
-
-echo "==> Done: ${IMAGE}"
