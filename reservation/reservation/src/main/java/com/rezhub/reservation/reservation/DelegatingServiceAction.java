@@ -81,7 +81,7 @@ public class DelegatingServiceAction extends Consumer {
         } else {
             String weekStart = dt.with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY)).format(WEEK_FMT);
             String calendarUrl = calendarBaseUrl + "/calendar?facilityId=" + facilityId + "&week=" + weekStart;
-            text = ("🎾 %s\n📅 %s\n👥 %s\n📆 %s\n\n🆔 <code>%s</code>")
+            text = ("🎾 %s\n📅 %s\n👥 %s\n📆 <a href=\"%s\">Open calendar</a>\n\n🆔 <code>%s</code>")
                 .formatted(courtLabel, formattedDate, attendees, calendarUrl, reservationId);
         }
 
