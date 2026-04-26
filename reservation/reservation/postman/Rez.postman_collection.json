@@ -197,6 +197,27 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Clear bot token",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/botToken",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "botToken"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -318,6 +339,68 @@
             "description": "Attaches an existing resource to a facility via external references."
           },
           "response": []
+        },
+        {
+          "name": "Set resource schedule",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"hours\": {\n    \"MONDAY\": [\"09:00\", \"10:00\", \"11:00\"],\n    \"WEDNESDAY\": [\"14:00\", \"15:00\"]\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/schedule",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id}}",
+                "schedule"
+              ]
+            },
+            "description": "Sets the weekly availability schedule for the resource."
+          },
+          "response": []
+        },
+        {
+          "name": "Set resource type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "court"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/type",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id}}",
+                "type"
+              ]
+            },
+            "description": "Sets the resource type tag, for example 'court'."
+          },
+          "response": []
         }
       ]
     },
@@ -341,6 +424,27 @@
                 "{{reservation_id}}"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete booking",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings",
+                "{{reservation_id}}"
+              ]
+            },
+            "description": "Cancels the booking identified by reservation_id via the DELETE /bookings/{reservationId} endpoint."
           },
           "response": []
         }
