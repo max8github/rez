@@ -1,5 +1,7 @@
 # Rez Architecture Handoff
 
+Cross-repository overview: [../../hit/hit-backend/docs/reference/backend-system-overview.md](../../hit/hit-backend/docs/reference/backend-system-overview.md)
+
 Date: 2026-04-25
 
 This document is the current-state handoff for Rez after the booking-flow refactors completed on 2026-04-22 through 2026-04-25.

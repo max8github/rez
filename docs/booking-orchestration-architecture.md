@@ -1,5 +1,7 @@
 # Booking Orchestration Architecture
 
+Note: this is a target-state / migration design document. Parts of it are now historical. For the current implemented architecture, read [`rez-architecture-handoff.md`](/Users/max/code/rez/docs/rez-architecture-handoff.md) first.
+
 ## Purpose
 
 This document captures the target architecture for how Rez should accept booking requests from different user-facing entrypoints, resolve the business context needed for a booking, and call the generic reservation engine.
@@ -97,9 +99,9 @@ Today the code path from Telegram to booking is approximately:
 1. `TelegramEndpoint.onUpdate()` receives the webhook update.
 2. It resolves `botToken -> facilityId, timezone` via `FacilityByBotTokenView`.
 3. It invokes `BookingAgent.chat(...)`.
-4. The agent uses `BookingService` tools.
-5. `BookingService.bookCourt(...)` calls `FacilityEntity.getFacility()` to load `resourceIds` and timezone-related data.
-6. `BookingService` initializes `ReservationEntity` with the candidate `resourceIds`.
+4. The agent uses booking tools.
+5. The current booking tool / orchestration chain resolves facility scope and candidate `resourceIds`.
+6. The orchestration chain initializes `ReservationEntity` with the candidate `resourceIds`.
 7. `ReservationEntity` and `ResourceEntity` perform the generic booking competition and lock acquisition.
 8. `DelegatingServiceAction` sends outcome notifications through `NotificationSender`.
 
@@ -539,7 +541,7 @@ Target flow:
 8. reservation core performs booking competition and locking
 9. outcome is delivered through notifier / response path
 
-This means that the current direct dependency from `BookingService` to `FacilityEntity` should disappear.
+This means that the old direct dependency from a monolithic booking service to `FacilityEntity` should disappear.
 
 ## Supplier Booking Workflow
 
@@ -615,9 +617,9 @@ The reservation core itself remains unchanged.
 - `BookingAgent`
   - should remain an intent/dialog layer, not a workflow owner
 
-### Split current `BookingService`
+### Split current booking orchestration
 
-Current `BookingService` mixes:
+The old monolithic booking service mixed:
 - agent tool surface
 - facility/timezone lookup
 - reservation submission
@@ -659,7 +661,7 @@ Implement `ReservationGatewayAkka` over current Akka entities / endpoints.
 
 The goal is to make the reservation core an explicit dependency of the application layer.
 
-### Phase 3: Split current `BookingService`
+### Phase 3: Split current booking orchestration
 
 Create:
 - `BookingTools`

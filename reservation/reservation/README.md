@@ -24,11 +24,11 @@ MessagingEndpoint  (Akka HTTP, e.g. TelegramEndpoint)
 BookingAgent    (Akka Agent)
   │  tool calls
   ▼
-BookingService  (Spring @Component)
+BookingTools / BookingApplicationServiceImpl
   │  ComponentClient calls
-  ├──▶ ResourceView      – check availability helper
-  ├──▶ FacilityEntity    – resolve candidate resources for Telegram/agent path
-  └──▶ ReservationEntity – initiate booking with flat resource IDs
+├──▶ ResourceView      – check availability helper
+├──▶ ResourcesByFacilityView – resolve candidate resources for the court-booking path
+└──▶ ReservationEntity       – initiate booking with flat resource IDs
           │
           ▼
        ReservationAction
@@ -74,14 +74,13 @@ From `reservation/reservation/`:
 mvn clean compile
 ```
 
-The `googlecalendar` and other stub modules must be installed in the local Maven
-repository first (one-time setup, or after a version bump). Run from `reservation/`
-(the parent module) — **not** from `reservation/reservation/` to avoid triggering
-the Docker image build:
+The notifier/SPI modules must be installed in the local Maven repository first
+(one-time setup, or after a version bump). Run from `reservation/`
+(the parent module):
 
 ```bash
-cd /path/to/reservation  # the parent module, not reservation/reservation
-mvn install -pl spi,calendarstub,notifierstub,googlecalendar,telegramnotifier,twistnotifier -DskipTests
+cd /path/to/reservation
+mvn install -pl spi,notifierstub,telegramnotifier -DskipTests
 ```
 
 To build and push a production image to the Gitea registry, run from `reservation/reservation/`:
@@ -99,10 +98,10 @@ Maven build output. There is no Dockerfile; the image is built entirely by the M
 ## Run
 
 ```bash
-# Production (default): uses real Google Calendar API
+# Production (default): uses the real Telegram notifier
 mvn exec:java
 
-# Local dev / testing: uses FakeCalendarSender (no Google API calls)
+# Local dev / testing: uses the stub notifier
 mvn compile exec:java -Plocal
 ```
 
@@ -152,6 +151,8 @@ GET /reservation-lookup/recipient/{recipientId}/latest
 ```
 
 This is intended for operational tooling and QA, especially for asynchronous agent-driven booking flows where the initial webhook response does not contain the reservation ID.
+
+For a more accurate current-state architecture walkthrough than the historical design notes, see [`../../docs/rez-architecture-handoff.md`](../../docs/rez-architecture-handoff.md).
 
 ## Provisioning
 
