@@ -35,8 +35,9 @@ Transport wiring would then be controlled entirely by classpath.
 
 Facility resource registration is asynchronous. If bookings arrive immediately
 after facility creation but before resource registration completes, availability
-fan-out may see an empty resource set and the booking will time out. This is now
-handled safely, but the provisioning flow should eventually expose readiness more clearly.
+fan-out may see an empty resource set and the booking may conclude `UNAVAILABLE`
+or otherwise fail to find a candidate. This is now handled safely, but the
+provisioning flow should eventually expose readiness more clearly.
 
 ### Google Calendar is still not a source of truth
 

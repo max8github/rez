@@ -4,15 +4,14 @@ import akka.javasdk.testkit.TestKitSupport;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
-import com.rezhub.reservation.dto.EntityType;
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.dto.SelectionItem;
 import com.rezhub.reservation.reservation.ReservationEntity;
+import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceView;
+import com.rezhub.reservation.resource.dto.Resource;
 import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
@@ -36,7 +35,7 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .method(ReservationEntity::init)
             .invoke(new ReservationEntity.Init(
                 reservation,
-                Set.of(new SelectionItem(resourceId, EntityType.RESOURCE)),
+                Set.of(resourceId),
                 "telegram-user"
             ));
         componentClient.forEventSourcedEntity(reservationId)
@@ -80,7 +79,7 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .method(ReservationEntity::init)
             .invoke(new ReservationEntity.Init(
                 reservation,
-                Set.of(new SelectionItem(resourceId, EntityType.RESOURCE)),
+                Set.of(resourceId),
                 "telegram-user"
             ));
         componentClient.forEventSourcedEntity(reservationId)
@@ -108,22 +107,15 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
     private void createFacilityAndResource(String facilityId, String resourceId, String resourceName) {
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility(
-                "Calendar Club",
-                new Address("Main Street", "Rome"),
-                Collections.emptySet(),
-                "Europe/Rome",
-                null,
-                null
-            ));
+            .invoke(new Facility("Calendar Club", new Address("Main Street", "Rome"), "Europe/Rome", null, null));
 
-        componentClient.forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::requestResourceCreateAndRegister)
-            .invoke(new FacilityEntity.CreateAndRegisterResource(
-                resourceName,
-                resourceId,
-                "calendar-" + resourceId + "@example.test"
-            ));
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::create)
+            .invoke(new Resource(resourceId, resourceName, "calendar-" + resourceId + "@example.test"));
+
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setExternalRef)
+            .invoke(new ResourceEntity.SetExternalRef(resourceId, facilityId));
     }
 
     private void waitForResource(String resourceId) throws Exception {

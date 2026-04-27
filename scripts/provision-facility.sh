@@ -17,6 +17,7 @@
 # --webhook-host Base URL Telegram should call for webhooks. Defaults to --host.
 #                Set this separately when the API is on an internal host but webhooks
 #                must go through a public tunnel (e.g. https://rez.rezbotapp.com).
+#                Can also be set via REZ_BASE_URL / REZ_WEBHOOK_BASE_URL env vars.
 # --courts       Comma-separated court names. The script creates a Google Calendar for
 #                each court automatically via the Calendar API.
 #                You can also provide existing calendar IDs as "name:calendarId" pairs
@@ -28,8 +29,8 @@
 set -euo pipefail
 
 # ---- parse arguments --------------------------------------------------------
-HOST="https://rez.rezbotapp.com"
-WEBHOOK_HOST="https://rez.rezbotapp.com"
+HOST="${REZ_BASE_URL:-https://rez.rezbotapp.com}"
+WEBHOOK_HOST="${REZ_WEBHOOK_BASE_URL:-${REZ_BASE_URL:-https://rez.rezbotapp.com}}"
 NAME=""
 STREET=""
 CITY=""
@@ -38,6 +39,10 @@ BOT_TOKEN=""
 ADMINS=""
 COURTS=""
 CREDENTIALS_FILE="${GOOGLE_CREDENTIALS_FILE:-credentials.json}"
+
+slugify() {
+  python3 -c 'import re,sys; s=sys.argv[1].strip().lower(); s=re.sub(r"[^a-z0-9]+","-",s).strip("-"); print(s or "resource")' "$1"
+}
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -167,7 +172,9 @@ echo ""
 echo "==> Creating courts"
 
 declare -a COURT_IDS=()
+COURT_INDEX=0
 for ENTRY in "${COURT_LIST[@]}"; do
+  COURT_INDEX=$((COURT_INDEX + 1))
   if [[ "$ENTRY" == *:* ]]; then
     COURT_NAME="${ENTRY%%:*}"
     CALENDAR_ID="${ENTRY#*:}"
@@ -177,12 +184,26 @@ for ENTRY in "${COURT_LIST[@]}"; do
     CALENDAR_ID=$(create_calendar "$COURT_NAME" "$ACCESS_TOKEN")
     echo "    Calendar ID: $CALENDAR_ID"
   fi
-  COURT_ID=$(curl -sf -X POST "$HOST/facility/$FACILITY_ID/resource" \
+
+  COURT_SLUG=$(slugify "$COURT_NAME")
+  # Prefix with first 8 chars of facility ID so IDs are unique across facilities.
+  COURT_ID="${FACILITY_ID:0:8}-${COURT_SLUG}-${COURT_INDEX}"
+
+  curl -sf -X POST "$HOST/resource/$COURT_ID" \
     -H "Content-Type: application/json" \
     -d "{
-      \"name\": $(echo "$COURT_NAME" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().strip()))'),
+      \"resourceId\": \"$COURT_ID\",
+      \"resourceName\": $(echo "$COURT_NAME" | python3 -c 'import json,sys; print(json.dumps(sys.stdin.read().strip()))'),
       \"calendarId\": \"$CALENDAR_ID\"
-    }")
+    }" >/dev/null
+
+  curl -sf -X PUT "$HOST/resource/$COURT_ID/external-ref" \
+    -H "Content-Type: application/json" \
+    -d "{
+      \"externalRef\": \"$COURT_ID\",
+      \"externalGroupRef\": \"$FACILITY_ID\"
+    }" >/dev/null
+
   echo "    $COURT_NAME → $COURT_ID  (calendar: $CALENDAR_ID)"
   COURT_IDS+=("$COURT_NAME=$COURT_ID=$CALENDAR_ID")
 done

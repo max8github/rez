@@ -2,23 +2,24 @@ package com.rezhub.reservation.agent;
 
 import akka.javasdk.agent.Agent;
 import akka.javasdk.annotations.Component;
+import com.rezhub.reservation.orchestration.OriginRequestContext;
 
 /**
  * Conversational booking agent for Rez.
  *
- * Handles natural-language court booking requests from players via Matrix (or any MS).
+ * Handles natural-language court booking requests from players via any messaging surface.
  * Maintains per-session conversation history automatically via Akka's Agent session mechanism.
  *
- * Session ID should be scoped per user per facility, e.g. "roomId:senderUserId",
- * so concurrent users don't share conversation state.
+ * Session ID is supplied by the caller (conversationId in OriginRequestContext), scoped
+ * per user per facility so concurrent users don't share conversation state.
  */
 @Component(id = "booking-agent")
 public class BookingAgent extends Agent {
 
-    private final BookingService bookingService;
+    private final BookingTools bookingTools;
 
-    public BookingAgent(BookingService bookingService) {
-        this.bookingService = bookingService;
+    public BookingAgent(BookingTools bookingTools) {
+        this.bookingTools = bookingTools;
     }
 
     private static final String SYSTEM_MESSAGE = """
@@ -35,21 +36,25 @@ public class BookingAgent extends Agent {
         ## How to behave
         - Always reply in the same language the member used.
         - Be concise and friendly. Members are on their phones.
-        - If a member asks to book but doesn't specify a time precisely, use checkAvailability
-          to find nearby free slots and ask them to confirm before booking.
+        - If a member asks to book and has already given a clear date/time and players,
+          call bookCourt directly. Do not ask them to choose a court unless they explicitly
+          say they care which court it is.
+        - Use checkAvailability when the member explicitly asks what is free, or when
+          the booking request is underspecified and you need nearby options to continue.
         - If the member expresses the date or time in natural language, first call resolveDateTime.
           This includes phrases like today, tomorrow, next Tuesday, oggi, domani, dopodomani,
           lunedi, martedi, mercoledi, giovedi, venerdi, sabato, domenica.
         - Never invent ISO dates yourself when the member used natural language. Use resolveDateTime first.
         - If the user message contains a [resolvedDateTime:...] prefix, treat that as the authoritative
           resolved local date/time for the member request and use it exactly.
-        - Always confirm the date, time, and players before calling bookCourt.
+        - Confirm missing or ambiguous date, time, or players before calling bookCourt.
         - For bookCourt, use the sender's display name for the person making the request.
           If a partner is mentioned by name (e.g. "with John"), use that name as-is.
         - If no courts are free at the requested time, suggest the nearest available slot.
         - When bookCourt is called, always pass the recipientId exactly as it appears in the [recipient:X] prefix of the message.
-        - When bookCourt succeeds, reply with a brief confirmation (1–2 sentences). The system also sends an automated notification to the user.
+        - When bookCourt returns, the booking is NOT yet confirmed — availability is checked asynchronously. Reply only with "Request submitted — you'll receive a notification shortly with the outcome." Do NOT say the court is booked or wish them a good game.
         - When cancelReservation succeeds, reply with a brief confirmation.
+        - NEVER cancel an existing reservation unless the member explicitly uses a word like "cancel", "delete", "remove", or equivalent in their language. If the member repeats a booking request for a time slot already booked in this session, treat it as a request for a SECOND court, not a replacement.
         - Date/times passed to tools must be in ISO-8601 format: YYYY-MM-DDTHH:MM:SS
         - Today is %s. Use this to resolve relative days like "Thursday" or "next Tuesday" to exact dates.
 
@@ -62,39 +67,46 @@ public class BookingAgent extends Agent {
         """;
 
     /**
-     * Single command handler: receives a user message in context (facilityId + sender + text).
-     * The LLM will use bookingService tools to check availability, book, or cancel.
+     * Single command handler: receives a user message in context (origin + raw text).
+     * The LLM will use bookingTools to check availability, book, or cancel.
      */
-    public Effect<String> chat(BookingRequest request) {
-        String tz = request.timezone() != null ? request.timezone() : "Europe/Berlin";
+    public Effect<String> chat(AgentRequest request) {
+        OriginRequestContext origin = request.origin();
+        String facilityId = origin.attributes().getOrDefault("facilityId", "");
+        String timezone = origin.attributes().getOrDefault("timezone", "Europe/Berlin");
+        String senderName = origin.senderDisplayName() != null && !origin.senderDisplayName().isBlank()
+            ? origin.senderDisplayName() : "Player";
+        String recipientId = origin.recipientId();
+
         String systemMsg = SYSTEM_MESSAGE.formatted(
-            java.time.LocalDate.now(java.time.ZoneId.of(tz))
+            java.time.LocalDate.now(java.time.ZoneId.of(BookingTools.safeZoneId(timezone).getId()))
                 .format(java.time.format.DateTimeFormatter.ofPattern("EEEE, MMMM d, yyyy", java.util.Locale.ENGLISH)));
+
         java.util.Optional<java.time.LocalDateTime> resolvedDateTime =
-            BookingService.resolveNaturalDateTime(
+            BookingTools.resolveNaturalDateTime(
                 request.message(),
-                BookingService.safeZoneId(tz),
-                java.time.ZonedDateTime.now(BookingService.safeZoneId(tz)));
+                BookingTools.safeZoneId(timezone),
+                java.time.ZonedDateTime.now(BookingTools.safeZoneId(timezone)));
 
         String resolvedPrefix = resolvedDateTime
-            .map(dateTime -> " [resolvedDateTime:" + dateTime.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]")
+            .map(dt -> " [resolvedDateTime:" + dt.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]")
             .orElse("");
 
         return effects()
             .systemMessage(systemMsg)
-            .tools(bookingService)
-            .userMessage("[facility:" + request.facilityId() + "] [recipient:" + request.recipientId() + "]" + resolvedPrefix + " "
-                + request.senderName() + ": " + request.message())
+            .tools(bookingTools)
+            .userMessage("[facility:" + facilityId + "] [recipient:" + recipientId + "]" + resolvedPrefix + " "
+                + senderName + ": " + request.message())
             .thenReply();
     }
 
+    /** Input record: the caller's resolved origin context plus the raw user message. */
+    public record AgentRequest(OriginRequestContext origin, String message) {}
+
     /**
-     * Incoming message from the messaging service.
-     *
-     * @param facilityId  Akka entity ID of the facility (maps to the MS room/channel)
-     * @param senderName  display name of the sender, for personalisation
-     * @param timezone    IANA timezone ID for the facility, e.g. "Europe/Berlin"
-     * @param message     raw natural-language text from the player
+     * Legacy record kept for backward compatibility with existing test callers.
+     * @deprecated Use AgentRequest with OriginRequestContext instead.
      */
+    @Deprecated
     public record BookingRequest(String facilityId, String senderName, String recipientId, String timezone, String message) {}
 }

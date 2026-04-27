@@ -9,8 +9,6 @@ import com.rezhub.reservation.resource.ResourceState;
 import com.rezhub.reservation.resource.dto.Resource;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
-
 import static org.junit.jupiter.api.Assertions.*;
 
 /**
@@ -23,9 +21,8 @@ public class ReservationIntegrationTest extends TestKitSupport {
     public void testCreateFacility() {
         String facilityId = "f_test-facility";
         Address address = new Address("Test Street 123", "Test City");
-        Facility facility = new Facility("Test Facility", address, Collections.emptySet(), "Europe/Berlin", null, null);
+        Facility facility = new Facility("Test Facility", address, "Europe/Berlin", null, null);
 
-        // Create the facility
         String result = componentClient
             .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
@@ -33,7 +30,6 @@ public class ReservationIntegrationTest extends TestKitSupport {
 
         assertEquals(facilityId, result);
 
-        // Verify the facility was created
         Facility state = componentClient
             .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::getFacility)
@@ -48,7 +44,6 @@ public class ReservationIntegrationTest extends TestKitSupport {
         String resourceId = "resource-test-1";
         Resource resource = new Resource(resourceId, "Tennis Court 1", null);
 
-        // Create the resource
         String result = componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::create)
@@ -56,7 +51,6 @@ public class ReservationIntegrationTest extends TestKitSupport {
 
         assertEquals(resourceId, result);
 
-        // Verify the resource was created
         ResourceState state = componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::getResource)
@@ -70,29 +64,24 @@ public class ReservationIntegrationTest extends TestKitSupport {
         String facilityId = "f_facility-with-resource";
         String resourceId = "resource-for-facility";
 
-        // Create the facility
         Address address = new Address("Main Street", "Berlin");
-        Facility facility = new Facility("Tennis Club", address, Collections.emptySet(), "Europe/Berlin", null, null);
+        Facility facility = new Facility("Tennis Club", address, "Europe/Berlin", null, null);
 
         componentClient
             .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
             .invoke(facility);
 
-        // Register a resource to the facility
-        String registeredId = componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::registerResource)
-            .invoke(resourceId);
+        componentClient
+            .forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::create)
+            .invoke(new Resource(resourceId, "Tennis Court 1", null));
 
-        assertEquals(resourceId, registeredId);
+        String result = componentClient
+            .forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setExternalRef)
+            .invoke(new ResourceEntity.SetExternalRef(resourceId, facilityId));
 
-        // Verify the resource is registered
-        Facility facilityState = componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::getFacility)
-            .invoke();
-
-        assertTrue(facilityState.resourceIds().contains(resourceId));
+        assertEquals("OK", result);
     }
 }

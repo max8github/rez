@@ -1,6 +1,5 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.customer.facility.FacilityAction;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationEvent;
 import com.rezhub.reservation.resource.ResourceEntity;
@@ -23,9 +22,19 @@ public class ReservationAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.Inited event) {
-        log.info("Broadcast starts to selection {}", event.selection());
-        FacilityAction.broadcast(componentClient, event.reservationId(),
-          event.reservation(), event.selection());
+        log.info("Fanning out checkAvailability for reservation {} to {} resources",
+            event.reservationId(), event.resourceIds().size());
+        event.resourceIds().forEach(resourceId -> {
+            var command = new ResourceEntity.CheckAvailability(event.reservationId(), event.reservation());
+            componentClient.forEventSourcedEntity(resourceId)
+                .method(ResourceEntity::checkAvailability)
+                .invokeAsync(command)
+                .whenComplete((result, error) -> {
+                    if (error != null) {
+                        log.error("Error checking availability for resource {}: {}", resourceId, error.getMessage());
+                    }
+                });
+        });
         return effects().done();
     }
 
@@ -39,22 +48,14 @@ public class ReservationAction extends Consumer {
         return effects().done();
     }
 
-    public Effect on(ReservationEvent.RejectedWithNext event) {
-        var reservationId = event.reservationId();
-        var resourceId = event.resourceId();
-        var nextResourceId = event.nextResourceId();
-        log.info("Reservation {} had a candidate ({}), but that got subsequently rejected. Now to try: {}.",
-          reservationId, resourceId, nextResourceId);
-        var command = new ReservationEntity.ReplyAvailability(reservationId, event.nextResourceId(), true);
-        componentClient.forEventSourcedEntity(reservationId)
-            .method(ReservationEntity::replyAvailability)
-            .invoke(command);
-        return effects().done();
-    }
-
     public Effect on(ReservationEvent.CancelRequested event) {
-        log.info("Cancel reservation {} in resource {}", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();
+        if (resourceId == null || resourceId.isEmpty()) {
+            // Cancelled while still in COLLECTING — no resource was ever locked, nothing to undo.
+            log.info("Cancel reservation {} — no resource was locked, skipping resource un-lock", event.reservationId());
+            return effects().done();
+        }
+        log.info("Cancel reservation {} in resource {}", event.reservationId(), resourceId);
         var command = new ResourceEntity.CancelReservation(event.reservationId(), event.dateTime());
         componentClient.forEventSourcedEntity(resourceId)
             .method(ResourceEntity::cancel)

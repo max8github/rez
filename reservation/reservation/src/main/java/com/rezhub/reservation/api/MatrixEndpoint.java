@@ -5,8 +5,11 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.agent.BookingAgent;
+import com.rezhub.reservation.orchestration.OriginRequestContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+
+import java.util.Map;
 
 /**
  * HTTP endpoint called by the Matrix bot (bot.py) running on lurch/synapse.
@@ -45,11 +48,20 @@ public class MatrixEndpoint {
         // Session per user per facility — keeps conversations isolated between players
         String sessionId = sanitize(msg.facility_id() + ":" + msg.sender());
 
+        OriginRequestContext origin = new OriginRequestContext(
+            "matrix",
+            msg.sender(),
+            msg.sender_name(),
+            msg.facility_id(),
+            sessionId,
+            Map.of("facilityId", msg.facility_id())
+        );
+
         String reply = componentClient
             .forAgent()
             .inSession(sessionId)
             .method(BookingAgent::chat)
-            .invoke(new BookingAgent.BookingRequest(msg.facility_id(), msg.sender_name(), msg.sender(), null, msg.message()));
+            .invoke(new BookingAgent.AgentRequest(origin, msg.message()));
 
         return new Reply(reply);
     }

@@ -3,7 +3,9 @@ package com.rezhub.reservation.resource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.DayOfWeek;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.time.Period;
 import java.util.*;
 
@@ -14,26 +16,27 @@ import java.util.*;
  *     <li>a name (identifying that resource within the facility)</li>
  *     <li>a maximum future bookable time, setting the bookable time period</li>
  *     <li>an association of time -> reservation id</li>
+ *     <li>an optional weekly schedule restricting which hours are bookable</li>
+ *     <li>a resourceType tag (e.g. "court", "player") for filtering</li>
+ *     <li>an optional externalRef pointing to the canonical record in another bounded context</li>
+ *     <li>an optional externalGroupRef for group/container reverse-lookup (e.g. facility in external service)</li>
  * </ul>
- * The operations are:
- * <ul>
- *     <li>inquire if a time is reservable</li>
- *     <li>reserve a time</li>
- *     <li>cancel a reservation</li>
- * </ul>
- * When inquiring, a peek on the key, the iso date-time, needs to be checked.
- * When reserving, validation is performed first and then the datetime/reservation entry is inserted.
- * <br>
- * The validation when reserving is about time period and key.
- * The datetime needs to be set correct depending on policy. For example, if a reservation's datetime is
- * 2023-09-28T08:07, and only full hours are bookable, then the key 2023-09-28T08:07 needs to be automatically corrected
- * and transformed to 2023-09-28T08:00.
- * The datetime needs to be also within the timeframe allowed for reservations.
  */
-public record ResourceState(String name, String calendarId, Map<LocalDateTime, String> timeWindow, Period period) {
+public record ResourceState(
+    String name,
+    String calendarId,
+    Map<LocalDateTime, String> timeWindow,
+    Period period,
+    Map<DayOfWeek, Set<LocalTime>> weeklySchedule,
+    String resourceType,
+    String externalRef,
+    String externalGroupRef
+) {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
+
     public static ResourceState initialize(String name, String calendarId) {
-        return new ResourceState(name, calendarId, new TreeMap<>(), Period.ofMonths(3));
+        return new ResourceState(name, calendarId, new TreeMap<>(), Period.ofMonths(3),
+            new HashMap<>(), "", "", "");
     }
 
     public ResourceState set(LocalDateTime dateTime, String reservationId) {
@@ -50,12 +53,29 @@ public record ResourceState(String name, String calendarId, Map<LocalDateTime, S
     }
 
     public boolean isReservableAt(LocalDateTime dateTime) {
+        if (!weeklySchedule.isEmpty()) {
+            Set<LocalTime> hours = weeklySchedule.get(dateTime.getDayOfWeek());
+            if (hours == null || !hours.contains(dateTime.toLocalTime())) return false;
+        }
         return isWithinBounds(dateTime) && !timeWindow.containsKey(dateTime);
     }
 
     public ResourceState cancel(LocalDateTime dateTime, String reservationId) {
-        if(timeWindow.containsKey(dateTime) && timeWindow.get(dateTime).equals(reservationId)) timeWindow.remove(dateTime);
+        if (timeWindow.containsKey(dateTime) && timeWindow.get(dateTime).equals(reservationId))
+            timeWindow.remove(dateTime);
         return this;
+    }
+
+    public ResourceState withWeeklySchedule(Map<DayOfWeek, Set<LocalTime>> schedule) {
+        return new ResourceState(name, calendarId, timeWindow, period, schedule, resourceType, externalRef, externalGroupRef);
+    }
+
+    public ResourceState withResourceType(String type) {
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, type, externalRef, externalGroupRef);
+    }
+
+    public ResourceState withExternalRef(String ref, String groupRef) {
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, resourceType, ref, groupRef);
     }
 
     @Override
@@ -63,8 +83,9 @@ public record ResourceState(String name, String calendarId, Map<LocalDateTime, S
         return "ResourceState{" +
                 "name='" + name + '\'' +
                 ", calendarId='" + calendarId + '\'' +
+                ", resourceType='" + resourceType + '\'' +
+                ", externalRef='" + externalRef + '\'' +
                 ", timeWindow=" + timeWindow +
-                ", period=" + period +
                 '}';
     }
 

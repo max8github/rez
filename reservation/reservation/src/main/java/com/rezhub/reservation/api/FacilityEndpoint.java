@@ -20,12 +20,13 @@ import java.util.UUID;
  *
  * IDs are generated internally — callers never supply entity IDs.
  *
- * Provisioning a facility with its courts:
- *   POST /facility                                    { "name": "Padel Club", "address": {...}, "timezone": "Europe/Berlin", "botToken": "..." }
+ * Provisioning a facility:
+ *   POST /facility   { "name": "Padel Club", "address": {...}, "timezone": "Europe/Berlin", "botToken": "..." }
  *   → returns generated facilityId, e.g. "abc123"
  *
- *   POST /facility/abc123/resource                   { "name": "Court 1", "calendarId": "xxx@group.calendar.google.com" }
- *   POST /facility/abc123/resource                   { "name": "Court 2", "calendarId": "yyy@group.calendar.google.com" }
+ * Provisioning courts (two steps per court via ResourceEndpoint):
+ *   POST /resource/{courtId}             { "resourceName": "Court 1", "calendarId": "..." }
+ *   PUT  /resource/{courtId}/external-ref { "externalRef": "{courtId}", "externalGroupRef": "{facilityId}" }
  */
 @HttpEndpoint("/facility")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -80,40 +81,7 @@ public class FacilityEndpoint {
             .invoke();
     }
 
-    /**
-     * Create a resource (court) and register it with the facility in one step.
-     * The resource ID is generated internally and returned to the caller.
-     */
-    @Post("/{facilityId}/resource")
-    public String createAndRegisterResource(String facilityId, CreateResourceRequest request) {
-        String resourceId = UUID.randomUUID().toString().replace("-", "");
-        var command = new FacilityEntity.CreateAndRegisterResource(request.name(), resourceId, request.calendarId());
-        componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::requestResourceCreateAndRegister)
-            .invoke(command);
-        return resourceId;
-    }
-
-    /** Register an already-existing resource with a facility. */
-    @Post("/{facilityId}/resources/{resourceId}")
-    public String registerResource(String facilityId, String resourceId) {
-        return componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::registerResource)
-            .invoke(resourceId);
-    }
-
-    @Delete("/{facilityId}/resources/{resourceId}")
-    public String unregisterResource(String facilityId, String resourceId) {
-        return componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::unregisterResource)
-            .invoke(resourceId);
-    }
-
     public record RenameRequest(String name) {}
-    public record CreateResourceRequest(String name, String calendarId) {}
 
     private void validateUniqueBotToken(String botToken) {
         if (botToken == null || botToken.isBlank()) {
@@ -130,5 +98,4 @@ public class FacilityEndpoint {
                 "Bot token is already assigned to facility " + matches.get(0).facilityId());
         }
     }
-
 }

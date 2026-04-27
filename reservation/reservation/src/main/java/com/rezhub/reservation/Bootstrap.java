@@ -5,9 +5,12 @@ import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
-import akka.javasdk.timer.TimerScheduler;
-import com.rezhub.reservation.agent.BookingService;
-import com.rezhub.reservation.spi.CalendarSender;
+import com.rezhub.reservation.agent.BookingTools;
+import com.rezhub.reservation.orchestration.BookingApplicationServiceImpl;
+import com.rezhub.reservation.orchestration.BookingContextResolverAkka;
+import com.rezhub.reservation.orchestration.CourtBookingWorkflow;
+import com.rezhub.reservation.orchestration.CourtDirectoryAkka;
+import com.rezhub.reservation.orchestration.ReservationGatewayAkka;
 import com.rezhub.reservation.spi.NotificationSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -21,11 +24,9 @@ public class Bootstrap implements ServiceSetup {
     private static final Logger logger = LoggerFactory.getLogger(Bootstrap.class);
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public Bootstrap(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public Bootstrap(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
     }
 
     @Override
@@ -40,7 +41,6 @@ public class Bootstrap implements ServiceSetup {
         logger.info("*****************************************************");
         logger.info("");
 
-        // DIAG: confirm license key is present in env (akka.license-key picks it up via HOCON substitution)
         String licenseKey = System.getenv("AKKA_LICENSE_KEY");
         if (licenseKey == null || licenseKey.isBlank()) {
             logger.warn("DIAG: AKKA_LICENSE_KEY is not set");
@@ -54,14 +54,18 @@ public class Bootstrap implements ServiceSetup {
 
     @Override
     public DependencyProvider createDependencyProvider() {
-        var bookingService = new BookingService(componentClient, timerScheduler);
+        var reservationGateway = new ReservationGatewayAkka(componentClient);
+        var courtDirectory = new CourtDirectoryAkka(componentClient);
+        var contextResolver = new BookingContextResolverAkka(componentClient);
+        var courtWorkflow = new CourtBookingWorkflow(courtDirectory, reservationGateway, componentClient);
+        var bookingService = new BookingApplicationServiceImpl(contextResolver, courtWorkflow);
+        var bookingTools = new BookingTools(bookingService, reservationGateway, componentClient);
+
         return new DependencyProvider() {
             @Override
             public <T> T getDependency(Class<T> clazz) {
-                if (clazz == BookingService.class) {
-                    return clazz.cast(bookingService);
-                } else if (clazz == CalendarSender.class) {
-                    return clazz.cast(ServiceLoader.load(CalendarSender.class).iterator().next());
+                if (clazz == BookingTools.class) {
+                    return clazz.cast(bookingTools);
                 } else if (clazz == NotificationSender.class) {
                     return clazz.cast(ServiceLoader.load(NotificationSender.class).iterator().next());
                 }

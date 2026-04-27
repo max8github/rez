@@ -1,7 +1,6 @@
 package com.rezhub.reservation.reservation;
 
 import com.rezhub.reservation.dto.Reservation;
-import com.rezhub.reservation.dto.SelectionItem;
 import akka.javasdk.annotations.TypeName;
 
 import java.time.LocalDateTime;
@@ -10,7 +9,7 @@ import java.util.Set;
 public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record Inited(String reservationId, Reservation reservation,
-                  Set<SelectionItem> selection, String recipientId) implements ReservationEvent {}
+                  Set<String> resourceIds, String recipientId) implements ReservationEvent {}
     @TypeName("reservation-cancelled")
     record ReservationCancelled(String reservationId, Reservation reservation, String resourceId,
                                 Set<String> resourceIds, String recipientId) implements ReservationEvent {}
@@ -21,8 +20,6 @@ public sealed interface ReservationEvent {
     record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds,
                            String recipientId) implements ReservationEvent {}
 
-    @TypeName("rejectedWithNext")
-    record RejectedWithNext(String reservationId, String resourceId, String nextResourceId) implements ReservationEvent {}
     @TypeName("rejected")
     record Rejected(String reservationId, String resourceId) implements ReservationEvent {}
 

@@ -7,16 +7,24 @@ For cloud deployment steps see [docs/deployment.md](deployment.md).
 Start local (stub calendar + notifier, no external API calls):
 
 ```shell
+export REZ_PORT=9001
 cd /Users/max/code/rez/reservation/reservation
 mvn compile exec:java -Plocal
 ```
 
-## Provision facility and courts
-
-Create facility — returns a bare UUID (the `f_` prefix is added internally):
+Set the local base URL once for all commands below:
 
 ```shell
-FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
+PORT="${REZ_PORT:-9001}"
+BASE_URL="http://localhost:$PORT"
+```
+
+## Provision facility and courts
+
+Create facility — returns a bare UUID:
+
+```shell
+FACILITY_ID=$(curl -s -X POST "$BASE_URL/facility" \
   -H "Content-Type: application/json" \
   -d '{
     "name": "Test Club",
@@ -28,24 +36,48 @@ FACILITY_ID=$(curl -s -X POST http://localhost:9000/facility \
 echo "Facility ID: $FACILITY_ID"
 ```
 
-Create courts — each returns a bare UUID for the resource:
+Create courts in two steps — create the resource, then attach it to the facility via `external-ref`:
 
 ```shell
-COURT1=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
+COURT1="court-1"
+curl -s -X POST "$BASE_URL/resource/$COURT1" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Court 1", "calendarId": "local-cal-1@group.calendar.google.com"}')
+  -d '{
+    "resourceId": "court-1",
+    "resourceName": "Court 1",
+    "calendarId": "local-cal-1@group.calendar.google.com"
+  }'
+curl -s -X PUT "$BASE_URL/resource/$COURT1/external-ref" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"externalRef\": \"$COURT1\",
+    \"externalGroupRef\": \"$FACILITY_ID\"
+  }"
 echo "Court 1 ID: $COURT1"
 
-COURT2=$(curl -s -X POST http://localhost:9000/facility/$FACILITY_ID/resource \
+COURT2="court-2"
+curl -s -X POST "$BASE_URL/resource/$COURT2" \
   -H "Content-Type: application/json" \
-  -d '{"name": "Court 2", "calendarId": "local-cal-2@group.calendar.google.com"}')
+  -d '{
+    "resourceId": "court-2",
+    "resourceName": "Court 2",
+    "calendarId": "local-cal-2@group.calendar.google.com"
+  }'
+curl -s -X PUT "$BASE_URL/resource/$COURT2/external-ref" \
+  -H "Content-Type: application/json" \
+  -d "{
+    \"externalRef\": \"$COURT2\",
+    \"externalGroupRef\": \"$FACILITY_ID\"
+  }"
 echo "Court 2 ID: $COURT2"
 ```
 
-Verify facility state:
+Verify facility and resource state:
 
 ```shell
-curl -s http://localhost:9000/facility/$FACILITY_ID
+curl -s "$BASE_URL/facility/$FACILITY_ID"
+curl -s "$BASE_URL/resource/$COURT1"
+curl -s "$BASE_URL/resource/$COURT2"
 ```
 
 ## Book with Telegram
@@ -53,7 +85,7 @@ curl -s http://localhost:9000/facility/$FACILITY_ID
 The bot token in the path must match what was stored on the facility:
 
 ```shell
-curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
+curl -s -X POST "$BASE_URL/telegram/bot:local-test/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -68,7 +100,7 @@ curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
 Wrong/unknown bot token (should log a warning and return 200 with no action):
 
 ```shell
-curl -s -X POST "http://localhost:9000/telegram/bot:unknown/webhook" \
+curl -s -X POST "$BASE_URL/telegram/bot:unknown/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -83,16 +115,17 @@ curl -s -X POST "http://localhost:9000/telegram/bot:unknown/webhook" \
 ## Book with Matrix (still uses facilityId directly)
 
 ```shell
-curl -s -X POST http://localhost:9000/matrix/message \
+curl -s -X POST "$BASE_URL/matrix/message" \
   -H "Content-Type: application/json" \
   -d "{\"facility_id\":\"$FACILITY_ID\",\"sender\":\"@max:local\",\"sender_name\":\"Max\",\"message\":\"Book a court tomorrow at 10am for Max and Anna\"}"
 ```
-The above will produce, say, reservation `7bcdf6d0`.
 
 ### Cancel the reservation
 
 ```shell
-curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
+curl -s "$BASE_URL/reservation-lookup/recipient/bot:local-test:123456/latest"
+
+curl -s -X POST "$BASE_URL/telegram/bot:local-test/webhook" \
   -H "Content-Type: application/json" \
   -d '{
     "message": {
@@ -107,9 +140,7 @@ curl -s -X POST "http://localhost:9000/telegram/bot:local-test/webhook" \
 ## Check bookings
 
 ```shell
-# All reservations for the facility
-curl -s http://localhost:9000/facility/$FACILITY_ID/reservations
-
-# Resource view (calendarId should be present)
-curl -s http://localhost:9000/resource/$COURT1
+curl -s "$BASE_URL/bookings/7bcdf6d0"
+curl -s "$BASE_URL/reservation-lookup/recipient/bot:local-test:123456/latest"
+curl -s "$BASE_URL/resource/$COURT1"
 ```

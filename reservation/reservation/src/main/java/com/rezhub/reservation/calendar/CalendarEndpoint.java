@@ -7,6 +7,8 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.AbstractHttpEndpoint;
 import akka.javasdk.http.HttpResponses;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
 
@@ -19,6 +21,9 @@ import java.util.stream.Collectors;
 @HttpEndpoint
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 public class CalendarEndpoint extends AbstractHttpEndpoint {
+    private static final String DEFAULT_THEME = "default";
+    private static final String ETC_EDINGEN_THEME = "etc-edingen";
+    private static final String ETC_EDINGEN_NAME = "Erster Tennisclub Edingen-Neckarhausen";
 
     private final ComponentClient componentClient;
 
@@ -58,6 +63,42 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         }
     }
 
+    @Get("/api/calendar/resources")
+    public Object calendarResources() {
+        try {
+            String facilityId = requiredQueryParam("facilityId");
+
+            ResourceView.Resources resources = componentClient.forView()
+                .method(ResourceView::getResource)
+                .invoke(facilityId);
+
+            return resources.resources().stream()
+                .sorted(java.util.Comparator.comparing(ResourceV::resourceName))
+                .map(resource -> new CalendarResource(resource.resourceId(), resource.resourceName()))
+                .toList();
+        } catch (IllegalArgumentException e) {
+            return HttpResponses.badRequest(e.getMessage());
+        }
+    }
+
+    @Get("/api/calendar/theme")
+    public Object calendarTheme() {
+        try {
+            String facilityId = requiredQueryParam("facilityId");
+
+            Facility facility = componentClient
+                .forEventSourcedEntity(facilityId)
+                .method(FacilityEntity::getFacility)
+                .invoke();
+
+            return new CalendarTheme(isEtcEdingen(facility) ? ETC_EDINGEN_THEME : DEFAULT_THEME);
+        } catch (IllegalArgumentException e) {
+            return HttpResponses.badRequest(e.getMessage());
+        } catch (Exception e) {
+            return new CalendarTheme(DEFAULT_THEME);
+        }
+    }
+
     private CalendarEvent toApi(ReservationCalendarView.ReservationEntry entry, ResourceV resource) {
         return new CalendarEvent(
             entry.reservationId(),
@@ -85,6 +126,12 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         }
     }
 
+    private boolean isEtcEdingen(Facility facility) {
+        return facility != null
+            && facility.name() != null
+            && ETC_EDINGEN_NAME.equalsIgnoreCase(facility.name().trim());
+    }
+
     public record CalendarEvent(
         String id,
         String resourceId,
@@ -92,5 +139,14 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         String title,
         String start,
         String end
+    ) {}
+
+    public record CalendarResource(
+        String resourceId,
+        String resourceName
+    ) {}
+
+    public record CalendarTheme(
+        String theme
     ) {}
 }

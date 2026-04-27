@@ -2,8 +2,9 @@
 
 Rez lets tennis club members book courts by sending a natural language message
 via Telegram. An AI agent interprets the request, checks availability, books the
-court, and replies conversationally. Confirmed bookings appear in Google Calendar,
-and Rez also serves a read-only calendar view derived from reservation events.
+court, and replies with a confirmation.
+
+Rez also serves a read-only calendar view derived from reservation events.
 
 ## Architecture
 
@@ -12,38 +13,37 @@ Member (Telegram)
   │  natural language message
   ▼
 TelegramEndpoint   POST /telegram/{botToken}/webhook
-  │
+  │  builds OriginRequestContext
   ▼
 BookingAgent       (Akka Agent, GPT-4o-mini)
   │  tool calls
   ▼
-BookingService
-  │  ComponentClient calls
-  ├──▶ ResourceView       – check availability
-  ├──▶ ReservationEntity  – initiate booking
-  └──▶ FacilityEntity     – broadcast to courts
+BookingTools
+  │
+  ▼
+BookingApplicationServiceImpl
+  │  resolves BookingContext, selects workflow
+  ▼
+CourtBookingWorkflow
+  ├──▶ BookingContextResolverAkka  – botToken → facilityId + timezone
+  ├──▶ CourtDirectoryAkka          – facilityId → candidate resourceIds
+  └──▶ ReservationGatewayAkka      – submit / cancel / get
             │
             ▼
-         ResourceEntity (court-1, court-2, …)
-            │  FULFILLED event
-            ▼
-         ReservationCalendarView
+        ReservationEntity
             │
-            ▼
-         CalendarEndpoint   GET /calendar
+            ├──▶ ReservationAction
+            │      └── fan-out checkAvailability / reserve → ResourceEntity
             │
-            ▼
-         Rez Calendar UI
+            ├──▶ ReservationOutcomeProducer
+            │      └── emits reservation-outcomes service stream
             │
-            └──▶ read-only, state-derived schedule
-         
-         ResourceEntity (court-1, court-2, …)
-            │  FULFILLED event
-            ▼
-         DelegatingServiceAction
-            │
-            ▼
-         GoogleCalendar (Google Calendar API)
+            └──▶ DelegatingServiceAction
+                   └── Telegram notification + optional Rez calendar link
+
+ResourceEntity
+  └──▶ ResourceView / ResourcesByFacilityView / ReservationCalendarView
+                           └──▶ CalendarEndpoint  GET /calendar
 ```
 
 The bot token in the webhook path is used to look up the facility via
@@ -55,35 +55,30 @@ different bots, no `FACILITY_ID` env var needed.
 - **Runtime**: [Akka SDK](https://akka.io) 3.x (Java), event-sourced entities,
   views, consumers, agents
 - **LLM**: OpenAI GPT-4o-mini (switchable via `application.conf`)
-- **Persistence**: PostgreSQL via R2DBC (standalone) or managed (Akka Cloud)
-- **Messaging**: Telegram (production), Matrix/Twist (partial)
-- **Calendar**: Rez read-only calendar view plus Google Calendar API side-effects
+- **Persistence**: managed PostgreSQL (Akka Cloud)
+- **Messaging**: Telegram
 
 ## Modules
 
 | Module | Purpose |
 |---|---|
-| `reservation` | Main application — entities, views, endpoints, agent |
+| `reservation` | Main application — entities, views, endpoints, orchestration, agent |
 | `spi` | `CalendarSender` and `NotificationSender` interfaces |
-| `googlecalendar` | Google Calendar implementation of `CalendarSender` |
 | `telegramnotifier` | Telegram implementation of `NotificationSender` |
-| `twistnotifier` | Twist implementation of `NotificationSender` |
-| `calendarstub` | No-op stub for local dev |
 | `notifierstub` | No-op stub for local dev |
 
 ## Deployment
 
-Rez runs self-managed on lurch (home server, `https://maxdc.duckdns.org`),
-deployed as a Docker service on Proxmox LXC CT 115 with a PostgreSQL sidecar.
+Rez runs on **Akka Cloud** (`max8github/rez` on Docker Hub, project `rez-prod`).
 
-Akka Cloud (`max8github/rez` on Docker Hub) is the fallback — see
-[docs/deployment.md](docs/deployment.md).
+A standalone self-managed deployment on lurch (Proxmox LXC CT 115) exists as fallback —
+see [docs/deployment.md](docs/deployment.md) for both options.
 
 ## Quick start (local dev)
 
 ```shell
 cd reservation/reservation
-mvn compile exec:java -Plocal   # stub calendar + notifier, no external calls
+mvn compile exec:java -Plocal   # stub notifier, no external calls
 ```
 
 See [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md) for copy-paste
@@ -92,21 +87,22 @@ curl commands to provision a facility and send test bookings.
 Rez also exposes a read-only calendar UI at:
 
 ```text
-http://localhost:9000/calendar?facilityId=<FACILITY_ID>
+http://localhost:9001/calendar?facilityId=<FACILITY_ID>
 ```
 
 ## Provisioning
 
-State is persistent (PostgreSQL). Facilities and courts are provisioned once via
+State is persistent (managed PostgreSQL). Facilities and courts are provisioned once via
 the HTTP API and survive restarts. See [docs/provisioning.md](docs/provisioning.md).
 
 ## Docs
 
 | File | Contents |
 |---|---|
-| [docs/deployment.md](docs/deployment.md) | Build, push, deploy — standalone and cloud; current status |
+| [docs/deployment.md](docs/deployment.md) | Build, push, deploy — Akka Cloud and standalone fallback |
 | [docs/provisioning.md](docs/provisioning.md) | How to onboard a new club |
+| [docs/facility-provisioning-runbook.md](docs/facility-provisioning-runbook.md) | Step-by-step facility onboarding |
 | [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md) | Local dev copy-paste commands |
 | [docs/user-onboarding.md](docs/user-onboarding.md) | End-user booking guide |
-| [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) | Development plan: current blocker, backlog, completed work |
-| [reservation/reservation/README.md](reservation/reservation/README.md) | Module-level build and run reference |
+| [docs/booking-orchestration-architecture.md](docs/booking-orchestration-architecture.md) | Orchestration design |
+| [docs/rez-architecture-handoff.md](docs/rez-architecture-handoff.md) | Current-state architecture handoff |

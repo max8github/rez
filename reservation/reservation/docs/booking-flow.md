@@ -1,157 +1,138 @@
 # Booking Flow
 
-End-to-end walk-through of what happens when a player sends a message to the Telegram bot.
+This document describes the target booking flow for the post-rearchitecture reservation engine.
 
----
+It intentionally describes the timer-free design: the reservation engine receives the full candidate `resourceId` set at initialization time, so normal booking completion is driven by candidate exhaustion rather than by timeout.
 
-## ReservationEntity State Machine
+## State Machine Summary
 
-See [fsm.md](fsm.md) for the full state diagram. Summary:
+See [fsm.md](fsm.md) for the detailed state machine.
 
 ```mermaid
 stateDiagram-v2
     direction LR
     [*] --> INIT
-    INIT --> COLLECTING : Initiated
-    COLLECTING --> COLLECTING : (no)
-    COLLECTING --> SELECTING : (yes)
-    COLLECTING --> UNAVAILABLE : Rejected
-    SELECTING --> SELECTING : (yes/no)
-    SELECTING --> FULFILLED : Accepted
-    SELECTING --> COLLECTING : Rejected
-    FULFILLED --> CANCELLED
+    INIT --> SEARCHING : init(reservation, resourceIds)
+    SEARCHING --> RESERVING : choose available candidate
+    RESERVING --> FULFILLED : ReservationAccepted
+    RESERVING --> SEARCHING : ReservationRejected and work remains
+    SEARCHING --> UNAVAILABLE : known candidates exhausted
+    FULFILLED --> CANCELLED : cancellation confirmed
 ```
 
----
+## End-to-End Flow
 
-## Step-by-step Flow
+### 1. Caller creates a reservation request
 
-### 1. TelegramEndpoint receives the webhook
+A caller such as `BookingService` or `BookingEndpoint` sends:
 
-`POST /telegram/{botToken}/webhook` — Telegram calls this for every incoming message.
+- reservation payload
+- full set of candidate `resourceId`s
+- recipient / notification metadata
 
-- Looks up the facility by bot token via `FacilityByBotTokenView`.
-  - If no facility is found (view empty / not yet populated), the request is dropped with a WARN log and **nothing further happens**.
-- Builds a `sessionId = facilityId:chatId` (sanitised) to scope the conversation per user per facility.
-- Calls `BookingAgent::chat` **asynchronously** (`invokeAsync`) and immediately returns HTTP 200 to Telegram.
-- When the agent replies, sends the reply text back to the player via `NotificationSender`.
+The reservation engine must know the complete candidate set at the start.
 
-### 2. BookingAgent handles the message
+### 2. `ReservationEntity::init` enters `SEARCHING`
 
-`BookingAgent` is a stateful Akka Agent. The session preserves conversation history automatically.
+Initialization persists the reservation details together with the full candidate set.
 
-- Constructs the system prompt with the current date (in the facility's timezone).
-- Formats the user message as: `[facility:X] [recipient:Y] SenderName: <text>`
-- Calls the LLM. The LLM may invoke `BookingService` tools (0 or more times) before generating a reply.
+The reservation should initialize bookkeeping like this:
 
-### 3. LLM tool calls — BookingService
+- `pendingAvailability = candidateResourceIds`
+- `availableCandidates = {}`
+- `triedOrRejected = {}`
+- `selectedResourceId = empty`
 
-The LLM uses two tools during a booking:
+### 3. `ReservationAction` fans out availability checks
 
-**`checkAvailability(facilityId, dateTimeIso)`**
-- Queries `ResourceView` for all courts belonging to the facility.
-- For each court, checks whether the requested time slot already exists in its `timeWindow`.
-- Returns a human-readable list of free courts, or suggests nearby alternatives if all are taken.
+For every candidate resource, Rez sends `ResourceEntity.CheckAvailability`.
 
-**`bookCourt(facilityId, dateTimeIso, playerNames, recipientId)`**
-- Generates a random 8-char `reservationId`.
-- Registers a **14-second expiry timer** via `TimerScheduler` (fires `TimerAction::expire` if booking is not fulfilled in time).
-- Calls `ReservationEntity::init` with the reservation data, the facility as the selection target, and the `recipientId` for later notification.
-- Returns a confirmation string to the LLM (not sent to the player directly — the final LLM reply handles that).
+This step is only a filter. It does not lock anything.
 
-### 4. ReservationEntity::init
+### 4. Each `ResourceEntity` checks availability locally
 
-- Guards: rejects if already in any non-INIT state.
-- Persists `Inited` event containing: reservation (players + dateTime), selection (facility ID), recipientId.
-- State: `INIT → COLLECTING`
-- Returns `ReservationId` to the caller.
+Each resource:
 
-### 5. ReservationAction consumer reacts to Inited
+- rounds the requested booking time to the valid slot boundary
+- evaluates `isReservableAt(validTime)` against its own `timeWindow` and booking policy
+- emits an availability result
 
-`@Consume.FromEventSourcedEntity(ReservationEntity)` — runs as a projection.
+A positive availability reply is advisory. Another reservation may still lock the slot first.
 
-- Calls `FacilityAction.broadcast()` which fans out an availability check to **every resource** registered on the facility.
-- Each `ResourceEntity` checks its own time window for the requested slot and emits `AvalabilityChecked(available=true/false)`.
+### 5. `ReservationEntity` accounts for each availability reply
 
-### 6. ResourceAction consumer reacts to AvalabilityChecked
+Each reply removes that resource from `pendingAvailability`.
 
-- Calls `ReservationEntity::replyAvailability` with the resource's answer.
-- Inside `ReservationEntity`:
-  - First `true` reply → persists `ResourceSelected`, state: `COLLECTING → SELECTING`
-  - `false` replies → recorded via `AvailabilityReplied(false)`, entity stays in `COLLECTING`
+If the reply is negative:
 
-### 7. ReservationAction consumer reacts to ResourceSelected
+- add the resource to `triedOrRejected`
+- if nothing is pending, nothing is available, and no reserve is in flight, mark the reservation `UNAVAILABLE`
 
-- Calls `ResourceEntity::reserve` on the winning resource to actually lock the slot.
+If the reply is positive:
 
-### 8. ResourceEntity processes the reserve command
+- add the resource to `availableCandidates`
+- if no reserve is currently in flight, choose one candidate and move to `RESERVING`
 
-- If the slot is still free: persists `ReservationAccepted`, locks the time slot in its state.
-- If the slot was grabbed concurrently: persists `ReservationRejected`.
+### 6. `ReservationAction` asks one resource to reserve
 
-### 9a. ResourceAction consumer reacts to ReservationAccepted
+When the reservation chooses a candidate, Rez sends `ResourceEntity.Reserve` to exactly one selected resource.
 
-- Calls `ReservationEntity::fulfill`.
-- State: `SELECTING → FULFILLED`
-- Cancels the expiry timer.
+This is the real lock attempt.
 
-### 9b. ResourceAction consumer reacts to ReservationRejected
+### 7. `ResourceEntity.reserve()` is the lock point
 
-- Calls `ReservationEntity::reject`.
-- If other available resources remain → `RejectedWithNext` event, state back to `COLLECTING`, retries with the next resource.
-- If no resources remain → `Rejected` event, state: `SELECTING → COLLECTING` (awaits timeout).
+`reserve()` re-checks the slot against current resource state.
 
-### 10. DelegatingServiceAction consumer reacts to Fulfilled
+- if the slot is still free, the resource persists `ReservationAccepted` and writes the lock into `timeWindow`
+- otherwise it persists `ReservationRejected`
 
-- Looks up the resource name and calendar ID from `ResourceView`.
-- Calls `CalendarSender.saveToGoogle()` to create a Google Calendar event.
-- On success, calls `NotificationSender.send(recipientId, text)` with a confirmation message:
-  ```
-  ✅ Court booked!
-  🎾 <court name>
-  📅 <date/time>
-  👥 <players>
-  🆔 ID: <reservationId>
-  <link to club calendar>
-  ```
+That second check is what makes the slot-level algorithm safe under races.
 
-### Timeout path — TimerAction fires
+### 8. `ResourceAction` forwards the reserve result back to the reservation
 
-If the 14-second timer expires before `FULFILLED`:
+If the selected resource accepts:
 
-- `TimerAction::expire` → `ReservationEntity::expire`
-- Persists `SearchExhausted`, state → `UNAVAILABLE`
-- `DelegatingServiceAction` reacts to `SearchExhausted` and calls `NotificationSender.send()`:
-  ```
-  Sorry, no court was available for <dateTime>. Please try a different time.
-  ```
+- `ReservationEntity` persists `Fulfilled`
+- the reservation moves to `FULFILLED`
+- notification/calendar side effects happen afterward
 
-### Cancellation path
+If the selected resource rejects:
 
-- Player asks the agent to cancel → LLM calls `BookingService.cancelReservation(reservationId)`
-- `ReservationEntity::cancelRequest` → persists `CancelRequested`, state: `FULFILLED → FULFILLED` (still fulfilled, waiting for resource ack)
-- `ReservationAction` consumer reacts to `CancelRequested` → calls `ResourceEntity::cancel`
-- `ResourceAction` consumer reacts to `ReservationCanceled` (from ResourceEntity) → calls `ReservationEntity::cancel`
-- `ReservationEntity::cancel` → persists `ReservationCancelled`, state: `FULFILLED → CANCELLED`
-- `DelegatingServiceAction` reacts to `ReservationCancelled`:
-  - Deletes the Google Calendar event.
-  - Sends `"Reservation <id> has been cancelled."` via `NotificationSender`.
+- mark that resource as tried
+- clear `selectedResourceId`
+- if another available candidate already exists, reserve it immediately
+- otherwise, if availability replies are still pending, return to `SEARCHING` and wait
+- otherwise, mark the reservation `UNAVAILABLE`
 
----
+## Important Invariants
 
-## Component Map
+- Availability checks never lock a resource.
+- Only `ReservationAccepted` on the resource acquires a lock.
+- At most one resource may be in `reserve()` for a reservation at a time.
+- `UNAVAILABLE` is a deterministic conclusion over the known candidate set, not a timeout guess.
 
-| Component | Type | Role |
-|---|---|---|
-| `TelegramEndpoint` | HTTP Endpoint | Receives Telegram webhooks, dispatches to agent |
-| `BookingAgent` | Agent | LLM conversation, tool orchestration |
-| `BookingService` | Tool provider | `checkAvailability`, `bookCourt`, `cancelReservation` |
-| `ReservationEntity` | Event-Sourced Entity | Reservation lifecycle state machine |
-| `ResourceEntity` | Event-Sourced Entity | Per-court availability and booking |
-| `FacilityEntity` | Event-Sourced Entity | Facility metadata (timezone, bot token, resources) |
-| `ReservationAction` | Consumer | Reacts to ReservationEntity events → drives broadcast and resource reserve |
-| `ResourceAction` | Consumer | Reacts to ResourceEntity events → drives ReservationEntity transitions |
-| `DelegatingServiceAction` | Consumer | Reacts to terminal ReservationEntity events → calendar + notification |
-| `TimerAction` | Timed Action | Fires expiry if booking not fulfilled within 14 s |
-| `FacilityByBotTokenView` | View | Resolves bot token → facilityId (requires projections running) |
-| `ResourceView` | View | Lists courts per facility; per-resource lookup by ID |
+## Failure Model
+
+This design removes the business timeout from normal booking logic, but it does not by itself make the orchestration transactional.
+
+The remaining architectural risk is cross-entity partial failure:
+
+- an event consumer may acknowledge its source event
+- a downstream `componentClient.invoke()` or `invokeAsync()` may then fail
+- the workflow can be left partially advanced without automatic replay of the downstream command
+
+That risk should be documented separately from the slot-locking algorithm.
+
+## Operational Watchdog
+
+An operational watchdog can still be useful for alerting or compensating stuck workflows, but it should be treated as operational safety only.
+
+It should not be the primary way the reservation engine decides that a request is `UNAVAILABLE`.
+
+## Cancellation
+
+Cancellation remains a separate flow:
+
+1. Reservation requests cancellation of its fulfilled resource.
+2. Resource removes the slot lock if the reservation owns it.
+3. Reservation records `CANCELLED` after the resource confirms cancellation.

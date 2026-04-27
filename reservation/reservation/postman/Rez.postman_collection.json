@@ -64,7 +64,7 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"resourceIds\": [],\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": []\n}"
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": []\n}"
             },
             "url": {
               "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
@@ -197,6 +197,27 @@
             }
           },
           "response": []
+        },
+        {
+          "name": "Clear bot token",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/botToken",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}",
+                "botToken"
+              ]
+            }
+          },
+          "response": []
         }
       ]
     },
@@ -204,15 +225,14 @@
       "name": "Resource",
       "item": [
         {
-          "name": "Create and register resource",
+          "name": "Create resource",
           "event": [
             {
               "listen": "test",
               "script": {
                 "exec": [
-                  "var id = pm.response.text().replace(/\"/g, \"\");",
-                  "pm.environment.set(\"resource_id\", id);",
-                  "console.info(\"resource_id set to: \" + id);"
+                  "var id = pm.environment.get(\"resource_id\");",
+                  "console.info(\"resource_id confirmed as: \" + id);"
                 ],
                 "type": "text/javascript",
                 "packages": {},
@@ -223,12 +243,15 @@
               "listen": "prerequest",
               "script": {
                 "exec": [
-                  "var calendar_id = pm.variables.replaceIn('{{$randomUUID}}');",
+                  "var resourceId = 'resource-' + pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var calendar_id = pm.variables.replaceIn('{{$randomUUID}}') + '@group.calendar.google.com';",
                   "var resourceName = pm.variables.replaceIn('{{$randomLoremWord}}');",
                   "",
+                  "console.info(\"resourceId is: \"+ resourceId);",
                   "console.info(\"calendar_id is: \"+ calendar_id);",
                   "console.info(\"resourceName is: \"+ resourceName);",
                   "",
+                  "pm.environment.set(\"resource_id\", resourceId);",
                   "pm.variables.set(\"calendarId\", calendar_id);",
                   "pm.variables.set(\"resourceName\", resourceName);"
                 ],
@@ -248,22 +271,21 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+              "raw": "{\n  \"resourceId\": \"{{resource_id}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resource",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "facility",
-                "{{facility_id}}",
-                "resource"
+                "resource",
+                "{{resource_id}}"
               ]
             },
-            "description": "Creates a resource and registers it with the facility. ID is auto-generated and returned. Stored in resource_id env var."
+            "description": "Creates a resource with an explicit ID. Use the external-ref request to attach it to a facility."
           },
           "response": []
         },
@@ -288,106 +310,7 @@
           "response": []
         },
         {
-          "name": "Register existing resource with facility",
-          "request": {
-            "method": "POST",
-            "header": [],
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "facility",
-                "{{facility_id}}",
-                "resources",
-                "{{resource_id}}"
-              ]
-            },
-            "description": "Registers an already-existing resource with a facility (no body needed)."
-          },
-          "response": []
-        },
-        {
-          "name": "Unregister resource from facility",
-          "request": {
-            "method": "DELETE",
-            "header": [],
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}/resources/{{resource_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "facility",
-                "{{facility_id}}",
-                "resources",
-                "{{resource_id}}"
-              ]
-            }
-          },
-          "response": []
-        }
-      ]
-    },
-    {
-      "name": "User",
-      "item": [
-        {
-          "name": "Create user",
-          "request": {
-            "method": "POST",
-            "header": [
-              {
-                "key": "Content-Type",
-                "value": "application/json"
-              }
-            ],
-            "body": {
-              "mode": "raw",
-              "raw": "{\n  \"email\": \"{{userEmail}}\",\n  \"name\": \"{{userName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  }\n}"
-            },
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Get user",
-          "request": {
-            "method": "GET",
-            "header": [],
-            "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}",
-              "protocol": "{{protocol}}",
-              "host": [
-                "{{host}}"
-              ],
-              "port": "{{port}}",
-              "path": [
-                "user",
-                "{{user_id}}"
-              ]
-            }
-          },
-          "response": []
-        },
-        {
-          "name": "Change user name",
+          "name": "Attach resource to facility",
           "request": {
             "method": "PUT",
             "header": [
@@ -398,26 +321,27 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"name\": \"{{newUserName}}\"\n}"
+              "raw": "{\n  \"externalRef\": \"{{resource_id}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/name",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/external-ref",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "user",
-                "{{user_id}}",
-                "name"
+                "resource",
+                "{{resource_id}}",
+                "external-ref"
               ]
-            }
+            },
+            "description": "Attaches an existing resource to a facility via external references."
           },
           "response": []
         },
         {
-          "name": "Change user address",
+          "name": "Set resource schedule",
           "request": {
             "method": "PUT",
             "header": [
@@ -428,21 +352,53 @@
             ],
             "body": {
               "mode": "raw",
-              "raw": "{\n  \"street\": \"{{street}}\",\n  \"city\": \"{{city}}\"\n}"
+              "raw": "{\n  \"hours\": {\n    \"MONDAY\": [\"09:00\", \"10:00\", \"11:00\"],\n    \"WEDNESDAY\": [\"14:00\", \"15:00\"]\n  }\n}"
             },
             "url": {
-              "raw": "{{protocol}}://{{host}}:{{port}}/user/{{user_id}}/address",
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/schedule",
               "protocol": "{{protocol}}",
               "host": [
                 "{{host}}"
               ],
               "port": "{{port}}",
               "path": [
-                "user",
-                "{{user_id}}",
-                "address"
+                "resource",
+                "{{resource_id}}",
+                "schedule"
               ]
-            }
+            },
+            "description": "Sets the weekly availability schedule for the resource."
+          },
+          "response": []
+        },
+        {
+          "name": "Set resource type",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "text/plain"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "court"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id}}/type",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id}}",
+                "type"
+              ]
+            },
+            "description": "Sets the resource type tag, for example 'court'."
           },
           "response": []
         }
@@ -468,6 +424,992 @@
                 "{{reservation_id}}"
               ]
             }
+          },
+          "response": []
+        },
+        {
+          "name": "Delete booking",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings",
+                "{{reservation_id}}"
+              ]
+            },
+            "description": "Cancels the booking identified by reservation_id via the DELETE /bookings/{reservationId} endpoint."
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "QA Seed",
+      "item": [
+        {
+          "name": "Create QA facility",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var facilityName = 'QA Club ' + suffix;",
+                  "var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+                  "var city = pm.variables.replaceIn('{{$randomCity}}');",
+                  "var botToken = 'bot:local-test-' + suffix;",
+                  "var adminUserId = String(Math.floor(Math.random() * 900000) + 100000);",
+                  "",
+                  "pm.environment.set('qa_suffix', suffix);",
+                  "pm.environment.set('facilityName', facilityName);",
+                  "pm.environment.set('street', street);",
+                  "pm.environment.set('city', city);",
+                  "pm.environment.set('botToken', botToken);",
+                  "pm.environment.set('admin_user_id', adminUserId);",
+                  "pm.environment.unset('facility_id');",
+                  "pm.environment.unset('resource_id');",
+                  "pm.environment.unset('resource_id_1');",
+                  "pm.environment.unset('resource_id_2');",
+                  "pm.environment.unset('reservation_id');",
+                  "",
+                  "console.info('QA suffix: ' + suffix);",
+                  "console.info('QA botToken: ' + botToken);",
+                  "console.info('QA admin_user_id: ' + adminUserId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\\\"/g, '');",
+                  "pm.environment.set('facility_id', id);",
+                  "console.info('facility_id set to: ' + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": [\"{{admin_user_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-a-' + suffix;",
+                  "var resourceName = 'Court 1';",
+                  "var calendarId = 'local-cal-' + suffix + '-1@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_1', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 1 id: ' + resourceId);",
+                  "console.info('resource 1 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.info('resource_id_1 confirmed as: ' + pm.environment.get('resource_id_1'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id_1}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 1 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_1}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}",
+                "external-ref"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-b-' + suffix;",
+                  "var resourceName = 'Court 2';",
+                  "var calendarId = 'local-cal-' + suffix + '-2@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_2', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 2 id: ' + resourceId);",
+                  "console.info('resource 2 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.info('resource_id_2 confirmed as: ' + pm.environment.get('resource_id_2'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id_2}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 2 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_2}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}",
+                "external-ref"
+              ]
+            }
+          },
+          "response": []
+        }
+      ]
+    },
+    {
+      "name": "QA Flow",
+      "item": [
+        {
+          "name": "Create QA facility",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var facilityName = 'QA Club ' + suffix;",
+                  "var street = pm.variables.replaceIn('{{$randomStreetName}}');",
+                  "var city = pm.variables.replaceIn('{{$randomCity}}');",
+                  "var botToken = 'bot:local-test-' + suffix;",
+                  "var adminUserId = String(Math.floor(Math.random() * 900000) + 100000);",
+                  "",
+                  "pm.environment.set('qa_suffix', suffix);",
+                  "pm.environment.set('facilityName', facilityName);",
+                  "pm.environment.set('street', street);",
+                  "pm.environment.set('city', city);",
+                  "pm.environment.set('botToken', botToken);",
+                  "pm.environment.set('admin_user_id', adminUserId);",
+                  "pm.environment.unset('facility_id');",
+                  "pm.environment.unset('resource_id');",
+                  "pm.environment.unset('resource_id_1');",
+                  "pm.environment.unset('resource_id_2');",
+                  "pm.environment.unset('reservation_id');",
+                  "",
+                  "console.info('QA suffix: ' + suffix);",
+                  "console.info('QA botToken: ' + botToken);",
+                  "console.info('QA admin_user_id: ' + adminUserId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var id = pm.response.text().replace(/\"/g, '');",
+                  "pm.environment.set('facility_id', id);",
+                  "console.info('facility_id set to: ' + id);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"name\": \"{{facilityName}}\",\n  \"address\": {\n    \"street\": \"{{street}}\",\n    \"city\": \"{{city}}\"\n  },\n  \"timezone\": \"{{timezone}}\",\n  \"botToken\": \"{{botToken}}\",\n  \"adminUserIds\": [\"{{admin_user_id}}\"]\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                ""
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 1",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-a-' + suffix;",
+                  "var resourceName = 'Court 1';",
+                  "var calendarId = 'local-cal-' + suffix + '-1@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_1', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 1 id: ' + resourceId);",
+                  "console.info('resource 1 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.info('resource_id_1 confirmed as: ' + pm.environment.get('resource_id_1'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id_1}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 1 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_1}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}",
+                "external-ref"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA resource 2",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var suffix = pm.environment.get('qa_suffix') || pm.variables.replaceIn('{{$randomUUID}}').substring(0, 8);",
+                  "var resourceId = 'court-b-' + suffix;",
+                  "var resourceName = 'Court 2';",
+                  "var calendarId = 'local-cal-' + suffix + '-2@group.calendar.google.com';",
+                  "pm.environment.set('resource_id_2', resourceId);",
+                  "pm.environment.set('resource_id', resourceId);",
+                  "pm.environment.set('resourceName', resourceName);",
+                  "pm.environment.set('calendarId', calendarId);",
+                  "console.info('resource 2 id: ' + resourceId);",
+                  "console.info('resource 2 name: ' + resourceName);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "console.info('resource_id_2 confirmed as: ' + pm.environment.get('resource_id_2'));"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"resourceId\": \"{{resource_id_2}}\",\n  \"resourceName\": \"{{resourceName}}\",\n  \"calendarId\": \"{{calendarId}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Attach QA resource 2 to facility",
+          "request": {
+            "method": "PUT",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"externalRef\": \"{{resource_id_2}}\",\n  \"externalGroupRef\": \"{{facility_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}/external-ref",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}",
+                "external-ref"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA facility",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/facility/{{facility_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "facility",
+                "{{facility_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Create QA booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function pad(n) { return String(n).padStart(2, '0'); }",
+                  "var dt = new Date();",
+                  "dt.setDate(dt.getDate() + 1);",
+                  "dt.setHours(10, 0, 0, 0);",
+                  "var bookingDateTime = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate()) + 'T' + pad(dt.getHours()) + ':' + pad(dt.getMinutes()) + ':' + pad(dt.getSeconds());",
+                  "var reservationId = pm.variables.replaceIn('{{$randomUUID}}').replace(/-/g, '').substring(0, 8);",
+                  "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var recipientId = 'postman:' + (pm.environment.get('botToken') || 'qa');",
+                  "",
+                  "pm.environment.set('booking_date_time', bookingDateTime);",
+                  "pm.environment.set('reservation_id', reservationId);",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "",
+                  "console.info('reservation_id: ' + reservationId);",
+                  "console.info('booking_date_time: ' + bookingDateTime);",
+                  "console.info('players: ' + player1 + ', ' + player2);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            },
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.reservationId) pm.environment.set('reservation_id', json.reservationId);",
+                  "if (json && json.resourceId) pm.environment.set('booked_resource_id', json.resourceId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"reservationId\": \"{{reservation_id}}\",\n  \"dateTime\": \"{{booking_date_time}}\",\n  \"emails\": [\"{{player_1}}\", \"{{player_2}}\"],\n  \"resourceIds\": [\"{{resource_id_1}}\", \"{{resource_id_2}}\"],\n  \"recipientId\": \"{{recipient_id}}\"\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA booking",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/bookings/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "bookings",
+                "{{reservation_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA reservation",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/reservation/{{reservation_id}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "reservation",
+                "{{reservation_id}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA resource 1",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_1}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_1}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Get QA resource 2",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/resource/{{resource_id_2}}",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "resource",
+                "{{resource_id_2}}"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook book",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var player1 = pm.environment.get('player_1') || pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.environment.get('player_2') || pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var messageText = pm.environment.get('telegram_message_text') || ('Book a court tomorrow at 10am for ' + player1 + ' and ' + player2);",
+                  "var recipientId = (pm.environment.get('botToken') || '') + ':' + (pm.environment.get('admin_user_id') || '');",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "pm.environment.set('telegram_message_text', messageText);",
+                  "console.info('telegram message: ' + messageText);",
+                  "console.info('telegram recipient_id: ' + recipientId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 1,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook custom",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var messageText = pm.environment.get('telegram_message_text');",
+                  "if (!messageText) {",
+                  "  throw new Error('telegram_message_text must be set in the environment for Telegram webhook custom.');",
+                  "}",
+                  "var player1 = pm.environment.get('player_1') || 'QA';",
+                  "var recipientId = (pm.environment.get('botToken') || '') + ':' + (pm.environment.get('admin_user_id') || '');",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "console.info('telegram custom message: ' + messageText);",
+                  "console.info('telegram recipient_id: ' + recipientId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 101,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            },
+            "description": "Sends exactly the telegram_message_text environment variable as a fake Telegram webhook message for prompt testing."
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook random daytime booking",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "function pad(n) { return String(n).padStart(2, '0'); }",
+                  "var player1 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var player2 = pm.variables.replaceIn('{{$randomFirstName}}');",
+                  "var dayOffset = Math.floor(Math.random() * 7);",
+                  "var hour = 9 + Math.floor(Math.random() * 11);",
+                  "var minute = 0;",
+                  "var dt = new Date();",
+                  "dt.setDate(dt.getDate() + dayOffset);",
+                  "dt.setHours(hour, minute, 0, 0);",
+                  "if (dt.getTime() <= Date.now() + 30 * 60 * 1000) {",
+                  "  dt.setDate(dt.getDate() + 1);",
+                  "}",
+                  "var dateIso = dt.getFullYear() + '-' + pad(dt.getMonth() + 1) + '-' + pad(dt.getDate());",
+                  "var timeText = pad(dt.getHours()) + ':' + pad(dt.getMinutes());",
+                  "var messageText = 'Book a court on ' + dateIso + ' at ' + timeText + ' for ' + player1 + ' and ' + player2;",
+                  "var recipientId = (pm.environment.get('botToken') || '') + ':' + (pm.environment.get('admin_user_id') || '');",
+                  "pm.environment.set('player_1', player1);",
+                  "pm.environment.set('player_2', player2);",
+                  "pm.environment.set('recipient_id', recipientId);",
+                  "pm.environment.set('telegram_message_text', messageText);",
+                  "console.info('telegram random booking message: ' + messageText);",
+                  "console.info('telegram recipient_id: ' + recipientId);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 102,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            },
+            "description": "Generates a random daytime booking request within the next 7 days using random player names."
+          },
+          "response": []
+        },
+        {
+          "name": "Get latest reservation by recipient",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  "var json = pm.response.json();",
+                  "if (json && json.reservationId) {",
+                  "  pm.environment.set('reservation_id', json.reservationId);",
+                  "  if (json.resourceId) pm.environment.set('booked_resource_id', json.resourceId);",
+                  "  console.info('reservation_id set to: ' + json.reservationId);",
+                  "} else {",
+                  "  console.warn('No reservation found for recipient_id=' + pm.environment.get('recipient_id'));",
+                  "}"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/reservation-lookup/recipient/{{recipient_id}}/latest",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "reservation-lookup",
+                "recipient",
+                "{{recipient_id}}",
+                "latest"
+              ]
+            },
+            "description": "Finds the most recent reservation for the Telegram recipient and stores reservation_id for later cancel calls."
+          },
+          "response": []
+        },
+        {
+          "name": "Telegram webhook cancel",
+          "event": [
+            {
+              "listen": "prerequest",
+              "script": {
+                "exec": [
+                  "var reservationId = pm.environment.get('reservation_id');",
+                  "if (!reservationId) {",
+                  "  throw new Error('reservation_id is required for Telegram cancel. Set it first from a previous booking result, notification, or logs.');",
+                  "}",
+                  "var cancelText = 'Cancel reservation ' + reservationId;",
+                  "pm.environment.set('telegram_message_text', cancelText);",
+                  "console.info('telegram cancel message: ' + cancelText);"
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "requests": {}
+              }
+            }
+          ],
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"message\": {\n    \"message_id\": 2,\n    \"from\": {\"id\": {{admin_user_id}}, \"first_name\": \"{{player_1}}\", \"username\": \"qa\"},\n    \"chat\": {\"id\": {{admin_user_id}}, \"type\": \"private\"},\n    \"text\": \"{{telegram_message_text}}\"\n  }\n}"
+            },
+            "url": {
+              "raw": "{{protocol}}://{{host}}:{{port}}/telegram/{{botToken}}/webhook",
+              "protocol": "{{protocol}}",
+              "host": [
+                "{{host}}"
+              ],
+              "port": "{{port}}",
+              "path": [
+                "telegram",
+                "{{botToken}}",
+                "webhook"
+              ]
+            },
+            "description": "Requires reservation_id to be set manually or from another API response before sending the cancel message."
           },
           "response": []
         }

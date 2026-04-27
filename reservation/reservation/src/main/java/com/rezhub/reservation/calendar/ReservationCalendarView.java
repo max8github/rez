@@ -1,3 +1,5 @@
+// TODO: this view projects raw booking facts only. Enrichment with facility name, timezone,
+//       and i18n belongs in a dedicated Calendar service that consumes Rez events externally.
 package com.rezhub.reservation.calendar;
 
 import akka.javasdk.annotations.Component;
@@ -56,7 +58,6 @@ public class ReservationCalendarView extends View {
                 case ReservationEvent.Inited ignored -> effects().ignore();
                 case ReservationEvent.CancelRequested ignored -> effects().ignore();
                 case ReservationEvent.SearchExhausted ignored -> effects().ignore();
-                case ReservationEvent.RejectedWithNext ignored -> effects().ignore();
                 case ReservationEvent.Rejected ignored -> effects().ignore();
                 case ReservationEvent.AvailabilityReplied ignored -> effects().ignore();
                 case ReservationEvent.ResourceSelected ignored -> effects().ignore();

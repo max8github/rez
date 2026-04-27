@@ -3,7 +3,7 @@
 #
 # Usage:
 #   ./build-push.sh standalone          # build, push to Gitea, redeploy on lurch
-#   ./build-push.sh cloud               # build, push to Docker Hub, deploy to Akka Cloud
+#   ./build-push.sh cloud               # build, push to Akka registry, deploy to Akka Cloud
 #   ./build-push.sh standalone --no-deploy
 #   ./build-push.sh cloud    --no-deploy
 set -euo pipefail
@@ -17,6 +17,27 @@ fi
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
+build_and_find_local_image() {
+  local log_file
+  log_file="$(mktemp)"
+
+  # Redirect tee output to stderr: visible in terminal but not captured by caller's $()
+  "$@" 2>&1 | tee "$log_file" >&2
+
+  local local_image
+  local_image=$(
+    sed -n 's|.*Tagging image \(reservation:[^ ]*\) successful!.*|\1|p' "$log_file" | tail -n 1
+  )
+  rm -f "$log_file"
+
+  if [[ -z "${local_image:-}" ]]; then
+    echo "ERROR: could not find Maven-produced local image tag in build output" >&2
+    exit 1
+  fi
+
+  printf '%s\n' "$local_image"
+}
+
 case "$TARGET" in
   standalone)
     REGISTRY="gitea-reg.fritz.box:3000/max/rez"
@@ -24,10 +45,11 @@ case "$TARGET" in
     IMAGE="${REGISTRY}:${TAG}"
 
     echo "==> [standalone] Building (mvn install -DskipTests -Pgoogle,standalone) ..."
-    mvn install -DskipTests -Pgoogle,standalone
+    LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests -Pgoogle,standalone)
+    echo "==> Using local image ${LOCAL_IMAGE}"
 
     echo "==> Tagging as ${IMAGE} ..."
-    docker tag reservation:1.0 "$IMAGE"
+    docker tag "$LOCAL_IMAGE" "$IMAGE"
 
     echo "==> Pushing to Gitea ..."
     docker push "$IMAGE"
@@ -53,22 +75,23 @@ case "$TARGET" in
     ;;
 
   cloud)
-    DOCKERHUB_IMAGE="max8github/rez"
-    TAG="${REZ_TAG:-1.0}"
-    IMAGE="${DOCKERHUB_IMAGE}:${TAG}"
+    CLOUD_CALENDAR_BASE_URL="${REZ_CALENDAR_BASE_URL:-https://red-shadow-4568.europe-west1.akka.services}"
 
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
-    mvn install -DskipTests --settings settings.xml -Pgoogle
-
-    echo "==> Tagging as ${IMAGE} ..."
-    docker tag reservation:1.0 "$IMAGE"
-
-    echo "==> Pushing to Docker Hub ..."
-    docker push "$IMAGE"
+    LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests --settings settings.xml -Pgoogle)
+    echo "==> Using local image ${LOCAL_IMAGE}"
 
     if [[ "$DEPLOY" == "true" ]]; then
-      echo "==> Deploying to Akka Cloud ..."
-      akka service deploy rez "$IMAGE" --project rez-prod
+      echo "==> Pushing to Akka registry and deploying ..."
+      echo "==> Using REZ_CALENDAR_BASE_URL=${CLOUD_CALENDAR_BASE_URL}"
+      akka service deploy rez "$LOCAL_IMAGE" --push --project rez-prod \
+        --secret-env OPENAI_API_KEY=openai/key \
+        --env REZ_CALENDAR_BASE_URL="$CLOUD_CALENDAR_BASE_URL"
+      echo "==> Done: deployed ${LOCAL_IMAGE} to Akka Cloud"
+    else
+      echo "==> Pushing to Akka registry (no deploy) ..."
+      akka container-registry push "$LOCAL_IMAGE" --project rez-prod
+      echo "==> Done: pushed ${LOCAL_IMAGE} to Akka registry"
     fi
     ;;
 
@@ -77,5 +100,3 @@ case "$TARGET" in
     exit 1
     ;;
 esac
-
-echo "==> Done: ${IMAGE}"

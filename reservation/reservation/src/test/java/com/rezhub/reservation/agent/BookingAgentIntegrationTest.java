@@ -6,9 +6,10 @@ import akka.javasdk.testkit.TestModelProvider;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.orchestration.OriginRequestContext;
 import org.junit.jupiter.api.Test;
 
-import java.util.Collections;
+import java.util.Map;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -38,9 +39,9 @@ public class BookingAgentIntegrationTest extends TestKitSupport {
         bookingModel.fixedResponse("You're all set! Court 1 booked for Max on 2026-03-22 at 11:00. See you there!");
 
         String sessionId = UUID.randomUUID().toString();
-        var request = new BookingAgent.BookingRequest(
-            "facility-smoke-1", "Max", "chat-100", "Europe/Berlin",
-            "Book a court for tomorrow at 11am");
+        var origin = new OriginRequestContext("test", "sender-1", "Max", "chat-100", sessionId,
+            Map.of("facilityId", "facility-smoke-1", "timezone", "Europe/Berlin"));
+        var request = new BookingAgent.AgentRequest(origin, "Book a court for tomorrow at 11am");
 
         String reply = componentClient
             .forAgent()
@@ -61,16 +62,15 @@ public class BookingAgentIntegrationTest extends TestKitSupport {
         // Provision facility so the entity exists (agent may call FacilityEntity via tools)
         componentClient.forEventSourcedEntity(facilityId)
             .method(FacilityEntity::create)
-            .invoke(new Facility("Agent Test Club", new Address("Test St", "Berlin"),
-                Collections.emptySet(), "Europe/Berlin", null, null));
+            .invoke(new Facility("Agent Test Club", new Address("Test St", "Berlin"), "Europe/Berlin", null, null));
 
         // Model says no slots free — relayed directly without tool calls
         bookingModel.fixedResponse("Sorry, no courts available at 11:00. The next free slot is 13:00.");
 
         String sessionId = UUID.randomUUID().toString();
-        var request = new BookingAgent.BookingRequest(
-            facilityId, "Max", "chat-200", "Europe/Berlin",
-            "Any free courts tomorrow at 11?");
+        var origin = new OriginRequestContext("test", "sender-2", "Max", "chat-200", sessionId,
+            Map.of("facilityId", facilityId, "timezone", "Europe/Berlin"));
+        var request = new BookingAgent.AgentRequest(origin, "Any free courts tomorrow at 11?");
 
         String reply = componentClient
             .forAgent()

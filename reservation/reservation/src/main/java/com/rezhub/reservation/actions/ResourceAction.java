@@ -1,6 +1,5 @@
 package com.rezhub.reservation.actions;
 
-import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceEvent;
@@ -8,7 +7,6 @@ import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.consumer.Consumer;
-import akka.javasdk.timer.TimerScheduler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -19,21 +17,9 @@ public class ResourceAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(ResourceAction.class);
 
     private final ComponentClient componentClient;
-    private final TimerScheduler timerScheduler;
 
-    public ResourceAction(ComponentClient componentClient, TimerScheduler timerScheduler) {
+    public ResourceAction(ComponentClient componentClient) {
         this.componentClient = componentClient;
-        this.timerScheduler = timerScheduler;
-    }
-
-    @SuppressWarnings("unused")
-    public Effect on(ResourceEvent.FacilityResourceCreated event) {
-        log.debug("Facility Asset was Created with id {}", event.resourceId());
-        componentClient
-            .forEventSourcedEntity(event.parentId())
-            .method(FacilityEntity::registerResource)
-            .invoke(event.resourceId());
-        return effects().done();
     }
 
     @SuppressWarnings("unused")
@@ -57,11 +43,7 @@ public class ResourceAction extends Consumer {
         componentClient
             .forEventSourcedEntity(reservationId)
             .method(ReservationEntity::fulfill)
-            .invokeAsync(command)
-            .thenAccept(result -> {
-                // Cancel the timer after successful fulfillment
-                timerScheduler.delete(RezAction.timerName(reservationId));
-            });
+            .invoke(command);
 
         return effects().done();
     }
