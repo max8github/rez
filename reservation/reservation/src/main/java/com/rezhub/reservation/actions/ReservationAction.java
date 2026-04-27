@@ -49,8 +49,13 @@ public class ReservationAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.CancelRequested event) {
-        log.info("Cancel reservation {} in resource {}", event.reservationId(), event.resourceId());
         var resourceId = event.resourceId();
+        if (resourceId == null || resourceId.isEmpty()) {
+            // Cancelled while still in COLLECTING — no resource was ever locked, nothing to undo.
+            log.info("Cancel reservation {} — no resource was locked, skipping resource un-lock", event.reservationId());
+            return effects().done();
+        }
+        log.info("Cancel reservation {} in resource {}", event.reservationId(), resourceId);
         var command = new ResourceEntity.CancelReservation(event.reservationId(), event.dateTime());
         componentClient.forEventSourcedEntity(resourceId)
             .method(ResourceEntity::cancel)
