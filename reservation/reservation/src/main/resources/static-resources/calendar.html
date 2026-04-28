@@ -176,19 +176,22 @@
     }
 
     .status {
-      min-height: 24px;
+      display: none;
       color: var(--muted);
+      margin-bottom: 0;
+    }
+
+    .status.error {
+      display: block;
+      color: #991b1b;
       margin-bottom: 10px;
     }
 
     body[data-theme="etc-edingen"] .status {
+      display: block;
       min-height: 22px;
       color: #55677d;
       margin-bottom: 12px;
-    }
-
-    .status.error {
-      color: #991b1b;
     }
 
     body[data-theme="etc-edingen"] .status.error {
@@ -456,6 +459,14 @@
       padding: 6px 0;
     }
 
+    .day-picker-main {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex: 1;
+      min-width: 0;
+    }
+
     .day-nav-button {
       border: 1px solid rgba(217, 205, 189, 0.95);
       border-radius: 999px;
@@ -493,9 +504,16 @@
       font-weight: 700;
     }
 
+    .day-picker .day-refresh-button {
+      min-height: 40px;
+      padding: 0 14px;
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
     .resource-pager {
       display: flex;
-      justify-content: space-between;
+      justify-content: center;
       align-items: center;
       gap: 12px;
       min-height: 44px;
@@ -504,6 +522,7 @@
     .resource-pager-info {
       color: var(--muted);
       font-size: 0.95rem;
+      white-space: nowrap;
     }
 
     .resource-pager-actions {
@@ -682,15 +701,26 @@
 
       .day-picker {
         gap: 10px;
+        align-items: flex-start;
       }
 
       .day-nav-label {
         text-align: left;
       }
 
+      .day-picker-main {
+        gap: 10px;
+      }
+
+      .day-picker .day-refresh-button {
+        min-height: 36px;
+        padding: 0 12px;
+        font-size: 0.95rem;
+      }
+
       .resource-pager {
-        align-items: start;
-        flex-direction: column;
+        min-height: 0;
+        justify-content: center;
       }
 
       .shared-timeline-head,
@@ -784,7 +814,6 @@
         <span class="week-nav-arrow">›</span>
       </button>
     </div>
-    <button id="reloadButton" type="button">Refresh</button>
   </section>
 
   <section class="calendar-controls">
@@ -810,7 +839,6 @@
   const prevWeekButton = document.getElementById("prevWeekButton");
   const todayButton = document.getElementById("todayButton");
   const nextWeekButton = document.getElementById("nextWeekButton");
-  const reloadButton = document.getElementById("reloadButton");
   const requestedTheme = readRequestedTheme(params.get("theme"));
   const facilityId = (params.get("facilityId") || "").trim();
 
@@ -828,8 +856,6 @@
     void loadCalendar();
   });
   nextWeekButton.addEventListener("click", () => moveWeek(7));
-  reloadButton.addEventListener("click", () => void loadCalendar());
-
   void loadCalendar();
 
   function moveWeek(days) {
@@ -948,6 +974,11 @@
   }
 
   function setStatus(message, isError = false) {
+    if (!isError && document.body.dataset.theme !== "etc-edingen") {
+      statusEl.textContent = "";
+      statusEl.className = "status";
+      return;
+    }
     statusEl.textContent = message;
     statusEl.className = isError ? "status error" : "status";
   }
@@ -1192,14 +1223,18 @@
     }
 
     dayPicker.innerHTML = `
-      <button class="day-nav-button secondary" id="prevDayButton" type="button" aria-label="Previous day">‹</button>
-      <div class="day-nav-label" aria-live="polite">
-        <span class="day-nav-weekday">${currentDay.toLocaleDateString([], { weekday: "long" })}</span>
-        <span class="day-nav-date">${currentDay.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</span>
+      <div class="day-picker-main">
+        <button class="day-nav-button secondary" id="prevDayButton" type="button" aria-label="Previous day">‹</button>
+        <div class="day-nav-label" aria-live="polite">
+          <span class="day-nav-weekday">${currentDay.toLocaleDateString([], { weekday: "long" })}</span>
+          <span class="day-nav-date">${currentDay.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</span>
+        </div>
+        <button class="day-nav-button secondary" id="nextDayButton" type="button" aria-label="Next day">›</button>
       </div>
-      <button class="day-nav-button secondary" id="nextDayButton" type="button" aria-label="Next day">›</button>
+      <button class="day-refresh-button" id="reloadButtonInline" type="button">Refresh</button>
     `;
 
+    document.getElementById("reloadButtonInline").addEventListener("click", () => void loadCalendar());
     document.getElementById("prevDayButton").addEventListener("click", () => moveDay(-1));
     document.getElementById("nextDayButton").addEventListener("click", () => moveDay(1));
   }
@@ -1214,9 +1249,11 @@
     const start = currentResourcePage * resourcesPerPage + 1;
     const end = start + visibleCount - 1;
     resourcePager.innerHTML = `
-      <div class="resource-pager-info">Courts ${start}-${end} of ${totalResources}</div>
       <div class="resource-pager-actions">
         <button class="secondary resource-pager-button" id="prevResourcePageButton" type="button" aria-label="Previous courts page"${currentResourcePage === 0 ? " disabled" : ""}>‹</button>
+      </div>
+      <div class="resource-pager-info">Courts ${start}-${end} of ${totalResources}</div>
+      <div class="resource-pager-actions">
         <button class="secondary resource-pager-button" id="nextResourcePageButton" type="button" aria-label="Next courts page"${currentResourcePage >= pageCount - 1 ? " disabled" : ""}>›</button>
       </div>
     `;
