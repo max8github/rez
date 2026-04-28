@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Multi-agent planner](index.html)
 - [Evaluation on changes](eval.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -163,7 +163,7 @@ public class EvaluatorAgent extends Agent {
 
 ## <a href="about:blank#_consumer_of_preference_events"></a> Consumer of preference events
 
-The `PreferencesEntity` emits events when the preferences are changed, and we can listen to these events and trigger the `LlmAsJudge`.
+The `PreferencesEntity` emits events when the preferences are changed, and we can listen to these events and trigger the `EvaluatorAgent`.
 
 Add a new file `PreferencesConsumer.java` to `src/main/java/com/example/application/`
 
@@ -247,11 +247,11 @@ public class PreferencesConsumer extends Consumer { // (2)
 | **1** | Consume events from the `PreferencesEntity`. |
 | **2** | Extend `Consumer`. |
 | **3** | Retrieve previous activity suggestions for the user from the `ActivityView`. |
-| **4** | Call the `LlmAsJudge` for each previous suggestion. |
+| **4** | Call the `EvaluatorAgent` for each previous suggestion. |
 | **5** | Run the workflow again, using the new preferences when the suggested activities are evaluated to be incorrect. |
 This would probably be improved in a real application by not evaluating all previous suggestions, but only the ones that are still relevant, e.g. last 3 sorted by timestamp. The evaluations could also be made in parallel by using `invokeAsync` and compose the `CompletionStage` results.
 
-Add the new method to the `AgentTeamWorkflow:
+Add the new method to the `AgentTeamWorkflow`:
 
 [AgentTeamWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/multi-agent/src/main/java/demo/multiagent/application/AgentTeamWorkflow.java)
 ```java

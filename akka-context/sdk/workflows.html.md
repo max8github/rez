@@ -44,7 +44,7 @@ public class TransferWorkflow extends Workflow<TransferState> { // (2)
   @Override
   public WorkflowSettings settings() { // (3)
     return WorkflowSettings.builder()
-      .defaultStepTimeout(ofSeconds// (2))
+      .defaultStepTimeout(ofSeconds(2))
       .build();
   }
 
@@ -386,7 +386,7 @@ A long-running workflow can be paused while waiting for some additional informat
 private StepEffect waitForAcceptanceStep() {
   return stepEffects()
     .thenPause( // (1)
-      pauseSetting(ofHours// (8)).timeoutHandler(TransferWorkflow::acceptanceTimeout) // (2)
+      pauseSetting(ofHours(8)).timeoutHandler(TransferWorkflow::acceptanceTimeout) // (2)
     );
 }
 ```
@@ -484,19 +484,22 @@ Clients subscribe to workflow notifications using the `ComponentClient`. The not
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 public class WorkflowEndpoint {
 
+  public record TransferUpdate(String message) {} // (1)
+
   @Get("/updates/{transferId}")
   public HttpResponse updates(String transferId) {
-    return HttpResponses.serverSentEvents(
-      componentClient
-        .forWorkflow(transferId)
-        .notificationStream(TransferWorkflowWithNotifications::updates) // (1)
-        .source()
-    );
+    var source = componentClient
+      .forWorkflow(transferId)
+      .notificationStream(TransferWorkflowWithNotifications::updates)
+      .source()
+      .map(msg -> new TransferUpdate(msg)); // (2)
+    return HttpResponses.serverSentEvents(source);
   }
 }
 ```
 
-| **1** | Use `notificationStream()` with a method reference to the workflow’s stream method. The returned source can be consumed directly or wrapped with `HttpResponses.serverSentEvents()` for SSE delivery to HTTP clients. |
+| **1** | Define API-specific records to avoid exposing internal domain types outside the service. |
+| **2** | Map notifications to API records using the `map` operator on the notification source. The result can be wrapped with `HttpResponses.serverSentEvents()` for SSE delivery to HTTP clients. |
 You can find the full source code of workflow notification sample in the [akka-samples/multi-agent GitHub Repository](https://github.com/akka-samples/multi-agent).
 
 |  | The notification stream is a live stream that emits messages only after the client creates the stream—it does not replay historical messages. While the stream is running, it delivers all messages in order without message loss. If the stream detects missing messages, it will fail, allowing clients to reconnect and recover. |
@@ -518,9 +521,9 @@ NOTE Workflow timeout should be greater than the step timeout. Otherwise, the wo
 @Override
 public WorkflowSettings settings() {
   return WorkflowSettings.builder()
-    .timeout(ofSeconds// (10)) // (1)
-    .defaultStepTimeout(ofSeconds// (2)) // (2)
-    .stepTimeout(TransferWorkflow::failoverHandlerStep, ofSeconds// (1)) // (3)
+    .timeout(ofSeconds(10)) // (1)
+    .defaultStepTimeout(ofSeconds(2)) // (2)
+    .stepTimeout(TransferWorkflow::failoverHandlerStep, ofSeconds(1)) // (3)
     .build();
 }
 ```
@@ -540,10 +543,12 @@ It’s time to define what should happen in case of step timeout or any other un
 @Override
 public WorkflowSettings settings() {
   return WorkflowSettings.builder()
-    .defaultStepRecovery(maxRetries// (1).failoverTo(TransferWorkflow::failoverHandlerStep)) // (1)
+    .defaultStepRecovery(
+      RecoverStrategy.maxRetries(1).failoverTo(TransferWorkflow::failoverHandlerStep)
+    ) // (1)
     .stepRecovery(
       TransferWorkflow::depositStep,
-      maxRetries// (2).failoverTo(TransferWorkflow::compensateWithdrawStep)
+      RecoverStrategy.maxRetries(2).failoverTo(TransferWorkflow::compensateWithdrawStep)
     ) // (2)
     .build();
 }

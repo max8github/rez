@@ -14,7 +14,7 @@ Everything in Akka is based on the [fundamental principles for distributed syste
 
 Akka manages the operational aspects of your application. To learn about how Akka Services run in distributed infrastructure and may span multiple *Regions*, see [Deployment Model](deployment-model.html). Once deployed, Akka’s [Telemetry and Monitoring](../operations/observability-and-monitoring/index.html) provides operational insights into your deployment.
 
-When you are familiar with the main aspects for Akka applications, continue with [Development Process](development-process.html) to understand the steps involved to implement a *Service*.
+When you are familiar with the main aspects for Akka applications, continue with [Development process](development-process.html) to understand the steps involved to implement a *Service*.
 
 Components in Akka decouple behavior from execution by using [Delegation with Effects](declarative-effects.html).
 
@@ -26,7 +26,7 @@ Orchestration use cases are often catered for best by considering *Sagas* which 
 
 - [Concepts](concepts.html)
 - [Distributed systems](distributed-systems.html)
-- [Project structure](architecture-model.html)
+- [Architecture](architecture-model.html)
 - [Deployment model](deployment-model.html)
 - [Development process](development-process.html)
 - [Delegation with Effects](declarative-effects.html)
@@ -34,7 +34,7 @@ Orchestration use cases are often catered for best by considering *Sagas* which 
 - [Multi-region operations](multi-region.html)
 - [Saga patterns](saga-patterns.html)
 - [Endpoints](grpc-vs-http-endpoints.html)
-- [Building AI agents](ai-agents.html)
+- [AI Agents](ai-agents.html)
 - [Inter-agent communications](inter-agent-comms.html)
 - [Access control lists](acls.html)
 

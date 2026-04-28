@@ -20,7 +20,7 @@ Akka provides several built-in features for dependency injection, data serializa
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Retrieval-Augmented Generation (RAG)](../rag.html) [Setup and dependency injection](../setup-and-dependency-injection.html)
+[Streaming](../streaming.html) [Setup and dependency injection](../setup-and-dependency-injection.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

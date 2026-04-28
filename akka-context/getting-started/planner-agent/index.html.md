@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Multi-agent planner](index.html)
 
 <!-- </nav> -->
@@ -9,7 +9,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 This guide starts with creating an agent that suggests real-world activities. We will incorporate more components in separate parts of the guide, and at the end we will have a multi-agent system with dynamic planning and orchestration capabilities.
 
 1. [Activity agent](activity.html) — An Agent (with session memory) that suggests real-world activities using an LLM.

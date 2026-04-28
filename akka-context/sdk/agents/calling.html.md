@@ -74,8 +74,10 @@ public class ActivityAgentManager extends Workflow<ActivityAgentManager.State> {
   @Override
   public WorkflowSettings settings() { // (6)
     return WorkflowSettings.builder()
-      .stepTimeout(ActivityAgentManager::suggestActivities, ofSeconds// (60))
-      .defaultStepRecovery(maxRetries// (2).failoverTo(ActivityAgentManager::error))
+      .stepTimeout(ActivityAgentManager::suggestActivities, ofSeconds(60))
+      .defaultStepRecovery(
+        RecoverStrategy.maxRetries(2).failoverTo(ActivityAgentManager::error)
+      )
       .build();
   }
 
@@ -120,12 +122,12 @@ The workflow itself will be instantiated by making a call to the `start` method 
 Keep in mind that AI requests are typically slow (many seconds), and you need to define the workflow timeouts accordingly. This is specified in the workflow step definition with:
 
 ```java
-.stepConfig(ActivityAgentManager::suggestActivities, ofSeconds// (60))
+.stepConfig(ActivityAgentManager::suggestActivities, ofSeconds(60))
 ```
 Additionally, you should define a workflow recovery strategy so that it doesn’t retry failing requests infinitely. This is specified in the workflow definition with:
 
 ```java
-.defaultStepRecovery(maxRetries// (2).failoverTo(ActivityAgentManager::error))
+.defaultStepRecovery(RecoverStrategy.maxRetries(2).failoverTo(ActivityAgentManager::error))
 ```
 More details in [Workflow timeouts and recovery strategy](../workflows.html#_error_handling).
 

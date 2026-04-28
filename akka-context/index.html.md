@@ -1,71 +1,88 @@
 <!-- <nav> -->
 - [Akka](index.html)
-- [Welcome to Akka](index.html)
+- [Akka Documentation](index.html)
 
 <!-- </nav> -->
 
-# Welcome to Akka
+# Akka Documentation
 
-Akka is a platform for building, running and evaluating agentic systems. It includes a framework, runtime, streaming engine, and memory store for creating any kind of agentic system: AI, autonomous, real-time, adaptive, transactional, analytical, or edge. The Akka Runtime is the most widely adopted actor-based runtime in the world, enabling high-throughput, stateful services that are resilient, elastic and responsive. Akka runs on any infrastructure: public cloud, private cloud or on-premises.
+Akka is the agentic systems platform built for Reliability, Risk Control, and Repeatability at enterprise scale. The only full-stack platform for agentic AI: developer experience, runtime, and governance in one integrated system.
+
+## [Why Akka](why-akka.html)
+
+Three barriers stand between AI prototypes and production:
+
+- the **Production Gap**,
+- **Liability**,
+- and the **Specialist Trap**.
+Learn [how Akka solves them](why-akka.html).
+
+## [What is Akka](what-is-akka.html)
+
+Akka is the only full-stack platform for agentic AI: developer experience, runtime, and governance in one integrated system.
+Learn [about what Akka provides](what-is-akka.html) or find [the docs for your role](who-uses-akka.html).
 
 ## [Tutorials](getting-started/index.html)
 
-**Start here**: a hands-on introduction, guiding you through your first steps.
+**Start here**: hands-on introduction to building with Akka.
 
-- [Build your first agent](getting-started/author-your-first-service.html)
+- [Spec-first greeting agent](getting-started/spec-your-first-agent.html) — Build your first agent with Spec-Driven Development
+- [Hello world agent](getting-started/author-your-first-service.html) — Classic hands-on tutorial
 - [Build an AI multi-agent planner](getting-started/planner-agent/index.html)
 - [Explore other sample applications](getting-started/samples.html)
-- [Foundations for building transactional and agentic AI services](concepts/index.html)
-
-## [Understanding](concepts/index.html)
-
-**Foundational topics** that explain how Akka services are designed and behave.
-
-- [Agentic AI concepts](concepts/concepts.html)
-- [Distributed systems](concepts/distributed-systems.html)
-- [Deployment model](concepts/deployment-model.html)
-- [Development process](concepts/development-process.html)
-- [AI agents](concepts/ai-agents.html)
-- [Memory models](concepts/state-model.html)
-- [Saga patterns](concepts/saga-patterns.html)
-- [Multi-region operations](concepts/multi-region.html)
 
 ## [Developing](sdk/index.html)
 
-**Implementation guidance** for key components and development patterns.
+**Build with Akka** — Spec-Driven Development, SDK components, use cases, and integrations.
 
-- [Orchestration](sdk/workflows.html)
+- [Spec-Driven Development](sdk/spec-driven-development.html)
 - [Agents](sdk/agents.html)
+- [Orchestration](sdk/workflows.html)
 - [Memory](sdk/event-sourced-entities.html)
 - [Streaming](sdk/consuming-producing.html)
-- [Set up your local dev environment](sdk/running-locally.html)
+
+## [Understanding](concepts/index.html)
+
+**Foundational topics** on how Akka services are designed and behave.
+
+- [AI agents](concepts/ai-agents.html)
+- [Governance & the runtime](concepts/governance-and-the-runtime.html)
+- [Architecture](concepts/architecture-model.html)
+- [Distributed systems](concepts/distributed-systems.html)
+- [Multi-region operations](concepts/multi-region.html)
 
 ## [Operating](operations/index.html)
 
-**Practical guidance** for deploying, observing and managing Akka services.
+**Deploy, observe, and manage** Akka services in production.
 
-- [Install the Akka CLI](operations/cli/installation.html)
+- [Akka Automated Operations](operations/akka-platform.html)
 - [Deploy and manage services](operations/services/deploy-service.html)
 - [View metrics](operations/observability-and-monitoring/metrics.html)
-- [Configure message brokers](operations/projects/message-brokers.html)
+- [Install the Akka CLI](operations/cli/installation.html)
 - [CI/CD with GitHub Actions](operations/integrating-cicd/github-actions.html)
 
 ## [Reference](reference/index.html)
 
-**Technical reference material** for releases, APIs, tooling and terminology.
+**Technical reference** for releases, APIs, tooling, and terminology.
 
 - [Release notes](reference/release-notes.html)
 - [API documentation](reference/api-docs.html)
 - [CLI command reference](reference/cli/akka-cli/index.html)
 - [Glossary](reference/glossary.html)
 
+## [Resources](resources.html)
+
+Blogs, demos, webinars, customer stories, foundational works, training, and community links are
+listed in the [Resources](resources.html) section.
+
 ## [Akka Libraries](libraries/index.html)
 
-Akka provides a set of libraries for building and running responsive applications that have been used in production for over a decade.
+Libraries for building and running responsive applications, used in production for over a decade.
+Learn about [the Akka Libraries](libraries/index.html).
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Getting started](getting-started/starthere.html)
+[Why Akka](why-akka.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

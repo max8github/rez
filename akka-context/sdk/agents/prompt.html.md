@@ -43,9 +43,9 @@ Keep in mind that some models have preferences in how you wrap or label user inp
 
 ## <a href="about:blank#_multimodal_user_message"></a> Multimodal user message
 
-Multimodal AI models can process not only text but also images, enabling agents to analyze visual content, extract information from diagrams, or answer questions about images.
+Multimodal AI models can process not only text but also images or PDF, enabling agents to analyze visual content, extract information from documents, or answer questions about images.
 
-To send images along with text to an AI model, use the `UserMessage` class which supports multimodal content:
+To send images or PDF along with text to an AI model, use the `UserMessage` class which supports multimodal content:
 
 [ImageProcessingAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/ImageProcessingAgent.java)
 ```java
@@ -64,86 +64,90 @@ public Effect<String> ask() {
 
 | **1** | Create a `UserMessage` with multiple content elements |
 | **2** | Add text content using `TextMessageContent.from()` |
-| **3** | Add image content using `ImageMessageContent.from()` |
+| **3** | Add image content using `ImageMessageContent.fromUrl()` |
 
-|  | Not all AI models support vision capabilities. Ensure your configured model provider supports image inputs before using multimodal messages. |
+|  | Not all AI models support vision or PDF capabilities. Ensure your configured model provider supports the input types before using multimodal messages. |
 
-### <a href="about:blank#_custom_image_loading"></a> Custom image loading
+### <a href="about:blank#_custom_content_loading"></a> Custom content loading
 
-By default, the Akka runtime fetches images from publicly accessible URLs. When you need to load images from authenticated endpoints, private storage systems, or custom sources, you can implement a custom `ImageLoader`.
+Some AI models are able to fetch images or PDF from publicly accessible URLs. When you need to load content from authenticated endpoints, private storage systems, or custom sources, you can implement a custom `ContentLoader`.
 
-The `ImageLoader` interface provides a single method that receives the image URI, detail level, and an optional MIME type hint. Your implementation fetches the image data and returns it along with the actual MIME type:
+The `ContentLoader` interface provides a single `load` method that receives a `LoadableMessageContent`. Use pattern matching to handle each content type, fetch the data, and return it along with the appropriate MIME type:
 
-[CustomImageLoadingAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/CustomImageLoadingAgent.java)
+[CustomContentLoadingAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/CustomContentLoadingAgent.java)
 ```java
-@Component(id = "custom-image-loading-agent")
-public class CustomImageLoadingAgent extends Agent {
+@Component(id = "custom-content-loading-agent")
+public class CustomContentLoadingAgent extends Agent {
 
   private final HttpClient httpClient;
 
-  public CustomImageLoadingAgent(HttpClient httpClient) {
+  public CustomContentLoadingAgent(HttpClient httpClient) {
     this.httpClient = httpClient;
   }
 
-  public class MyImageLoader implements ImageLoader { // (1)
+  public class MyContentLoader implements ContentLoader { // (1)
 
     private final String userToken;
 
-    public MyImageLoader(String userToken) {
+    public MyContentLoader(String userToken) {
       this.userToken = userToken;
     }
 
     @Override
-    public LoadedImage load(
-      URI uri,
-      ImageMessageContent.DetailLevel detailLevel,
-      Optional<String> mimeType
-    ) {
-      StrictResponse<ByteString> response = httpClient // (2)
-        .GET(uri.toString())
-        .addCredentials(HttpCredentials.createOAuth2BearerToken(userToken))
-        .invoke();
+    public LoadedContent load(MessageContent.LoadableMessageContent content) {
+      return switch (content) {
+        case MessageContent.ImageUrlMessageContent image -> {
+          StrictResponse<ByteString> response = httpClient // (2)
+            .GET(image.url().toString())
+            .addCredentials(HttpCredentials.createOAuth2BearerToken(userToken))
+            .invoke();
 
-      byte[] imageData = response.body().toArray();
-      String actualMimeType = response
-        .httpResponse()
-        .entity()
-        .getContentType()
-        .mediaType()
-        .toString(); // (3)
+          byte[] data = response.body().toArray();
+          String actualMimeType = response
+            .httpResponse()
+            .entity()
+            .getContentType()
+            .mediaType()
+            .toString(); // (3)
 
-      return new LoadedImage(imageData, actualMimeType); // (4)
+          yield new LoadedContent(data, Optional.of(actualMimeType)); // (4)
+        }
+        case MessageContent.PdfUrlMessageContent pdf -> throw new RuntimeException(
+          "Not implemented"
+        );
+      };
     }
   }
 ```
 
-| **1** | Implement the `ImageLoader` interface |
-| **2** | Custom logic to fetch image data with authentication |
+| **1** | Implement the `ContentLoader` interface |
+| **2** | Fetch image data with authentication using the URL from `ImageUrlMessageContent` |
 | **3** | Extract the actual MIME type of the image from the response |
-| **4** | Wrap bytes and type in a `LoadedImage` and return |
-To use your custom image loader, pass it to the agent effect builder:
+| **4** | Return `LoadedContent` with the data and MIME type |
+To use your custom content loader, pass it to the agent effect builder:
 
-[CustomImageLoadingAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/CustomImageLoadingAgent.java)
+[CustomContentLoadingAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/CustomContentLoadingAgent.java)
 ```java
-public record AnalyzeRequest(String imageUri, String userToken) {}
+public record AnalyzeRequest(String imageUri, String pdfUri, String userToken) {}
 
 public Effect<String> analyzeImage(AnalyzeRequest request) {
   return effects()
-    .systemMessage("You are an image analysis assistant.")
-    .imageLoader(new MyImageLoader(request.userToken())) // (1)
+    .systemMessage("You are a document analysis assistant.")
+    .contentLoader(new MyContentLoader(request.userToken())) // (1)
     .userMessage(
       UserMessage.from(
-        TextMessageContent.from("Describe this image in detail"),
-        ImageMessageContent.fromUrl(request.imageUri)
+        TextMessageContent.from("Describe this image and summarize the PDF"),
+        ImageMessageContent.fromUrl(request.imageUri), // (2)
+        PdfMessageContent.fromUrl(request.pdfUri) // (3)
       )
-    ) // (2)
+    )
     .thenReply();
 }
 ```
 
-| **1** | Register the custom image loader with the effect |
-| **2** | The image URL is passed to your loader when processing the message |
-The image loader instance can be created per-request like in this example (to support per-request credentials) or shared globally via dependency injection. If shared, ensure the implementation is thread-safe as it may be used by multiple concurrent agent interactions.
+| **1** | Register the custom content loader with the effect |
+| **2** | `ImageUrlMessageContent` is passed to your loader when processing the user message |
+The content loader instance can be created per-request like in this example (to support per-request credentials) or shared globally via dependency injection. If shared, ensure the implementation is thread-safe as it may be used by multiple concurrent agent interactions.
 
 |  | If the `load` method throws an exception, the entire agent request fails. |
 
@@ -219,7 +223,7 @@ Although the system message has a dedicated method to use the prompt template, y
 
 ## <a href="about:blank#_adding_more_context"></a> Adding more context
 
-[Retrieval-Augmented Generation (RAG)](../rag.html) is a technique to provide additional, relevant content in the user message.
+[RAG](../use-cases/rag-and-knowledge.html) is a technique to provide additional, relevant content in the user message.
 
 <!-- <footer> -->
 <!-- <nav> -->

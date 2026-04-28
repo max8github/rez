@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Multi-agent planner](index.html)
 - [Weather agent](weather.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -139,11 +139,11 @@ You can sign up for a free API for the weather service at [https://www.weatherap
 
 Linux or macOS
 ```command
-export WEATHER_API_KEY=your-openai-api-key
+export WEATHER_API_KEY=your-weather-api-key
 ```
 Windows 10+
 ```command
-set WEATHER_API_KEY=your-openai-api-key
+set WEATHER_API_KEY=your-weather-api-key
 ```
 This test is using real LLM requests, and you must set your [OpenAI API key](https://platform.openai.com/api-keys) as an environment variable:
 

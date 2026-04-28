@@ -18,7 +18,7 @@ Prerequisites not covered in detail by this guide:
 2. The MSK cluster must be set up with [TLS for client broker connections and SASL/SCRAM for authentication](https://docs.aws.amazon.com/msk/latest/developerguide/msk-password.html) with a user and password to use for authenticating your Akka service
 
   1. The user and password is stored in a secret
-  2. The secret must be encrypted with a specific key, MSK cannot use the default MKS encryption key
+  2. The secret must be encrypted with a specific key, MSK cannot use the default MSK encryption key
 3. The provisioned cluster must be set up for [public access](https://docs.aws.amazon.com/msk/latest/developerguide/public-access.html)
 
   1. Creating relevant ACLs for the user to access the topics in your MSK cluster
@@ -49,9 +49,9 @@ akka projects config set broker  \
   --broker-auth scram-sha-512 \
   --broker-user <sasl username> \
   --broker-password-secret aws-msk-secret/pwd \
-  --broker-bootstrap-servers <bootstrap brokers> \
+  --broker-bootstrap-servers <bootstrap brokers>
 ```
-The `broker-password-secret` refer to the name of the Akka secret created earlier rather than the actual password string.
+The `broker-password-secret` refers to the name of the Akka secret created earlier rather than the actual password string.
 
 An optional description can be added with the parameter `--description` to provide additional notes about the broker.
 
@@ -76,8 +76,8 @@ akka projects config set broker  \
   --broker-auth scram-sha-512 \
   --broker-user <sasl username> \
   --broker-password-secret aws-msk-secret/pwd \
-  --broker-ca-cert-secret kafka-ca-cert
-  --broker-bootstrap-servers <bootstrap brokers> \
+  --broker-ca-cert-secret kafka-ca-cert \
+  --broker-bootstrap-servers <bootstrap brokers>
 ```
 
 ## <a href="about:blank#_delivery_characteristics"></a> Delivery characteristics

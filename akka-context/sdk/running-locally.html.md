@@ -117,6 +117,53 @@ akka.javasdk.dev-mode.http-port=9001
 ```
 With both services configured, we can start them independently by running `mvn compile exec:java` in two separate terminals.
 
+## <a href="about:blank#_invoking_cloud_based_services_from_local_services"></a> Invoking cloud based services from local services
+
+Sometimes, when developing services locally that depend on other services, rather than running those services locally as well, it’s more convenient to use instances of those services running in the cloud. Akka allows this through its backoffice proxy. The cloud services do not need to be exposed to the internet, rather, requests are forwarded through a proxy that authenticates and authorizes developers using their Akka platform credentials.
+
+|  | By default, local services use an in-memory data store, so state is lost on each restart. When connecting to cloud-based services, this means views and consumers subscribed to cloud event streams must replay events from the beginning on each restart, which can be slow for large event stores. To preserve local state and offsets across restarts, see [Running a service with persistence enabled](about:blank#persistence-enabled). |
+To do this, you will need to have the [Akka CLI](../operations/cli/index.html) installed on your path, and be logged in with the backoffice or admin role on the project you wish to use. Alternatively, if the Akka CLI is not installed, the `AKKA_REFRESH_TOKEN` environment variable can be set with a valid refresh or service token.
+
+Backoffice services can be configured in `src/main/resources/application.conf`, by specifying the project that the services run in:
+
+```json
+akka.javasdk {
+  dev-mode {
+    backoffice.services {
+      my-service-a {
+        project = "my-akka-project"
+      }
+      my-service-b {
+        project = "my-akka-project"
+      }
+    }
+  }
+}
+```
+With the above configuration, all calls made to `my-service-a` and `my-service-b` from your locally running service will be proxied to the project `my-akka-project` hosted in the cloud. This includes invoking other services using the [HTTP client provider](http-endpoints.html#http_client_provider) or gRPC client provider, consuming events from [Service to Service Eventing](consuming-producing.html#s2s-eventing) producers hosted in other services, and invoking [MCP Endpoints](mcp-endpoints.html) hosted in other services.
+
+Other configuration options are shown here:
+
+```json
+akka.javasdk {
+  dev-mode {
+    backoffice.services {
+      my-service-a {
+        project = "my-akka-project"
+        organization = "my-organization"
+        service-name = "service-a"
+        region = "gcp-us-east1"
+      }
+    }
+  }
+}
+```
+
+- `project` - This can either be the project UUID, or the project name.
+- `organization` - This is usually not necessary, however if you ar referring to the project by its name, and you are a member of two organizations that have projects with that same name, this will be used to disambiguate them. Either an organization UUID or an organization name can be set here.
+- `service-name` - Can be used if you wish to use a service with a different name running in the cloud to the one referenced from your locally running service.
+- `region` - If you have a multi-region project, and you don’t want to use the primary region, this can be used to select the region.
+
 ## <a href="about:blank#local_cluster"></a> Running a local cluster
 
 To run a service project as a local cluster, see [this page](local-cluster.html).

@@ -42,6 +42,15 @@ values (like 50) allow for more diversity.
 
 If this value is supplied and the model supports this property, then it will stop operations in mid flight if the token quota runs out. It’s important to check *how* the model counts tokens, as some may count differently. Be aware of the fact that this parameter name frequently varies from one provider to the next. Make sure you’re using the right property name.
 
+### <a href="about:blank#_thinking"></a> Thinking
+
+Some models support thinking, also sometimes referred to as "thought process" or reasoning, where the model generates an intermediate
+thought process, breaking down bigger problems into smaller more manageable tasks. This can be good for more complex problems but comes
+at the price of tokens used for the thought process.
+
+For models that support thinking, it is enabled through model-specific configuration, either by setting a thinking token budget, or
+by a toggle. Thinking is disabled for all models by default.
+
 ## <a href="about:blank#_model_configuration"></a> Model configuration
 
 The following is a list of all natively supported model configurations. Remember that if you don’t see your model or model format here, you can always create your own custom configuration and still use all of the Agent-related components.
@@ -61,6 +70,8 @@ The following is a list of all natively supported model configurations. Remember
 | `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `thinking-budget-tokens` | Integer | A maximum number of tokens to spend on thinking, use 0 to disable thinking |
+| `additional-model-request-headers` | List<String> | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_ANTHROPIC_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Anthropic.html">`ModelProvider.Anthropic`</a> for programmatic settings.
 
 ### <a href="about:blank#_bedrock"></a> Bedrock
@@ -70,8 +81,6 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Anthropic.html">`
 | `provider` | "bedrock" | Name of the provider. Must always be `bedrock` |
 | `region` | String | The region to be used, e.g. "us-east-1" |
 | `model-id` | String | The Bedrock model id, e.g. "ai21.jamba-1-5-large-v1:0" |
-| `send-thinking` | boolean | Send thinking can be enabled |
-| `return-thinking` | boolean | Return thinking can be enabled |
 | `max-output-tokens` | Integer | Max token *output* quota. Leave as –1 for model default |
 | `reasoning-token-budget` | Integer | Max reasoning token budget. Leave as –1 for model default |
 | `additional-model-request-fields` | Map<String, Object> | Send additional fields, e.g. *additional-model-request-fields.key=value* |
@@ -81,6 +90,7 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Anthropic.html">`
 | `max-tokens` | Integer | Maximum number of tokens to generate. Leave as –1 for model default |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `additional-model-request-headers` | List<String> | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_BEDROCK_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Bedrock.html">`ModelProvider.Bedrock`</a> for programmatic settings.
 
 ### <a href="about:blank#_gemini"></a> Gemini
@@ -97,6 +107,11 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Bedrock.html">`Mo
 | `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `thinking-budget` | Integer | A budget of tokens to spend on thinking for Gemini 2.5 models, set to "none" for other models. Can be –1 for dynamic budget, 0 for disabled, a positive value to define an upper limit for tokens spent on thinking. See [https://ai.google.dev/gemini-api/docs/thinking#set-budget](https://ai.google.dev/gemini-api/docs/thinking#set-budget) for details |
+| `thinking-level` | String | Control thinking for Gemini 3 models, exact values depend on the specific model chosen, must be empty for 2.5 models. See Google Gemini docs for more details: [https://ai.google.dev/gemini-api/docs/thinking#thinking-levels](https://ai.google.dev/gemini-api/docs/thinking#thinking-levels) |
+| `media-resolution` | String | Defines the level for media resolution. Possible values: `MEDIA_RESOLUTION_UNSPECIFIED`, `MEDIA_RESOLUTION_LOW`, `MEDIA_RESOLUTION_MEDIUM`, `MEDIA_RESOLUTION_HIGH`, `MEDIA_RESOLUTION_ULTRA_HIGH`. See [https://ai.google.dev/gemini-api/docs/media-resolution](https://ai.google.dev/gemini-api/docs/media-resolution) for details |
+| `media-resolution-per-part-enabled` | Boolean | When enabled, allows setting media resolution for individual media objects (like images) within your request |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_GOOGLE_AI_GEMINI_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.GoogleAIGemini.html">`ModelProvider.GoogleAIGemini`</a> for programmatic settings.
 
 ### <a href="about:blank#_hugging_face"></a> Hugging Face
@@ -113,6 +128,8 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.GoogleAIGemini.ht
 | `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `thinking` | Boolean | Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling. |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_HUGGING_FACE_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.HuggingFace.html">`ModelProvider.HuggingFace`</a> for programmatic settings.
 
 ### <a href="about:blank#_local_ai"></a> Local AI
@@ -125,6 +142,7 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.HuggingFace.html"
 | `temperature` | Float | Model randomness. The default is not supplied so check with the model documentation for default behavior |
 | `top-p` | Float | Nucleus sampling parameter |
 | `max-tokens` | Integer | Max number of tokens to generate (–1 for model default) |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_LOCAL_AI_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.LocalAI.html">`ModelProvider.LocalAI`</a> for programmatic settings.
 
 ### <a href="about:blank#_ollama"></a> Ollama
@@ -139,6 +157,8 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.LocalAI.html">`Mo
 | `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `think` | Boolean | Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling. |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_OLLAMA_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Ollama.html">`ModelProvider.Ollama`</a> for programmatic settings.
 
 ### <a href="about:blank#_openai"></a> OpenAI
@@ -156,7 +176,30 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Ollama.html">`Mod
 | `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `thinking` | Boolean | Enable thinking, only supported for DeepSeek. Make sure the chosen model supports thinking before enabling. |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_OPENAI_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.OpenAi.html">`ModelProvider.OpenAi`</a> for programmatic settings.
+
+### <a href="about:blank#_vertex_ai"></a> Vertex AI
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `provider` | "vertex-ai" | Name of the provider. Must always be `vertex-ai` |
+| `model-name` | String | The name of the model to use, e.g. "gemini-2.0-flash-001". See vendor documentation for a list of available models |
+| `api-key` | String | API key for authentication. Defaults to the value of the `VERTEX_AI_API_KEY` environment variable. Use either this or `project-id` + `location`, not both |
+| `project-id` | String | Google Cloud project ID. Used together with `location` for authentication via application default credentials. Use either this or `api-key`, not both |
+| `location` | String | Google Cloud region, e.g. "us-central1". Used together with `project-id` |
+| `base-url` | Url | Optional override to the base URL of the Vertex AI API |
+| `api-version` | String | Optional override for the API version |
+| `temperature` | Float | Model randomness. The default is not supplied so check with the model documentation for default behavior |
+| `top-p` | Float | Nucleus sampling parameter |
+| `thinking-budget` | Integer | Tokens to spend on thinking (0 to disable thinking) |
+| `max-output-tokens` | Integer | Max token *output* quota. Leave as –1 for model default |
+| `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
+| `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
+| `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `additional-model-request-headers` | List of String | Additional HTTP headers to include in each request to the model API, as a list of `"name:value"` strings. Can also be set via `ADDITIONAL_VERTEX_AI_REQUEST_HEADERS_N` environment variables |
+See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.VertexAi.html">`ModelProvider.VertexAi`</a> for programmatic settings.
 
 ## <a href="about:blank#_default_model_configuration"></a> Default model configuration
 
@@ -188,7 +231,7 @@ akka.javasdk {
     model-provider = anthropic
 
     anthropic {
-      model-name = "claude-sonnet-4"
+      model-name = "claude-opus-4-6"
       api-key = ${?ANTHROPIC_API_KEY}
       max-tokens = 5000
     }
@@ -196,6 +239,65 @@ akka.javasdk {
 }
 ```
 The API key can be defined with an environment variable, `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in the above examples.
+
+## <a href="about:blank#_additional_model_request_headers"></a> Additional model request headers
+
+All built in model providers support attaching extra HTTP headers to every request sent to the model API. This is useful for passing authentication tokens to an AI gateway or proxy, adding routing or tracing headers, or meeting any other header requirements imposed by the endpoint.
+
+### <a href="about:blank#_configuration"></a> Configuration
+
+Set a global default in `application.conf` as a HOCON list of `name:value` strings:
+
+```hocon
+akka.javasdk.agent.additional-model-request-headers = [
+  "X-Custom-Header:value",
+  "X-Custom-Header-2:value-2",
+]
+```
+All providers inherit this value automatically. You can override it for a specific provider:
+
+```hocon
+akka.javasdk.agent.openai.additional-model-request-headers = ["X-Custom-Header:value"]
+```
+
+### <a href="about:blank#_environment_variable"></a> Environment variable
+
+The global setting can also be supplied via environment variables, this is the recommended approach for secrets such as gateway tokens.
+
+Each header entry is a separate environment variable with an incrementing numeric suffix:
+
+```bash
+ADDITIONAL_MODEL_REQUEST_HEADERS_0="Authorization:Bearer mytoken"
+ADDITIONAL_MODEL_REQUEST_HEADERS_1="X-Custom-Header:value"
+```
+You can also set headers for a specific model provider using provider-specific environment variables. These replace the inherited global headers for that provider:
+
+| Provider | Environment variable prefix |
+| --- | --- |
+| `Anthropic` | `ADDITIONAL_ANTHROPIC_REQUEST_HEADERS_N` |
+| `OpenAI` | `ADDITIONAL_OPENAI_REQUEST_HEADERS_N` |
+| `Google AI Gemini` | `ADDITIONAL_GOOGLE_AI_GEMINI_REQUEST_HEADERS_N` |
+| `Google Cloud Vertex AI` | `ADDITIONAL_VERTEX_AI_REQUEST_HEADERS_N` |
+| `Ollama` | `ADDITIONAL_OLLAMA_REQUEST_HEADERS_N` |
+| `Local AI` | `ADDITIONAL_LOCAL_AI_REQUEST_HEADERS_N` |
+| `Hugging Face` | `ADDITIONAL_HUGGING_FACE_REQUEST_HEADERS_N` |
+| `Bedrock` | `ADDITIONAL_BEDROCK_REQUEST_HEADERS_N` |
+For example, to set a header only for Anthropic requests:
+
+```bash
+ADDITIONAL_ANTHROPIC_REQUEST_HEADERS_0="Authorization:Bearer mytoken"
+```
+
+### <a href="about:blank#_programmatic_override"></a> Programmatic override
+
+Headers can also be set directly in code, which overrides any configuration value for that model:
+
+```java
+ModelProvider.openAi()
+    .withApiKey(System.getenv("OPENAI_API_KEY"))
+    .withAdditionalModelRequestHeaders(
+        List.of(RawHeader.create("Authorization", "Bearer mygatewaytoken")));
+```
 
 ## <a href="about:blank#_reference_configurations"></a> Reference configurations
 
@@ -259,6 +361,10 @@ akka.javasdk.agent.anthropic {
   max-retries = 2
   # A maximum number of tokens to spend on thinking, use 0 to disable thinking
   thinking-budget-tokens = 0
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_ANTHROPIC_REQUEST_HEADERS[]}
 }
 ```
 
@@ -301,6 +407,10 @@ akka.javasdk.agent.bedrock {
   response-timeout = 1m
   # Retry this many times if the request to the model fails
   max-retries = 2
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_BEDROCK_REQUEST_HEADERS[]}
 }
 ```
 
@@ -317,7 +427,8 @@ akka.javasdk.agent.googleai-gemini {
   base-url = ""
   # Environment variable override for the API key
   api-key = ${?GOOGLE_AI_GEMINI_API_KEY}
-  # The name of the model to use, e.g. "gemini-2.0-flash", "gemini-1.5-flash", "gemini-1.5-pro" or "gemini-1.0-pro"
+  # The name of the model to use, e.g. "gemini-2.5-flash", "gemini-2.5-pro", etc
+  # The full list is at https://ai.google.dev/gemini-api/docs/models - select a model to find its "Model code"
   model-name = ""
   # Controls randomness in the model's output (0.0 to 1.0)
   temperature = NaN
@@ -343,6 +454,15 @@ akka.javasdk.agent.googleai-gemini {
   # Control thinking for Gemini 3 models, exact values depend on the specific model chosen, must be empty for 2.5 models
   # See Google Gemini docs for more details: https://ai.google.dev/gemini-api/docs/thinking#thinking-levels
   thinking-level = ""
+  # Defines the level for media resolution: https://ai.google.dev/gemini-api/docs/media-resolution
+  # Possible values: MEDIA_RESOLUTION_UNSPECIFIED, MEDIA_RESOLUTION_LOW, MEDIA_RESOLUTION_MEDIUM, MEDIA_RESOLUTION_HIGH, MEDIA_RESOLUTION_ULTRA_HIGH
+  media-resolution = "MEDIA_RESOLUTION_UNSPECIFIED"
+  # Media resolution for individual media objects (like images) within your request
+  media-resolution-per-part-enabled = false
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_GOOGLE_AI_GEMINI_REQUEST_HEADERS[]}
 }
 ```
 
@@ -376,8 +496,12 @@ akka.javasdk.agent.hugging-face {
   response-timeout = 1m
   # Retry this many times if the request to the model fails
   max-retries = 2
-  # Enable thinking, only supported for some models. Make sure the chosne model supports thinking before enabling.
+  # Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling.
   thinking = false
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_HUGGING_FACE_REQUEST_HEADERS[]}
 }
 ```
 
@@ -403,6 +527,10 @@ akka.javasdk.agent.local-ai {
   top-p = NaN
   # Maximum number of tokens to generate (-1 for model default)
   max-tokens = -1
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_LOCAL_AI_REQUEST_HEADERS[]}
 }
 ```
 
@@ -434,6 +562,10 @@ akka.javasdk.agent.ollama {
   max-retries = 2
   # Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling.
   think = false
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_OLLAMA_REQUEST_HEADERS[]}
 }
 ```
 
@@ -476,8 +608,118 @@ akka.javasdk.agent.openai {
   max-retries = 2
   # Enable thinking, only supported for deepseek. Make sure the chosen model supports thinking before enabling.
   thinking = false
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_OPENAI_REQUEST_HEADERS[]}
 }
 ```
+
+### <a href="about:blank#_vertex_ai_2"></a> Vertex AI
+
+```hocon
+# Configuration for large language models from Google Cloud Vertex AI https://cloud.google.com/vertex-ai
+akka.javasdk.agent.vertex-ai {
+  # The provider name, must be "vertex-ai"
+  provider = "vertex-ai"
+  # The Vertex AI model name, e.g. "gemini-2.0-flash-001"
+  model-name = ""
+  # The API key for authentication with Vertex AI
+  # If using this, the project-id and location must be empty.
+  api-key = ""
+  api-key = ${?VERTEX_AI_API_KEY}
+  # The Google Cloud project ID
+  # If defining a project-id, location should also be defined. The api-key must be empty and credentials provided through GOOGLE_APPLICATION_CREDENTIALS
+  project-id = ""
+  # The Google Cloud region, e.g. "us-central1"
+  location = ""
+  # Optional base URL override for the Vertex AI API
+  base-url = ""
+  # Optional API version override, if left undefined beta API versions are used, set to for example "v1" to use a stable API version
+  api-version = ""
+  # Controls randomness in the model's output (0.0 to 2.0)
+  temperature = NaN
+  # Nucleus sampling parameter (0.0 to 1.0). Controls text generation by
+  # only considering the most likely tokens whose cumulative probability
+  # exceeds the threshold value. It helps balance between diversity and
+  # quality of outputs—lower values (like 0.3) produce more focused,
+  # predictable text while higher values (like 0.9) allow more creativity
+  # and variation.
+  top-p = NaN
+  # Tokens to spend on thinking (0 to disable thinking)
+  thinking-budget = 0
+  # Maximum number of tokens to generate (-1 for model default)
+  max-output-tokens = -1
+  # Fail the request if connecting to the model API takes longer than this
+  connection-timeout = 15s
+  # Fail the request if getting a response from the model API takes longer than this
+  response-timeout = 1m
+  # Retry this many times if the request to the model fails
+  max-retries = 2
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_VERTEX_AI_REQUEST_HEADERS[]}
+}
+```
+
+### <a href="about:blank#_custom"></a> Custom
+
+If none of the built-in providers fit your needs, you can implement a custom model provider. Set the `provider` property to the fully qualified class name (FQCN) of your implementation.
+
+The custom class must implement the `ModelProvider.Custom` interface, which requires two methods: `createChatModel()` and `createStreamingChatModel()`. These should return instances of Langchain4j’s `ChatModel` and `StreamingChatModel` respectively. If streaming is not needed, `createStreamingChatModel()` can throw an exception. Overriding the `modelName()` method allows to pass this information to observability attributes.
+
+```hocon
+akka.javasdk {
+  agent {
+    model-provider = my-provider
+
+    my-provider {
+      # fully qualified class name of the provider implementation
+      provider = "com.example.application.MyModelProvider"
+      # additional settings
+      model-name = "gpt-4o-mini"
+      api-key = ""
+      api-key = ${?MY_PROVIDER_API_KEY}
+    }
+  }
+}
+```
+Any additional properties in the configuration section (such as `model-name` or `api-key`) are available to the provider implementation through an injected `Config` parameter.
+
+com/example/application/MyModelProvider.java
+```java
+public class MyModelProvider implements ModelProvider.Custom {
+
+  private final String modelName;
+
+  public MyModelProvider(Config config) { // (1)
+    modelName = config.getString("model-name");
+    //TODO model provider initialization based on injected config
+  }
+
+  @Override
+  public String modelName() {
+    return modelName;
+  }
+
+  @Override
+  public Object createChatModel() { // (2)
+    //TODO return ChatModel implementation
+    return null;
+  }
+
+  @Override
+  public Object createStreamingChatModel() { // (3)
+    //TODO return StreamingChatModel implementation
+    return null;
+  }
+}
+```
+
+| **1** | If the constructor accepts a `com.typesafe.config.Config` parameter, the full provider configuration section is injected automatically. A no-arg constructor is also supported. |
+| **2** | Return an instance of `dev.langchain4j.model.chat.ChatModel`. |
+| **3** | Return an instance of `dev.langchain4j.model.chat.StreamingChatModel`, or throw an exception if streaming is not needed. |
 
 <!-- <footer> -->
 <!-- <nav> -->

@@ -329,7 +329,7 @@ public class CallExternalGrpcEndpointImpl implements CallExternalGrpcEndpoint {
 Since the called service and the `DelegatingGrpcEndpoint` share the same request and response protocol, no further transformation
 of the request or response is needed here.
 
-The service is expected to accept HTTPS connections and run on the standard HTTPS port // (443). For calling a service on a nonstandard
+The service is expected to accept HTTPS connections and run on the standard HTTPS port (443). For calling a service on a nonstandard
 port, or served unencrypted (not recommended) it is possible to define configuration overrides in `application.conf` (or `application-test.conf` specifically for tests):
 
 [application.conf](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/resources/application.conf)
@@ -344,7 +344,7 @@ akka.javasdk.grpc.client."hellogrpc.example.com" {
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Integrations](integrations/index.html) [Message broker integrations](message-brokers.html)
+[Integrations](integrations/index.html) [AI & models](integrations/ai-and-models.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

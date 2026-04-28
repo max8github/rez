@@ -9,7 +9,7 @@
 
 # Exporting metrics, logs, and traces
 
-Akka supports exporting metrics, logs, and traces to a variety of different destinations for reporting, long term storage and alerting. Metrics, logs, and traces can either be exported to the same location, by configuring a default exporter, or to different locations by configuring separate logging, metrics, and tracing exporters. Only one exporter for each may be configured.
+Akka supports exporting metrics, logs, and traces to a variety of different destinations for reporting, long term storage and alerting. Metrics, logs, and traces can either be exported to the same location, by configuring default exporters, or to different locations by configuring separate logging, metrics, and tracing exporters. Multiple exporters can be configured for each category, allowing you to send the same data to multiple destinations simultaneously.
 
 Observability configuration is configured per Akka project. All services in that project will use the same observability config. Configuration can either be done by specifying an observability descriptor, or by running CLI commands.
 
@@ -33,12 +33,27 @@ akka project observability export
 This will write the observability YAML descriptor out to standard out. If preferred, the `-f` argument can be used to specify a file to write the descriptor out to.
 
 ```yaml
-exporter:
-  kalixConsole: {}
-logs: {}
-metrics: {}
-traces: {}
+resource: Observability
+resourceVersion: v2
+spec:
+  exporters:
+    - kalixConsole: {}
+  logs:
+    - googleCloud:
+        serviceAccountKeySecret:
+          name: gcp-credentials
+    - kalixConsole: {}
+  metrics: []
+  traces: []
 ```
+In this example:
+
+- The `exporters` section defines default exporters applied to logs, metrics, and traces.
+- The `logs` section overrides the default exporters for logs. It configures both a Google Cloud exporter and the Akka Console exporter. Without explicitly including `kalixConsole` here, logs would only be sent to Google Cloud.
+- The `metrics` and `traces` sections are empty arrays, meaning they use the default exporters.
+Each section (`exporters`, `logs`, `metrics`, `traces`) accepts an array of exporter configurations, allowing multiple destinations. When a specific `logs`, `metrics`, or `traces` section is defined, it **replaces** the default exporters for that category. To continue sending data to a default destination, you must include it in the specific section as well. An empty array (`[]`) means the category falls back to the default exporters.
+
+|  | All configuration details are listed in [Observability Descriptor reference](../../reference/descriptors/observability-descriptor.html). |
 
 ### <a href="about:blank#_updating_the_observability_configuration"></a> Updating the observability configuration
 
@@ -82,11 +97,18 @@ Another possible use is to add a `traceparent` header when calling your Akka end
 
 By default, Akka filters traces and exports them to your Akka Console. You’ll get 1% of the traces produced by your services. You can adjust this percentage according to your needs.
 
-This filtering is known as [head sampling](https://opentelemetry.io/docs/concepts/sampling/#head-sampling). To configure it, you need to set your observability descriptor as follows and [update the observability configuration](about:blank#_updating_the_observability_configuration):
+This filtering is known as [head sampling](https://opentelemetry.io/docs/concepts/sampling/#head-sampling). Sampling is configured at the top level of the observability descriptor using `traceSampling` and applies to all configured trace exporters. To configure it, set your observability descriptor as follows and [update the observability configuration](about:blank#_updating_the_observability_configuration):
 
 ```yaml
-traces:
-  sampling:
+resource: Observability
+resourceVersion: v2
+spec:
+  exporters:
+    - kalixConsole: {}
+  traces:
+    - otlp:
+        endpoint: traces.example.com:4317
+  traceSampling:
     probabilistic:
       percentage: "2"
 ```
@@ -99,9 +121,36 @@ The Akka observability configuration can also be updated using commands. To view
 ```command
 akka project observability get
 ```
-To change configuration, the `set` command can be used. To change the default exporter for both logs and metrics, use `set default`, to change the exporter just for metrics, use `set metrics`, and to change the exporter just for logs, use `set logs`.
 
-When using the `set` command, the default, logs or metrics exporter configuration will be completely replaced. It’s important to include the full configuration for that exporter when you run the command. For example, if you run `akka project observability set default otlp --endpoint otlp.example.com:4317`, and then you want to add a header, you must include the `--endpoint` flag when setting the header.
+### <a href="about:blank#_adding_exporters"></a> Adding exporters
+
+To add an exporter to the configuration, use the `add` command. This appends the exporter to the existing configuration without removing any previously configured exporters.
+
+```command
+akka project observability add default otlp --endpoint otlp.example.com:4317
+akka project observability add logs google-cloud --service-account-key-secret gcp-credentials
+akka project observability add metrics prometheus --endpoint https://prometheus.example.com/api/v1/push
+akka project observability add traces otlp --endpoint traces.example.com:4317
+```
+
+### <a href="about:blank#_removing_exporters"></a> Removing exporters
+
+To remove an exporter from the configuration, use the `remove` command.
+
+```command
+akka project observability remove default otlp --endpoint otlp.example.com:4317
+akka project observability remove logs google-cloud --service-account-key-secret gcp-credentials
+```
+
+### <a href="about:blank#_replacing_all_exporters"></a> Replacing all exporters
+
+To completely replace all exporters for a category, use the `set` command. This removes all existing exporters in the specified category and replaces them with the new configuration.
+
+```command
+akka project observability set default otlp --endpoint otlp.example.com:4317
+```
+
+|  | When using the `set` command, all existing exporters in that category (default, logs, metrics, or traces) will be removed and replaced with the new exporter. Use `add` if you want to keep existing exporters. |
 
 ## <a href="about:blank#_supported_exporters"></a> Supported exporters
 
@@ -113,12 +162,12 @@ The Akka Console is the default destination for metrics and traces. It provides 
 
 Descriptor
 ```yaml
-default:
-  kalixConsole: {}
+exporters:
+  - kalixConsole: {}
 ```
 CLI
 ```command
-akka project observability set default akka-console
+akka project observability add default akka-console
 ```
 
 ### <a href="about:blank#_otlp"></a> OTLP
@@ -127,15 +176,48 @@ OTLP is the gRPC based protocol used by OpenTelemetry. It is supported for logs,
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4317
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4317
 ```
 CLI
 ```command
-akka project observability set default otlp --endpoint otlp.example.com:4317
+akka project observability add default otlp --endpoint otlp.example.com:4317
 ```
 In addition, the OTLP exporter supports [TLS configuration](about:blank#_tls_configuration) and [custom headers](about:blank#_custom_headers). A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_observabilityotlp).
+
+### <a href="about:blank#_otlp_http"></a> OTLP HTTP
+
+OTLP HTTP is the HTTP-based protocol used by OpenTelemetry, as an alternative to the gRPC-based OTLP exporter. It is supported for logs, metrics, and traces. This exporter is useful in environments where HTTP is preferred over gRPC, such as when behind proxies or firewalls that don’t support HTTP/2.
+
+The primary piece of configuration it needs is a base URL endpoint. The exporter will automatically append the appropriate path for logs, metrics, or traces (e.g., `/v1/logs`, `/v1/metrics`, `/v1/traces`).
+
+Descriptor
+```yaml
+exporters:
+  - otlpHttp:
+      endpointBaseUrl: https://otlp.example.com:4318
+```
+CLI
+```command
+akka project observability add default otlp-http --endpoint-base-url https://otlp.example.com:4318
+```
+By default, the exporter uses Protobuf encoding. To use JSON encoding instead:
+
+Descriptor
+```yaml
+exporters:
+  - otlpHttp:
+      endpointBaseUrl: https://otlp.example.com:4318
+      encoding: json
+```
+CLI
+```command
+akka project observability add default otlp-http \
+  --endpoint-base-url https://otlp.example.com:4318 \
+  --encoding json
+```
+In addition, the OTLP HTTP exporter supports [TLS configuration](about:blank#_tls_configuration) and [custom headers](about:blank#_custom_headers). A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_observabilityotlphttp).
 
 ### <a href="about:blank#_prometheus_remote_write"></a> Prometheus Remote Write
 
@@ -144,12 +226,12 @@ The Prometheus remote write protocol is supported for exporting metrics. It is g
 Descriptor
 ```yaml
 metrics:
-  prometheuswrite:
-    endpoint: https://prometheus.example.com/api/v1/push
+  - prometheuswrite:
+      endpoint: https://prometheus.example.com/api/v1/push
 ```
 CLI
 ```command
-akka project observability set metrics prometheus --endpoint https://prometheus.example.com/api/v1/push
+akka project observability add metrics prometheus --endpoint https://prometheus.example.com/api/v1/push
 ```
 In addition, the Prometheus exporter supports [TLS configuration](about:blank#_tls_configuration) and [custom headers](about:blank#_custom_headers). A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_observabilityprometheuswrite).
 
@@ -159,20 +241,38 @@ The Splunk HTTP Event Collector protocol is supported for exporting both metrics
 
 Descriptor
 ```yaml
-default:
-  splunkHec:
-    endpoint: https://<my-trial-instance>.splunkcloud.com:8088/services/collector
-    tokenSecret:
-      name: my-splunk-token
-      key: token
+exporters:
+  - splunkHec:
+      endpoint: https://<my-trial-instance>.splunkcloud.com:8088/services/collector
+      tokenSecret:
+        name: my-splunk-token
+        key: token
 ```
 CLI
 ```command
-akka project observability set default splunk-hec \
+akka project observability add default splunk-hec \
   --endpoint https://<my-trial-instance>.splunkcloud.com:8088/services/collector \
   --token-secret-name my-splunk-token --token-secret-key token
 ```
 In addition, the Splunk HEC exporter supports [TLS configuration](about:blank#_tls_configuration). A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_observabilitysplunkhec).
+
+### <a href="about:blank#_azure_monitor"></a> Azure Monitor
+
+Azure Monitor is supported for exporting logs, metrics, and traces. The primary piece of configuration it needs is an Azure Monitor connection string, which can be obtained from your Application Insights resource in the Azure portal.
+
+|  | Replace the `XXXXXXXX` placeholder values with the actual values from your Azure Application Insights connection string. |
+Descriptor
+```yaml
+exporters:
+  - azureMonitor:
+      connectionString: InstrumentationKey=XXXXXXXX;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=XXXXXXXX
+```
+CLI
+```command
+akka project observability add default azure-monitor \
+  --connection-string "InstrumentationKey=XXXXXXXX;IngestionEndpoint=https://centralus-2.in.applicationinsights.azure.com/;LiveEndpoint=https://centralus.livediagnostics.monitor.azure.com/;ApplicationId=XXXXXXXX"
+```
+A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_observabilityazuremonitor).
 
 ### <a href="about:blank#_google_cloud"></a> Google Cloud
 
@@ -213,14 +313,14 @@ Now that you have configured service account, granted it the necessary roles, cr
 
 Descriptor
 ```yaml
-default:
-  googleCloud:
-    serviceAccountKeySecret:
-      name: gcp-credentials
+exporters:
+  - googleCloud:
+      serviceAccountKeySecret:
+        name: gcp-credentials
 ```
 CLI
 ```command
-akka project observability set default google-cloud --service-account-key-secret gcp-credentials
+akka project observability add default google-cloud --service-account-key-secret gcp-credentials
 ```
 
 ## <a href="about:blank#_common_exporter_configuration"></a> Common exporter configuration
@@ -231,62 +331,62 @@ TLS configuration for multiple different exporters can be configured. To turn of
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    tls:
-      insecure: true
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      tls:
+        insecure: true
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 --insecure
 ```
 To skip verifying server certificates, use insecure skip verify:
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    tls:
-      insecureSkipVerify: true
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      tls:
+        insecureSkipVerify: true
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 --insecure-skip-verify
 ```
 To specify a custom CA to verify server certificates, use the server CA property, pointing to an Akka CA secret:
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    tls:
-      caSecret:
-        name: my-ca
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      tls:
+        caSecret:
+          name: my-ca
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 --server-ca-secret my-ca
 ```
 To specify a client certificate to use to authenticate with a remote server, you can use the client certificate property, pointing to an Akka TLS secret:
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    tls:
-      clientCertSecret:
-        name: my-client-certificate
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      tls:
+        clientCertSecret:
+          name: my-client-certificate
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 \
   --client-cert-secret my-client-certificate
 ```
@@ -299,16 +399,16 @@ To specify a static header:
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    headers:
-    - name: X-My-Header
-      value: some-value
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      headers:
+        - name: X-My-Header
+          value: some-value
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 \
   --header X-My-Header=some-value
 ```
@@ -316,19 +416,19 @@ To set a header value from a secret:
 
 Descriptor
 ```yaml
-default:
-  otlp:
-    endpoint: otlp.example.com:4137
-    headers:
-    - name: X-Token
-      valueFrom:
-        secretKeyRef:
-          name: my-token
-          key: token
+exporters:
+  - otlp:
+      endpoint: otlp.example.com:4137
+      headers:
+        - name: X-Token
+          valueFrom:
+            secretKeyRef:
+              name: my-token
+              key: token
 ```
 CLI
 ```command
-akka project observability set default otlp \
+akka project observability add default otlp \
   --endpoint otlp.example.com:4137 \
   --header-secret X-Token=my-token/token
 ```
@@ -344,6 +444,7 @@ This will show the observability agent logs for all instances of the service. An
 
 ## <a href="about:blank#_see_also"></a> See also
 
+- [Observability Descriptor reference](../../reference/descriptors/observability-descriptor.html)
 - <a href="../../reference/cli/akka-cli/akka_projects_observability.html#_see_also">`akka project observability` commands</a>
 - [Exported metrics reference](../../reference/telemetry/metrics.html)
 

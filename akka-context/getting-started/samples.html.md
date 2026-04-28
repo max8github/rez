@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../index.html)
-- [Tutorials](index.html)
+- [Getting started & Tutorials](index.html)
 - [Additional samples](samples.html)
 
 <!-- </nav> -->
@@ -9,7 +9,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 In addition to our getting started guides and SDK reference material, we also have many samples available that demonstrate important patterns and abstractions. Full sources for the samples can be downloaded with `akka code init` or cloned from their respective GitHub repositories. Please refer to the `README` file in each repository for setup and usage instructions.
 
 It is also possible to deploy a pre-built sample project in [the Akka console](https://console.akka.io/), eliminating the need for local development.

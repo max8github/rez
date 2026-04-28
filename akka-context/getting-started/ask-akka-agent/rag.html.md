@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [RAG chat agent](index.html)
 - [Executing RAG queries](rag.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -56,7 +56,7 @@ public class Knowledge {
     var contentRetriever = EmbeddingStoreContentRetriever.builder() // (1)
       .embeddingStore(MongoDbUtils.embeddingStore(mongoClient))
       .embeddingModel(OpenAiUtils.embeddingModel())
-      .maxResults// (10)
+      .maxResults(10)
       .minScore(0.1)
       .build();
 

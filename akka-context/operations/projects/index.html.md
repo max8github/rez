@@ -31,6 +31,7 @@ Akka services are deployed to *Projects* within an [organization](../organizatio
   - [AWS MSK Kafka](broker-aws-msk.html)
   - [Confluent Cloud](broker-confluent.html)
   - [Google Pub/Sub](broker-google-pubsub.html)
+  - [Azure Event Hubs](broker-azure-eventhubs.html)
 - [Manage secrets](secrets.html)
 
 <!-- <footer> -->

@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Multi-agent planner](index.html)
 - [Dynamic orchestration](dynamic-team.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -235,7 +235,7 @@ public class PlannerAgent extends Agent {
 }
 ```
 
-| **1** | Lookup the agent information for the selected agents from the `AgentRegistry. |
+| **1** | Lookup the agent information for the selected agents from the `AgentRegistry`. |
 | **2** | Detailed instructions and include descriptions (as json) of the agents. |
 The result from the `PlannerAgent` is a `Plan` with a list of `PlanStep`.
 
@@ -380,11 +380,13 @@ public class AgentTeamWorkflow extends Workflow<AgentTeamWorkflow.State> { // (1
   @Override
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
-      .defaultStepTimeout(ofSeconds// (30))
-      .defaultStepRecovery(maxRetries// (1).failoverTo(AgentTeamWorkflow::interruptStep))
+      .defaultStepTimeout(ofSeconds(30))
+      .defaultStepRecovery(
+        RecoverStrategy.maxRetries(1).failoverTo(AgentTeamWorkflow::interruptStep)
+      )
       .stepRecovery(
         AgentTeamWorkflow::selectAgentsStep,
-        maxRetries// (1).failoverTo(AgentTeamWorkflow::summarizeStep)
+        RecoverStrategy.maxRetries(1).failoverTo(AgentTeamWorkflow::summarizeStep)
       )
       .build();
   }
@@ -534,7 +536,7 @@ public class AgentTeamWorkflow extends Workflow<AgentTeamWorkflow.State> { // (1
     var finalAnswer = notificationPublisher.publishTokenStream(
       tokenSource,
       10,
-      ofMillis// (200),
+      ofMillis(200),
       AgentTeamNotification.LlmResponseDelta::new,
       materializer
     );

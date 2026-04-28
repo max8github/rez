@@ -8,10 +8,10 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../getting-started/author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../getting-started/spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 The Akka SDK provides you proven design patterns that enable your apps to remain responsive to change. It frees you from infrastructure concerns and lets you focus on the application logic.
 
-With its few, concise components, the Akka SDK is easy to learn, and you can develop services in quick, iterative steps by running your code locally with full insight through Akka’s console.
+With its few, concise components, the Akka SDK is easy to learn. You can develop services in quick, iterative steps by running your code locally with full insight through Akka’s console. Or even better, you can use [Spec-driven development](spec-driven-development.html) to turn natural-language specifications into code.
 
 Akka services let you build REST endpoints with flexible access control and multiple ways to expose these endpoints to their consuming systems or applications. Akka is secure by default, and you explicitly express the desired access through code and configuration.
 
@@ -21,21 +21,15 @@ Data and changes to it are managed by Akka’s runtime without the need to manag
 
 Integrations with message systems like Kafka are already built-in and the Akka SDK enables message consumers to listen to topics and queues.
 
-## <a href="about:blank#_prerequisites"></a> Prerequisites
-
-The following are required to develop services with the Akka SDK:
-
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
-- [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
-- <a href="https://curl.se/download.html">`curl` command-line tool</a>
-- [Docker Engine](https://docs.docker.com/get-started/get-docker/) 27 or later
-
 ## <a href="about:blank#_getting_started"></a> Getting Started
 
-Follow [Build your first agent](../getting-started/author-your-first-service.html) to implement your first agentic service. If you prefer to first explore working example code, you can check out [A simple shopping cart service](../getting-started/shopping-cart/build-and-deploy-shopping-cart.html) or our other [samples](../getting-started/samples.html).
+Create your first Akka agent with your AI assistant using Spec-driven development following our instructions to [Build your first agent with Spec-Driven Development](../getting-started/spec-your-first-agent.html).
+
+For manually coding your first Akka agent, follow [Build your first agent](../getting-started/author-your-first-service.html) to implement your first agentic service. If you prefer to first explore working example code, you can check out [A simple shopping cart service](../getting-started/shopping-cart/build-and-deploy-shopping-cart.html) or our other [samples](../getting-started/samples.html).
 
 On the other hand, if you would rather spend some time exploring our documentation, here are some main features you will find in this section:
 
+- [Spec-driven development](spec-driven-development.html)
 - [Agents](agents.html)
 - [Event Sourced Entities](event-sourced-entities.html)
 - [Key Value Entities](key-value-entities.html)
@@ -49,7 +43,7 @@ On the other hand, if you would rather spend some time exploring our documentati
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Access control lists](../concepts/acls.html) [Components](components/index.html)
+[Governance & the runtime](../concepts/governance-and-the-runtime.html) [Spec-driven development](spec-driven-development.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [RAG chat agent](index.html)
 
 <!-- </nav> -->
@@ -9,7 +9,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 This tutorial walks through building a Retrieval-Augmented Generation (RAG) chat agent. We start with a simple agent that streams responses from a large language model (LLM), and add retrieval functionality in separate parts of the tutorial. By the end, we will have an agent that uses the latest Akka documentation as its knowledge base, accessible through a web UI.
 
 1. [Creating the agent](the-agent.html) — A streaming Agent that answers questions using an LLM and session memory.

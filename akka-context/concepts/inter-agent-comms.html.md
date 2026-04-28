@@ -102,7 +102,7 @@ It might seem like trivial semantics, but when you see A2A and ACP, you should t
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Building AI agents](ai-agents.html) [AI orchestration patterns](ms-agent-patterns.html)
+[AI Agents](ai-agents.html) [AI orchestration patterns](ms-agent-patterns.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

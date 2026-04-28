@@ -39,7 +39,7 @@ Example with `limitedWindow` memory provider:
 ```java
 public Effect<String> ask(String question) {
   return effects()
-    .memory(MemoryProvider.limitedWindow().readLast// (5))
+    .memory(MemoryProvider.limitedWindow().readLast(5))
     .systemMessage("You are a helpful...")
     .userMessage(question)
     .thenReply();
@@ -312,7 +312,7 @@ public class CompactionAgent extends Agent {
         ModelProvider.openAi()
           .withModelName("gpt-4o-mini")
           .withApiKey(System.getenv("OPENAI_API_KEY"))
-          .withMaxTokens// (1000)
+          .withMaxTokens(1000)
       )
       .systemMessage(SYSTEM_MESSAGE)
       .userMessage(concatenatedMessages)
@@ -360,21 +360,32 @@ public class SessionMemoryConsumer extends Consumer {
             .method(SessionMemoryEntity::getHistory) // (2)
             .invoke(new SessionMemoryEntity.GetHistoryCmd());
 
-          var summary = componentClient
+          AgentReply<CompactionAgent.Result> summaryReply = componentClient
             .forAgent()
             .inSession(sessionId)
             .method(CompactionAgent::summarizeSessionHistory) // (3)
+            .withDetailedReply()
             .invoke(history);
 
           var now = Instant.now();
+          var tokenUsage = new SessionMessage.TokenUsage(
+            summaryReply.tokenUsage().inputTokens(),
+            summaryReply.tokenUsage().outputTokens()
+          );
+
           componentClient
             .forEventSourcedEntity(sessionId)
             .method(SessionMemoryEntity::compactHistory) // (4)
             .invoke(
               new SessionMemoryEntity.CompactionCmd(
-                new SessionMessage.UserMessage(now, summary.userMessage(), ""),
-                new SessionMessage.AiMessage(now, summary.aiMessage(), ""),
-                history.sequenceNumber() // (5)
+                new SessionMessage.UserMessage(now, summaryReply.value().userMessage(), ""),
+                new SessionMessage.AiMessage(
+                  now,
+                  summaryReply.value().aiMessage(),
+                  "",
+                  tokenUsage
+                ), // (5)
+                history.sequenceNumber() // (6)
               )
             );
         }
@@ -392,7 +403,8 @@ public class SessionMemoryConsumer extends Consumer {
 | **2** | Retrieve the full history from the `SessionMemoryEntity`. |
 | **3** | Call the agent to make the summary. |
 | **4** | Store the summary as the new compacted history in the `SessionMemoryEntity`. |
-| **5** | To support concurrent updates, the `sequenceNumber` of the retrieved history is included in the `CompactionCmd`. |
+| **5** | Set token usage for the AiMessage based on compaction summary reply. |
+| **6** | To support concurrent updates, the `sequenceNumber` of the retrieved history is included in the `CompactionCmd`. |
 
 ## <a href="about:blank#_multi_region_replication"></a> Multi-region replication
 

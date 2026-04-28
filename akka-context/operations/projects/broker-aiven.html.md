@@ -37,7 +37,7 @@ akka config get-project
 ```command
 akka secret create tls-ca kafka-ca-cert --cert ./ca.pem
 ```
-5. Copy the CA password from the "Connection Information" and store it in an Akka secret (e.g. called `kafka-secret`)
+5. Copy the SASL password from the "Connection Information" and store it in an Akka secret (e.g. called `kafka-secret`)
 
 ```command
 akka secret create generic kafka-secret --literal pwd=<the password>
@@ -70,7 +70,7 @@ To create a topic, you can either use the Aiven console, or the Aiven CLI.
 Browser Instructions from Aiven’s [Creating an Apache Kafka topic](https://docs.aiven.io/docs/products/kafka/howto/create-topic)
 
 1. Open the [Aiven Console](https://console.aiven.io/).
-2. In the Services page, click on the Aiven for Apache Kafka® service where you want to crate the topic.
+2. In the Services page, click on the Aiven for Apache Kafka® service where you want to create the topic.
 3. Select the Topics tab:
 
   1. In the Add new topic section, enter a name for your topic.
@@ -110,7 +110,7 @@ See [Testing Akka eventing](message-brokers.html#_testing)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[AWS MSK Kafka](broker-aws-msk.html) [Manage secrets](secrets.html)
+[AWS MSK Kafka](broker-aws-msk.html) [Azure Event Hubs](broker-azure-eventhubs.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

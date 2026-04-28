@@ -1,0 +1,20 @@
+{
+  "agents_md": {
+    "etag": "\"67a0-64fa5b0c5299b\"",
+    "last_modified": "Fri, 17 Apr 2026 10:48:34 GMT",
+    "downloaded_at": "2026-04-28T12:25:34Z",
+    "source_url": "https://doc.akka.io/_attachments/AGENTS.md"
+  },
+  "claude_md": {
+    "etag": "\"1299-64fa5b0c52d83\"",
+    "last_modified": "Fri, 17 Apr 2026 10:48:34 GMT",
+    "downloaded_at": "2026-04-28T12:25:32Z",
+    "source_url": "https://doc.akka.io/_attachments/CLAUDE.md"
+  },
+  "context": {
+    "etag": "\"fdcfa-64fa5d235ed97\"",
+    "last_modified": "Fri, 17 Apr 2026 10:57:55 GMT",
+    "downloaded_at": "2026-04-28T12:25:14Z",
+    "source_url": "https://doc.akka.io/java/_attachments/akka-docs-md.zip"
+  }
+}

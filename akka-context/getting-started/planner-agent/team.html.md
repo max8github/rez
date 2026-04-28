@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Multi-agent planner](index.html)
 - [Orchestrate the agents](team.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -41,6 +41,7 @@ import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.StepName;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.workflow.Workflow;
+import akka.javasdk.workflow.Workflow.RecoverStrategy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -83,9 +84,9 @@ public class AgentTeamWorkflow extends Workflow<AgentTeamWorkflow.State> {
   @Override
   public WorkflowSettings settings() {
     return WorkflowSettings.builder()
-      .stepTimeout(AgentTeamWorkflow::askWeather, ofSeconds// (60))
-      .stepTimeout(AgentTeamWorkflow::suggestActivities, ofSeconds// (60))
-      .defaultStepRecovery(maxRetries// (2).failoverTo(AgentTeamWorkflow::error))
+      .stepTimeout(AgentTeamWorkflow::askWeather, ofSeconds(60))
+      .stepTimeout(AgentTeamWorkflow::suggestActivities, ofSeconds(60))
+      .defaultStepRecovery(RecoverStrategy.maxRetries(2).failoverTo(AgentTeamWorkflow::error))
       .build();
   }
 

@@ -203,7 +203,6 @@ This example assumes a Customer equal to the previous example and an Event Sourc
 
 [CustomerEvent.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/main/java/customer/domain/CustomerEvent.java)
 ```java
-import akka.javasdk.annotations.Migration;
 import akka.javasdk.annotations.TypeName;
 
 public sealed interface CustomerEvent {
@@ -236,19 +235,27 @@ Every time an event is processed by the view, the state of the view can be updat
 import akka.javasdk.annotations.Component;
 import akka.javasdk.annotations.Consume;
 import akka.javasdk.annotations.Query;
+import akka.javasdk.annotations.SnapshotHandler;
 import akka.javasdk.view.TableUpdater;
 import akka.javasdk.view.View;
+import customer.domain.Customer;
 import customer.domain.CustomerEntries;
 import customer.domain.CustomerEntry;
 import customer.domain.CustomerEvent;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(id = "customers-by-name") // (1)
 public class CustomersByNameView extends View {
 
+  private static final Logger logger = LoggerFactory.getLogger(CustomersByNameView.class);
+
   @Consume.FromEventSourcedEntity(CustomerEntity.class)
   public static class CustomersByNameUpdater extends TableUpdater<CustomerEntry> { // (2)
 
+
     public Effect<CustomerEntry> onEvent(CustomerEvent event) { // (3)
+      logger.info("onEvent [{}]", event);
       return switch (event) {
         case CustomerEvent.CustomerCreated created -> effects()
           .updateRow(new CustomerEntry(created.email(), created.name(), created.address()));
@@ -268,18 +275,35 @@ public class CustomersByNameView extends View {
 ```
 
 | **1** | Defines a component id for the view. |
-| **2** | Declares a `TableUpdater` of type `CustomerRow`. |
+| **2** | Declares a `TableUpdater` of type `CustomerEntry`. |
 | **3** | Handles the super type `CustomerEvent` and defines the proper update row method for each subtype. |
 
 ### <a href="about:blank#_ignoring_events"></a> Ignoring events
 
-You can ignore events by returning `Effect.ignore` for those you are not interested in. Using a `sealed interface` for the events is a good practice to ensure that all events types are handled.
+You can ignore events by returning `effects().ignore()` for those you are not interested in. Using a `sealed interface` for the events is a good practice to ensure that all events types are handled.
 
 ### <a href="about:blank#es_delete"></a> Handling Event Sourced Entity deletes
 
 When an entity is deleted, its corresponding view row will be deleted automatically.
 
 If you want to customize this behavior, you can add a handler method marked with `@DeleteHandler` to your table updater. For example, instead of deleting the row, you can perform a logical deleted.
+
+### <a href="about:blank#_starting_from_snapshot"></a> Starting from Snapshot
+
+A View that processes events from an Event Sourced Entity can optionally define a `@SnapshotHandler` method to receive entity snapshots. This can provide significant performance improvements when a new view needs to catch up on a long event history.
+
+When a `@SnapshotHandler` is defined in the `TableUpdater`, the view will start processing from the most recent snapshot instead of replaying historical events. After processing the snapshot, subsequent events are processed normally.
+
+[CustomersByNameView.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/main/java/customer/application/CustomersByNameView.java)
+```java
+@SnapshotHandler
+public Effect<CustomerEntry> onSnapshot(Customer snapshot) {
+  logger.info("onSnapshot [{}]", snapshot);
+  return effects()
+    .updateRow(new CustomerEntry(snapshot.email(), snapshot.name(), snapshot.address()));
+}
+```
+The `@SnapshotHandler` annotation marks the method that will receive entity snapshots. The parameter type must match the state type of the Event Sourced Entity.
 
 ## <a href="about:blank#workflow"></a> Creating a View from a Workflow
 
@@ -437,6 +461,12 @@ Rebuilding a new View may take some time if there are many events that have to b
 The View definitions are stored and validated when a new version is deployed. There will be an error message if the changes are not compatible.
 
 |  | Views from topics cannot be rebuilt from the source messages, because it might not be possible to consume all events from the topic again. The new View is built from new messages published to the topic. |
+
+## <a href="about:blank#at-least-once-delivery"></a> Delivery semantics and deduplication
+
+All Views based on Event Sourced Entities, Key Value Entities and Workflows use exactly-once delivery semantics. It means that there is a build in deduplication mechanism based on [sequence number](dev-best-practices.html#_sequence_number_tracking) tracking.
+
+|  | For Views based on Key Value Entities, while the deduplication mechanism ensures exactly-once processing, it does not guarantee that all intermediate state changes will be delivered to the View. Due to the nature of Key Value Entities, only the latest state is guaranteed to be reflected in the View. If a Key Value Entity is updated multiple times in quick succession, some intermediate states may be skipped during restarts or rebalances. |
 
 ## <a href="about:blank#_testing_the_view"></a> Testing the View
 

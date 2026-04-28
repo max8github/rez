@@ -1,6 +1,6 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Tutorials](../index.html)
+- [Getting started & Tutorials](../index.html)
 - [Shopping cart](index.html)
 - [Authenticated user-specific lookup](addview.html)
 
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent](../author-your-first-service.html) guide to get a simple agentic service running locally and interact with it. |
+Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 This guide walks you through the design and implementation of an enhancement to the shopping cart service example, illustrating model refactoring, the use of Views, and user authentication.
 
 ## <a href="about:blank#_overview"></a> Overview

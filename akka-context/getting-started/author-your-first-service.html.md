@@ -1,49 +1,16 @@
 <!-- <nav> -->
 - [Akka](../index.html)
-- [Tutorials](index.html)
+- [Getting started & Tutorials](index.html)
 - [Hello world agent](author-your-first-service.html)
 
 <!-- </nav> -->
 
 # Build your first agent
 
+|  | The recommended way to build your first agent is with [Spec-Driven Development](spec-your-first-agent.html). The tutorial below walks through the manual, hands-on Java approach — ideal for understanding how Akka components work under the hood. |
+
 ## <a href="about:blank#_introduction"></a> Introduction
 
-Akka is a framework, runtime, and memory store for autonomous, adaptive agentic systems. Akka is delivered as an SDK and platform that can execute on any infrastructure, anywhere.
-
-![Akka Agentic Platform](../concepts/_images/akka-agentic-platform.png)
-
-
-Developers create services built with *Akka components* that - when deployed - become agentic systems. Services can be tested locally or within a Continuous Integration/Continuous Delivery (CI/CD) practice using a *Testkit* that is available with each Akka component. Your services are compiled into a binary that includes the *Akka Runtime* which enables your services to self-cluster for scale and resilience. *Akka clusters* are able to execute on any infrastructure whether bare metal, Kubernetes, Docker or edge. Optionally, add *Akka Automated Operations* to gain multi-region failover, auto-elasticity, persistence oversight, multi-tenant services, and certificate rotation. *Akka Automated Operations* has two deployment options: our serverless cloud or your virtual private cloud (VPC).
-
-| Product | Where To Start |
-| --- | --- |
-| Akka Orchestration | Akka provides a durable execution engine which automatically captures state at every step, and in the event of failure, can pick up exactly where they left off. No lost progress, no orphaned processes, and no manual recovery required.
-
-You implement orchestration by creating an Akka service with the [Workflow](../sdk/workflows.html) component. |
-| Akka Agents | Akka provides a development framework and runtime for agents. Agents can be stateful (durable memory included) or stateless. Agents can be invoked by other Akka components or run autonomously. Agents can transact with embedded tools, MCP servers, or any 3rd party data source with 100s of Akka connectors.
-
-You implement an agent by creating an Akka service with the [Agent](../sdk/agents.html) component.
-
-You implement a tool in a regular Java class or embedded within the [Agent](../sdk/agents.html) component.
-
-You implement an MCP server with the [MCP Endpoint](../sdk/mcp-endpoints.html) component.
-
-You implement APIs that can front an agent with the [HTTP Endpoint](../sdk/http-endpoints.html) and [gRPC Endpoint](../sdk/grpc-endpoints.html) components. |
-| Akka Memory | Akka provides an in-memory, durable store for stateful data. Stateful data can be scoped to a single agent, or made available system-wide. Stateful data is persisted in an embedded event store that tracks incremental state changes, which enables recovery of system state (resilience) to its last known modification. State is automatically sharded and rebalanced across Akka nodes running in a cluster to support elastic scaling to terabytes of memory. State can also be replicated across regions for failover and disaster recovery.
-
-Short-term (traced and episodic) memory is included transparently within the [Agent](../sdk/agents.html) component.
-
-You implement long-term memory with the [Event Sourced Entity](../sdk/event-sourced-entities.html) and [Key Value Entity](../sdk/key-value-entities.html) components.
-
-You implement propagations of cross-system state with the [View](../sdk/views.html) component. Views implement the Command Query Responsibility Segregation (CQRS) pattern. |
-| Akka Streaming | Akka provides a continuous stream processing engine which can synthesize, aggregate, and analyze windows of data without receiving a terminating event. Data streams can be sourced from other Akka services or a 3rd party messaging broker or coming in through an Akka Endpoint. Your services can either store intermediate processing results into *Akka Memory* or trigger commands to other Akka components that take action on the data.
-
-You produce events to a message broker with the [Producer](../sdk/consuming-producing.html#_event_producer) annotation.
-
-You create a continuous incoming stream of events with the [HTTP Endpoint](../sdk/http-endpoints.html) or the [gRPC Endpoint](../sdk/grpc-endpoints.html) components.
-
-You create a stream processor to analyze and act against a stream of data with the [Consumer](../sdk/consuming-producing.html) component. |
 In this guide, you will:
 
 - Set up your development environment.
@@ -77,7 +44,7 @@ Alternatively, you can clone the [GitHub Repository](https://github.com/akka-sam
 ```command
 git clone https://github.com/akka-samples/helloworld-agent.git --depth 1
 ```
-Then navigate to the new project directory and open it in your preferred IDE / Editor.
+Then navigate to the new project directory and open it in your preferred IDE / Editor, making sure to add [your Akka token](https://account.akka.io/token) to the pom.xml.
 
 ## <a href="about:blank#_explore_the_agent"></a> Explore the Agent
 
@@ -268,7 +235,7 @@ Something like:
 ```none
 Hello, Blackbeard! (English)
 
-What a fantastic name you have! It’s not every day I get to chat with a legendary pirate.
+What a fantastic name you have! It's not every day I get to chat with a legendary pirate.
 So tell me, do you sail the high seas or do you prefer to dock at the local coffee shop
 for a pirate-themed chai latte?
 
@@ -289,19 +256,24 @@ The Akka local console is a web-based tool that comes bundled with the Akka CLI.
 Starting the local console requires using the Akka CLI.
 
 |  | In case there is any trouble with installing the CLI when following these instructions, please check the [detailed CLI installation instructions](../operations/cli/installation.html). |
-Linux Download and install the latest version of `akka`:
+Linux Install the `akka` CLI using the Debian package repository:
 
 ```bash
-curl -sL https://doc.akka.io/install-cli.sh | bash
+curl -1sLf \
+  'https://downloads.akka.io/setup.deb.sh' \
+  | sudo -E bash
+sudo apt install akka
 ```
 macOS The recommended approach to install `akka` on macOS, is using [brew](https://brew.sh/)
 
 ```bash
 brew install akka/brew/akka
 ```
-Windows
-1. Download the latest version of `akka` from [https://downloads.akka.io/latest/akka_windows_amd64.zip](https://downloads.akka.io/latest/akka_windows_amd64.zip)
-2. Extract the zip file and move `akka.exe` to a location on your `%PATH%`.
+Windows Install the `akka` CLI using [winget](https://learn.microsoft.com/en-us/windows/package-manager/winget/):
+
+```powershell
+winget install Akka.Cli
+```
 
 |  | By downloading and using this software you agree to Akka’s [Privacy Policy](https://akka.io/legal/privacy) and [Software Terms of Use](https://trust.akka.io/cloud-terms-of-service). |
 Verify that the Akka CLI has been installed successfully by running the following to list all available commands:
@@ -362,12 +334,19 @@ This is a simple Hello World service, so there isn’t much to see here yet. How
 
 Now that you have a basic service running, it’s time to learn more about building real services in Akka.
 
+- See the [Spec-first greeting agent](spec-your-first-agent.html) sample if you use an AI assistant and want to see a [Spec-Driven Development](../sdk/spec-driven-development.html) alternative to this example.
 - See [multi-agent planner](planner-agent/index.html) to build a more realistic application.
 - [Deploy to akka.io](quick-deploy.html)
 
+## <a href="about:blank#_see_also"></a> See also
+
+- [Spec-driven development](../sdk/spec-driven-development.html)
+- [Build an AI multi-agent planner](planner-agent/index.html)
+- [Akkademy training](https://akkademy.akka.io/)
+
 <!-- <footer> -->
 <!-- <nav> -->
-[Tutorials](index.html) [Multi-agent planner](planner-agent/index.html)
+[Spec-first greeting agent](spec-your-first-agent.html) [Multi-agent planner](planner-agent/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

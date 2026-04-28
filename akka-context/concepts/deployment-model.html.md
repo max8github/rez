@@ -7,7 +7,7 @@
 
 # Deployment model
 
-Akka services are distributed by design. You may run them locally, but they are built to operate across nodes without requiring changes to your code.
+Akka services are distributed by design. You may run them locally, but they are built to operate across nodes (and even across cloud regions of multiple providers) without requiring changes to your code.
 
 ## <a href="about:blank#_service_packaging"></a> Service packaging
 
@@ -24,8 +24,10 @@ Akka supports three deployment models. Behaviour remains consistent across them,
 | Deployment Model | Description |
 | --- | --- |
 | Development | Developers can build, run, and test multi-service projects locally without needing cloud infrastructure. The Akka SDK provides persistence, clustering, service discovery, and integration features. This is the default when any service using Akka SDK is built. You may also [run the local console](../sdk/running-locally.html#_local_console) for tracing and debugging. |
-| [Self-managed operations](../operations/configuring.html) | Akka clusters [can be run on your infrastructure](concepts.html#_service_packaging): virtual machines, containers, Platform as a Service (PaaS), edge, unikernels, or Kubernetes. You will need to configure routing, certificates, networking, and persistence yourself. Some PaaS systems may block network access, affecting clustering. In those cases, single-node operation is possible. |
-| Akka Automated Operations (AAO) | This optional product helps automate day 2 operations. It provides a global federation plane for managing federated regions, along with an application plane for running services in a secure way. Services can be deployed from the Akka CLI to either [Akka’s serverless cloud](../operations/index.html) or a [privately managed VPC region](../operations/index.html).
+| <a href="../operations/configuring.html">**Self-managed operations**</a> | Akka clusters [can be run on your infrastructure](concepts.html#_service_packaging): virtual machines, containers, Platform as a Service (PaaS), edge, unikernels, or Kubernetes. You will need to configure routing, certificates, networking, and persistence yourself. Some PaaS systems may block network access, affecting clustering. In those cases, single-node operation is possible. |
+| <a href="../operations/akka-platform.html">**Akka Automated Operations (AAO)**</a> (in your VPC or serverless) | This optional product helps automate day 2 operations. It provides a global federation plane for managing federated regions, along with an application plane for running services in a secure way. Services can be deployed from the Akka CLI to either [Akka’s serverless cloud](../operations/index.html) or a [privately managed VPC region](../operations/index.html).
+
+For enterprise users, we also support a shared operations responsibility model where your team manages the underlying Kubernetes setup and Akka injects our specific components.
 
 AAO supports multi-region setups, including replication of durable state, failover arrangements, and data pinning for compliance needs. It provides elasticity based on observed traffic, memory auto-scaling, rolling upgrades without downtime, and access control at the organizational level. Observability is available through the [Akka console](https://console.akka.io/) or by [exporting logs, metrics, and traces](../operations/observability-and-monitoring/observability-exports.html).
 
@@ -53,6 +55,12 @@ With self-managed operations, a region maps to one cluster. With AAO, you can ha
 ## <a href="about:blank#_regions_in_akka_automated_operations"></a> Regions in Akka Automated Operations
 
 A region corresponds to a cloud provider’s location, such as AWS "US East." Akka spans availability zones and can scale multiple hyperscaler clouds. Projects specify the regions where they run. Each region receives a unique endpoint with region-specific DNS, much like services such as S3 or SQS. [Container registries](../operations/projects/container-registries.html) exist in all regions to reduce latency.
+
+We offer a set of regions for serverless deployments to choose from.
+
+Our high degree of automation allows us to support your needs for additional Akka regions in your VPC on all major cloud providers with very short lead times. We establish the full setup and provide monitoring and management.
+
+In case your organization requires more detailed control over the exact cloud setup, we offer models with a shared infrastructure responsibility.
 
 ## <a href="about:blank#_about_akka_clustering"></a> About Akka clustering
 
@@ -82,11 +90,11 @@ The following topics may also be of interest.
 
 - [Memory models](state-model.html)
 - [Developer best practices](../sdk/dev-best-practices.html)
-- [Project structure](architecture-model.html)
+- [Architecture](architecture-model.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Project structure](architecture-model.html) [Development process](development-process.html)
+[Architecture](architecture-model.html) [Development process](development-process.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

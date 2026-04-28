@@ -43,7 +43,7 @@ Consumers</a>
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Developing](../index.html) [Agents](../agents.html)
+[Spec-driven development](../spec-driven-development.html) [Agents](../agents.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

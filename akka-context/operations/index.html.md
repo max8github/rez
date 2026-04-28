@@ -8,38 +8,40 @@
 
 Akka offers two distinct operational approaches:
 
-- **Self-managed operations**: For teams that prefer to operate Akka on their own infrastructure. This provides full control over runtime and operational details.
-- **Akka Automated Operations**: For teams seeking a managed experience with built-in automation, observability, and scalability. Services are deployed either in our [serverless cloud](https://console.akka.io/) or your VPC.
+- <a href="configuring.html">**Self-managed operations**</a>: For teams that prefer to operate Akka on their own infrastructure. This provides full control over runtime and operational details.
+- <a href="akka-platform.html">**Akka Automated Operations**</a>: For teams seeking a managed experience with built-in automation, observability, and scalability. Services are deployed either in our serverless cloud or your VPC. AAO gives you a single entry point to all of your Akka regions.
 
 ## Feature comparison
 
-| Feature | Self-managed Operations | Akka Automated Operations |
-| --- | --- | --- |
-| Akka runtime | ✅ | ✅ |
-| Akka clustering | ✅ | ✅ |
-| Elasticity | ✅ | ✅ |
-| Resilience | ✅ | ✅ |
-| Durable memory | ✅ | ✅ |
-| Akka Orchestration | ✅ | ✅ |
-| Akka Agents | ✅ | ✅ |
-| Akka Memory | ✅ | ✅ |
-| Akka Streaming | ✅ | ✅ |
-| Metrics, logs, and traces | ✅ | ✅ |
-| Deploy: Bare metal | ✅ | ❌ |
-| Deploy: VMs | ✅ | ❌ |
-| Deploy: Edge | ✅ | ❌ |
-| Deploy: Containers | ✅ | ❌ |
-| Deploy: PaaS | ✅ | ❌ |
-| Deploy: Serverless | ❌ | ✅ |
-| Deploy: Your VPC | ❌ | ✅ |
-| Deploy: Your Edge VPC | ❌ | ✅ |
-| Auto-elasticity | ❌ | ✅ |
-| Multi-tenant services | ❌ | ✅ |
-| Multi-region operations | ❌ | ✅ |
-| Persistence oversight | ❌ | ✅ |
-| Certificate and key rotation | ❌ | ✅ |
-| Multi-org access controls | ❌ | ✅ |
-| No downtime updates | ❌ | ✅ |
+| Feature | Self-managed Operations | Akka Automated Operations (in your VPC) | Akka Automated Operations (serverless) |
+| --- | --- | --- | --- |
+| Akka runtime | ✅ | ✅ | ✅ |
+| Akka clustering | ✅ | ✅ | ✅ |
+| Elasticity | ✅ | ✅ | ✅ |
+| Resilience | ✅ | ✅ | ✅ |
+| Durable memory | ✅ | ✅ | ✅ |
+| Akka Orchestration | ✅ | ✅ | ✅ |
+| Akka Agents | ✅ | ✅ | ✅ |
+| Akka Memory | ✅ | ✅ | ✅ |
+| Akka Streaming | ✅ | ✅ | ✅ |
+| Metrics, logs, and traces | ✅ | ✅ | ✅ |
+| User management: OpenID Connect (OIDC) | ❌ | ✅ | ✅ |
+| Deploy: Bare metal | ✅ | ❌ | ❌ |
+| Deploy: VMs | ✅ | ❌ | ❌ |
+| Deploy: Edge | ✅ | ❌ | ❌ |
+| Deploy: Containers | ✅ | ❌ | ❌ |
+| Deploy: PaaS | ✅ | ❌ | ❌ |
+| Deploy: Serverless | ❌ | ❌ | ✅ |
+| Deploy: Your VPC | ❌ | ✅ | ❌ |
+| Deploy: Your Edge VPC | ❌ | ✅ | ❌ |
+| Custom network setup | ✅ | ✅ | ❌ |
+| Auto-elasticity | ❌ | ✅ | ✅ |
+| Multi-tenant services | ❌ | ✅ | ❌ |
+| Multi-region operations | ❌ | ✅ | ✅ |
+| Persistence oversight | ❌ | ✅ | ✅ |
+| Certificate and key rotation | ❌ | ✅ | ✅ |
+| Multi-org access controls | ❌ | ✅ | ❌ |
+| No downtime updates | ❌ | ✅ | ✅ |
 
 ## Service packaging
 

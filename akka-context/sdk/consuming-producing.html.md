@@ -63,6 +63,21 @@ If an exception is raised during the event processing. Akka runtime will redeliv
 When deleting Event Sourced Entities, and want to act on it in a consumer, make sure to persist a final event representing
 the deletion before triggering delete.
 
+### <a href="about:blank#_starting_from_snapshot"></a> Starting from Snapshot
+
+A Consumer that processes events from an Event Sourced Entity can optionally define a `@SnapshotHandler` method to receive entity snapshots. This can provide significant performance improvements when a new consumer needs to catch up on a long event history.
+
+When a `@SnapshotHandler` is defined, the consumer will start processing from the most recent snapshot instead of replaying historical events. After processing the snapshot, subsequent events are processed normally.
+
+[CounterEventsConsumer.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/application/CounterEventsConsumer.java)
+```java
+@SnapshotHandler
+public Effect onSnapshot(Integer value) {
+  return effects().done();
+}
+```
+The `@SnapshotHandler` annotation marks the method that will receive entity snapshots. The parameter type must match the state type of the Event Sourced Entity.
+
 ## <a href="about:blank#_consume_from_key_value_entity"></a> Consume from Key Value Entity
 
 You can consume state changes from a Key Value Entity. To receive messages with the entity state changes, annotate the Consumer with `@Consume.FromKeyValueEntity` and specify the class of the entity. Although it looks similar to an Event Sourced Entity Consumer, the semantics are slightly different. The Key Value Entity Consumer is guaranteed to receive the most recent state change, but not necessarily all changes. Normally it will receive all changes, but changes may be omitted in case of a very high update pace, and a new consumer will not see all historical changes.
@@ -159,6 +174,7 @@ public class CustomerEvents extends Consumer {
 | **3** | Allow access from other Akka services (in the same project), but not from the public internet. |
 | **4** | Event handler transforms service internal event model into public API types. |
 | **5** | Filter event types that should not be available to consuming services using `ignore()`. |
+[Starting from Snapshot](about:blank#_starting_from_snapshot) can be used for service-to-service eventing. The snapshot handling is defined on the producer side using `@Produce.ServiceStream`, where the snapshot is transformed to an event that consumers receive like any other event.
 
 ### <a href="about:blank#_event_consumer"></a> Event Consumer
 
@@ -296,6 +312,13 @@ public class CounterJournalToTopicConsumer extends Consumer {
 
 |  | Only topic names are referenced and no additional details about how to connect to the topics are needed. When deploying the application there must be a broker configuration in the Akka project, with credentials and details on how connect to the broker. For details about configuring a broker see [Configure message brokers](../operations/projects/message-brokers.html). |
 
+## <a href="about:blank#at-least-once-delivery"></a> At-least-once delivery and deduplication
+
+All consumers in Akka use at-least-once delivery semantics. It means that messages may be delivered more than once in cases of network failures, process restarts, or other transient issues. To maintain data integrity, your consumer implementations must handle duplicate messages gracefully.
+
+|  | Deduplication is not handled automatically by Akka. You must implement deduplication logic explicitly in your consumer code. |
+For detailed guidance on implementing deduplication strategies, including idempotent updates and sequence number tracking, see [Message deduplication](dev-best-practices.html#message-deduplication).
+
 ## <a href="about:blank#_handling_serialization"></a> Handling Serialization
 
 Check [serialization](serialization.html) documentation for more details.
@@ -352,9 +375,9 @@ Following up on the counter entity example used above, let’s consider an examp
 ![eventing testkit sample](_images/eventing-testkit-sample.svg)
 In this example:
 
-- commands are consumed from an external topic `event-commands` and forwarded to a `Counter` entity;
+- commands are consumed from an external topic `counter-commands` and forwarded to a `Counter` entity;
 - the `Counter` entity is an Event Sourced Entity and has its events published to another topic `counter-events`.
-To test this flow, we will take advantage of the TestKit to be able to push commands into the `event-commands` topic and check what messages are produced to topic `counter-events`.
+To test this flow, we will take advantage of the TestKit to be able to push commands into the `counter-commands` topic and check what messages are produced to topic `counter-events`.
 
 [CounterIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterIntegrationTest.java)
 ```java
@@ -380,7 +403,7 @@ public class CounterIntegrationTest extends TestKitSupport { // (1)
     commandsTopic.publish(increaseCmd, counterId); // (3)
     commandsTopic.publish(multipleCmd, counterId);
 
-    var eventIncreased = eventsTopic.expectOneTyped(ValueIncreased.class, ofSeconds// (20)); // (4)
+    var eventIncreased = eventsTopic.expectOneTyped(ValueIncreased.class, ofSeconds(20)); // (4)
     var eventMultiplied = eventsTopic.expectOneTyped(ValueMultiplied.class);
 
     assertEquals(increaseCmd.value(), eventIncreased.getPayload().value()); // (5)
@@ -496,7 +519,7 @@ A Consumer can also receive messages from a broker topic, and that could be regi
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Timers](timed-actions.html) [Integrations](integrations/index.html)
+[Timers](timed-actions.html) [Use cases](use-cases/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->
