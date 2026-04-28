@@ -25,7 +25,7 @@ import java.util.UUID;
  *   → returns generated facilityId, e.g. "abc123"
  *
  * Provisioning courts (two steps per court via ResourceEndpoint):
- *   POST /resource/{courtId}             { "resourceName": "Court 1", "calendarId": "..." }
+ *   POST /resource/{courtId}             { "resourceName": "Court 1", "calendarId": "" }
  *   PUT  /resource/{courtId}/external-ref { "externalRef": "{courtId}", "externalGroupRef": "{facilityId}" }
  */
 @HttpEndpoint("/facility")

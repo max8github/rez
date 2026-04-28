@@ -21,14 +21,22 @@ One bot per facility. If a club has distinct court groups with different policie
 
 ---
 
-## Step 2 — Google Calendars (optional, future use)
+## Step 2 — `calendarId` metadata (optional)
 
-Google Calendar integration is currently disabled. The `calendarId` field stored on each court resource is reserved for future re-activation.
+Google Calendar integration is currently disabled for provisioning and booking.
 
-The provisioning script can create Google Calendars automatically if you pass `--credentials` with a service account file. If you skip `--credentials`, pass court names as `"Name:placeholder-id"` pairs so the script does not attempt calendar creation:
+`calendarId` is still stored on each court resource, but it is optional metadata. Today it is only useful if you want Rez to include a Google Calendar link when showing reservation details.
 
+The normal path is to pass plain court names:
+
+```shell
+--courts "Court 1,Court 2,Court 3,Court 4"
 ```
---courts "Court 1:court-1,Court 2:court-2,Court 3:court-3,Court 4:court-4"
+
+If you want to preserve an existing calendar identifier on the resource for future use, you can still pass `"Name:calendarId"` pairs:
+
+```shell
+--courts "Court 1:existing-cal-1,Court 2:existing-cal-2"
 ```
 
 ---
@@ -45,7 +53,7 @@ The script creates the facility entity, registers each court, and registers the 
   --city        "68535 Edingen-Neckarhausen" \
   --token       "123456789:ABCdef..." \
   --admins      "987654321" \
-  --courts      "Court 1:court-1,Court 2:court-2,Court 3:court-3,Court 4:court-4"
+  --courts      "Court 1,Court 2,Court 3,Court 4"
 ```
 
 `--host`, `--webhook-host`, and `--timezone` all have sensible defaults and can be omitted for the standard deployment.
@@ -62,8 +70,7 @@ The script creates the facility entity, registers each court, and registers the 
 | `--timezone` | `Europe/Berlin` | IANA timezone |
 | `--token` | required | Telegram bot token |
 | `--admins` | — | Comma-separated Telegram user IDs for facility admins |
-| `--credentials` | `$GOOGLE_CREDENTIALS_FILE` or `./credentials.json` | Path to Google service account credentials JSON — only needed if creating Google Calendars |
-| `--courts` | required | Comma-separated court names. Use `"Name:calendarId"` to supply a fixed ID (and skip Google Calendar creation). |
+| `--courts` | required | Comma-separated court names. Use `"Name:calendarId"` only if you want to store optional calendar metadata on the resource. |
 
 The script prints a summary with all generated IDs at the end.
 

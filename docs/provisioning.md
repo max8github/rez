@@ -42,6 +42,8 @@ redeployments. Do not re-run provisioning unless you are explicitly resetting/re
 
 **Resource IDs** are supplied by the caller — the provisioning script derives them from the court name (e.g. `court-1`, `court-2`). Resource IDs must be stable; they are stored as `externalRef` and used in booking requests. Keep a record of them in the provisioned state table below.
 
+`calendarId` is optional metadata on the resource. It is not required for booking, Rez calendar rendering, or facility provisioning.
+
 ---
 
 ## One-time infrastructure setup
@@ -52,7 +54,8 @@ Secrets live in `/Users/max/code/mini-dc/env/prod/rez.env` and are mounted into 
 Required:
 - `OPENAI_API_KEY`
 - `AKKA_LICENSE_KEY`
-- Google credentials file at `secrets/credentials.json`
+
+Google service-account credentials are not required for current Rez provisioning. They are only relevant if you intentionally want to populate `calendarId` from an external Google Calendar workflow.
 
 ### Secrets (Akka Cloud)
 
@@ -61,9 +64,6 @@ Set once per project:
 ```shell
 akka secret create generic openai \
   --literal key=<OPENAI_KEY> --project rez-prod
-
-akka secret create generic google-service-account \
-  --from-file credentials.json=<path-to-credentials.json> --project rez-prod
 ```
 
 > No `telegram-secret` needed — the bot token is stored on the facility entity and
@@ -138,10 +138,10 @@ This is Rez’s own read-only calendar view derived from reservation events.
 | Court 2 ID | `court-2-2` |
 | Court 3 ID | `court-3-3` |
 | Court 4 ID | `court-4-4` |
-| Google Calendar — court-1 | `3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com` |
-| Google Calendar — court-2 | `63hd39cd9ppt8tajp76vglt394@group.calendar.google.com` |
-| Google Calendar — court-3 | `42cf1e8db6c37f2a7c8f02dbf9b6fc9d497008ecd92a30892ea7b1a380c8e130@group.calendar.google.com` |
-| Google Calendar — court-4 | `2bba1d7802c29ab3a4455cadaebc68b0bf79370ac009b053664c9a2decb2ea1a@group.calendar.google.com` |
+| Stored calendarId — court-1 | `3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com` |
+| Stored calendarId — court-2 | `63hd39cd9ppt8tajp76vglt394@group.calendar.google.com` |
+| Stored calendarId — court-3 | `42cf1e8db6c37f2a7c8f02dbf9b6fc9d497008ecd92a30892ea7b1a380c8e130@group.calendar.google.com` |
+| Stored calendarId — court-4 | `2bba1d7802c29ab3a4455cadaebc68b0bf79370ac009b053664c9a2decb2ea1a@group.calendar.google.com` |
 
 ---
 
@@ -159,10 +159,10 @@ This is Rez’s own read-only calendar view derived from reservation events.
 | Campo 2 ID | `80ab6351-campo-2` |
 | Campo 3 ID | `80ab6351-campo-3` |
 | Campo 4 ID | `80ab6351-campo-4` |
-| Google Calendar — campo-1 | `a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a@group.calendar.google.com` |
-| Google Calendar — campo-2 | `2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776@group.calendar.google.com` |
-| Google Calendar — campo-3 | `dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96@group.calendar.google.com` |
-| Google Calendar — campo-4 | `40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f@group.calendar.google.com` |
+| Stored calendarId — campo-1 | `a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a@group.calendar.google.com` |
+| Stored calendarId — campo-2 | `2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776@group.calendar.google.com` |
+| Stored calendarId — campo-3 | `dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96@group.calendar.google.com` |
+| Stored calendarId — campo-4 | `40f2bf51f1ea9727c89f561f41c8299675ffd5b2b83d10c2699d8768746fca6f@group.calendar.google.com` |
 
 ---
 
@@ -178,5 +178,5 @@ This is Rez’s own read-only calendar view derived from reservation events.
 | Host | `https://red-shadow-4568.europe-west1.akka.services` |
 | Court 1 ID | `1224dba0-court-1` |
 | Court 2 ID | `1224dba0-court-2` |
-| Google Calendar — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
-| Google Calendar — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |
+| Stored calendarId — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
+| Stored calendarId — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |

@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
-# create-calendars.sh — Create Google Calendars for a set of court names and print
-# the resulting "name:calendarId" pairs ready to paste into provision-facility.sh --courts.
+# create-calendars.sh — Legacy helper for creating Google Calendars and printing
+# the resulting "name:calendarId" pairs.
 #
 # Usage:
 #   ./scripts/create-calendars.sh \
@@ -9,6 +9,9 @@
 #
 # Output (copy-pasteable):
 #   Court 1:abc123@group.calendar.google.com,Court 2:def456@group.calendar.google.com,...
+#
+# Current Rez provisioning does not require Google Calendar creation. Use this
+# only if you explicitly want to store calendarId metadata on resources.
 #
 # --credentials  Path to service account credentials.json.
 #                Defaults to $GOOGLE_CREDENTIALS_FILE env var, then ./credentials.json.

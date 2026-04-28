@@ -45,7 +45,7 @@ curl -s -X POST "$BASE_URL/resource/$COURT1" \
   -d '{
     "resourceId": "court-1",
     "resourceName": "Court 1",
-    "calendarId": "local-cal-1@group.calendar.google.com"
+    "calendarId": ""
   }'
 curl -s -X PUT "$BASE_URL/resource/$COURT1/external-ref" \
   -H "Content-Type: application/json" \
@@ -61,7 +61,7 @@ curl -s -X POST "$BASE_URL/resource/$COURT2" \
   -d '{
     "resourceId": "court-2",
     "resourceName": "Court 2",
-    "calendarId": "local-cal-2@group.calendar.google.com"
+    "calendarId": ""
   }'
 curl -s -X PUT "$BASE_URL/resource/$COURT2/external-ref" \
   -H "Content-Type: application/json" \
@@ -71,6 +71,8 @@ curl -s -X PUT "$BASE_URL/resource/$COURT2/external-ref" \
   }"
 echo "Court 2 ID: $COURT2"
 ```
+
+`calendarId` is optional metadata. Leave it empty unless you explicitly want Rez to keep a Google Calendar identifier for reservation-detail links.
 
 Verify facility and resource state:
 

@@ -109,7 +109,9 @@ Use the provisioning script — it handles facility creation, court registration
   --street      "Mannheimer Str. 50" \
   --city        "68535 Edingen-Neckarhausen" \
   --token       "<BOT_TOKEN>" \
-  --courts      "Court 1:court-1,Court 2:court-2,Court 3:court-3,Court 4:court-4"
+  --courts      "Court 1,Court 2,Court 3,Court 4"
 ```
+
+This default path stores an empty `calendarId` on each court. If you want to preserve an existing calendar identifier as metadata, use `"Name:calendarId"` pairs instead.
 
 See [facility-provisioning-runbook.md](facility-provisioning-runbook.md) for the full step-by-step guide.

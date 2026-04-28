@@ -31,7 +31,7 @@ curl -s -X POST "$BASE_URL/resource/$COURT1" \
   -d '{
     "resourceId": "court-1",
     "resourceName": "Court 1",
-    "calendarId": "local-cal-1@group.calendar.google.com"
+    "calendarId": ""
   }'
 curl -s -X PUT "$BASE_URL/resource/$COURT1/external-ref" \
   -H "Content-Type: application/json" \
@@ -47,7 +47,7 @@ curl -s -X POST "$BASE_URL/resource/$COURT2" \
   -d '{
     "resourceId": "court-2",
     "resourceName": "Court 2",
-    "calendarId": "local-cal-2@group.calendar.google.com"
+    "calendarId": ""
   }'
 curl -s -X PUT "$BASE_URL/resource/$COURT2/external-ref" \
   -H "Content-Type: application/json" \
@@ -62,6 +62,8 @@ curl -s "$BASE_URL/facility/$FACILITY_ID"
 curl -s "$BASE_URL/resource/$COURT1" | jq
 curl -s "$BASE_URL/resource/$COURT2" | jq
 ```
+
+`calendarId` is optional metadata and can be left empty for local QA.
 
 ## Create And Cancel Reservations Through AI Agent
 
