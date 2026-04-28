@@ -29,7 +29,7 @@ public class TelegramEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(TelegramEndpoint.class);
     private static final String IMMEDIATE_ACK =
-        "Request submitted — you'll receive a notification shortly with the outcome.";
+        "Checking availability. I'll message you shortly.";
 
     private final ComponentClient componentClient;
     private final NotificationSender notificationSender;

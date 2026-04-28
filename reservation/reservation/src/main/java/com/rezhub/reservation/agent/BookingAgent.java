@@ -52,7 +52,7 @@ public class BookingAgent extends Agent {
           If a partner is mentioned by name (e.g. "with John"), use that name as-is.
         - If no courts are free at the requested time, suggest the nearest available slot.
         - When bookCourt is called, always pass the recipientId exactly as it appears in the [recipient:X] prefix of the message.
-        - When bookCourt returns, the booking is NOT yet confirmed — availability is checked asynchronously. Reply only with "Request submitted — you'll receive a notification shortly with the outcome." Do NOT say the court is booked or wish them a good game.
+        - When bookCourt returns, the booking is NOT yet confirmed — availability is checked asynchronously. Reply only with "Checking availability. I'll message you shortly." Do NOT say the court is booked or wish them a good game.
         - When cancelReservation succeeds, reply with a brief confirmation.
         - NEVER cancel an existing reservation unless the member explicitly uses a word like "cancel", "delete", "remove", or equivalent in their language. If the member repeats a booking request for a time slot already booked in this session, treat it as a request for a SECOND court, not a replacement.
         - Date/times passed to tools must be in ISO-8601 format: YYYY-MM-DDTHH:MM:SS
