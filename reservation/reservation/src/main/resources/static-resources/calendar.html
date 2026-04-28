@@ -437,44 +437,73 @@
       margin-bottom: 18px;
     }
 
-    .day-picker {
-      display: grid;
-      grid-template-columns: repeat(7, minmax(0, 1fr));
-      gap: 10px;
+    .week-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
     }
 
-    .day-chip {
+    .week-nav-button {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-height: 46px;
+      padding: 0 14px;
+    }
+
+    .week-nav-arrow {
+      font-size: 1.25rem;
+      line-height: 1;
+    }
+
+    .week-nav-text {
+      font-size: 0.74rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+    }
+
+    .day-picker {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 6px 0;
+    }
+
+    .day-nav-button {
       border: 1px solid rgba(217, 205, 189, 0.95);
-      border-radius: 16px;
+      border-radius: 999px;
       background: rgba(255, 255, 255, 0.88);
       color: var(--ink);
-      padding: 10px 12px;
-      text-align: left;
+      min-width: 46px;
+      min-height: 46px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       box-shadow: var(--shadow);
+      font-size: 1.25rem;
+      line-height: 1;
     }
 
-    .day-chip.active {
-      background: var(--accent);
-      color: white;
-      border-color: transparent;
+    .day-nav-label {
+      flex: 1;
+      min-width: 0;
+      text-align: center;
     }
 
-    .day-chip-weekday,
-    .day-chip-date {
+    .day-nav-weekday {
       display: block;
-      pointer-events: none;
-    }
-
-    .day-chip-weekday {
       font-size: 0.76rem;
       text-transform: uppercase;
       letter-spacing: 0.06em;
-      opacity: 0.8;
+      color: var(--muted);
     }
 
-    .day-chip-date {
+    .day-nav-date {
+      display: block;
       margin-top: 4px;
-      font-size: 1rem;
+      font-size: 1.05rem;
       font-weight: 700;
     }
 
@@ -494,6 +523,17 @@
     .resource-pager-actions {
       display: flex;
       gap: 10px;
+    }
+
+    .resource-pager-button {
+      min-width: 46px;
+      min-height: 46px;
+      padding: 0;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      line-height: 1;
     }
 
     .shared-timeline {
@@ -655,7 +695,11 @@
       }
 
       .day-picker {
-        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 10px;
+      }
+
+      .day-nav-label {
+        text-align: left;
       }
 
       .resource-pager {
@@ -678,6 +722,30 @@
 
       .shared-timeline-resource-meta {
         font-size: 0.76rem;
+      }
+
+      .timeline-booking {
+        left: 4px;
+        right: 4px;
+        border-radius: 10px;
+        padding: 6px 5px;
+      }
+
+      .timeline-booking-time {
+        font-size: 0.66rem;
+        margin-bottom: 4px;
+      }
+
+      .timeline-booking-title {
+        font-size: 0.78rem;
+        line-height: 1.05;
+      }
+
+      .timeline-empty-note {
+        inset: 6px 4px auto;
+        min-height: 42px;
+        font-size: 0.72rem;
+        text-align: center;
       }
 
       body[data-theme="etc-edingen"] main {
@@ -711,21 +779,27 @@
 <main>
   <section class="hero">
     <div>
-      <h1>Rez Calendar</h1>
+      <h1 id="calendarTitle">Rez Calendar</h1>
       <p class="subtle">Read-only weekly schedule served directly from Rez. It reflects reservation events, so rebuilding Rez state rebuilds this calendar too.</p>
     </div>
     <div class="week-label" id="weekLabel"></div>
   </section>
 
   <section class="toolbar">
-    <label>
-      Facility ID
-      <input id="facilityIdInput" placeholder="Enter facility id">
-    </label>
-    <button class="secondary" id="prevWeekButton" type="button">Previous</button>
+    <div class="week-nav" aria-label="Week navigation">
+      <button class="secondary week-nav-button" id="prevWeekButton" type="button" aria-label="Previous week">
+        <span class="week-nav-arrow">‹</span>
+        <span class="week-nav-text">Week</span>
+      </button>
+    </div>
     <button class="secondary" id="todayButton" type="button">Today</button>
-    <button class="secondary" id="nextWeekButton" type="button">Next</button>
-    <button id="reloadButton" type="button">Load Calendar</button>
+    <div class="week-nav" aria-label="Week navigation">
+      <button class="secondary week-nav-button" id="nextWeekButton" type="button" aria-label="Next week">
+        <span class="week-nav-text">Week</span>
+        <span class="week-nav-arrow">›</span>
+      </button>
+    </div>
+    <button id="reloadButton" type="button">Refresh</button>
   </section>
 
   <section class="calendar-controls">
@@ -743,18 +817,18 @@
   const HOUR_HEIGHT = 58;
   const params = new URLSearchParams(window.location.search);
   const board = document.getElementById("board");
+  const calendarTitleEl = document.getElementById("calendarTitle");
   const dayPicker = document.getElementById("dayPicker");
   const resourcePager = document.getElementById("resourcePager");
   const statusEl = document.getElementById("status");
   const weekLabelEl = document.getElementById("weekLabel");
-  const facilityIdInput = document.getElementById("facilityIdInput");
   const prevWeekButton = document.getElementById("prevWeekButton");
   const todayButton = document.getElementById("todayButton");
   const nextWeekButton = document.getElementById("nextWeekButton");
   const reloadButton = document.getElementById("reloadButton");
   const requestedTheme = readRequestedTheme(params.get("theme"));
+  const facilityId = (params.get("facilityId") || "").trim();
 
-  facilityIdInput.value = params.get("facilityId") || "";
   applyTheme(requestedTheme || "default");
 
   let currentWeekStart = readWeekStart(params.get("week"));
@@ -770,18 +844,19 @@
   });
   nextWeekButton.addEventListener("click", () => moveWeek(7));
   reloadButton.addEventListener("click", () => void loadCalendar());
-  facilityIdInput.addEventListener("keydown", (event) => {
-    if (event.key === "Enter") {
-      event.preventDefault();
-      void loadCalendar();
-    }
-  });
 
   void loadCalendar();
 
   function moveWeek(days) {
     currentDay = addDays(currentDay, days);
     currentWeekStart = addDays(currentWeekStart, days);
+    currentResourcePage = 0;
+    void loadCalendar();
+  }
+
+  function moveDay(days) {
+    currentDay = addDays(currentDay, days);
+    currentWeekStart = startOfWeek(currentDay);
     currentResourcePage = 0;
     void loadCalendar();
   }
@@ -893,7 +968,6 @@
   }
 
   async function loadCalendar() {
-    const facilityId = facilityIdInput.value.trim();
     const theme = await resolveTheme(facilityId);
     applyTheme(theme);
     currentDay = clampDayToWeek(currentDay, currentWeekStart);
@@ -905,7 +979,9 @@
       board.innerHTML = "";
       dayPicker.innerHTML = "";
       resourcePager.innerHTML = "";
-      setStatus("Add a facility id to load the weekly court schedule.");
+      calendarTitleEl.textContent = "Rez Calendar";
+      document.title = "Rez Calendar";
+      setStatus("Open this page with a facilityId in the URL to load the court schedule.");
       return;
     }
 
@@ -913,13 +989,19 @@
     board.innerHTML = "";
 
     try {
-      const resources = await fetchResources(facilityId);
-      const events = await fetchEvents(facilityId);
+      const [facilityResult, resources, events] = await Promise.all([
+        fetchFacility(facilityId).catch(() => null),
+        fetchResources(facilityId),
+        fetchEvents(facilityId)
+      ]);
+      applyFacilityTitle(facilityResult);
       renderBoard(theme, resources, events);
       setStatus(buildStatus(theme, resources, events));
     } catch (error) {
       board.innerHTML = "";
       resourcePager.innerHTML = "";
+      calendarTitleEl.textContent = "Rez Calendar";
+      document.title = "Rez Calendar";
       setStatus(error.message || "Failed to load calendar.", true);
     }
   }
@@ -943,6 +1025,24 @@
 
     const payload = await response.json();
     return Array.isArray(payload) ? payload : [];
+  }
+
+  async function fetchFacility(facilityId) {
+    const response = await fetch(`/facility/${encodeURIComponent(facilityId)}`);
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Facility lookup failed (${response.status}).`);
+    }
+
+    return response.json();
+  }
+
+  function applyFacilityTitle(facility) {
+    const name = facility && typeof facility.name === "string" && facility.name.trim()
+      ? facility.name.trim()
+      : "Rez Calendar";
+    calendarTitleEl.textContent = name;
+    document.title = name;
   }
 
   async function fetchEvents(facilityId) {
@@ -1106,24 +1206,17 @@
       return;
     }
 
-    const days = Array.from({ length: 7 }, (_, index) => addDays(currentWeekStart, index));
-    dayPicker.innerHTML = days.map((day) => {
-      const isActive = formatDate(day) === formatDate(currentDay);
-      return `
-        <button class="day-chip${isActive ? " active" : ""}" data-day="${formatDate(day)}" type="button">
-          <span class="day-chip-weekday">${day.toLocaleDateString([], { weekday: "short" })}</span>
-          <span class="day-chip-date">${day.toLocaleDateString([], { month: "short", day: "numeric" })}</span>
-        </button>
-      `;
-    }).join("");
+    dayPicker.innerHTML = `
+      <button class="day-nav-button secondary" id="prevDayButton" type="button" aria-label="Previous day">‹</button>
+      <div class="day-nav-label" aria-live="polite">
+        <span class="day-nav-weekday">${currentDay.toLocaleDateString([], { weekday: "long" })}</span>
+        <span class="day-nav-date">${currentDay.toLocaleDateString([], { month: "short", day: "numeric", year: "numeric" })}</span>
+      </div>
+      <button class="day-nav-button secondary" id="nextDayButton" type="button" aria-label="Next day">›</button>
+    `;
 
-    dayPicker.querySelectorAll("[data-day]").forEach((buttonEl) => {
-      buttonEl.addEventListener("click", () => {
-        currentDay = readSelectedDay(buttonEl.dataset.day);
-        currentResourcePage = 0;
-        void loadCalendar();
-      });
-    });
+    document.getElementById("prevDayButton").addEventListener("click", () => moveDay(-1));
+    document.getElementById("nextDayButton").addEventListener("click", () => moveDay(1));
   }
 
   function renderResourcePager(totalResources, pageCount, visibleCount) {
@@ -1138,8 +1231,8 @@
     resourcePager.innerHTML = `
       <div class="resource-pager-info">Courts ${start}-${end} of ${totalResources}</div>
       <div class="resource-pager-actions">
-        <button class="secondary" id="prevResourcePageButton" type="button"${currentResourcePage === 0 ? " disabled" : ""}>Earlier Courts</button>
-        <button class="secondary" id="nextResourcePageButton" type="button"${currentResourcePage >= pageCount - 1 ? " disabled" : ""}>More Courts</button>
+        <button class="secondary resource-pager-button" id="prevResourcePageButton" type="button" aria-label="Previous courts page"${currentResourcePage === 0 ? " disabled" : ""}>‹</button>
+        <button class="secondary resource-pager-button" id="nextResourcePageButton" type="button" aria-label="Next courts page"${currentResourcePage >= pageCount - 1 ? " disabled" : ""}>›</button>
       </div>
     `;
 
@@ -1173,7 +1266,7 @@
     return `
       <article class="timeline-booking" style="top:${top}px;height:${height}px">
         <span class="timeline-booking-time">${formatTime(event.start)} - ${formatTime(event.end)}</span>
-        <span class="timeline-booking-title">${escapeHtml(event.title || "Reserved")}</span>
+        <span class="timeline-booking-title">${escapeHtml(formatTimelineBookingTitle(event.title || "Reserved"))}</span>
       </article>
     `;
   }
@@ -1185,10 +1278,30 @@
   }
 
   function getResourcesPerPage() {
-    if (window.innerWidth < 720) return 2;
+    if (window.innerWidth < 720) return 4;
     if (window.innerWidth < 1100) return 3;
     if (window.innerWidth < 1500) return 4;
     return 5;
+  }
+
+  function formatTimelineBookingTitle(title) {
+    const normalized = (title || "Reserved").trim();
+    if (!isCompactTimelineLayout()) return normalized;
+
+    const firstParticipant = normalized.split(/\s*(?:&|,|\/|\+|\band\b)\s*/i)[0].trim();
+    const tokens = (firstParticipant.match(/[A-Za-z0-9À-ÿ]+/g) || []).filter(Boolean);
+
+    if (tokens.length >= 2) {
+      return `${tokens[0][0]}${tokens[1][0]}`.toUpperCase();
+    }
+    if (tokens.length === 1) {
+      return tokens[0].slice(0, 2).toUpperCase();
+    }
+    return normalized.slice(0, 2).toUpperCase();
+  }
+
+  function isCompactTimelineLayout() {
+    return window.innerWidth < 720;
   }
 
   function buildStatus(theme, resources, events) {
