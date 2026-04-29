@@ -11,6 +11,7 @@ import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
 
@@ -28,8 +29,6 @@ import java.util.Optional;
 public class TelegramEndpoint {
 
     private static final Logger log = LoggerFactory.getLogger(TelegramEndpoint.class);
-    private static final String IMMEDIATE_ACK =
-        "Checking availability. I'll message you shortly.";
 
     private final ComponentClient componentClient;
     private final NotificationSender notificationSender;
@@ -46,8 +45,7 @@ public class TelegramEndpoint {
 
     /**
      * Telegram webhook receiver. Telegram POSTs one Update per incoming message.
-     * Returns 200 OK immediately; an acknowledgement is sent to the chat right away,
-     * while the agent reply and booking outcome continue asynchronously.
+     * Returns 200 OK immediately while the agent reply and booking outcome continue asynchronously.
      */
     @Post("/{botToken}/webhook")
     public void onUpdate(String botToken, Update update) {
@@ -78,7 +76,6 @@ public class TelegramEndpoint {
         String conversationId = sanitize(botToken + ":" + chatId);
 
         log.info("Telegram message from {} (chat {}) for facility {}: {}", senderDisplayName, chatId, facilityId, msg.text());
-        notificationSender.send(recipientId, IMMEDIATE_ACK);
 
         OriginRequestContext origin = new OriginRequestContext(
             "telegram",
@@ -95,7 +92,7 @@ public class TelegramEndpoint {
             .method(BookingAgent::chat)
             .invokeAsync(new BookingAgent.AgentRequest(origin, msg.text()))
             .thenAccept(reply -> {
-                if (reply != null && !reply.isBlank() && !IMMEDIATE_ACK.equals(reply)) {
+                if (shouldSendAgentReply(reply)) {
                     notificationSender.send(recipientId, reply);
                 }
             })
@@ -106,5 +103,16 @@ public class TelegramEndpoint {
 
     private static String sanitize(String s) {
         return s.replaceAll("[^a-zA-Z0-9_\\-.]", "-");
+    }
+
+    private static boolean shouldSendAgentReply(String reply) {
+        return reply != null && !reply.isBlank() && !isInterimBookingAcknowledgement(reply);
+    }
+
+    private static boolean isInterimBookingAcknowledgement(String reply) {
+        String normalized = reply.trim().toLowerCase(Locale.ROOT);
+        return normalized.equals("checking availability. i'll message you shortly.")
+            || normalized.startsWith("booking request queued (id:")
+            || normalized.startsWith("request submitted");
     }
 }
