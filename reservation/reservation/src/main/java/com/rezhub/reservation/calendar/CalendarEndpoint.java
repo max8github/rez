@@ -7,8 +7,6 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.AbstractHttpEndpoint;
 import akka.javasdk.http.HttpResponses;
-import com.rezhub.reservation.customer.facility.FacilityEntity;
-import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
 
@@ -22,8 +20,6 @@ import java.util.stream.Collectors;
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
 public class CalendarEndpoint extends AbstractHttpEndpoint {
     private static final String DEFAULT_THEME = "default";
-    private static final String ETC_EDINGEN_THEME = "etc-edingen";
-    private static final String ETC_EDINGEN_NAME = "Erster Tennisclub Edingen-Neckarhausen";
 
     private final ComponentClient componentClient;
 
@@ -84,18 +80,10 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
     @Get("/api/calendar/theme")
     public Object calendarTheme() {
         try {
-            String facilityId = requiredQueryParam("facilityId");
-
-            Facility facility = componentClient
-                .forEventSourcedEntity(facilityId)
-                .method(FacilityEntity::getFacility)
-                .invoke();
-
-            return new CalendarTheme(isEtcEdingen(facility) ? ETC_EDINGEN_THEME : DEFAULT_THEME);
+            requiredQueryParam("facilityId");
+            return new CalendarTheme(DEFAULT_THEME);
         } catch (IllegalArgumentException e) {
             return HttpResponses.badRequest(e.getMessage());
-        } catch (Exception e) {
-            return new CalendarTheme(DEFAULT_THEME);
         }
     }
 
@@ -124,12 +112,6 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         } catch (DateTimeParseException e) {
             throw new IllegalArgumentException("Invalid ISO local date-time for query parameter: " + name);
         }
-    }
-
-    private boolean isEtcEdingen(Facility facility) {
-        return facility != null
-            && facility.name() != null
-            && ETC_EDINGEN_NAME.equalsIgnoreCase(facility.name().trim());
     }
 
     public record CalendarEvent(
