@@ -687,6 +687,88 @@
       font-size: 0.9rem;
     }
 
+    .booking-detail-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(17, 24, 39, 0.42);
+      backdrop-filter: blur(8px);
+      display: none;
+      align-items: flex-end;
+      justify-content: center;
+      padding: 16px;
+      z-index: 50;
+    }
+
+    .booking-detail-backdrop.open {
+      display: flex;
+    }
+
+    .booking-detail-sheet {
+      width: min(100%, 420px);
+      border: 0;
+      border-radius: 24px;
+      background: #fffdf8;
+      box-shadow: 0 24px 60px rgba(15, 23, 42, 0.24);
+      padding: 18px 18px 20px;
+      color: var(--ink);
+    }
+
+    .booking-detail-grip {
+      width: 44px;
+      height: 5px;
+      border-radius: 999px;
+      background: rgba(107, 114, 128, 0.32);
+      margin: 0 auto 14px;
+    }
+
+    .booking-detail-header {
+      display: flex;
+      align-items: start;
+      justify-content: space-between;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .booking-detail-title {
+      margin: 0;
+      font-size: 1.1rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+
+    .booking-detail-close {
+      border-radius: 999px;
+      min-width: 40px;
+      min-height: 40px;
+      padding: 0;
+      font-size: 1.2rem;
+      line-height: 1;
+    }
+
+    .booking-detail-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .booking-detail-row {
+      display: grid;
+      gap: 2px;
+    }
+
+    .booking-detail-label {
+      color: var(--muted);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.06em;
+      font-weight: 700;
+    }
+
+    .booking-detail-value {
+      font-size: 1rem;
+      line-height: 1.35;
+      word-break: break-word;
+    }
+
     @media (max-width: 980px) {
       .hero {
         flex-direction: column;
@@ -753,27 +835,36 @@
       }
 
       .timeline-booking {
-        left: 4px;
-        right: 4px;
-        border-radius: 10px;
-        padding: 6px 5px;
+        left: 3px;
+        right: 3px;
+        border-radius: 9px;
+        padding: 4px 4px;
       }
 
       .timeline-booking-time {
-        font-size: 0.66rem;
-        margin-bottom: 4px;
+        display: none;
       }
 
       .timeline-booking-title {
-        font-size: 0.78rem;
-        line-height: 1.05;
+        font-size: 0.72rem;
+        font-weight: 700;
+        line-height: 1;
+        text-align: center;
       }
 
       .timeline-empty-note {
         inset: 6px 4px auto;
-        min-height: 42px;
+        min-height: 40px;
         font-size: 0.72rem;
         text-align: center;
+      }
+
+      .booking-detail-backdrop {
+        padding: 10px;
+      }
+
+      .booking-detail-sheet {
+        width: 100%;
       }
 
       body[data-theme="etc-edingen"] main {
@@ -837,10 +928,37 @@
   <div class="board" id="board"></div>
 </main>
 
+<div class="booking-detail-backdrop" id="bookingDetailBackdrop" aria-hidden="true">
+  <section class="booking-detail-sheet" role="dialog" aria-modal="true" aria-labelledby="bookingDetailTitle">
+    <div class="booking-detail-grip"></div>
+    <div class="booking-detail-header">
+      <h2 class="booking-detail-title" id="bookingDetailTitle">Booking details</h2>
+      <button class="secondary booking-detail-close" id="bookingDetailClose" type="button" aria-label="Close details">×</button>
+    </div>
+    <div class="booking-detail-list">
+      <div class="booking-detail-row">
+        <span class="booking-detail-label">Court</span>
+        <span class="booking-detail-value" id="bookingDetailCourt"></span>
+      </div>
+      <div class="booking-detail-row">
+        <span class="booking-detail-label">Players</span>
+        <span class="booking-detail-value" id="bookingDetailPlayers"></span>
+      </div>
+      <div class="booking-detail-row">
+        <span class="booking-detail-label">Start</span>
+        <span class="booking-detail-value" id="bookingDetailStart"></span>
+      </div>
+      <div class="booking-detail-row">
+        <span class="booking-detail-label">End</span>
+        <span class="booking-detail-value" id="bookingDetailEnd"></span>
+      </div>
+    </div>
+  </section>
+</div>
+
 <script>
   const DAY_START_HOUR = 7;
   const DAY_END_HOUR = 22;
-  const HOUR_HEIGHT = 58;
   const params = new URLSearchParams(window.location.search);
   const board = document.getElementById("board");
   const calendarTitleEl = document.getElementById("calendarTitle");
@@ -848,6 +966,12 @@
   const resourcePager = document.getElementById("resourcePager");
   const statusEl = document.getElementById("status");
   const weekLabelEl = document.getElementById("weekLabel");
+  const bookingDetailBackdrop = document.getElementById("bookingDetailBackdrop");
+  const bookingDetailClose = document.getElementById("bookingDetailClose");
+  const bookingDetailCourt = document.getElementById("bookingDetailCourt");
+  const bookingDetailPlayers = document.getElementById("bookingDetailPlayers");
+  const bookingDetailStart = document.getElementById("bookingDetailStart");
+  const bookingDetailEnd = document.getElementById("bookingDetailEnd");
   const prevWeekButton = document.getElementById("prevWeekButton");
   const todayButton = document.getElementById("todayButton");
   const nextWeekButton = document.getElementById("nextWeekButton");
@@ -861,6 +985,18 @@
   let currentResourcePage = readPage(params.get("page"));
 
   prevWeekButton.addEventListener("click", () => moveWeek(-7));
+  bookingDetailClose.addEventListener("click", closeBookingDetail);
+  bookingDetailBackdrop.addEventListener("click", (event) => {
+    if (event.target === bookingDetailBackdrop) closeBookingDetail();
+  });
+  document.addEventListener("keydown", (event) => {
+    if (event.key === "Escape") closeBookingDetail();
+  });
+  board.addEventListener("click", (event) => {
+    const booking = event.target.closest(".timeline-booking[data-detail-court]");
+    if (!booking || !isCompactTimelineLayout()) return;
+    openBookingDetail(booking.dataset);
+  });
   todayButton.addEventListener("click", () => {
     currentDay = startOfDay(new Date());
     currentWeekStart = startOfWeek(currentDay);
@@ -1152,10 +1288,11 @@
   }
 
   function renderSharedTimeline(resources, grouped, selectedDateKey) {
+    const hourHeight = getHourHeight();
     const totalHours = DAY_END_HOUR - DAY_START_HOUR;
-    const timelineHeight = totalHours * HOUR_HEIGHT;
+    const timelineHeight = totalHours * hourHeight;
     const hourLines = Array.from({ length: totalHours + 1 }, (_, index) => {
-      const top = index * HOUR_HEIGHT;
+      const top = index * hourHeight;
       const hour = DAY_START_HOUR + index;
       const label = hour <= DAY_END_HOUR ? `
         <span class="timeline-hour-label" style="top:${top}px">${String(hour).padStart(2, "0")}:00</span>
@@ -1164,7 +1301,7 @@
       return {
         top,
         label,
-        fill: index < totalHours ? `<div class="timeline-hour-fill" style="top:${top}px;height:${HOUR_HEIGHT}px"></div>` : "",
+        fill: index < totalHours ? `<div class="timeline-hour-fill" style="top:${top}px;height:${hourHeight}px"></div>` : "",
         line: `<div class="timeline-hour-line" style="top:${top}px"></div>`
       };
     });
@@ -1281,18 +1418,20 @@
     const end = parseLocalDateTime(event.end);
     const startMinutes = clampMinutesWithinTimeline((start.getHours() * 60) + start.getMinutes());
     const endMinutes = clampMinutesWithinTimeline((end.getHours() * 60) + end.getMinutes());
-    const top = ((startMinutes - (DAY_START_HOUR * 60)) / 60) * HOUR_HEIGHT;
-    const timelineHeight = (DAY_END_HOUR - DAY_START_HOUR) * HOUR_HEIGHT;
-    const rawHeight = Math.max(52, ((Math.max(endMinutes, startMinutes + 30) - startMinutes) / 60) * HOUR_HEIGHT);
-    const maxHeight = Math.max(32, timelineHeight - top - 6);
+    const hourHeight = getHourHeight();
+    const top = ((startMinutes - (DAY_START_HOUR * 60)) / 60) * hourHeight;
+    const timelineHeight = (DAY_END_HOUR - DAY_START_HOUR) * hourHeight;
+    const rawHeight = Math.max(isCompactTimelineLayout() ? 36 : 52, ((Math.max(endMinutes, startMinutes + 30) - startMinutes) / 60) * hourHeight);
+    const maxHeight = Math.max(isCompactTimelineLayout() ? 24 : 32, timelineHeight - top - 6);
     const height = Math.min(maxHeight, rawHeight);
     const fullTitle = event.title || "Reserved";
     const compactTitle = formatTimelineBookingTitle(fullTitle);
     const fullLabel = `${fullTitle}, ${formatTimelineBookingDetectorDate(start)}, ${formatTime(event.start)} - ${formatTime(event.end)}`;
+    const visibleTime = isCompactTimelineLayout() ? "" : `${formatTime(event.start)} - ${formatTime(event.end)}`;
 
     return `
-      <article class="timeline-booking" style="top:${top}px;height:${height}px" aria-label="${escapeHtml(fullLabel)}" title="${escapeHtml(fullLabel)}">
-        <span class="timeline-booking-time">${formatTime(event.start)} - ${formatTime(event.end)}</span>
+      <article class="timeline-booking" style="top:${top}px;height:${height}px" aria-label="${escapeHtml(fullLabel)}" title="${escapeHtml(fullLabel)}" data-detail-court="${escapeHtml(event.resourceName || "Court")}" data-detail-players="${escapeHtml(fullTitle)}" data-detail-start="${escapeHtml(formatTimelineDetailDateTime(start))}" data-detail-end="${escapeHtml(formatTimelineDetailDateTime(end))}">
+        <span class="timeline-booking-time">${escapeHtml(visibleTime)}</span>
         <span class="timeline-booking-title">${escapeHtml(compactTitle)}</span>
         <span class="sr-only">${escapeHtml(fullLabel)}</span>
       </article>
@@ -1305,6 +1444,10 @@
     return Math.max(min, Math.min(max, minutes));
   }
 
+  function getHourHeight() {
+    return isCompactTimelineLayout() ? 42 : 58;
+  }
+
   function getResourcesPerPage() {
     if (window.innerWidth < 720) return 4;
     if (window.innerWidth < 1100) return 3;
@@ -1314,6 +1457,30 @@
 
   function formatTimelineBookingDetectorDate(date) {
     return date.toLocaleDateString([], { weekday: "long", month: "long", day: "numeric", year: "numeric" });
+  }
+
+  function formatTimelineDetailDateTime(date) {
+    return date.toLocaleString([], {
+      weekday: "long",
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit"
+    });
+  }
+
+  function openBookingDetail(detail) {
+    bookingDetailCourt.textContent = detail.detailCourt || "Court";
+    bookingDetailPlayers.textContent = detail.detailPlayers || "Reserved";
+    bookingDetailStart.textContent = detail.detailStart || "";
+    bookingDetailEnd.textContent = detail.detailEnd || "";
+    bookingDetailBackdrop.classList.add("open");
+    bookingDetailBackdrop.setAttribute("aria-hidden", "false");
+  }
+
+  function closeBookingDetail() {
+    bookingDetailBackdrop.classList.remove("open");
+    bookingDetailBackdrop.setAttribute("aria-hidden", "true");
   }
 
   function formatTimelineBookingTitle(title) {

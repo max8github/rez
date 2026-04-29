@@ -1,21 +1,22 @@
 #!/usr/bin/env python3
 
+import argparse
 import json
+import os
 import random
+import re
 import time
 import urllib.error
 import urllib.request
 from datetime import datetime, timedelta
-import os
-import re
 
-BASE = os.getenv("REZ_BASE_URL", f"http://localhost:{os.getenv('PORT', '9001')}")
+DEFAULT_BASE = os.getenv("REZ_BASE_URL", f"http://localhost:{os.getenv('PORT', '9001')}")
 
 
-def request(method, path, payload=None):
+def request(base_url, method, path, payload=None):
     data = None if payload is None else json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(
-        BASE + path,
+        base_url + path,
         data=data,
         headers={"Content-Type": "application/json"},
         method=method,
@@ -28,17 +29,17 @@ def request(method, path, payload=None):
         raise RuntimeError(f"{e.code} {e.reason} on {path}: {body}")
 
 
-def get_json(path):
-    with urllib.request.urlopen(BASE + path) as resp:
+def get_json(base_url, path):
+    with urllib.request.urlopen(base_url + path) as resp:
         return json.loads(resp.read().decode("utf-8"))
 
 
-def post(path, payload):
-    return request("POST", path, payload)
+def post(base_url, path, payload):
+    return request(base_url, "POST", path, payload)
 
 
-def put(path, payload):
-    return request("PUT", path, payload)
+def put(base_url, path, payload):
+    return request(base_url, "PUT", path, payload)
 
 
 def slugify(value):
@@ -46,16 +47,31 @@ def slugify(value):
     return value or "resource"
 
 
-def main():
-    bot_token = f"bot:local-seed-{int(time.time())}"
+def parse_args():
+    parser = argparse.ArgumentParser(
+        description="Seed Rez calendar bookings, optionally against an existing facility."
+    )
+    parser.add_argument(
+        "--host",
+        default=DEFAULT_BASE,
+        help="Rez base URL, e.g. http://localhost:9001 or https://rez.example.com",
+    )
+    parser.add_argument(
+        "--facility-id",
+        help="Existing facility ID to seed. If omitted, the script provisions a fresh facility with 4 courts.",
+    )
+    return parser.parse_args()
 
+
+def provision_facility(base_url):
+    bot_token = f"bot:local-seed-{int(time.time())}"
     facility_payload = {
         "name": "Calendar Seed Club",
         "address": {"street": "Via Roma 1", "city": "Rome"},
         "timezone": "Europe/Rome",
         "botToken": bot_token,
     }
-    facility_id = post("/facility/", facility_payload).strip().strip('"')
+    facility_id = post(base_url, "/facility/", facility_payload).strip().strip('"')
     print("FACILITY_ID =", facility_id)
     print("BOT_TOKEN   =", bot_token)
 
@@ -69,29 +85,55 @@ def main():
             "resourceName": name,
             "calendarId": calendar_id,
         }
-        post(f"/resource/{resource_id}", resource_payload)
+        post(base_url, f"/resource/{resource_id}", resource_payload)
         put(
+            base_url,
             f"/resource/{resource_id}/external-ref",
             {"externalRef": resource_id, "externalGroupRef": facility_id},
         )
         resource_ids.append(resource_id)
         print("RESOURCE READY =", resource_id, name)
+        time.sleep(1)
 
-    print("Waiting for both resources to become readable...")
+    print("Waiting for resources to become readable...")
 
     for i in range(120):
         ready = 0
         for resource_id in resource_ids:
-            resource = get_json(f"/resource/{resource_id}")
+            resource = get_json(base_url, f"/resource/{resource_id}")
             if resource.get("externalGroupRef") == facility_id:
                 ready += 1
         print(f"  poll {i + 1:02d}: {ready}/{len(resource_ids)} resources ready")
         if ready == len(resource_ids):
             time.sleep(1.0)
-            break
+            return facility_id, resource_ids
         time.sleep(0.5)
+
+    raise RuntimeError("Resources did not finish attaching to the facility in time")
+
+
+def load_existing_facility_resources(base_url, facility_id):
+    resources = get_json(base_url, f"/api/calendar/resources?facilityId={facility_id}")
+    resource_ids = [resource["resourceId"] for resource in resources]
+    if not resource_ids:
+        raise RuntimeError(f"Facility {facility_id} has no resources to seed")
+
+    print("FACILITY_ID =", facility_id)
+    print("USING EXISTING RESOURCES:")
+    for resource in resources:
+        print("RESOURCE READY =", resource["resourceId"], resource["resourceName"])
+    return resource_ids
+
+
+def main():
+    args = parse_args()
+    base_url = args.host.rstrip("/")
+
+    if args.facility_id:
+        facility_id = args.facility_id
+        resource_ids = load_existing_facility_resources(base_url, facility_id)
     else:
-        raise RuntimeError("Resources did not finish attaching to the facility in time")
+        facility_id, resource_ids = provision_facility(base_url)
 
     players_pool = [
         "Alice", "Bob", "Max", "John", "Sara", "Leo", "Ana", "Tom",
@@ -132,7 +174,7 @@ def main():
         }
 
         try:
-            post("/bookings", {"reservationId": reservation_id, **payload})
+            post(base_url, "/bookings", {"reservationId": reservation_id, **payload})
             created += 1
             print(f"BOOKED {created:02d} {reservation_id} {slot_key} {players}")
             time.sleep(0.05)
@@ -142,7 +184,7 @@ def main():
     print()
     print(f"Submitted {created} booking requests.")
     print("Wait a few seconds for projections, then open:")
-    print(f"{BASE}/calendar?facilityId={facility_id}")
+    print(f"{base_url}/calendar?facilityId={facility_id}")
 
 
 if __name__ == "__main__":

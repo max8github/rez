@@ -104,12 +104,6 @@ public class DelegatingServiceAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.ReservationCancelled event) {
-        String recipientId = event.recipientId();
-        String text = "Reservation %s has been cancelled.".formatted(event.reservationId());
-        notificationSender.send(recipientId, text)
-            .whenComplete((result, error) -> {
-                if (error != null) log.error("Error sending cancellation notification: {}", error.getMessage());
-            });
         return effects().done();
     }
 }
