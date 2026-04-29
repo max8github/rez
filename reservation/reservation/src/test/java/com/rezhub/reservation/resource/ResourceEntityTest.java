@@ -74,4 +74,15 @@ class ResourceEntityTest {
 
         assertThat(result.isError()).isTrue();
     }
+
+    @Test
+    void deleteResource_persistsDeletionEvent() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create)
+            .invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+
+        var result = testKit.method(ResourceEntity::deleteResource).invoke();
+
+        assertThat(result.getNextEventOfType(ResourceEvent.ResourceDeleted.class).resourceId()).isEqualTo(RESOURCE_ID);
+    }
 }

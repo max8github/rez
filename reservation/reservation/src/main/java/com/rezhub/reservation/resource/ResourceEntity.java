@@ -42,6 +42,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             case ResourceEvent.WeeklyScheduleUpdated e -> currentState().withWeeklySchedule(e.schedule());
             case ResourceEvent.ResourceTypeSet e -> currentState().withResourceType(e.resourceType());
             case ResourceEvent.ExternalRefSet e -> currentState().withExternalRef(e.externalRef(), e.externalGroupRef());
+            case ResourceEvent.ResourceDeleted e -> currentState();
         };
     }
 
@@ -104,6 +105,14 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         log.info("Cancelling reservation {} from resource {} on dateTime {} ", command.reservationId(), entityId, validTime);
         return effects()
             .persist(new ResourceEvent.ReservationCanceled(entityId, command.reservationId(), validTime))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> deleteResource() {
+        log.info("Deleting resource {}", entityId);
+        return effects()
+            .persist(new ResourceEvent.ResourceDeleted(entityId))
+            .deleteEntity()
             .thenReply(newState -> "OK");
     }
 

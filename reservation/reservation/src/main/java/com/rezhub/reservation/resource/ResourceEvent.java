@@ -30,4 +30,6 @@ public sealed interface ResourceEvent {
     record ResourceTypeSet(String resourceId, String resourceType) implements ResourceEvent {}
     @TypeName("external-ref-set")
     record ExternalRefSet(String resourceId, String externalRef, String externalGroupRef) implements ResourceEvent {}
+    @TypeName("resource-deleted")
+    record ResourceDeleted(String resourceId) implements ResourceEvent {}
 }

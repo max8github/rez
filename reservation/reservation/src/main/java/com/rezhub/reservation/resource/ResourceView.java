@@ -44,6 +44,7 @@ public class ResourceView extends View {
                     rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withFacilityId(
                         e.externalGroupRef() != null ? e.externalGroupRef() : rowState().facilityId()));
+                case ResourceEvent.ResourceDeleted e -> effects().deleteRow();
             };
         }
     }

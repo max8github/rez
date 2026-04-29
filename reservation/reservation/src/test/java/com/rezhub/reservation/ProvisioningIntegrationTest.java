@@ -2,6 +2,7 @@ package com.rezhub.reservation;
 
 import akka.javasdk.testkit.TestKitSupport;
 import com.rezhub.reservation.api.FacilityEndpoint;
+import com.rezhub.reservation.api.ResourceEndpoint;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
@@ -218,6 +219,49 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
     }
 
     @Test
+    public void deleteResource_removesFacilityAndResourceViewRows() throws Exception {
+        var facilityId = "f_prov-delete-" + shortId();
+        var resourceId = "court-" + shortId();
+
+        componentClient.forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::create)
+            .invoke(new Facility("Delete Club", new Address("Court Rd", "Berlin"), "Europe/Berlin", null, null));
+
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::create)
+            .invoke(new Resource(resourceId, "Court 4", ""));
+
+        componentClient.forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setExternalRef)
+            .invoke(new ResourceEntity.SetExternalRef(resourceId, facilityId));
+
+        eventually(() ->
+                componentClient.forView()
+                    .method(ResourcesByFacilityView::getByFacilityId)
+                    .invoke(facilityId)
+                    .entries(),
+            found -> !found.isEmpty());
+
+        ResourceEndpoint endpoint = new ResourceEndpoint(componentClient);
+        assertThat(endpoint.deleteResource(resourceId)).isEqualTo("OK");
+
+        List<ResourcesByFacilityView.Row> rows = eventually(() ->
+                componentClient.forView()
+                    .method(ResourcesByFacilityView::getByFacilityId)
+                    .invoke(facilityId)
+                    .entries(),
+            List::isEmpty);
+        assertThat(rows).isEmpty();
+
+        Optional<com.rezhub.reservation.resource.ResourceV> resourceView = eventually(() ->
+                componentClient.forView()
+                    .method(ResourceView::getResourceById)
+                    .invoke(resourceId),
+            Optional::isEmpty);
+        assertThat(resourceView).isEmpty();
+    }
+
+    @Test
     public void resourceView_getResourceById_unknownId_returnsEmpty() {
         Optional<com.rezhub.reservation.resource.ResourceV> result = componentClient.forView()
             .method(ResourceView::getResourceById)
@@ -239,7 +283,7 @@ public class ProvisioningIntegrationTest extends TestKitSupport {
     }
 
     @FunctionalInterface
-    interface CheckedSupplier<T> {
+    private interface CheckedSupplier<T> {
         T get() throws Exception;
     }
 

@@ -59,7 +59,7 @@ def main():
     print("FACILITY_ID =", facility_id)
     print("BOT_TOKEN   =", bot_token)
 
-    court_names = ["Center Court", "Court 2"]
+    court_names = ["Center Court", "Court 2", "Court 3", "Court 4"]
     resource_ids = []
     for name in court_names:
         resource_id = f"{slugify(name)}-{int(time.time())}"
@@ -115,7 +115,7 @@ def main():
         dt = dt.replace(hour=hour)
 
         slot_key = dt.isoformat(timespec="seconds")
-        court_index = random.choice([0, 1])
+        court_index = random.randrange(len(resource_ids))
 
         if (court_index, slot_key) in used:
             continue

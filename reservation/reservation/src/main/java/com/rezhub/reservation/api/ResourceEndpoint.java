@@ -1,6 +1,7 @@
 package com.rezhub.reservation.api;
 
 import akka.javasdk.annotations.Acl;
+import akka.javasdk.annotations.http.Delete;
 import akka.javasdk.annotations.http.Get;
 import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
@@ -40,6 +41,14 @@ public class ResourceEndpoint {
         return componentClient
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::getResource)
+            .invoke();
+    }
+
+    @Delete("/{resourceId}")
+    public String deleteResource(String resourceId) {
+        return componentClient
+            .forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::deleteResource)
             .invoke();
     }
 

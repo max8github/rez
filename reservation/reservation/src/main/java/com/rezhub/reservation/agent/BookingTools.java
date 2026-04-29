@@ -163,7 +163,7 @@ public class BookingTools {
         ReservationHandle handle = bookingService.book(origin, intent);
 
         log.info("Booking initiated, reservationId={}", handle.reservationId());
-        return "Booking request queued (ID: " + handle.reservationId() + "). The system is checking availability asynchronously — the member will receive a separate notification with the outcome. Do NOT tell the member the court is confirmed yet.";
+        return "BOOKING_SUBMITTED:" + handle.reservationId();
     }
 
     @FunctionTool(description = """

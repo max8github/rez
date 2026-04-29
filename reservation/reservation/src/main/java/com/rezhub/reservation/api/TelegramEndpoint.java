@@ -111,8 +111,10 @@ public class TelegramEndpoint {
 
     private static boolean isInterimBookingAcknowledgement(String reply) {
         String normalized = reply.trim().toLowerCase(Locale.ROOT);
-        return normalized.equals("checking availability. i'll message you shortly.")
+        return normalized.equals("__silent_booking_ack__")
+            || normalized.equals("checking availability. i'll message you shortly.")
             || normalized.startsWith("booking request queued (id:")
-            || normalized.startsWith("request submitted");
+            || normalized.startsWith("request submitted")
+            || normalized.startsWith("booking_submitted:");
     }
 }
