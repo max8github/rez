@@ -3,3 +3,4 @@ secrets/
 reservation/settings.xml
 deploy/standalone/.env
 .claude/settings.local.json
+__pycache__
