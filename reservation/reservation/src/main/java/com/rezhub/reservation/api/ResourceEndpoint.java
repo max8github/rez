@@ -12,7 +12,9 @@ import com.rezhub.reservation.resource.ResourceState;
 import com.rezhub.reservation.resource.dto.Resource;
 
 import java.time.DayOfWeek;
+import java.time.LocalDateTime;
 import java.time.LocalTime;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -92,5 +94,39 @@ public class ResourceEndpoint {
             .forEventSourcedEntity(resourceId)
             .method(ResourceEntity::setExternalRef)
             .invoke(command);
+    }
+
+    /**
+     * Bulk availability check for discovery.
+     *
+     * Body: { "resourceIds": ["hit-player-xxx", ...], "scheduledAt": "2026-05-01T14:00:00", "durationMinutes": 60 }
+     * Returns the subset of resourceIds whose weekly schedule includes the requested slot
+     * and that are not already booked at that time.
+     * Resources with no schedule published are excluded (treated as unavailable).
+     */
+    public record AvailabilityQueryRequest(List<String> resourceIds, String scheduledAt, int durationMinutes) {}
+    public record AvailabilityQueryResponse(List<String> availableIds) {}
+
+    @Post("/query-available")
+    public AvailabilityQueryResponse queryAvailable(AvailabilityQueryRequest request) {
+        LocalDateTime slotTime = LocalDateTime.parse(request.scheduledAt()).truncatedTo(ChronoUnit.HOURS);
+
+        List<String> availableIds = request.resourceIds().stream()
+            .filter(resourceId -> {
+                try {
+                    ResourceState state = componentClient
+                        .forEventSourcedEntity(resourceId)
+                        .method(ResourceEntity::getResource)
+                        .invoke();
+                    // No schedule published → player hasn't set availability
+                    if (state.weeklySchedule().isEmpty()) return false;
+                    return state.isReservableAt(slotTime);
+                } catch (Exception e) {
+                    return false;
+                }
+            })
+            .toList();
+
+        return new AvailabilityQueryResponse(availableIds);
     }
 }
