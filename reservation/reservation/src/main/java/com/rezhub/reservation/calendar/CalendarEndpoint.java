@@ -13,6 +13,7 @@ import com.rezhub.reservation.resource.ResourceView;
 import java.time.format.DateTimeParseException;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -35,15 +36,9 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
     @Get("/api/calendar/events")
     public Object calendarEvents() {
         try {
-            String facilityId = requiredQueryParam("facilityId");
+            Map<String, ResourceV> resourcesById = resolveRequestedResources();
             String start = parseDateTime("start");
             String end = parseDateTime("end");
-
-            ResourceView.Resources resources = componentClient.forView()
-                .method(ResourceView::getResource)
-                .invoke(facilityId);
-            Map<String, ResourceV> resourcesById = resources.resources().stream()
-                .collect(Collectors.toMap(ResourceV::resourceId, Function.identity()));
 
             List<CalendarEvent> events = componentClient.forView()
                 .method(ReservationCalendarView::getEvents)
@@ -62,13 +57,7 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
     @Get("/api/calendar/resources")
     public Object calendarResources() {
         try {
-            String facilityId = requiredQueryParam("facilityId");
-
-            ResourceView.Resources resources = componentClient.forView()
-                .method(ResourceView::getResource)
-                .invoke(facilityId);
-
-            return resources.resources().stream()
+            return resolveRequestedResources().values().stream()
                 .sorted(java.util.Comparator.comparing(ResourceV::resourceName))
                 .map(resource -> new CalendarResource(resource.resourceId(), resource.resourceName()))
                 .toList();
@@ -80,11 +69,31 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
     @Get("/api/calendar/theme")
     public Object calendarTheme() {
         try {
-            requiredQueryParam("facilityId");
+            resolveRequestedResources();
             return new CalendarTheme(DEFAULT_THEME);
         } catch (IllegalArgumentException e) {
             return HttpResponses.badRequest(e.getMessage());
         }
+    }
+
+    private Map<String, ResourceV> resolveRequestedResources() {
+        Optional<String> resourceId = optionalQueryParam("resourceId");
+        if (resourceId.isPresent()) {
+            Optional<ResourceV> resource = componentClient.forView()
+                .method(ResourceView::getResourceById)
+                .invoke(resourceId.get());
+            if (resource.isEmpty()) {
+                throw new IllegalArgumentException("Unknown resourceId: " + resourceId.get());
+            }
+            return Map.of(resource.get().resourceId(), resource.get());
+        }
+
+        String facilityId = requiredQueryParam("facilityId");
+        ResourceView.Resources resources = componentClient.forView()
+            .method(ResourceView::getResource)
+            .invoke(facilityId);
+        return resources.resources().stream()
+            .collect(Collectors.toMap(ResourceV::resourceId, Function.identity()));
     }
 
     private CalendarEvent toApi(ReservationCalendarView.ReservationEntry entry, ResourceV resource) {
@@ -98,9 +107,14 @@ public class CalendarEndpoint extends AbstractHttpEndpoint {
         );
     }
 
-    private String requiredQueryParam(String name) {
+    private Optional<String> optionalQueryParam(String name) {
         return requestContext().queryParams().getString(name)
-            .filter(value -> !value.isBlank())
+            .map(String::trim)
+            .filter(value -> !value.isBlank());
+    }
+
+    private String requiredQueryParam(String name) {
+        return optionalQueryParam(name)
             .orElseThrow(() -> new IllegalArgumentException("Missing query parameter: " + name));
     }
 

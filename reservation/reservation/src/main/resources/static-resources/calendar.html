@@ -977,6 +977,7 @@
   const nextWeekButton = document.getElementById("nextWeekButton");
   const requestedTheme = readRequestedTheme(params.get("theme"));
   const facilityId = (params.get("facilityId") || "").trim();
+  const resourceId = (params.get("resourceId") || "").trim();
 
   applyTheme(requestedTheme || "default");
 
@@ -1092,6 +1093,7 @@
   function updateUrl(facilityId) {
     const nextParams = new URLSearchParams();
     if (facilityId) nextParams.set("facilityId", facilityId);
+    if (resourceId) nextParams.set("resourceId", resourceId);
     if (requestedTheme) nextParams.set("theme", requestedTheme);
     nextParams.set("week", formatDate(currentWeekStart));
     nextParams.set("day", formatDate(currentDay));
@@ -1129,13 +1131,13 @@
     renderWeekLabel(theme);
     renderDayPicker(theme);
 
-    if (!facilityId) {
+    if (!facilityId && !resourceId) {
       board.innerHTML = "";
       dayPicker.innerHTML = "";
       resourcePager.innerHTML = "";
       calendarTitleEl.textContent = "Rez Calendar";
       document.title = "Rez Calendar";
-      setStatus("Open this page with a facilityId in the URL to load the court schedule.");
+      setStatus("Open this page with a facilityId or resourceId in the URL to load the court schedule.");
       return;
     }
 
@@ -1143,12 +1145,16 @@
     board.innerHTML = "";
 
     try {
+      const resourceResult = resourceId ? await fetchResource(resourceId) : null;
+      const effectiveFacilityId = facilityId || (resourceResult && typeof resourceResult.externalGroupRef === "string"
+        ? resourceResult.externalGroupRef.trim()
+        : "");
       const [facilityResult, resources, events] = await Promise.all([
-        fetchFacility(facilityId).catch(() => null),
-        fetchResources(facilityId),
-        fetchEvents(facilityId)
+        effectiveFacilityId ? fetchFacility(effectiveFacilityId).catch(() => null) : Promise.resolve(null),
+        fetchResources(effectiveFacilityId, resourceId),
+        fetchEvents(effectiveFacilityId, resourceId)
       ]);
-      applyFacilityTitle(facilityResult);
+      applyFacilityTitle(facilityResult, resourceResult, resources);
       renderBoard(theme, resources, events);
       setStatus(buildStatus(theme, resources, events));
     } catch (error) {
@@ -1170,8 +1176,11 @@
     weekLabelEl.textContent = `${currentDay.toLocaleDateString([], { weekday: "long", month: "short", day: "numeric", year: "numeric" })}`;
   }
 
-  async function fetchResources(facilityId) {
-    const response = await fetch(`/api/calendar/resources?facilityId=${encodeURIComponent(facilityId)}`);
+  async function fetchResources(facilityId, resourceId) {
+    const query = resourceId
+      ? `resourceId=${encodeURIComponent(resourceId)}`
+      : `facilityId=${encodeURIComponent(facilityId)}`;
+    const response = await fetch(`/api/calendar/resources?${query}`);
     if (!response.ok) {
       const message = await response.text();
       throw new Error(message || `Resource lookup failed (${response.status}).`);
@@ -1179,6 +1188,16 @@
 
     const payload = await response.json();
     return Array.isArray(payload) ? payload : [];
+  }
+
+  async function fetchResource(resourceId) {
+    const response = await fetch(`/resource/${encodeURIComponent(resourceId)}`);
+    if (!response.ok) {
+      const message = await response.text();
+      throw new Error(message || `Resource lookup failed (${response.status}).`);
+    }
+
+    return response.json();
   }
 
   async function fetchFacility(facilityId) {
@@ -1191,18 +1210,27 @@
     return response.json();
   }
 
-  function applyFacilityTitle(facility) {
-    const name = facility && typeof facility.name === "string" && facility.name.trim()
+  function applyFacilityTitle(facility, resource, resources) {
+    const facilityName = facility && typeof facility.name === "string" && facility.name.trim()
       ? facility.name.trim()
-      : "Rez Calendar";
+      : "";
+    const resourceName = resource && typeof resource.name === "string" && resource.name.trim()
+      ? resource.name.trim()
+      : (resources.length === 1 && typeof resources[0].resourceName === "string" ? resources[0].resourceName.trim() : "");
+    const name = facilityName && resourceName
+      ? `${facilityName} - ${resourceName}`
+      : (resourceName || facilityName || "Rez Calendar");
     calendarTitleEl.textContent = name;
     document.title = name;
   }
 
-  async function fetchEvents(facilityId) {
+  async function fetchEvents(facilityId, resourceId) {
     const start = formatDateTime(currentWeekStart);
     const end = formatDateTime(addDays(currentWeekStart, 7));
-    const response = await fetch(`/api/calendar/events?facilityId=${encodeURIComponent(facilityId)}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
+    const scope = resourceId
+      ? `resourceId=${encodeURIComponent(resourceId)}`
+      : `facilityId=${encodeURIComponent(facilityId)}`;
+    const response = await fetch(`/api/calendar/events?${scope}&start=${encodeURIComponent(start)}&end=${encodeURIComponent(end)}`);
     if (!response.ok) {
       const message = await response.text();
       throw new Error(message || `Event lookup failed (${response.status}).`);
