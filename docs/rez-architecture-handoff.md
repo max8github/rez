@@ -44,6 +44,62 @@ What did not change:
 
 The practical result is that Rez is now much closer to a narrow booking engine, but the integration surfaces still carry some transitional coupling.
 
+## Intended Target Architecture
+
+This section captures the intended service-boundary direction so it is not lost across incremental refactors.
+
+What is clearly established today:
+
+- the runtime is currently split into two services:
+  - `hit-backend`
+  - `rez`
+- `rez` should keep narrowing toward a generic booking engine centered on:
+  - resources
+  - reservations
+  - booking correctness / locking
+  - a thin orchestration layer in front of the reservation core
+
+What earlier architecture work intended, but did not fully finalize:
+
+- facility ownership may move out of Rez
+- user/member ownership may move out of Rez
+- calendar responsibilities may move out of Rez or become a cleaner external read-model boundary
+- notification sending may eventually move out of Rez as well
+
+The strongest intended future boundary move was:
+
+- Rez remains the generic booking engine
+- facility/user/member metadata are owned outside Rez and accessed through directory/gateway abstractions
+
+That direction is explicit in the earlier target-state document, but the exact service topology was left open.
+
+Two plausible future decompositions were implicitly on the table:
+
+1. Conservative split
+   - `hit-backend`
+   - `rez` as booking engine
+   - one external facility/member/catalog service
+
+2. More decomposed split
+   - `hit-backend`
+   - `rez` as booking engine
+   - separate facility/catalog service
+   - separate member/user service
+   - separate calendar/read-model application or service
+   - possibly separate notification/orchestration service
+
+What was not actually decided:
+
+- whether facility and member metadata should live in one service or two
+- whether the calendar should remain embedded in Rez or become an external application/service
+- whether notification delivery should stay inside Rez or move outward
+
+So the durable architectural intent is narrower than "Rez will definitely split into N services":
+
+- keep Rez focused on generic booking correctness
+- push non-core metadata ownership outward
+- treat calendar and notifications as movable integration boundaries rather than permanent core responsibilities
+
 ## Current Architecture
 
 At a high level the current runtime flow is:
