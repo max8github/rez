@@ -628,7 +628,7 @@ The old monolithic booking service mixed:
 Target split:
 - `BookingTools`
   - agent-facing `@FunctionTool` methods
-- `BookingApplicationServiceImpl`
+- `BookingApplicationService`
   - deterministic orchestration and workflow dispatch
 - `ReservationGatewayAkka`
   - wrapper around current reservation entities / endpoint
@@ -665,7 +665,7 @@ The goal is to make the reservation core an explicit dependency of the applicati
 
 Create:
 - `BookingTools`
-- `BookingApplicationServiceImpl`
+- `BookingApplicationService`
 
 Move all deterministic facility/resource lookup logic out of agent-facing tool methods.
 

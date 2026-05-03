@@ -5,7 +5,7 @@ import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.orchestration.AvailabilityResult;
-import com.rezhub.reservation.orchestration.BookingApplicationServiceImpl;
+import com.rezhub.reservation.orchestration.BookingApplicationService;
 import com.rezhub.reservation.orchestration.BookingIntent;
 import com.rezhub.reservation.orchestration.CancelIntent;
 import com.rezhub.reservation.orchestration.OriginRequestContext;
@@ -34,7 +34,7 @@ import java.util.regex.Pattern;
 
 /**
  * Agent-facing @FunctionTool surface for booking operations.
- * Delegates domain logic to BookingApplicationServiceImpl; keeps only
+ * Delegates domain logic to BookingApplicationService; keeps only
  * parameter validation, LLM-specific string formatting, and utility helpers.
  */
 public class BookingTools {
@@ -73,11 +73,11 @@ public class BookingTools {
         Map.entry("domenica", DayOfWeek.SUNDAY)
     );
 
-    private final BookingApplicationServiceImpl bookingService;
+    private final BookingApplicationService bookingService;
     private final ReservationGatewayAkka reservationGateway;
     private final ComponentClient componentClient;
 
-    public BookingTools(BookingApplicationServiceImpl bookingService,
+    public BookingTools(BookingApplicationService bookingService,
                         ReservationGatewayAkka reservationGateway,
                         ComponentClient componentClient) {
         this.bookingService = bookingService;

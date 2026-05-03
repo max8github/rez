@@ -21,7 +21,7 @@ BookingAgent       (Akka Agent, GPT-4o-mini)
 BookingTools
   │
   ▼
-BookingApplicationServiceImpl
+BookingApplicationService
   │  resolves BookingContext, selects workflow
   ▼
 CourtBookingWorkflow

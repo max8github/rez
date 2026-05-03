@@ -63,7 +63,7 @@ BookingAgent
 BookingTools
   │
   ▼
-BookingApplicationServiceImpl
+BookingApplicationService
   │
   ▼
 CourtBookingWorkflow
@@ -153,7 +153,7 @@ The old `BookingService` mixed tool surface, context resolution, scope lookup, b
 That was split into:
 
 - `BookingTools` for the LLM-facing function surface
-- `BookingApplicationServiceImpl` for workflow dispatch
+- `BookingApplicationService` for workflow dispatch
 - `BookingContextResolverAkka` for deriving booking context from the request origin
 - `CourtBookingWorkflow` for court-domain booking behavior
 - `CourtDirectoryAkka` for resolving facility scope to candidate resources

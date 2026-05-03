@@ -24,7 +24,7 @@ MessagingEndpoint  (Akka HTTP, e.g. TelegramEndpoint)
 BookingAgent    (Akka Agent)
   │  tool calls
   ▼
-BookingTools / BookingApplicationServiceImpl
+BookingTools / BookingApplicationService
   │  ComponentClient calls
 ├──▶ ResourceView      – check availability helper
 ├──▶ ResourcesByFacilityView – resolve candidate resources for the court-booking path
