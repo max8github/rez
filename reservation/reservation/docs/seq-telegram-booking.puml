@@ -1,0 +1,108 @@
+@startuml seq-telegram-booking
+title Telegram Court Reservation — end-to-end flow
+
+skinparam sequenceMessageAlign center
+skinparam defaultFontSize 13
+skinparam defaultFontName Arial
+skinparam sequenceArrowFontSize 12
+skinparam noteFontSize 12
+skinparam participantFontSize 13
+skinparam participantFontStyle bold
+skinparam actorFontSize 13
+skinparam sequenceGroupFontSize 13
+skinparam sequenceGroupBorderThickness 2
+skinparam roundcorner 6
+skinparam sequenceLifeLineBorderColor #555
+skinparam sequenceArrowColor #333
+skinparam noteBackgroundColor #FFFDE7
+skinparam noteBorderColor #F9A825
+
+actor User
+
+box "Telegram" #EDE7F6
+  participant "Telegram Bot API" as TG
+end box
+
+box "Rez" #E3F2FD
+  participant TelegramEndpoint as TE
+  participant FacilityByBotTokenView as FV
+  participant "BookingAgent\n(LLM)" as BA
+  participant BookingTools as BT
+  participant BookingAppServiceImpl as BAS
+  participant CourtBookingWorkflow as CBW
+  participant ReservationGatewayAkka as RGW
+  participant ReservationEntity as RE
+  participant "ResourceEntity ×N" as Rx
+  participant DelegatingServiceAction as DSA
+  participant "NotificationSender\n(TelegramNotifier)" as NS
+end box
+
+== Request path ==
+
+User -> TG : "Book court tomorrow at 10"
+TG -> TE : POST /{botToken}/webhook
+
+TE -> FV : getByBotToken(botToken)
+FV --> TE : facilityId, timezone
+
+note over TE
+  builds OriginRequestContext
+  origin = "telegram"
+  recipientId = botToken:chatId
+end note
+
+TE ->> BA : chat(AgentRequest{origin, text})   [invokeAsync — fire & forget]
+TE --> TG : 200 OK immediately
+
+note over BA
+  LLM processes message,
+  decides to call bookCourt tool
+end note
+
+BA -> BT : bookCourt(facilityId, dateTime, players, recipientId)
+BT -> BAS : book(origin{recipientId=botToken:chatId}, intent)
+BAS -> CBW : book(origin, context, intent)
+CBW -> RGW : submit(reservationId, recipientId=botToken:chatId,\nresourceIds, dateTime, originSystem="telegram")
+RGW -> RE : init(reservation, resourceIds,\nrecipientId=botToken:chatId, originSystem="telegram")
+RE --> RGW : Done
+RGW --> CBW : ReservationHandle(reservationId)
+CBW --> BT : "BOOKING_SUBMITTED:abc123"
+BT --> BA : "BOOKING_SUBMITTED:abc123"
+
+note over BA
+  LLM replies "__SILENT_BOOKING_ACK__"
+end note
+
+BA --> TE : "__SILENT_BOOKING_ACK__"
+
+note over TE
+  isInterimBookingAcknowledgement() → true
+  Telegram reply suppressed (no message sent yet)
+end note
+
+== Async fan-out (Akka event-driven) ==
+
+RE -> Rx : check availability at dateTime
+Rx --> RE : available / unavailable
+
+alt Court available → ReservationEvent.Fulfilled
+
+  RE -> RE : persist Fulfilled(\n  reservationId, resourceId,\n  recipientId=botToken:chatId, originSystem="telegram")
+
+  DSA -> RE : [consumes Fulfilled event]
+  DSA -> NS : send(recipientId=botToken:chatId,\n"🎾 Court booked — Thu 10 May, 10:00")
+  NS -> TG : POST bot/sendMessage(chatId, text)
+  TG -> User : "🎾 Court 1 – Thu 10 May, 10:00 ✅"
+
+else No court available → ReservationEvent.SearchExhausted
+
+  RE -> RE : persist SearchExhausted(\n  reservationId,\n  recipientId=botToken:chatId, originSystem="telegram")
+
+  DSA -> RE : [consumes SearchExhausted event]
+  DSA -> NS : send(recipientId=botToken:chatId,\n"Sorry, no court available…")
+  NS -> TG : POST bot/sendMessage(chatId, text)
+  TG -> User : "Sorry, no court was available.\nPlease try a different time."
+
+end
+
+@enduml
