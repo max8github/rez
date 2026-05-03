@@ -22,11 +22,12 @@ public class ReservationOutcomeProducer extends Consumer {
     public Effect onEvent(ReservationEvent event) {
         return switch (event) {
             case ReservationEvent.Fulfilled f ->
-                effects().produce(new ReservationOutcomeEvent.Fulfilled(f.reservationId(), f.resourceId()));
+                effects().produce(new ReservationOutcomeEvent.Fulfilled(f.reservationId(), f.resourceId(), f.originSystem()));
             case ReservationEvent.SearchExhausted e ->
-                effects().produce(new ReservationOutcomeEvent.Rejected(e.reservationId()));
+                effects().produce(new ReservationOutcomeEvent.Rejected(e.reservationId(), e.originSystem()));
+            // Interim per-resource rejection: originSystem not available here; consumers should filter on terminal events only.
             case ReservationEvent.Rejected r ->
-                effects().produce(new ReservationOutcomeEvent.Rejected(r.reservationId()));
+                effects().produce(new ReservationOutcomeEvent.Rejected(r.reservationId(), null));
             default -> effects().ignore();
         };
     }

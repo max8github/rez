@@ -58,6 +58,9 @@ public class DelegatingServiceAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.Fulfilled event) {
+        // Hit-backend manages its own notifications via RezBookingConsumer.
+        if ("hit".equals(event.originSystem())) return effects().done();
+
         Reservation reservation = event.reservation();
         String reservationId = event.reservationId();
         String resourceId = event.resourceId();
@@ -93,6 +96,8 @@ public class DelegatingServiceAction extends Consumer {
     }
 
     public Effect on(ReservationEvent.SearchExhausted event) {
+        if ("hit".equals(event.originSystem())) return effects().done();
+
         String recipientId = event.recipientId();
         String time = event.reservation().dateTime().format(DATE_FMT);
         String text = "Sorry, no court was available for %s. Please try a different time.".formatted(time);

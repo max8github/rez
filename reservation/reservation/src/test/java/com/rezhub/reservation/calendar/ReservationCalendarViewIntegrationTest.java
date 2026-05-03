@@ -36,7 +36,8 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .invoke(new ReservationEntity.Init(
                 reservation,
                 Set.of(resourceId),
-                "telegram-user"
+                "telegram-user",
+                "telegram"
             ));
         componentClient.forEventSourcedEntity(reservationId)
             .method(ReservationEntity::replyAvailability)
@@ -80,7 +81,8 @@ public class ReservationCalendarViewIntegrationTest extends TestKitSupport {
             .invoke(new ReservationEntity.Init(
                 reservation,
                 Set.of(resourceId),
-                "telegram-user"
+                "telegram-user",
+                "telegram"
             ));
         componentClient.forEventSourcedEntity(reservationId)
             .method(ReservationEntity::replyAvailability)

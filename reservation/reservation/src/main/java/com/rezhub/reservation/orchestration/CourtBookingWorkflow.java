@@ -76,7 +76,8 @@ public class CourtBookingWorkflow implements BookingWorkflow {
             scope.timezone(),
             intent.dateTime(),
             intent.participantNames(),
-            Set.copyOf(scope.resourceIds())
+            Set.copyOf(scope.resourceIds()),
+            origin.origin()
         );
         return reservationGateway.submit(submission);
     }

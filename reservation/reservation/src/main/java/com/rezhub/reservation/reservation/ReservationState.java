@@ -8,47 +8,53 @@ import static com.rezhub.reservation.reservation.ReservationState.State.INIT;
 public record ReservationState(State state, String reservationId, List<String> emails,
                                Set<String> availableResources, Set<String> resourceIds,
                                Set<String> pendingResourceIds,
-                               LocalDateTime dateTime, String resourceId, String recipientId) {
+                               LocalDateTime dateTime, String resourceId, String recipientId,
+                               String originSystem) {
 
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
         return new ReservationState(INIT, entityId, empty, new HashSet<>(), new HashSet<>(), new HashSet<>(),
-            LocalDateTime.now(), "", "");
+            LocalDateTime.now(), "", "", null);
     }
 
     public ReservationState withState(State state) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withResourceId(String resourceId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withEmails(List<String> emails) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withResourceIds(Set<String> resourceIds) {
         return new ReservationState(state, reservationId, emails, availableResources, new HashSet<>(resourceIds), pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withPendingResourceIds(Set<String> pendingResourceIds) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, new HashSet<>(pendingResourceIds),
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withDateTime(LocalDateTime dateTime) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withRecipientId(String recipientId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, resourceId, recipientId);
+            dateTime, resourceId, recipientId, originSystem);
+    }
+
+    public ReservationState withOriginSystem(String originSystem) {
+        return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
+            dateTime, resourceId, recipientId, originSystem);
     }
 
     public ReservationState withAdded(String resourceId) {

@@ -45,7 +45,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     .withPendingResourceIds(e.resourceIds())
                     .withDateTime(reservation.dateTime())
                     .withEmails(reservation.emails())
-                    .withRecipientId(e.recipientId());
+                    .withRecipientId(e.recipientId())
+                    .withOriginSystem(e.originSystem());
             }
             case ReservationEvent.AvailabilityReplied e -> {
                 ReservationState next = currentState().withPendingRemoved(e.resourceId());
@@ -92,7 +93,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized");
             case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized");
             case INIT -> effects()
-                .persist(new ReservationEvent.Inited(id, command.reservation(), command.resourceIds(), command.recipientId()))
+                .persist(new ReservationEvent.Inited(id, command.reservation(), command.resourceIds(), command.recipientId(), command.originSystem()))
                 .thenReply(newState -> new ReservationId(id));
         };
     }
@@ -111,7 +112,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     if (isLastPendingWithoutCandidates(command.resourceId())) {
                         return effects()
                             .persist(new ReservationEvent.SearchExhausted(
-                                entityId, reservation, currentState().resourceIds(), currentState().recipientId()))
+                                entityId, reservation, currentState().resourceIds(), currentState().recipientId(), currentState().originSystem()))
                             .thenReply(newState -> "OK");
                     }
                     return effects()
@@ -144,7 +145,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         return switch (currentState().state()) {
             case SELECTING -> effects()
                 .persist(new ReservationEvent.Fulfilled(command.resourceId(),
-                    entityId, command.reservation(), currentState().resourceIds(), currentState().recipientId()))
+                    entityId, command.reservation(), currentState().resourceIds(), currentState().recipientId(), currentState().originSystem()))
                 .thenReply(newState -> "OK, picked resource " + command.resourceId());
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
@@ -217,7 +218,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                             entityId,
                             fromReservationState(currentState()),
                             currentState().resourceIds(),
-                            currentState().recipientId()))
+                            currentState().recipientId(),
+                            currentState().originSystem()))
                         .thenReply(newState -> "OK");
                 }
             }
@@ -230,7 +232,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
-    public record Init(Reservation reservation, Set<String> resourceIds, String recipientId) {}
+    public record Init(Reservation reservation, Set<String> resourceIds, String recipientId, String originSystem) {}
     public record ReservationId(String reservationId) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}

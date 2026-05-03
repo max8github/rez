@@ -28,7 +28,7 @@ public class ReservationGatewayAkka implements ReservationGateway {
             submission.reservationId(), submission.resourceIds().size(), submission.dateTime());
         Reservation reservation = new Reservation(submission.participants(), submission.dateTime());
         ReservationEntity.Init command = new ReservationEntity.Init(
-            reservation, submission.resourceIds(), submission.recipientId());
+            reservation, submission.resourceIds(), submission.recipientId(), submission.originSystem());
 
         componentClient
             .forEventSourcedEntity(submission.reservationId())

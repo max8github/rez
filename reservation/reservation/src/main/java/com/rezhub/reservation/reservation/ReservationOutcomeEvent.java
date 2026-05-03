@@ -9,8 +9,8 @@ import akka.javasdk.annotations.TypeName;
 public sealed interface ReservationOutcomeEvent {
 
     @TypeName("reservation-outcome-fulfilled")
-    record Fulfilled(String reservationId, String resourceId) implements ReservationOutcomeEvent {}
+    record Fulfilled(String reservationId, String resourceId, String originSystem) implements ReservationOutcomeEvent {}
 
     @TypeName("reservation-outcome-rejected")
-    record Rejected(String reservationId) implements ReservationOutcomeEvent {}
+    record Rejected(String reservationId, String originSystem) implements ReservationOutcomeEvent {}
 }

@@ -28,7 +28,7 @@ class ReservationEntityTest {
     private EventSourcedTestKit<ReservationState, ReservationEvent, ReservationEntity> inCollecting(Set<String> resourceIds) {
         var kit = freshKit();
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
-        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1"));
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1", null));
         return kit;
     }
 

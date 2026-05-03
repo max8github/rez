@@ -14,5 +14,6 @@ public record ReservationSubmission(
     String timezone,
     LocalDateTime dateTime,
     List<String> participants,
-    Set<String> resourceIds
+    Set<String> resourceIds,
+    String originSystem
 ) {}
