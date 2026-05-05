@@ -9,6 +9,15 @@ The messaging layer is pluggable. The current production integration is
 [Telegram](https://telegram.org). [Matrix/Element](https://matrix.org) support
 is partially implemented (`MatrixEndpoint`) but not active in production.
 
+## Docs map
+
+Start with these docs:
+
+- [`../../docs/reference/rez-system-overview.md`](../../docs/reference/rez-system-overview.md) — current-state Rez architecture
+- [`docs/booking-flow.md`](docs/booking-flow.md) — booking flow
+- [`docs/fsm.md`](docs/fsm.md) — reservation FSM
+- [`../../docs/reference/reservation-locking.md`](../../docs/reference/reservation-locking.md) — exact lock point and race behavior
+
 ## Architecture
 
 ```
@@ -152,7 +161,7 @@ GET /reservation-lookup/recipient/{recipientId}/latest
 
 This is intended for operational tooling and QA, especially for asynchronous agent-driven booking flows where the initial webhook response does not contain the reservation ID.
 
-For a more accurate current-state architecture walkthrough than the historical design notes, see [`../../docs/rez-architecture-handoff.md`](../../docs/rez-architecture-handoff.md).
+For a more accurate current-state architecture walkthrough than the historical design notes, see [`../../docs/reference/rez-system-overview.md`](../../docs/reference/rez-system-overview.md).
 
 ## Provisioning
 

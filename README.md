@@ -6,6 +6,37 @@ court, and replies with a confirmation.
 
 Rez also serves a read-only calendar view derived from reservation events.
 
+## Docs map
+
+Start with these docs:
+
+- [docs/README.md](docs/README.md) — docs structure and source-of-truth guide
+- [docs/reference/rez-system-overview.md](docs/reference/rez-system-overview.md) — current-state architecture
+- [docs/conceptual-orchestration-overview.md](docs/conceptual-orchestration-overview.md) — conceptual orchestration overview
+- [reservation/reservation/docs/booking-flow.md](reservation/reservation/docs/booking-flow.md) — booking flow
+- [reservation/reservation/docs/fsm.md](reservation/reservation/docs/fsm.md) — reservation state machine
+- [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md) — active engineering follow-up work
+
+## Where to read next
+
+If you are new to the project:
+
+1. Read [docs/reference/rez-system-overview.md](docs/reference/rez-system-overview.md)
+2. Then read [docs/conceptual-orchestration-overview.md](docs/conceptual-orchestration-overview.md)
+3. Then read [reservation/reservation/docs/booking-flow.md](reservation/reservation/docs/booking-flow.md) and [reservation/reservation/docs/fsm.md](reservation/reservation/docs/fsm.md)
+
+If you need a specific sub-topic:
+
+- Current implemented architecture: [docs/reference/rez-system-overview.md](docs/reference/rez-system-overview.md)
+- Conceptual orchestration layering: [docs/conceptual-orchestration-overview.md](docs/conceptual-orchestration-overview.md)
+- Exact lock point and race behavior: [docs/reference/reservation-locking.md](docs/reference/reservation-locking.md)
+- Booking lifecycle and candidate exhaustion flow: [reservation/reservation/docs/booking-flow.md](reservation/reservation/docs/booking-flow.md)
+- Reservation state machine: [reservation/reservation/docs/fsm.md](reservation/reservation/docs/fsm.md)
+- Deployment: [docs/deployment.md](docs/deployment.md) and [docs/deployment-standalone.md](docs/deployment-standalone.md)
+- Provisioning and facility onboarding: [docs/provisioning.md](docs/provisioning.md) and [docs/facility-provisioning-runbook.md](docs/facility-provisioning-runbook.md)
+- Local dev smoke commands: [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md)
+- Active follow-up engineering work: [docs/DEVELOPMENT_PLAN.md](docs/DEVELOPMENT_PLAN.md)
+
 ## Architecture
 
 ```
@@ -104,5 +135,6 @@ the HTTP API and survive restarts. See [docs/provisioning.md](docs/provisioning.
 | [docs/facility-provisioning-runbook.md](docs/facility-provisioning-runbook.md) | Step-by-step facility onboarding |
 | [docs/quick-notes-runbook.md](docs/quick-notes-runbook.md) | Local dev copy-paste commands |
 | [docs/user-onboarding.md](docs/user-onboarding.md) | End-user booking guide |
-| [docs/booking-orchestration-architecture.md](docs/booking-orchestration-architecture.md) | Orchestration design |
-| [docs/rez-architecture-handoff.md](docs/rez-architecture-handoff.md) | Current-state architecture handoff |
+| [docs/reference/rez-system-overview.md](docs/reference/rez-system-overview.md) | Current-state architecture overview |
+| [docs/conceptual-orchestration-overview.md](docs/conceptual-orchestration-overview.md) | Conceptual orchestration layering overview |
+| [docs/reference/reservation-locking.md](docs/reference/reservation-locking.md) | Precise locking and race-handling explanation |

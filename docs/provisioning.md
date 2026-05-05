@@ -6,6 +6,10 @@ For the step-by-step runbook to onboard a new facility, see [facility-provisioni
 
 For deployment mechanics (build, push, deploy) see [deployment.md](deployment.md).
 
+Current status:
+- this document is the operational reference for one-time platform setup and recorded facility state
+- booking architecture source of truth lives in [reference/rez-system-overview.md](reference/rez-system-overview.md)
+
 ---
 
 ## Concepts

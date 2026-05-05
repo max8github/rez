@@ -1,5 +1,9 @@
 # Development Plan
 
+This document tracks active engineering follow-up work and backlog items for Rez.
+
+For the current implemented architecture, read [reference/rez-system-overview.md](reference/rez-system-overview.md) first.
+
 ---
 
 ## Current blocker

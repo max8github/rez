@@ -1,6 +1,19 @@
-# Booking Orchestration Architecture
+# Conceptual Orchestration Overview
 
-Note: this is a target-state / migration design document. Parts of it are now historical. For the current implemented architecture, read [`rez-architecture-handoff.md`](/Users/max/code/rez/docs/rez-architecture-handoff.md) first.
+This document is the main conceptual overview of Rez orchestration layering.
+
+It is useful for understanding the architecture because it explains the separation between:
+
+- interaction-surface adapters
+- AI intent handling
+- deterministic booking orchestration
+- the generic reservation core
+
+Important:
+
+- for exact current implementation status, read [`reference/rez-system-overview.md`](/Users/max/code/rez/docs/reference/rez-system-overview.md) first
+- if this overview and the current-state overview conflict, the current-state overview wins
+- some sections here are still target-state oriented, but the layering model remains the intended architectural frame
 
 ## Purpose
 

@@ -1,8 +1,12 @@
-# Rez Architecture Handoff
+# Rez System Overview
 
 Cross-repository overview: [../../hit/hit-backend/docs/reference/backend-system-overview.md](../../hit/hit-backend/docs/reference/backend-system-overview.md)
 
 Date: 2026-04-25
+
+Current status:
+- current source of truth for Rez architecture: this document plus `reservation/reservation/docs/booking-flow.md` and `reservation/reservation/docs/fsm.md`
+- historical target-state design notes were moved to `docs/archive/` and should not be read as the implemented architecture
 
 This document is the current-state handoff for Rez after the booking-flow refactors completed on 2026-04-22 through 2026-04-25.
 
@@ -15,10 +19,10 @@ It replaces the earlier speculative version of this memo with:
 
 Related documents:
 
-- [docs/booking-orchestration-architecture.md](/Users/max/code/rez/docs/booking-orchestration-architecture.md)
+- [docs/conceptual-orchestration-overview.md](/Users/max/code/rez/docs/conceptual-orchestration-overview.md)
 - [reservation/reservation/docs/booking-flow.md](/Users/max/code/rez/reservation/reservation/docs/booking-flow.md)
 - [reservation/reservation/docs/fsm.md](/Users/max/code/rez/reservation/reservation/docs/fsm.md)
-- [docs/reservation-locking.md](/Users/max/code/rez/docs/reservation-locking.md)
+- [docs/reference/reservation-locking.md](/Users/max/code/rez/docs/reference/reservation-locking.md)
 
 ## Executive Summary
 
@@ -169,7 +173,7 @@ Relevant docs:
 
 - [reservation/reservation/docs/booking-flow.md](/Users/max/code/rez/reservation/reservation/docs/booking-flow.md)
 - [reservation/reservation/docs/fsm.md](/Users/max/code/rez/reservation/reservation/docs/fsm.md)
-- [docs/reservation-locking.md](/Users/max/code/rez/docs/reservation-locking.md)
+- [docs/reference/reservation-locking.md](/Users/max/code/rez/docs/reference/reservation-locking.md)
 
 ### 2. Booking Now Starts From Flat Resource IDs
 
