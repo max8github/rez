@@ -4,3 +4,4 @@ reservation/settings.xml
 deploy/standalone/.env
 .claude/settings.local.json
 __pycache__
+.env.production
