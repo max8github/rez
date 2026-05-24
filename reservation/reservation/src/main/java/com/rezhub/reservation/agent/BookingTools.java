@@ -45,32 +45,42 @@ public class BookingTools {
         "\\b(?:alle\\s*)?(\\d{1,2})(?::(\\d{2}))?\\s*(am|pm)?\\b",
         Pattern.CASE_INSENSITIVE);
     private static final Map<String, DayOfWeek> WEEKDAYS = Map.ofEntries(
+        // English
         Map.entry("monday", DayOfWeek.MONDAY),
         Map.entry("mon", DayOfWeek.MONDAY),
-        Map.entry("lunedi", DayOfWeek.MONDAY),
-        Map.entry("lunedi'", DayOfWeek.MONDAY),
-        Map.entry("martedi", DayOfWeek.TUESDAY),
-        Map.entry("martedi'", DayOfWeek.TUESDAY),
         Map.entry("tuesday", DayOfWeek.TUESDAY),
         Map.entry("tue", DayOfWeek.TUESDAY),
         Map.entry("wednesday", DayOfWeek.WEDNESDAY),
         Map.entry("wed", DayOfWeek.WEDNESDAY),
-        Map.entry("mercoledi", DayOfWeek.WEDNESDAY),
-        Map.entry("mercoledi'", DayOfWeek.WEDNESDAY),
         Map.entry("thursday", DayOfWeek.THURSDAY),
         Map.entry("thu", DayOfWeek.THURSDAY),
-        Map.entry("giovedi", DayOfWeek.THURSDAY),
-        Map.entry("giovedi'", DayOfWeek.THURSDAY),
         Map.entry("friday", DayOfWeek.FRIDAY),
         Map.entry("fri", DayOfWeek.FRIDAY),
-        Map.entry("venerdi", DayOfWeek.FRIDAY),
-        Map.entry("venerdi'", DayOfWeek.FRIDAY),
         Map.entry("saturday", DayOfWeek.SATURDAY),
         Map.entry("sat", DayOfWeek.SATURDAY),
-        Map.entry("sabato", DayOfWeek.SATURDAY),
         Map.entry("sunday", DayOfWeek.SUNDAY),
         Map.entry("sun", DayOfWeek.SUNDAY),
-        Map.entry("domenica", DayOfWeek.SUNDAY)
+        // Italian
+        Map.entry("lunedi", DayOfWeek.MONDAY),
+        Map.entry("lunedi'", DayOfWeek.MONDAY),
+        Map.entry("martedi", DayOfWeek.TUESDAY),
+        Map.entry("martedi'", DayOfWeek.TUESDAY),
+        Map.entry("mercoledi", DayOfWeek.WEDNESDAY),
+        Map.entry("mercoledi'", DayOfWeek.WEDNESDAY),
+        Map.entry("giovedi", DayOfWeek.THURSDAY),
+        Map.entry("giovedi'", DayOfWeek.THURSDAY),
+        Map.entry("venerdi", DayOfWeek.FRIDAY),
+        Map.entry("venerdi'", DayOfWeek.FRIDAY),
+        Map.entry("sabato", DayOfWeek.SATURDAY),
+        Map.entry("domenica", DayOfWeek.SUNDAY),
+        // German
+        Map.entry("montag", DayOfWeek.MONDAY),
+        Map.entry("dienstag", DayOfWeek.TUESDAY),
+        Map.entry("mittwoch", DayOfWeek.WEDNESDAY),
+        Map.entry("donnerstag", DayOfWeek.THURSDAY),
+        Map.entry("freitag", DayOfWeek.FRIDAY),
+        Map.entry("samstag", DayOfWeek.SATURDAY),
+        Map.entry("sonntag", DayOfWeek.SUNDAY)
     );
 
     private final BookingApplicationService bookingService;
@@ -273,6 +283,28 @@ public class BookingTools {
         }
     }
 
+    private static final Map<String, Integer> NAMED_TIMES = Map.ofEntries(
+        // English
+        Map.entry("noon",        12),
+        Map.entry("midday",      12),
+        Map.entry("midnight",     0),
+        Map.entry("morning",      9),
+        Map.entry("afternoon",   15),
+        Map.entry("evening",     19),
+        // Italian
+        Map.entry("mezzogiorno", 12),
+        Map.entry("mezzanotte",   0),
+        Map.entry("mattina",      9),
+        Map.entry("pomeriggio",  15),
+        Map.entry("sera",        19),
+        // German
+        Map.entry("mittag",      12),
+        Map.entry("mitternacht",  0),
+        Map.entry("vormittag",    9),
+        Map.entry("nachmittag",  15),
+        Map.entry("abend",       19)
+    );
+
     static Optional<LocalDateTime> resolveNaturalDateTime(String text, ZoneId zoneId, ZonedDateTime now) {
         if (text == null || text.isBlank()) {
             return Optional.empty();
@@ -281,11 +313,14 @@ public class BookingTools {
         String normalized = normalize(text);
         LocalDate baseDate = null;
 
-        if (normalized.contains("dopodomani") || normalized.contains("day after tomorrow")) {
+        if (normalized.contains("dopodomani") || normalized.contains("day after tomorrow")
+                || normalized.contains("ubermorgen")) {
             baseDate = now.toLocalDate().plusDays(2);
-        } else if (containsWord(normalized, "domani") || normalized.contains("tomorrow")) {
+        } else if (containsWord(normalized, "domani") || normalized.contains("tomorrow")
+                || containsWord(normalized, "morgen")) {
             baseDate = now.toLocalDate().plusDays(1);
-        } else if (containsWord(normalized, "oggi") || normalized.contains("today")) {
+        } else if (containsWord(normalized, "oggi") || normalized.contains("today")
+                || containsWord(normalized, "heute")) {
             baseDate = now.toLocalDate();
         } else {
             for (Map.Entry<String, DayOfWeek> entry : WEEKDAYS.entrySet()) {
@@ -298,6 +333,13 @@ public class BookingTools {
 
         if (baseDate == null) {
             return Optional.empty();
+        }
+
+        // Check for named times (noon, midnight, etc.) before trying the numeric pattern
+        for (Map.Entry<String, Integer> entry : NAMED_TIMES.entrySet()) {
+            if (containsWord(normalized, entry.getKey())) {
+                return Optional.of(LocalDateTime.of(baseDate, java.time.LocalTime.of(entry.getValue(), 0)));
+            }
         }
 
         Matcher matcher = TIME_PATTERN.matcher(normalized);
@@ -324,7 +366,8 @@ public class BookingTools {
         int current = start.getDayOfWeek().getValue();
         int wanted = target.getValue();
         int delta = (wanted - current + 7) % 7;
-        if (delta == 0 || normalizedText.contains("next ") || normalizedText.contains("prossim")) {
+        if (delta == 0 || normalizedText.contains("next ") || normalizedText.contains("prossim")
+                || normalizedText.contains("nachst")) {
             delta = delta == 0 ? 7 : delta;
         }
         return start.plusDays(delta);
@@ -336,11 +379,17 @@ public class BookingTools {
 
     private static String normalize(String text) {
         return text.toLowerCase(Locale.ROOT)
+            // Italian accents
             .replace('à', 'a')
             .replace('è', 'e')
             .replace('é', 'e')
             .replace('ì', 'i')
             .replace('ò', 'o')
-            .replace('ù', 'u');
+            .replace('ù', 'u')
+            // German umlauts
+            .replace('ä', 'a')
+            .replace('ö', 'o')
+            .replace('ü', 'u')
+            .replace("ß", "ss");
     }
 }
