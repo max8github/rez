@@ -11,6 +11,7 @@ import com.rezhub.reservation.view.FacilityByBotTokenView;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Base64;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Optional;
@@ -72,8 +73,9 @@ public class TelegramEndpoint {
         String senderExternalId = msg.from() != null ? String.valueOf(msg.from().id()) : "";
         String senderDisplayName = msg.from() != null && msg.from().first_name() != null
             ? msg.from().first_name() : "Player";
-        String recipientId = botToken + ":" + chatId;
-        String conversationId = sanitize(botToken + ":" + chatId);
+        String recipientId = Base64.getUrlEncoder().withoutPadding()
+                .encodeToString((botToken + ":" + chatId).getBytes());
+        String conversationId = sanitize(botToken + "-" + chatId);
 
         log.info("Telegram message from {} (chat {}) for facility {}: {}", senderDisplayName, chatId, facilityId, msg.text());
 

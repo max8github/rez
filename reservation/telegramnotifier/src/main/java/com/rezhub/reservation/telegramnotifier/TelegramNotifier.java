@@ -8,12 +8,13 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.util.Base64;
 import java.util.concurrent.CompletableFuture;
 
 /**
  * Sends notifications back to a Telegram chat via the Bot API.
- * recipientId must be in the format "<botToken>:<chatId>", where botToken is the
- * Telegram bot token and chatId is the numeric chat ID from the original Update.
+ * recipientId is a base64url-encoded string of "<botToken>:<chatId>", making it
+ * opaque to the LLM so it passes through unchanged.
  */
 public class TelegramNotifier implements NotificationSender {
 
@@ -24,15 +25,21 @@ public class TelegramNotifier implements NotificationSender {
 
     @Override
     public CompletableFuture<String> send(String recipientId, String text) {
-        // Format: <botToken>:<chatId> where botToken itself contains a colon (e.g. 12345:ABCdef)
-        // Split on the LAST colon to separate chatId from botToken
-        int lastColon = recipientId.lastIndexOf(':');
-        if (lastColon <= 0) {
-            log.warn("TelegramNotifier: malformed recipientId '{}' — expected botToken:chatId, skipping send", recipientId);
+        // recipientId is base64url("<botToken>:<chatId>") — decode, then split on last colon
+        String decoded;
+        try {
+            decoded = new String(Base64.getUrlDecoder().decode(recipientId));
+        } catch (IllegalArgumentException e) {
+            log.warn("TelegramNotifier: recipientId '{}' is not valid base64url, skipping send", recipientId);
             return CompletableFuture.completedFuture("SKIPPED");
         }
-        String botToken = recipientId.substring(0, lastColon);
-        String chatId = recipientId.substring(lastColon + 1);
+        int lastColon = decoded.lastIndexOf(':');
+        if (lastColon <= 0) {
+            log.warn("TelegramNotifier: decoded recipientId '{}' has no colon, skipping send", decoded);
+            return CompletableFuture.completedFuture("SKIPPED");
+        }
+        String botToken = decoded.substring(0, lastColon);
+        String chatId = decoded.substring(lastColon + 1);
         log.info("Sending to Telegram chat {}: {}", chatId, text);
         String body = "{\"chat_id\": " + chatId + ", \"text\": \"" + escape(text) + "\", \"parse_mode\": \"HTML\"}";
         HttpRequest request = HttpRequest.newBuilder()
