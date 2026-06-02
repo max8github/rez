@@ -118,8 +118,6 @@ public class ResourceEndpoint {
                         .forEventSourcedEntity(resourceId)
                         .method(ResourceEntity::getResource)
                         .invoke();
-                    // No schedule published → player hasn't set availability
-                    if (state.weeklySchedule().isEmpty()) return false;
                     return state.isReservableAt(slotTime);
                 } catch (Exception e) {
                     return false;
