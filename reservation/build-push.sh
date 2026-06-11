@@ -77,6 +77,13 @@ case "$TARGET" in
   cloud)
     CLOUD_CALENDAR_BASE_URL="${REZ_CALENDAR_BASE_URL:-https://red-shadow-4568.europe-west1.akka.services}"
 
+    if [[ "$CLOUD_CALENDAR_BASE_URL" == *"trycloudflare.com"* ]]; then
+      echo "WARNING: REZ_CALENDAR_BASE_URL points to a temporary Cloudflare tunnel:" >&2
+      echo "         $CLOUD_CALENDAR_BASE_URL" >&2
+      echo "         This will produce broken Telegram calendar links in Akka Cloud." >&2
+      echo "         Expected value shape: https://<rez-service>.europe-west1.akka.services" >&2
+    fi
+
     echo "==> [cloud] Building (mvn install -DskipTests --settings settings.xml -Pgoogle) ..."
     LOCAL_IMAGE=$(build_and_find_local_image mvn install -DskipTests --settings settings.xml -Pgoogle)
     echo "==> Using local image ${LOCAL_IMAGE}"

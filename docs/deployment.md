@@ -79,6 +79,11 @@ REZ_CALENDAR_BASE_URL    optional — set to the public Akka service hostname
                          If omitted, calendar links are suppressed from notifications.
 ```
 
+`REZ_CALENDAR_BASE_URL` must point to the public Rez hostname itself, not to Hit and not to a
+temporary local tunnel URL. Telegram booking confirmations build calendar links from this value.
+If you accidentally deploy Rez with a stale `trycloudflare.com` URL, booking will still work but
+Telegram users will receive broken "Open calendar" links.
+
 Set env vars at deploy time:
 
 ```shell
@@ -86,6 +91,55 @@ akka service deploy rez reservation:2.0 --push --project rez-prod \
   --secret-env OPENAI_API_KEY=openai/key \
   --env REZ_CALENDAR_BASE_URL=https://small-frog-0557.europe-west1.akka.services
 ```
+
+### Verify deployed env after every cloud deploy
+
+After deploy, verify both the service route and the configured env:
+
+```shell
+akka service get rez --project rez-prod
+```
+
+Confirm that:
+
+1. `Routes` shows the public Rez hostname
+2. `REZ_CALENDAR_BASE_URL` is exactly that same hostname
+
+For example, if the route is:
+
+```text
+red-shadow-4568.europe-west1.akka.services
+```
+
+then the env must be:
+
+```text
+REZ_CALENDAR_BASE_URL=https://red-shadow-4568.europe-west1.akka.services
+```
+
+### Fresh deploy catch: the hostname is only known after the first deploy
+
+On a completely fresh Akka Cloud deployment, there is a bootstrapping catch:
+
+1. Before the first deploy, you do not yet know the final public hostname.
+2. `REZ_CALENDAR_BASE_URL` should point to that final public hostname.
+
+So a clean deployment is effectively a two-step process:
+
+1. First deploy Rez without `REZ_CALENDAR_BASE_URL`, or with a temporary placeholder if needed.
+   Result: Rez starts, but calendar links in Telegram notifications are omitted or not yet correct.
+2. Read the assigned hostname from:
+   ```shell
+   akka service get rez --project rez-prod
+   ```
+3. Deploy again with:
+   ```shell
+   --env REZ_CALENDAR_BASE_URL=https://<actual-rez-hostname>
+   ```
+4. Verify with `akka service get rez --project rez-prod`.
+5. Send a Telegram test booking and open the returned calendar link in a browser.
+
+In other words: for a true from-scratch deployment, yes, you should expect to deploy twice.
 
 ---
 
