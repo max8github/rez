@@ -46,7 +46,7 @@ redeployments. Do not re-run provisioning unless you are explicitly resetting/re
 
 **Resource IDs** are supplied by the caller — the provisioning script derives them from the court name (e.g. `court-1`, `court-2`). Resource IDs must be stable; they are stored as `externalRef` and used in booking requests. Keep a record of them in the provisioned state table below.
 
-`calendarId` is optional metadata on the resource. It is not required for booking, Rez calendar rendering, or facility provisioning.
+`calendarId` is optional metadata on the resource stored for reference only. It is not required for booking or facility provisioning. **Rez now has its own built-in calendar view** (`/calendar?facilityId=…`) — Google Calendar integration is no longer used and the stored calendarId values below are kept for historical reference only.
 
 ---
 
@@ -128,20 +128,20 @@ This is Rez’s own read-only calendar view derived from reservation events.
 
 ---
 
-## ETC Edingen — current provisioned state (as of 2026-06-19, Akka Cloud)
+## ETC Edingen — current provisioned state (as of 2026-06-24, Akka Cloud)
 
 | Item | Value |
 |------|-------|
-| Facility ID | `9783f7198a5c40f1bdd9db7572f7ecbf` |
+| Facility ID | `f600912cc1be4a73b5eaae8ed390b79f` |
 | Name | Erster Tennisclub Edingen-Neckarhausen |
 | Address | Mannheimer Str. 50, 68535 Edingen-Neckarhausen |
 | Timezone | Europe/Berlin |
 | Bot | @EtcEnBookingBot (`86752466...`) |
 | Host | `https://red-shadow-4568.europe-west1.akka.services` |
-| Court 1 ID | `9783f719-court-1-1` |
-| Court 2 ID | `9783f719-court-2-2` |
-| Court 3 ID | `9783f719-court-3-3` |
-| Court 4 ID | `9783f719-court-4-4` |
+| Court 1 ID | `f600912c-court-1-1` |
+| Court 2 ID | `f600912c-court-2-2` |
+| Court 3 ID | `f600912c-court-3-3` |
+| Court 4 ID | `f600912c-court-4-4` |
 | Stored calendarId — court-1 | `3d228lvsdmdjmj79662t8r1fh4@group.calendar.google.com` |
 | Stored calendarId — court-2 | `63hd39cd9ppt8tajp76vglt394@group.calendar.google.com` |
 | Stored calendarId — court-3 | `42cf1e8db6c37f2a7c8f02dbf9b6fc9d497008ecd92a30892ea7b1a380c8e130@group.calendar.google.com` |
@@ -149,20 +149,20 @@ This is Rez’s own read-only calendar view derived from reservation events.
 
 ---
 
-## CTC Circolo Tennistico Cittadellese — current provisioned state (as of 2026-06-19, Akka Cloud)
+## CTC Circolo Tennistico Cittadellese — current provisioned state (as of 2026-06-24, Akka Cloud)
 
 | Item | Value |
 |------|-------|
-| Facility ID | `e91e606cbea6408580e65bc940a22eba` |
+| Facility ID | `f1aecf903de84abab2c965e53482dbb8` |
 | Name | Circolo Tennistico Cittadellese |
 | Address | Via Giovanni XXIII, 30, 35014 Fontaniva PD, Italy |
 | Timezone | Europe/Rome |
 | Bot | @CTCBookBot (`75747972...`) |
 | Host | `https://red-shadow-4568.europe-west1.akka.services` |
-| Campo 1 ID | `e91e606c-campo-1-1` |
-| Campo 2 ID | `e91e606c-campo-2-2` |
-| Campo 3 ID | `e91e606c-campo-3-3` |
-| Campo 4 ID | `e91e606c-campo-4-4` |
+| Campo 1 ID | `f1aecf90-campo-1-1` |
+| Campo 2 ID | `f1aecf90-campo-2-2` |
+| Campo 3 ID | `f1aecf90-campo-3-3` |
+| Campo 4 ID | `f1aecf90-campo-4-4` |
 | Stored calendarId — campo-1 | `a2f154caafd74dc43fb4a6a6a04542fb8e0fceba7e3bb129a10c6669a6d1023a@group.calendar.google.com` |
 | Stored calendarId — campo-2 | `2c5b30f692e92bd385c60b08fa58919683a0a4b54fb0d9bc3568c902d29c1776@group.calendar.google.com` |
 | Stored calendarId — campo-3 | `dc47389291f68cda93211cffacf90faa98efaee5b7784657000e33218d4efd96@group.calendar.google.com` |
@@ -170,17 +170,17 @@ This is Rez’s own read-only calendar view derived from reservation events.
 
 ---
 
-## Eppelheimer Tennis-Club — current provisioned state (as of 2026-06-19, Akka Cloud)
+## Eppelheimer Tennis-Club — current provisioned state (as of 2026-06-24, Akka Cloud)
 
 | Item | Value |
 |------|-------|
-| Facility ID | `ea06e3e1321f4a1e9774e36986f7a6ad` |
+| Facility ID | `ca0919e5f2f24f9f862db8f15d4ad6b4` |
 | Name | Eppelheimer Tennis-Club e.V. |
 | Address | Peter-Böhm-Straße 50, 69214 Eppelheim |
 | Timezone | Europe/Berlin |
 | Bot | @EtcBookBot (`84181241...`) |
 | Host | `https://red-shadow-4568.europe-west1.akka.services` |
-| Court 1 ID | `ea06e3e1-court-1-1` |
-| Court 2 ID | `ea06e3e1-court-2-2` |
+| Court 1 ID | `ca0919e5-court-1-1` |
+| Court 2 ID | `ca0919e5-court-2-2` |
 | Stored calendarId — court-1 | `d5088961164845432bbe2f9a5e211cb4cc2461f4ef123840b2702e002166df7a@group.calendar.google.com` |
 | Stored calendarId — court-2 | `b4077bbda87f48d89f808a557ecae67c7535c5c2de7a89e52f28e3b416df2547@group.calendar.google.com` |
