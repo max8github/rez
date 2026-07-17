@@ -42,9 +42,12 @@ What changed recently:
 What did not change:
 
 - facility still exists in Rez as a compatibility/helper concept for provisioning and Telegram routing
-- Google Calendar side effects still exist
 - Rez still serves its own read-only calendar UI
 - orchestration is still not transactionally atomic across entity boundaries
+
+What also changed, but was missed in earlier drafts of this document: Google Calendar side
+effects were removed on 2026-04-21 (Phase 5, commits `9b20042` and `972dbef`) — see
+[Google Calendar Integration Removed](#google-calendar-integration-removed) below.
 
 The practical result is that Rez is now much closer to a narrow booking engine, but the integration surfaces still carry some transitional coupling.
 
@@ -143,7 +146,7 @@ ReservationEntity
   │      └── emits reservation-outcomes service stream events
   │
   └──▶ DelegatingServiceAction
-         └── notification + Google Calendar side effects
+         └── notification side effects only (calendar link text is cosmetic, no live Google Calendar API calls)
 
 ResourceEntity
   │
@@ -291,26 +294,20 @@ Rez currently does all of these:
 - owns booking facts
 - serves a read-only calendar UI
 - projects reservation data into `ReservationCalendarView`
-- performs Google Calendar side effects after booking fulfillment
+- builds a cosmetic `calendar.google.com` link string into notification text (no live Google Calendar integration — see [Google Calendar Integration Removed](#google-calendar-integration-removed))
 
 That means the calendar boundary is still mixed between:
 
 - canonical internal booking state
 - internal read model / UI
-- external mirrored side effects
 
-The repo is in a transitional state here, not a final one.
+The repo is in a transitional state here, not a final one — but it is a narrower transitional state than earlier drafts of this doc described, since there is no longer an external system to keep in sync.
 
-### Google Calendar Is Still A Side Effect
+### Google Calendar Integration Removed
 
-The earlier handoff argued that Google Calendar should no longer be treated as the canonical mutable booking target.
+The earlier handoff argued that Google Calendar should no longer be treated as the canonical mutable booking target. That has since actually happened: Google Calendar side-effecting was removed on 2026-04-21, via `9b20042 Phase 5: remove Google Calendar side-effecting, fix NotificationSender scope` and `972dbef chore: delete googlecalendar + calendarstub modules`. The `spi` module's old `CalendarSender` interface no longer exists.
 
-That direction is still reasonable, but it has not been completed. Current behavior still includes:
-
-- Google Calendar writes via `DelegatingServiceAction`
-- user-facing messages containing calendar links
-
-So this area should be treated as "still implemented, but architecturally open for redesign."
+What remains in `DelegatingServiceAction` today is purely cosmetic: if a resource has a stored `calendarId` string, the booking-confirmation notification text includes a `calendar.google.com/calendar/event?eid=...` link built from that string — no external Google API is called, nothing is written anywhere. Rez's own read-only calendar (`ReservationCalendarView` / `CalendarEndpoint`) is the actual calendar system now; see "Calendar Responsibilities Are Still Mixed" above for that boundary, which is a separate, still-open question from Google Calendar.
 
 ## Current Correctness Model
 
@@ -346,7 +343,6 @@ This matters in:
 - reservation to resource transitions
 - resource to reservation transitions
 - notification side effects
-- Google Calendar side effects
 
 This should now be treated as the primary architectural risk.
 
@@ -363,15 +359,12 @@ That is acceptable for now, but it means the boundary is not fully clean yet.
 
 ### 3. Side-Effect Ordering And Compensation
 
-Because booking fulfillment, notifications, and Google sync are decoupled, failure handling still depends on operational behavior rather than a single transaction boundary.
-
-The internal booking lock does not depend on Google Calendar succeeding, which is good.
+Because booking fulfillment and notifications are decoupled, failure handling still depends on operational behavior rather than a single transaction boundary.
 
 But operationally there is still room for:
 
 - missed notifications
-- missed downstream sync
-- eventual divergence between internal booking state and external mirrors
+- eventual divergence between internal booking state and the read-only calendar projection
 
 ## Provisioning Architecture: Current State
 
@@ -413,7 +406,7 @@ The next steps with the best payoff are:
 
 1. Decide whether facility remains a long-lived helper concept in Rez or is moved outward more aggressively.
 2. Make the cross-entity failure model more explicit with compensating behavior, retries, or a more durable orchestration strategy.
-3. Decide whether Google Calendar remains a side-effect mirror, becomes a pure projection target, or moves out of Rez entirely.
+3. ~~Decide whether Google Calendar remains a side-effect mirror, becomes a pure projection target, or moves out of Rez entirely.~~ Moot — Google Calendar integration was removed (see [Google Calendar Integration Removed](#google-calendar-integration-removed)).
 4. Decide whether the HTML calendar stays embedded in Rez or becomes an external read-model application.
 5. Keep expanding tests around orchestration failure cases and provisioning compatibility.
 

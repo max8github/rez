@@ -94,9 +94,12 @@ different bots, no `FACILITY_ID` env var needed.
 | Module | Purpose |
 |---|---|
 | `reservation` | Main application — entities, views, endpoints, orchestration, agent |
-| `spi` | `CalendarSender` and `NotificationSender` interfaces |
+| `spi` | `NotificationSender` interface (there is also an unused `Nlp` interface, TODO'd for removal) |
 | `telegramnotifier` | Telegram implementation of `NotificationSender` |
 | `notifierstub` | No-op stub for local dev |
+
+Google Calendar integration (there used to be a `CalendarSender` interface here) was removed —
+see [`docs/reference/rez-system-overview.md`](docs/reference/rez-system-overview.md#google-calendar-integration-removed).
 
 ## Deployment
 
