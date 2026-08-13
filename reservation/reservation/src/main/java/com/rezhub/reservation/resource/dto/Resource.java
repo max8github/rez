@@ -6,11 +6,12 @@ import java.util.Objects;
 public record Resource(String resourceId, String resourceName, String calendarId) {
     public static final String FORBIDDEN_NAME = "noname";
 
-    public record Entry(String dateTime, String reservationId) implements Comparable<Entry> {
+    /** One held reservation on a resource's calendar: its real start/end time and which reservation holds it. */
+    public record Entry(String startTime, String endTime, String reservationId) implements Comparable<Entry> {
         @Override
         public int compareTo(Entry that) {
             return Objects.compare(this, that,
-                    Comparator.comparing(Entry::dateTime));
+                    Comparator.comparing(Entry::startTime));
         }
 
         @Override
@@ -18,12 +19,12 @@ public record Resource(String resourceId, String resourceName, String calendarId
             if (this == o) return true;
             if (o == null || getClass() != o.getClass()) return false;
             Entry entry = (Entry) o;
-            return Objects.equals(dateTime, entry.dateTime);
+            return Objects.equals(reservationId, entry.reservationId);
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(dateTime);
+            return Objects.hash(reservationId);
         }
     }
 }

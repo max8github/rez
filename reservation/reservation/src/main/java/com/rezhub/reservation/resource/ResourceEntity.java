@@ -9,7 +9,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
 import java.util.Set;
@@ -36,10 +35,14 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             case ResourceEvent.FacilityResourceCreated e -> ResourceState.initialize(e.name(), e.calendarId());
             case ResourceEvent.ResourceCreated e -> ResourceState.initialize(e.resourceName(), e.calendarId());
             case ResourceEvent.AvalabilityChecked e -> currentState();
-            case ResourceEvent.ReservationAccepted e -> currentState().set(ResourceState.roundToValidTime(e.reservation().dateTime()), e.reservationId());
+            case ResourceEvent.ReservationAccepted e -> currentState().set(
+                e.reservation().dateTime(),
+                e.reservation().dateTime().plusMinutes(e.reservation().durationMinutes()),
+                e.reservationId());
             case ResourceEvent.ReservationRejected e -> currentState();
-            case ResourceEvent.ReservationCanceled e -> currentState().cancel(e.dateTime(), e.reservationId());
+            case ResourceEvent.ReservationCanceled e -> currentState().cancel(e.reservationId());
             case ResourceEvent.WeeklyScheduleUpdated e -> currentState().withWeeklySchedule(e.schedule());
+            case ResourceEvent.BookingGranularitySet e -> currentState().withBookingGranularityMinutes(e.bookingGranularityMinutes());
             case ResourceEvent.ResourceTypeSet e -> currentState().withResourceType(e.resourceType());
             case ResourceEvent.ExternalRefSet e -> currentState().withExternalRef(e.externalRef(), e.externalGroupRef());
             case ResourceEvent.ResourceDeleted e -> currentState();
@@ -73,8 +76,8 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     }
 
     public Effect<String> checkAvailability(CheckAvailability command) {
-        LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
-        boolean vacant = currentState().isReservableAt(validTime);
+        Reservation reservation = command.reservation();
+        boolean vacant = currentState().isReservableAt(reservation.dateTime(), reservation.durationMinutes());
         String yes = vacant ? "" : "NOT ";
         log.info("Resource {} ({}) can {}accept reservation {} ", currentState().name(), entityId, yes, command.reservationId);
         return effects()
@@ -83,8 +86,8 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     }
 
     public Effect<String> reserve(Reserve command) {
-        LocalDateTime validTime = ResourceState.roundToValidTime(command.reservation().dateTime());
-        if (currentState().isReservableAt(validTime)) {
+        Reservation reservation = command.reservation();
+        if (currentState().isReservableAt(reservation.dateTime(), reservation.durationMinutes())) {
             log.info("Resource {} {} accepts reservation {} ", currentState().name(), entityId, command.reservationId);
             return effects()
                 .persist(new ResourceEvent.ReservationAccepted(entityId, command.reservationId(),
@@ -101,10 +104,9 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
     }
 
     public Effect<String> cancel(CancelReservation command) {
-        LocalDateTime validTime = ResourceState.roundToValidTime(command.dateTime());
-        log.info("Cancelling reservation {} from resource {} on dateTime {} ", command.reservationId(), entityId, validTime);
+        log.info("Cancelling reservation {} from resource {}", command.reservationId(), entityId);
         return effects()
-            .persist(new ResourceEvent.ReservationCanceled(entityId, command.reservationId(), validTime))
+            .persist(new ResourceEvent.ReservationCanceled(entityId, command.reservationId()))
             .thenReply(newState -> "OK");
     }
 
@@ -135,6 +137,13 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             .thenReply(newState -> "OK");
     }
 
+    public Effect<String> setBookingGranularity(int bookingGranularityMinutes) {
+        log.info("Resource {} setting bookingGranularityMinutes to {}", entityId, bookingGranularityMinutes);
+        return effects()
+            .persist(new ResourceEvent.BookingGranularitySet(entityId, bookingGranularityMinutes))
+            .thenReply(newState -> "OK");
+    }
+
     public Effect<String> setResourceType(String resourceType) {
         log.info("Resource {} setting resourceType to {}", entityId, resourceType);
         return effects()
@@ -156,7 +165,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
 
     public record Reserve(String reservationId, Reservation reservation) {}
 
-    public record CancelReservation(String reservationId, LocalDateTime dateTime) {}
+    public record CancelReservation(String reservationId) {}
 
     public record SetExternalRef(String externalRef, String externalGroupRef) {}
 }

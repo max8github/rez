@@ -9,5 +9,6 @@ public record ReservationDetails(
     String reservationId,
     String status,
     String resourceId,
-    LocalDateTime dateTime
+    LocalDateTime dateTime,
+    int durationMinutes
 ) {}

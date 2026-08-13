@@ -5,7 +5,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rezhub.reservation.dto.Reservation;
 import akka.javasdk.annotations.TypeName;
 
-import java.time.LocalDateTime;
 import java.util.Set;
 
 public sealed interface ReservationEvent {
@@ -30,7 +29,7 @@ public sealed interface ReservationEvent {
                                 Set<String> resourceIds, String recipientId) implements ReservationEvent {}
 
     @TypeName("cancel-requested")
-    record CancelRequested(String reservationId, String resourceId, LocalDateTime dateTime) implements ReservationEvent {}
+    record CancelRequested(String reservationId, String resourceId) implements ReservationEvent {}
 
     @TypeName("search-exhausted")
     record SearchExhausted(String reservationId, Reservation reservation, Set<String> resourceIds,

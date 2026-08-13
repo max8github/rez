@@ -115,6 +115,8 @@ public class BookingTools {
         }
 
         OriginRequestContext origin = directOrigin("", facilityId);
+        // todo: durationMinutes hardcoded null (defaults to 60 downstream) — Rez now locks/checks
+        // real per-booking durations; add a duration parameter here once callers want anything else.
         BookingIntent intent = new BookingIntent(
             BookingIntent.BookingAction.CHECK_AVAILABILITY,
             requestedTime, null, List.of(), List.of(), null, Map.of());
@@ -166,6 +168,7 @@ public class BookingTools {
         }
 
         OriginRequestContext origin = directOrigin(recipientId, facilityId);
+        // todo: durationMinutes hardcoded null (defaults to 60 downstream) — same gap as checkAvailability above.
         BookingIntent intent = new BookingIntent(
             BookingIntent.BookingAction.BOOK,
             dateTime, null, players, List.of(), null, Map.of());

@@ -26,7 +26,7 @@ public class ReservationGatewayAkka implements ReservationGateway {
     public ReservationHandle submit(ReservationSubmission submission) {
         log.info("Submitting reservation {} for {} resources at {}",
             submission.reservationId(), submission.resourceIds().size(), submission.dateTime());
-        Reservation reservation = new Reservation(submission.participants(), submission.dateTime());
+        Reservation reservation = new Reservation(submission.participants(), submission.dateTime(), submission.durationMinutes());
         ReservationEntity.Init command = new ReservationEntity.Init(
             reservation, submission.resourceIds(), submission.recipientId(), submission.originSystem());
 
@@ -57,6 +57,7 @@ public class ReservationGatewayAkka implements ReservationGateway {
             state.reservationId(),
             state.state().name(),
             state.resourceId(),
-            state.dateTime());
+            state.dateTime(),
+            state.durationMinutes());
     }
 }

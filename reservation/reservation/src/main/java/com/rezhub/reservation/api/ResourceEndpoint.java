@@ -11,14 +11,9 @@ import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceState;
 import com.rezhub.reservation.resource.dto.Resource;
 
-import java.time.DayOfWeek;
 import java.time.LocalDateTime;
-import java.time.LocalTime;
-import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
-import java.util.stream.Collectors;
 
 @HttpEndpoint("/resource")
 @Acl(allow = @Acl.Matcher(principal = Acl.Principal.ALL))
@@ -109,7 +104,7 @@ public class ResourceEndpoint {
 
     @Post("/query-available")
     public AvailabilityQueryResponse queryAvailable(AvailabilityQueryRequest request) {
-        LocalDateTime slotTime = LocalDateTime.parse(request.scheduledAt()).truncatedTo(ChronoUnit.HOURS);
+        LocalDateTime scheduledAt = LocalDateTime.parse(request.scheduledAt());
 
         List<String> availableIds = request.resourceIds().stream()
             .filter(resourceId -> {
@@ -118,7 +113,7 @@ public class ResourceEndpoint {
                         .forEventSourcedEntity(resourceId)
                         .method(ResourceEntity::getResource)
                         .invoke();
-                    return state.isReservableAt(slotTime);
+                    return state.isReservableAt(scheduledAt, request.durationMinutes());
                 } catch (Exception e) {
                     return false;
                 }
@@ -127,4 +122,18 @@ public class ResourceEndpoint {
 
         return new AvailabilityQueryResponse(availableIds);
     }
+
+    /**
+     * Set the smallest booking increment this resource accepts (e.g. 60, 30, 15 minutes).
+     * Requests whose start time or duration don't align to this granularity are rejected.
+     */
+    @Put("/{resourceId}/booking-granularity")
+    public String setBookingGranularity(String resourceId, BookingGranularityRequest body) {
+        return componentClient
+            .forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setBookingGranularity)
+            .invoke(body.minutes());
+    }
+
+    public record BookingGranularityRequest(int minutes) {}
 }

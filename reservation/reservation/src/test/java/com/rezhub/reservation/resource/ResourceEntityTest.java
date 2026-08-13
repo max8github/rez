@@ -1,8 +1,12 @@
 package com.rezhub.reservation.resource;
 
 import akka.javasdk.testkit.EventSourcedTestKit;
+import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.dto.Resource;
 import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -84,5 +88,69 @@ class ResourceEntityTest {
         var result = testKit.method(ResourceEntity::deleteResource).invoke();
 
         assertThat(result.getNextEventOfType(ResourceEvent.ResourceDeleted.class).resourceId()).isEqualTo(RESOURCE_ID);
+    }
+
+    /**
+     * End-to-end regression for the fix: a resource that accepts a reservation must reject a second
+     * one that genuinely overlaps in real time, even when the two requests round to different hours
+     * under the old top-of-the-hour keying scheme.
+     */
+    @Test
+    void reserve_rejectsGenuinelyOverlappingBooking_evenAcrossDifferentHours() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create).invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+        testKit.method(ResourceEntity::setBookingGranularity).invoke(30);
+
+        LocalDateTime start = nextMonday().withHour(15).withMinute(30);
+        var first = new Reservation(List.of("amy@example.com"), start, 60); // 15:30-16:30
+        var firstResult = testKit.method(ResourceEntity::reserve)
+            .invoke(new ResourceEntity.Reserve("rez-1", first));
+        assertThat(firstResult.getReply()).isEqualTo("OK");
+
+        var second = new Reservation(List.of("bob@example.com"), start.plusMinutes(30), 60); // 16:00-17:00
+        var secondResult = testKit.method(ResourceEntity::reserve)
+            .invoke(new ResourceEntity.Reserve("rez-2", second));
+
+        assertThat(secondResult.getReply()).isEqualTo("UNAVAILABLE resource");
+        assertThat(secondResult.getNextEventOfType(ResourceEvent.ReservationRejected.class)).isNotNull();
+    }
+
+    @Test
+    void reserve_acceptsNonOverlappingBooking_inDifferentHour() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create).invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+
+        LocalDateTime start = nextMonday().withHour(15).withMinute(0);
+        var first = new Reservation(List.of("amy@example.com"), start, 60); // 15:00-16:00
+        testKit.method(ResourceEntity::reserve).invoke(new ResourceEntity.Reserve("rez-1", first));
+
+        var second = new Reservation(List.of("bob@example.com"), start.plusMinutes(60), 60); // 16:00-17:00
+        var secondResult = testKit.method(ResourceEntity::reserve)
+            .invoke(new ResourceEntity.Reserve("rez-2", second));
+
+        assertThat(secondResult.getReply()).isEqualTo("OK");
+        assertThat(secondResult.getNextEventOfType(ResourceEvent.ReservationAccepted.class)).isNotNull();
+    }
+
+    @Test
+    void cancel_releasesExactlyThatReservationsSlots() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create).invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+
+        LocalDateTime start = nextMonday().withHour(15).withMinute(0);
+        var reservation = new Reservation(List.of("amy@example.com"), start, 60);
+        testKit.method(ResourceEntity::reserve).invoke(new ResourceEntity.Reserve("rez-1", reservation));
+
+        testKit.method(ResourceEntity::cancel).invoke(new ResourceEntity.CancelReservation("rez-1"));
+
+        var checkResult = testKit.method(ResourceEntity::checkAvailability)
+            .invoke(new ResourceEntity.CheckAvailability("rez-2", reservation));
+        assertThat(checkResult.getNextEventOfType(ResourceEvent.AvalabilityChecked.class).available()).isTrue();
+    }
+
+    private static LocalDateTime nextMonday() {
+        LocalDateTime d = LocalDateTime.now().plusDays(1).withHour(0).withMinute(0).withSecond(0).withNano(0);
+        while (d.getDayOfWeek() != java.time.DayOfWeek.MONDAY) d = d.plusDays(1);
+        return d;
     }
 }

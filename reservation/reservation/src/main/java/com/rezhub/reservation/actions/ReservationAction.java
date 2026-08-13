@@ -56,7 +56,7 @@ public class ReservationAction extends Consumer {
             return effects().done();
         }
         log.info("Cancel reservation {} in resource {}", event.reservationId(), resourceId);
-        var command = new ResourceEntity.CancelReservation(event.reservationId(), event.dateTime());
+        var command = new ResourceEntity.CancelReservation(event.reservationId());
         componentClient.forEventSourcedEntity(resourceId)
             .method(ResourceEntity::cancel)
             .invoke(command);

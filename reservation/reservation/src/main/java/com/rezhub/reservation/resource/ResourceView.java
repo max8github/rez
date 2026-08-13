@@ -31,12 +31,16 @@ public class ResourceView extends View {
                 case ResourceEvent.AvalabilityChecked e -> effects().ignore();
                 case ResourceEvent.ReservationAccepted e ->
                     rowState() == null ? effects().ignore() :
-                    effects().updateRow(rowState().withBooking(e.reservation().dateTime(), e.reservationId()));
+                    effects().updateRow(rowState().withBooking(
+                        e.reservation().dateTime(),
+                        e.reservation().dateTime().plusMinutes(e.reservation().durationMinutes()),
+                        e.reservationId()));
                 case ResourceEvent.ReservationRejected e -> effects().ignore();
                 case ResourceEvent.ReservationCanceled e ->
                     rowState() == null ? effects().ignore() :
-                    effects().updateRow(rowState().withoutBooking(e.dateTime()));
+                    effects().updateRow(rowState().withoutBooking(e.reservationId()));
                 case ResourceEvent.WeeklyScheduleUpdated e -> effects().ignore();
+                case ResourceEvent.BookingGranularitySet e -> effects().ignore();
                 case ResourceEvent.ResourceTypeSet e ->
                     rowState() == null ? effects().ignore() :
                     effects().updateRow(rowState().withResourceType(e.resourceType()));

@@ -26,7 +26,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
     }
 
     public static Reservation fromReservationState(ReservationState reservationState) {
-        return new Reservation(reservationState.emails(), reservationState.dateTime());
+        return new Reservation(reservationState.emails(), reservationState.dateTime(), reservationState.durationMinutes());
     }
 
     @Override
@@ -44,6 +44,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     .withResourceIds(e.resourceIds())
                     .withPendingResourceIds(e.resourceIds())
                     .withDateTime(reservation.dateTime())
+                    .withDuration(reservation.durationMinutes())
                     .withEmails(reservation.emails())
                     .withRecipientId(e.recipientId())
                     .withOriginSystem(e.originSystem());
@@ -103,7 +104,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case COLLECTING -> {
                 log.info("Reservation " + entityId + ", in COLLECTING, got a " + (command.available() ? "YES " : "NO ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
-                Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
+                Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime(), currentState().durationMinutes());
                 if (command.available()) {
                     return effects()
                         .persist(new ReservationEvent.ResourceSelected(command.resourceId(), reservationId, reservation))
@@ -124,7 +125,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case SELECTING, UNAVAILABLE, FULFILLED, CANCELLED -> {
                 log.info("Reservation " + entityId + ", in SELECTING, got " + (command.available() ? "yes " : "no ") + "from resource " + command.resourceId);
                 String reservationId = currentState().reservationId();
-                Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
+                Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime(), currentState().durationMinutes());
                 return effects()
                     .persist(new ReservationEvent.AvailabilityReplied(command.resourceId(), reservationId,
                         reservation, command.available()))
@@ -162,8 +163,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case FULFILLED, COLLECTING -> {
                 String resourceId = getResourceIdFromState();
                 yield effects()
-                    .persist(new ReservationEvent.CancelRequested(entityId,
-                        resourceId, currentState().dateTime()))
+                    .persist(new ReservationEvent.CancelRequested(entityId, resourceId))
                     .thenReply(newState -> new ReservationId(entityId));
             }
             default ->
@@ -205,7 +205,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 if (nextOpt.isPresent()) {
                     String nextResourceId = nextOpt.get();
                     log.info("Reservation {} was rejected (resource {}) and will try another resource: {}", entityId, resourceId, nextResourceId);
-                    Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime());
+                    Reservation reservation = new Reservation(currentState().emails(), currentState().dateTime(), currentState().durationMinutes());
                     return effects().persist(new ReservationEvent.ResourceSelected(nextResourceId, entityId, reservation))
                         .thenReply(newState -> "OK");
                 } else if (currentState().hasPendingResources()) {

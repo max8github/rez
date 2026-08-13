@@ -24,13 +24,13 @@ public record ResourceV(
             created.calendarId() != null ? created.calendarId() : "", new TreeSet<>(), "");
     }
 
-    ResourceV withBooking(LocalDateTime dateTime, String fill) {
-        timeWindow.add(new Resource.Entry(dateTime.toString(), fill));
+    ResourceV withBooking(LocalDateTime start, LocalDateTime end, String reservationId) {
+        timeWindow.add(new Resource.Entry(start.toString(), end.toString(), reservationId));
         return this;
     }
 
-    ResourceV withoutBooking(LocalDateTime dateTime) {
-        this.timeWindow.remove(new Resource.Entry(dateTime.toString(), ""));
+    ResourceV withoutBooking(String reservationId) {
+        this.timeWindow.removeIf(e -> e.reservationId().equals(reservationId));
         return this;
     }
 

@@ -4,7 +4,6 @@ import com.rezhub.reservation.dto.Reservation;
 import akka.javasdk.annotations.TypeName;
 
 import java.time.DayOfWeek;
-import java.time.LocalDateTime;
 import java.time.LocalTime;
 import java.util.Map;
 import java.util.Set;
@@ -22,10 +21,12 @@ public sealed interface ResourceEvent {
     @TypeName("reservation-rejected")
     record ReservationRejected(String resourceId, String reservationId, Reservation reservation) implements ResourceEvent {}
     @TypeName("reservation-canceled")
-    record ReservationCanceled(String resourceId, String reservationId, LocalDateTime dateTime) implements ResourceEvent {}
+    record ReservationCanceled(String resourceId, String reservationId) implements ResourceEvent {}
 
     @TypeName("weekly-schedule-updated")
     record WeeklyScheduleUpdated(String resourceId, Map<DayOfWeek, Set<LocalTime>> schedule) implements ResourceEvent {}
+    @TypeName("booking-granularity-set")
+    record BookingGranularitySet(String resourceId, int bookingGranularityMinutes) implements ResourceEvent {}
     @TypeName("resource-type-set")
     record ResourceTypeSet(String resourceId, String resourceType) implements ResourceEvent {}
     @TypeName("external-ref-set")

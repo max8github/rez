@@ -40,7 +40,9 @@ public class BookingEndpoint {
     public BookingResult book(BookingRequest request) {
         log.info("BookingEndpoint: creating reservation {} for resources {}", request.reservationId(), request.resourceIds());
 
-        var reservation = new Reservation(request.emails(), request.dateTime());
+        var reservation = request.durationMinutes() != null
+            ? new Reservation(request.emails(), request.dateTime(), request.durationMinutes())
+            : new Reservation(request.emails(), request.dateTime());
         var init = new ReservationEntity.Init(reservation, request.resourceIds(), request.recipientId(), request.originSystem());
         componentClient
             .forEventSourcedEntity(request.reservationId())
@@ -81,6 +83,7 @@ public class BookingEndpoint {
     public record BookingRequest(
         String reservationId,
         LocalDateTime dateTime,
+        Integer durationMinutes,
         List<String> emails,
         Set<String> resourceIds,
         String recipientId,

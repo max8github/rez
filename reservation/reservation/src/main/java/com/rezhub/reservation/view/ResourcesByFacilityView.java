@@ -40,6 +40,7 @@ public class ResourcesByFacilityView extends View {
                 case ResourceEvent.ReservationRejected e -> effects().ignore();
                 case ResourceEvent.ReservationCanceled e -> effects().ignore();
                 case ResourceEvent.WeeklyScheduleUpdated e -> effects().ignore();
+                case ResourceEvent.BookingGranularitySet e -> effects().ignore();
                 case ResourceEvent.ResourceTypeSet e -> effects().ignore();
                 case ResourceEvent.ResourceDeleted e -> effects().deleteRow();
             };

@@ -1,6 +1,7 @@
 package com.rezhub.reservation.orchestration;
 
 import akka.javasdk.client.ComponentClient;
+import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
 import com.rezhub.reservation.resource.dto.Resource;
@@ -39,8 +40,10 @@ public class CourtBookingWorkflow implements BookingWorkflow {
     @Override
     public AvailabilityResult checkAvailability(OriginRequestContext origin, BookingContext context, BookingIntent intent) {
         String facilityId = context.scopeId();
-        LocalDateTime requestedTime = intent.dateTime();
-        log.debug("checkAvailability: facilityId={}, time={}", facilityId, requestedTime);
+        LocalDateTime requestedStart = intent.dateTime();
+        int durationMinutes = effectiveDuration(intent);
+        LocalDateTime requestedEnd = requestedStart.plusMinutes(durationMinutes);
+        log.debug("checkAvailability: facilityId={}, time={}", facilityId, requestedStart);
 
         ResourceView.Resources resources = componentClient.forView()
             .method(ResourceView::getResource)
@@ -52,12 +55,12 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         }
 
         List<String> available = resources.resources().stream()
-            .filter(r -> isAvailableAt(r, requestedTime))
+            .filter(r -> isAvailableAt(r, requestedStart, requestedEnd))
             .map(r -> r.resourceName() + " (id: " + r.resourceId() + ")")
             .toList();
 
         if (available.isEmpty()) {
-            String alternatives = findNearbySlots(resources.resources(), requestedTime);
+            String alternatives = findNearbySlots(resources.resources(), requestedStart, durationMinutes);
             return new AvailabilityResult(facilityId, List.of(), Map.of("alternatives", alternatives));
         }
 
@@ -75,6 +78,7 @@ public class CourtBookingWorkflow implements BookingWorkflow {
             origin.recipientId(),
             scope.timezone(),
             intent.dateTime(),
+            effectiveDuration(intent),
             intent.participantNames(),
             Set.copyOf(scope.resourceIds()),
             origin.origin()
@@ -88,35 +92,49 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         reservationGateway.cancel(intent.reservationId());
     }
 
-    private boolean isAvailableAt(ResourceV resource, LocalDateTime requestedTime) {
-        String isoKey = requestedTime.format(ISO_FMT);
-        return resource.timeWindow().stream()
-            .noneMatch(entry -> entry.dateTime().equals(isoKey));
+    private static int effectiveDuration(BookingIntent intent) {
+        return intent.durationMinutes() != null ? intent.durationMinutes() : Reservation.DEFAULT_DURATION_MINUTES;
     }
 
-    private String findNearbySlots(List<ResourceV> resources, LocalDateTime around) {
-        List<LocalDateTime> bookedTimes = resources.stream()
-            .flatMap(r -> r.timeWindow().stream())
-            .map(Resource.Entry::dateTime)
-            .map(s -> { try { return LocalDateTime.parse(s, ISO_FMT); } catch (Exception e) { return null; } })
-            .filter(t -> t != null && !t.isBefore(around.minusHours(2)) && !t.isAfter(around.plusHours(4)))
-            .distinct()
-            .sorted()
-            .toList();
+    private boolean isAvailableAt(ResourceV resource, LocalDateTime requestedStart, LocalDateTime requestedEnd) {
+        return resource.timeWindow().stream().noneMatch(entry -> overlaps(entry, requestedStart, requestedEnd));
+    }
 
-        if (bookedTimes.isEmpty()) {
+    private boolean overlaps(Resource.Entry entry, LocalDateTime start, LocalDateTime end) {
+        LocalDateTime entryStart = parseOrNull(entry.startTime());
+        LocalDateTime entryEnd = parseOrNull(entry.endTime());
+        if (entryStart == null || entryEnd == null) return false;
+        return entryStart.isBefore(end) && start.isBefore(entryEnd);
+    }
+
+    private static LocalDateTime parseOrNull(String s) {
+        try {
+            return LocalDateTime.parse(s, ISO_FMT);
+        } catch (Exception e) {
+            return null;
+        }
+    }
+
+    private String findNearbySlots(List<ResourceV> resources, LocalDateTime around, int durationMinutes) {
+        boolean anyBookingNearby = resources.stream()
+            .flatMap(r -> r.timeWindow().stream())
+            .map(Resource.Entry::startTime)
+            .map(CourtBookingWorkflow::parseOrNull)
+            .anyMatch(t -> t != null && !t.isBefore(around.minusHours(2)) && !t.isAfter(around.plusHours(4)));
+
+        if (!anyBookingNearby) {
             return "The facility appears to have open slots — try a slightly different time.";
         }
 
         for (int offset = 1; offset <= 4; offset++) {
-            LocalDateTime candidate = around.plusHours(offset).withMinute(0).withSecond(0).withNano(0);
-            String key = candidate.format(ISO_FMT);
+            LocalDateTime candidateStart = around.plusHours(offset).withMinute(0).withSecond(0).withNano(0);
+            LocalDateTime candidateEnd = candidateStart.plusMinutes(durationMinutes);
             long busyCourts = resources.stream()
-                .filter(r -> r.timeWindow().stream().anyMatch(e -> e.dateTime().equals(key)))
+                .filter(r -> r.timeWindow().stream().anyMatch(e -> overlaps(e, candidateStart, candidateEnd)))
                 .count();
             if (busyCourts < resources.size()) {
                 return "The next available slot is around "
-                    + candidate.format(DateTimeFormatter.ofPattern("HH:mm")) + ".";
+                    + candidateStart.format(DateTimeFormatter.ofPattern("HH:mm")) + ".";
             }
         }
         return "No alternative slots found in the next 4 hours.";

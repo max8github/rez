@@ -13,6 +13,7 @@ public record ReservationSubmission(
     String recipientId,
     String timezone,
     LocalDateTime dateTime,
+    int durationMinutes,
     List<String> participants,
     Set<String> resourceIds,
     String originSystem

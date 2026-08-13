@@ -35,12 +35,12 @@ public class ReservationCalendarView extends View {
             return switch (event) {
                 case ReservationEvent.Fulfilled e -> {
                     var startTime = e.reservation().dateTime();
+                    var endTime = startTime.plusMinutes(e.reservation().durationMinutes());
                     yield effects().updateRow(new ReservationEntry(
                         reservationId,
                         e.resourceId(),
                         startTime.toString(),
-                        // Reservations are modeled as one rounded booking slot in current Rez state.
-                        startTime.plusHours(1).toString(),
+                        endTime.toString(),
                         String.join(", ", e.reservation().emails()),
                         "FULFILLED"
                     ));
