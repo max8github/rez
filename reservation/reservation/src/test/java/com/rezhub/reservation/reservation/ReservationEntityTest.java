@@ -40,6 +40,59 @@ class ReservationEntityTest {
     }
 
     @Test
+    void init_replayWithIdenticalDetails_inCollecting_succeedsWithoutReinitializing() {
+        var kit = inCollecting(Set.of(RESOURCE_ID));
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        var result = kit.method(ReservationEntity::init)
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+
+        assertThat(result.isError()).isFalse();
+        assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
+        assertThat(kit.getState().state()).isEqualTo(COLLECTING);
+    }
+
+    @Test
+    void init_replayWithIdenticalDetails_inFulfilled_succeedsWithoutReinitializing() {
+        var kit = inSelectingSingleResource();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+        kit.method(ReservationEntity::fulfill)
+            .invoke(new ReservationEntity.Fulfill(RESOURCE_ID, RESERVATION_ID, reservation));
+
+        var result = kit.method(ReservationEntity::init)
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+
+        assertThat(result.isError()).isFalse();
+        assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
+        assertThat(kit.getState().state()).isEqualTo(FULFILLED);
+    }
+
+    @Test
+    void init_duplicateWithDifferentDetails_inCollecting_stillErrors() {
+        var kit = inCollecting(Set.of(RESOURCE_ID));
+        var differentReservation = new Reservation(List.of("someone-else@example.com"), SLOT.plusHours(1));
+
+        var result = kit.method(ReservationEntity::init)
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID_2), "recipient-2", null));
+
+        assertThat(result.isError()).isTrue();
+    }
+
+    @Test
+    void init_duplicateWithDifferentDetails_inFulfilled_stillErrors() {
+        var kit = inSelectingSingleResource();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+        kit.method(ReservationEntity::fulfill)
+            .invoke(new ReservationEntity.Fulfill(RESOURCE_ID, RESERVATION_ID, reservation));
+
+        var differentReservation = new Reservation(List.of("amy@example.com"), SLOT.plusHours(1));
+        var result = kit.method(ReservationEntity::init)
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID), "recipient-1", null));
+
+        assertThat(result.isError()).isTrue();
+    }
+
+    @Test
     void fulfill_inSelecting_succeedsAndTransitionsToFulfilled() {
         var kit = inSelectingSingleResource();
         assertThat(kit.getState().state()).isEqualTo(SELECTING);

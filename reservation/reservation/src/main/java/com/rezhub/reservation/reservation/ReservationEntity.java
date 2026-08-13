@@ -7,6 +7,7 @@ import akka.javasdk.eventsourcedentity.EventSourcedEntityContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
 
@@ -87,16 +88,39 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     public Effect<ReservationId> init(Init command) {
         String id = commandContext().entityId();
+        ReservationState state = currentState();
         log.info("ReservationEntity initializes with reservation id {}", id);
-        return switch (currentState().state()) {
+        return switch (state.state()) {
             case CANCELLED -> effects().error("Reservation cancelled: cannot be initialized");
             case UNAVAILABLE -> effects().error("Reservation was rejected for unavailable selection: cannot be initialized");
-            case FULFILLED -> effects().error("Reservation had already been accepted: it cannot be reinitialized");
-            case COLLECTING, SELECTING -> effects().error("Reservation is processing selection: cannot be initialized");
+            case FULFILLED -> isReplayOfSameRequest(state, command)
+                ? effects().reply(new ReservationId(id))
+                : effects().error("Reservation had already been accepted: it cannot be reinitialized");
+            case COLLECTING, SELECTING -> isReplayOfSameRequest(state, command)
+                ? effects().reply(new ReservationId(id))
+                : effects().error("Reservation is processing selection: cannot be initialized");
             case INIT -> effects()
                 .persist(new ReservationEvent.Inited(id, command.reservation(), command.resourceIds(), command.recipientId(), command.originSystem()))
                 .thenReply(newState -> new ReservationId(id));
         };
+    }
+
+    /**
+     * A caller retrying {@code init} with the same reservationId after a crash (before it saw the original
+     * reply) must not be rejected as "already initialized" — that would send the retrying saga into
+     * unnecessary compensation for a reservation that's actually fine. Distinguishes that safe replay from a
+     * genuine reservationId collision with a materially different booking request, which must still error
+     * rather than silently succeed against the wrong details. CANCELLED/UNAVAILABLE stay hard errors always —
+     * a real state change happened since the first attempt, not something to paper over.
+     */
+    private boolean isReplayOfSameRequest(ReservationState state, Init command) {
+        Reservation r = command.reservation();
+        return state.dateTime().equals(r.dateTime())
+            && state.durationMinutes() == r.durationMinutes()
+            && state.resourceIds().equals(command.resourceIds())
+            && Objects.equals(state.recipientId(), command.recipientId())
+            && Objects.equals(state.originSystem(), command.originSystem())
+            && Objects.equals(state.emails(), r.emails());
     }
 
     public Effect<String> replyAvailability(ReplyAvailability command) {
