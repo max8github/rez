@@ -17,6 +17,7 @@ These are the stable, current-state architecture docs:
 - [Reservation Booking Flow](../reservation/reservation/docs/booking-flow.md)
 - [Reservation FSM](../reservation/reservation/docs/fsm.md)
 - [Conceptual Orchestration Overview](./conceptual-orchestration-overview.md)
+- [Payments, Cancellation Refunds, and Waiting Lists — Target Design](./payments-cancellation-waitlist-design.md) (target-state, not implemented yet)
 
 These documents should explain:
 

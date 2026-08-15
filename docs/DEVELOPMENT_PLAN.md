@@ -14,6 +14,16 @@ No single blocker currently tracked here.
 
 ## Backlog
 
+### Payments, late-cancellation refunds, waiting lists
+
+Design proposed, not started. See
+[payments-cancellation-waitlist-design.md](payments-cancellation-waitlist-design.md) for the full target
+design: a `PaymentEntity` + `PricingPolicy` payment core (Stripe, facility/Rez split), a resale-refund
+mechanic for late cancellations (authorize-then-capture hold, voided if the slot resells before the
+original start time), and a priority waiting list (soft hold + timer on `ResourceEntity`, FIFO queue per
+`(resourceId, dateTime)`, Telegram notify-and-confirm). Several open decisions block Phase 1 (Stripe Connect
+routing) — see the design doc's Open Questions section.
+
 ### Make MatrixEndpoint fully async
 
 `MatrixEndpoint` returns the agent reply synchronously in the HTTP response body,
