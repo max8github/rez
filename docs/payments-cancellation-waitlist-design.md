@@ -1,7 +1,7 @@
 # Payments, Cancellation Refunds, and Waiting Lists — Target Design
 
 This document is a target-state design for adding payments to Rez, plus two features built on top of
-payments: a resale-refund mechanic for late cancellations, and a priority waiting list.
+payments: a rescue-refund mechanic for late cancellations, and a priority waiting list.
 
 Important:
 
@@ -15,7 +15,7 @@ Important:
 Today, booking through Rez is free: a facility grants courts away at no charge, and Rez has no concept of
 money anywhere in the codebase. This document proposes how to introduce real payment (facility gets paid,
 Rez takes a percentage) without breaking the reservation core's genericity, and how two derived features —
-late-cancellation-with-resale-refund and waiting lists — build on that payment layer.
+the late-cancellation rescue refund and the waiting list — build on that payment layer.
 
 ## Motivation
 
@@ -58,7 +58,7 @@ late-cancellation-with-resale-refund and waiting lists — build on that payment
 
 ### Slot
 
-The existing implicit unit of contention: a specific `(resourceId, dateTime)` pair. Both the resale-refund
+The existing implicit unit of contention: a specific `(resourceId, dateTime)` pair. Both the rescue-refund
 feature and the waiting-list feature are triggered by state changes on a specific slot, independent of which
 `ReservationEntity` currently owns it — this requires a query path that doesn't exist today (see
 `SlotPaymentView` below).
@@ -69,32 +69,55 @@ A new economic identity attached to a reservation: price, payer, and payment lif
 `ReservationEntity`'s booking-correctness state, so a new `PaymentEntity` is proposed rather than overloading
 `ReservationState`.
 
-### Commitment point and resolution point
+### Commitment window and commitment cutoff
 
-Two derived instants per reservation, computed from the facility's `freeCancellationWindow` (part of
-`PricingPolicy`, §1) and the slot's start time — not from when the booking happened to be made:
+- **Commitment window** — the facility-configured span (`PricingPolicy.commitmentWindow`, a duration, e.g. 3
+  days) immediately before a slot's start, during which a reservation is no longer freely cancellable.
+  *Before* the commitment window, cancelling is free. *Within* the commitment window, cancelling triggers the
+  rescue-refund mechanic (§2) instead of a normal cancellation.
+- **Commitment cutoff** — the specific instant a given reservation enters its commitment window:
+  `max(bookingTime, slotStart − commitmentWindow)`. Before it, no `PaymentEntity` exists yet and Stripe is
+  never involved for that reservation. At it (or immediately, if the booking itself happened after this point
+  already — e.g. booked the day before the slot), a payment hold is created.
+- **Resolution point** — where the commitment window ends: `slotStart` itself — not slot *end*; once a slot
+  has actually started there's no realistic scenario left where someone else rescues it — or a
+  facility-configurable buffer shortly before `slotStart` if facilities need prep-time certainty (open, see
+  below). This is when the hold resolves: captured by default, voided if rescued (§2).
 
-- **Commitment point** = `max(bookingTime, slotStart − freeCancellationWindow)`. The instant a reservation
-  stops being freely cancellable. Before it, cancelling is free and Stripe is never involved for that
-  reservation — no `PaymentEntity` exists yet. At it (or immediately, if the booking itself happened after
-  this point already — e.g. booked the day before the slot with a 3-day window), a payment hold is created.
-- **Resolution point** = `slotStart` (or a facility-configurable cutoff shortly before it). The instant the
-  hold is captured by default, unless a resale voided it first (§2).
+### Payment hold — what it actually means financially
 
-### Payment hold
+A Stripe `PaymentIntent` created with `capture_method: manual`, once confirmed, is what this document calls a
+**hold** — the two terms name the same thing at different levels. `PaymentIntent` is Stripe's API object
+tracking the whole lifecycle (`requires_payment_method → requires_confirmation → requires_capture →
+succeeded`/`canceled`); "hold" is the everyday name for what that `PaymentIntent` *is*, financially, while
+sitting in `requires_capture`.
 
-A Stripe `PaymentIntent` on manual capture, created at a reservation's commitment point — an authorization
-with no money moved yet. There is exactly **one** hold per reservation; it is the single mechanism behind
-both ordinary payment collection and the late-cancellation rescue-refund behavior (§1/§2) — not two separate
-mechanisms, and not a hold that spans the whole booking-to-slot-time gap (see the Stripe 7-day limit
-discussion in §1 for why that would be unsafe).
+It's more than a promise: the card network has verified the card and reserved that amount against it — it
+shows as a *pending* transaction on the cardholder's statement, reducing what they can spend elsewhere, even
+though no money has moved to Rez or the facility yet. Compared to doing nothing until the resolution point:
+creating the hold at the commitment cutoff verifies the card actually works with days of runway instead of
+failing silently right when the court would otherwise be handed away, and turns **capture** into a
+near-guaranteed follow-up call on an already-authorized amount rather than a fresh charge attempt that could
+itself fail.
+
+**Captured** means the reserved amount is actually transacted — Stripe pulls the funds for real, settlement
+follows, and this is the point money genuinely moves (to Rez as merchant of record, then via
+`createTransferFromCharge`-style transfer to the facility's connected account). **Voided** (cancelling an
+unconsumed hold) releases the reservation of funds — nothing ever transacts, no fee to anyone. There is
+exactly **one** hold per reservation; it's the single mechanism behind both ordinary payment collection and
+the rescue refund (§1/§2).
+
+### Rescue refund, rescue booker, rescued cancellation
+
+The player who books a slot freed up by a late cancellation is the **rescue booker**; a cancellation that
+gets bailed out this way is a **rescued cancellation**. See §2 for the mechanics.
 
 ### Slot hold
 
-A time-boxed exclusivity claim on a `(resourceId, dateTime)` for one player — an unrelated concept, needed
-for the waiting list's confirmation window ("this court is free, reply within 10 minutes to claim it"). This
-lives entirely in the orchestration layer via `WaitlistEntity` (§3); the reservation core (`ResourceEntity`)
-is never aware of it and needs no changes.
+A time-boxed exclusivity claim on a `(resourceId, dateTime)` for one player — an unrelated concept to the
+payment hold above, needed for the waiting list's confirmation window ("this court is free, reply within 10
+minutes to claim it"). Lives entirely in the orchestration layer via `WaitlistEntity` (§3); the reservation
+core (`ResourceEntity`) is never aware of it and needs no changes.
 
 ## Proposed Model
 
@@ -106,23 +129,23 @@ New components:
   `paymentId` field). States: `NONE → AUTHORIZED → CAPTURED / VOIDED / REFUNDED / FAILED`. Wraps a Stripe
   `PaymentIntent` id, amount, currency, the facility's Stripe connected-account id, and Rez's application-fee
   cut.
-- **`PricingPolicy`** — price per slot, Rez's commission percentage, and `freeCancellationWindow`. Lives on
+- **`PricingPolicy`** — price per slot, Rez's commission percentage, and `commitmentWindow`. Lives on
   `FacilityEntity` as a contract-level default (plus the facility's Stripe connected-account id once
   onboarded), with an optional per-`ResourceEntity` override for differently-priced courts.
 - **`SlotPaymentView`** — a new Akka View keyed by `resourceId + dateTime`, sourced from `PaymentEntity` /
   `ReservationEntity` events. This is the lookup the rescue-refund behavior (§2) needs: "is there still an
   open hold on exactly this slot?"
 
-**Timing — anchored to the commitment point, not to booking time.** Rather than charging at booking time, or
+**Timing — anchored to the commitment cutoff, not to booking time.** Rather than charging at booking time, or
 holding uncaptured all the way from booking to slot time, the hold is created at the reservation's
-**commitment point** (see Terminology above): `max(bookingTime, slotStart − freeCancellationWindow)`. A court
-booked two weeks out with a 3-day free-cancellation window has nothing to do with Stripe for the first eleven
-days — cancelling in that window is genuinely free, no `PaymentEntity` exists yet, nothing to void, nothing to
-refund. An Akka Timer for the commitment point is set at booking time; if the booking itself happens after
-that point already (e.g. booked the day before the slot), the commitment point is now, and the hold is
+**commitment cutoff** (see Terminology above): `max(bookingTime, slotStart − commitmentWindow)`. A court
+booked two weeks out with a 3-day commitment window has nothing to do with Stripe for the first eleven
+days — cancelling in that period is genuinely free, no `PaymentEntity` exists yet, nothing to void, nothing to
+refund. An Akka Timer for the commitment cutoff is set at booking time; if the booking itself happens after
+that point already (e.g. booked the day before the slot), the commitment cutoff is now, and the hold is
 created immediately with no waiting.
 
-When the commitment-point Timer fires: create `PaymentEntity` with a `PaymentIntent` on **manual capture** —
+When the commitment-cutoff Timer fires: create `PaymentEntity` with a `PaymentIntent` on **manual capture** —
 a hold, not a charge. A second Akka Timer is set for the **resolution point** (`slotStart`, or a
 facility-configurable cutoff before it).
 
@@ -130,17 +153,17 @@ When the resolution-point Timer fires: **capture** the hold by default. For an o
 booking, this is how it actually gets paid — landing at (or just before) slot time, which happens to be close
 to how Hit's own session-completion capture already works
 (`hit-backend/docs/reference/stripe-connect.md`) — convenient, not load-bearing; neither system was built to
-depend on the other's timing. If the reservation was cancelled after its commitment point and the slot got
+depend on the other's timing. If the reservation was cancelled within its commitment window and the slot got
 resold before resolution, the hold is **voided** instead of captured — see §2.
 
 This is one mechanism serving both purposes: ordinary payment collection, and — via what the same hold does
-between commitment and resolution — the late-cancellation rescue-refund logic. There's no second hold type,
-no separate penalty-specific Timer.
+between the commitment cutoff and the resolution point — the rescue-refund logic. There's no second hold
+type, no separate penalty-specific Timer.
 
 **Why this is Stripe-safe regardless of how far ahead a court is booked.** A reservation's hold is open for at
-most `freeCancellationWindow` (commitment point to resolution point) — never for the full booking-to-slot-time
+most `commitmentWindow` (commitment cutoff to resolution point) — never for the full booking-to-slot-time
 span. Stripe guarantees authorizations are capturable for up to ~7 days (shorter on some card networks), so
-`freeCancellationWindow` needs to stay safely under that — worth an explicit validation cap on `PricingPolicy`
+`commitmentWindow` needs to stay safely under that — worth an explicit validation cap on `PricingPolicy`
 (e.g. reject anything over a few days) rather than an implicit assumption. Realistic for any court
 cancellation policy (hours to a couple of days), so this shouldn't bind in practice.
 
@@ -160,36 +183,36 @@ charge made; disputes go to Rez, not the facility.
 Manual invoicing (no Stripe at all, for a first facility partner) is a reasonable bridge but isn't designed
 further here.
 
-### 2. Late cancellation with resale refund ("rescue refund")
+### 2. Rescue refund
 
-Working name for this mechanic: **rescue refund** — a later booker "rescues" the cancelling player from the
-penalty by taking the slot off their hands. (Easy to rename if you'd rather call it something else — it's
-only used as a label in this doc, not committed to code yet.)
+A later booker — the **rescue booker** — "rescues" the cancelling player from the penalty by booking the slot
+themselves before it resolves. A cancellation that gets bailed out this way is a **rescued cancellation**.
 
 Reframed simply: *the facility is guaranteed payment for the slot exactly once, from whoever ends up holding
 it last* — not a fine that stacks on top of a resale. This reframing costs nothing extra to build: it isn't a
-second mechanism, it's just what already happens to §1's hold when a reservation is cancelled after its
-commitment point.
+second mechanism, it's just what already happens to §1's hold when a reservation is cancelled within its
+commitment window.
 
-1. PlayerA cancels after their commitment point has passed. A `PaymentEntity` hold already exists for this
-   reservation (§1) — created back when the commitment-point Timer fired, well before the cancellation.
-   `ReservationEntity.cancelRequest()` (existing path) does **not** touch the hold at all; the reservation just
-   cancels normally, and the resolution-point Timer from §1 keeps running, untouched.
-2. If PlayerB books and pays for the same `(resourceId, dateTime)` before that timer fires: PlayerB is
-   necessarily booking after PlayerA's commitment point already passed, so PlayerB's *own* commitment point
-   (`max(playerBBookingTime, slotStart − freeCancellationWindow)`) is simply *now* — PlayerB's hold is created
-   and captured immediately. That capture's completion handler queries `SlotPaymentView`, finds PlayerA's
-   still-`AUTHORIZED` hold on the same slot, and **voids** it — PlayerA is never charged. PlayerB's payment
-   proceeds through the normal facility/Rez split.
-3. If the resolution-point Timer fires first with no rebooking: the hold **captures**, exactly as it would
+1. PlayerA cancels within their commitment window (i.e. after the commitment cutoff has passed). A
+   `PaymentEntity` hold already exists for this reservation (§1) — created back when the commitment-cutoff
+   Timer fired, well before the cancellation. `ReservationEntity.cancelRequest()` (existing path) does **not**
+   touch the hold at all; the reservation just cancels normally, and the resolution-point Timer from §1 keeps
+   running, untouched.
+2. If a rescue booker (PlayerB) books and pays for the same `(resourceId, dateTime)` before that timer fires:
+   PlayerB is necessarily booking after PlayerA's commitment cutoff already passed, so PlayerB's *own*
+   commitment cutoff (`max(playerBBookingTime, slotStart − commitmentWindow)`) is simply *now* — PlayerB's
+   hold is created and captured immediately. That capture's completion handler queries `SlotPaymentView`,
+   finds PlayerA's still-`AUTHORIZED` hold on the same slot, and **voids** it — PlayerA is never charged. This
+   is the rescue. PlayerB's payment proceeds through the normal facility/Rez split.
+3. If the resolution-point Timer fires first with no rescue booker: the hold **captures**, exactly as it would
    have if PlayerA had never cancelled — the facility is paid by PlayerA, as if the slot had gone unsold. From
    the payment side this is indistinguishable from an ordinary uncancelled booking resolving; the "penalty" is
    just what capturing an unrescued hold looks like.
 
 No second `PaymentEntity`, no cancellation-triggered hold creation, no double-authorization risk — there is
-only ever one hold per reservation, anchored at the commitment point regardless of whether that reservation
-later gets cancelled. Cancellation just changes which of the two resolution outcomes (capture vs. void) ends
-up happening.
+only ever one hold per reservation, anchored at the commitment cutoff regardless of whether that reservation
+later becomes a rescued cancellation. Cancellation just changes which of the two resolution outcomes (capture
+vs. void) ends up happening.
 
 ### 3. Waiting list with priority notify
 
@@ -247,11 +270,11 @@ rules into orchestration.
 ### Touched components
 
 - `ReservationEntity` / `ReservationState` — gains `paymentId`; `FULFILLED` triggers scheduling of the
-  commitment-point Timer (exact owning component TBD — likely a `CourtBookingWorkflow` step rather than the
+  commitment-cutoff Timer (exact owning component TBD — likely a `CourtBookingWorkflow` step rather than the
   entity itself, to keep `ReservationEntity` from taking on payment-timing responsibility)
 - `CourtBookingWorkflow` — gains the commitment/resolution payment flow (§1); gains a waitlist-offer step on
   rejection; gains an active-offer exclusivity check before submitting a booking (§3)
-- `FacilityEntity` — gains `PricingPolicy` (price, commission %, free-cancellation window) and Stripe
+- `FacilityEntity` — gains `PricingPolicy` (price, commission %, commitment window) and Stripe
   connected-account id
 - `BookingTools` — new `@FunctionTool` methods: join waitlist, confirm waitlist offer; `BookingAgent`'s system
   prompt loses its "payments out of scope" line
@@ -260,7 +283,7 @@ rules into orchestration.
 ### Left alone
 
 - `ResourceEntity` / `ResourceState` / `Booking` — genuinely untouched, not just unchanged in shape. The
-  reservation core still only ever knows free-or-booked; both the payment penalty (§2) and waitlist priority
+  reservation core still only ever knows free-or-booked; both the rescue refund (§2) and waitlist priority
   (§3) are enforced entirely outside it, in the orchestration layer.
 - The reservation-core locking correctness itself (`ReservationEntity`/`ResourceEntity`'s core competition and
   event handshake) is unchanged — payments and the waitlist extend the system around it, not the core.
@@ -269,22 +292,22 @@ rules into orchestration.
 
 ### Phase 1: Payment core
 
-- `PaymentEntity`, `PricingPolicy` (price, commission %, free-cancellation window) on `FacilityEntity`,
+- `PaymentEntity`, `PricingPolicy` (price, commission %, commitment window) on `FacilityEntity`,
   Stripe connected-account onboarding
 - Destination charges (Rez as merchant of record) — decided, see §1 above
-- Commitment-point Timer (scheduled at booking) → payment hold created → resolution-point Timer →
+- Commitment-cutoff Timer (scheduled at booking) → payment hold created → resolution-point Timer →
   capture-by-default — decided, see §1 above (supersedes two earlier revisions of this section: "hold from
   booking to slot time" and, before that, "charge immediately at booking" — both had real problems, see git
   history if curious)
 - Compensation (cancel reservation) on payment-authorization failure
 - Independently shippable — this alone makes Rez charge for bookings
 
-### Phase 2: Late cancellation rescue refund
+### Phase 2: Rescue refund
 
 - Depends entirely on Phase 1's hold/timer mechanism plus `SlotPaymentView` — no new payment primitive, see
   §2 above
-- The only genuinely new piece is the resale-detection lookup in the payment-completion handler; the
-  free-cancellation-window policy itself is already part of Phase 1's `PricingPolicy`
+- The only genuinely new piece is the rescue-detection lookup in the payment-completion handler; the
+  commitment-window policy itself is already part of Phase 1's `PricingPolicy`
 
 ### Phase 3: Waiting list
 
@@ -310,9 +333,9 @@ rules into orchestration.
 5. Who configures `PricingPolicy` per facility, and through what interface — is this an admin-only Telegram
    command, or does it require a non-conversational admin surface?
 6. ~~Could Phase 2 reuse Phase 1's hold instead of creating a second one?~~ **Resolved** — yes, by
-   construction: anchoring the hold to the commitment point (§1) rather than to booking time makes it the
+   construction: anchoring the hold to the commitment cutoff (§1) rather than to booking time makes it the
    same hold Phase 2 needs, with no double-authorization risk. See §1/§2.
-7. Should `freeCancellationWindow` be hard-capped in `PricingPolicy` validation (e.g. reject anything over a
+7. Should `commitmentWindow` be hard-capped in `PricingPolicy` validation (e.g. reject anything over a
    few days) to stay safely under Stripe's ~7-day authorization limit, or just documented as a guideline for
    facility onboarding?
 
@@ -320,11 +343,11 @@ rules into orchestration.
 
 - Introduce payment as a first-class new entity (`PaymentEntity`) joined to reservations by id, not folded
   into `ReservationState` — keeps the reservation core's booking-correctness concern separate from money.
-- Anchor the payment hold to the reservation's **commitment point** (`slotStart − freeCancellationWindow`, or
+- Anchor the payment hold to the reservation's **commitment cutoff** (`slotStart − commitmentWindow`, or
   booking time if later) rather than to booking time or slot time alone. This is what lets one hold safely
-  serve both ordinary payment collection and the late-cancellation rescue refund (§1/§2) — its lifetime is
-  always bounded by the facility's own free-cancellation-window policy, staying well under Stripe's 7-day
-  authorization limit by construction, not coincidence.
+  serve both ordinary payment collection and the rescue refund (§1/§2) — its lifetime is always bounded by
+  the facility's own commitment-window policy, staying well under Stripe's 7-day authorization limit by
+  construction, not coincidence.
 - Treat waitlist "priority" as an orchestration-layer policy (`WaitlistEntity`'s active-offer field, checked
   in `CourtBookingWorkflow.book()`), not a new primitive on the reservation core. `ResourceEntity` stays
   exactly as generic as it is today.
