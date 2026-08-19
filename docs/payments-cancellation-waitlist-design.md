@@ -69,11 +69,18 @@ A new economic identity attached to a reservation: price, payer, and payment lif
 `ReservationEntity`'s booking-correctness state, so a new `PaymentEntity` is proposed rather than overloading
 `ReservationState`.
 
-### Hold (soft lock)
+### Two different meanings of "hold"
 
-A time-boxed reservation of a slot that isn't a full booking yet — needed for the waiting-list confirmation
-window ("this court is free, reply within 10 minutes to claim it"). Nothing like this exists on `ResourceEntity`
-today; it currently only knows CONFIRMED-or-free.
+This document uses "hold" for two unrelated things — worth disambiguating up front:
+
+- **Payment hold**: a Stripe `PaymentIntent` on manual capture — an authorization with no money moved yet.
+  Used only for the late-cancellation penalty (§2). Normal bookings (§1) capture immediately; see the Stripe
+  7-day authorization limit discussion in §1 for why.
+- **Slot hold**: a time-boxed exclusivity claim on a `(resourceId, dateTime)` for one player — needed for the
+  waiting list's confirmation window ("this court is free, reply within 10 minutes to claim it"). This lives
+  entirely in the orchestration layer via `WaitlistEntity` (§3); the reservation core (`ResourceEntity`) is
+  never aware of it and needs no changes — from the core's point of view the slot is simply free the moment
+  it's cancelled.
 
 ## Proposed Model
 
@@ -93,20 +100,27 @@ New components:
   list need: "what's the current payment state of exactly this slot?"
 
 Flow: `CourtBookingWorkflow` gains a payment step after `ReservationEntity` reaches `FULFILLED` — create a
-`PaymentEntity` with a Stripe `PaymentIntent` on **manual capture** (a hold, not an immediate charge), and only
-then consider the booking complete from the player's perspective. Failure to pay should compensate the
-reservation (cancel it), the same way a composite-workflow failure would compensate an earlier step per
+`PaymentEntity`, **charge immediately** (`PaymentIntent` with automatic capture), and only then consider the
+booking complete from the player's perspective. Failure to pay should compensate the reservation (cancel it),
+the same way a composite-workflow failure would compensate an earlier step per
 `conceptual-orchestration-overview.md`'s saga pattern.
 
-**Capture timing — decided.** The hold is captured by an Akka Timer set for the slot's start/end (facility-
-configurable), not immediately at booking. This reuses the exact same hold-then-capture-via-Timer primitive
-Phase 2 already needs for the late-cancellation penalty (§2 below), so Phase 1 and Phase 2 share one mechanism
-instead of introducing two. It also keeps Rez's payment timing origin-agnostic: a direct Telegram booking has
-no external "session" to key off, so capture-at-slot-time is the only trigger that makes sense for every
-caller uniformly. For Hit-originated bookings specifically, this happens to land at roughly the same real-world
-moment as Hit's own session-completion capture (see `hit-backend/docs/reference/stripe-connect.md`) — the two
-systems weren't made to depend on each other's timing, they just converge because "slot end" and "session
-completion" are approximately the same instant.
+**Capture timing — corrected.** An earlier revision of this doc proposed holding every booking's payment
+uncaptured until slot start/end, reusing one Timer mechanism for both normal bookings and the late-cancellation
+penalty. That doesn't work: Stripe card authorizations are only guaranteed capturable for **up to 7 days**
+(shorter on some card networks), and a court can legitimately be booked weeks in advance — a manual-capture
+hold sitting open that long risks silently expiring before slot time, with no notification and no automatic
+retry. Reusing a hold across an unbounded advance-booking window isn't safe; reusing it across the
+late-cancellation window (§2) is, because "late" cancellation is by definition close to the slot's start.
+
+So Phase 1 reverts to the standard pattern: **charge in full at booking time**, same as most reservation
+systems. Phase 2's manual-capture hold (§2) is a separate, narrower mechanism used only for the cancellation
+penalty, where the authorize-to-resolve gap is short by construction. The two no longer share a Timer.
+
+Worth checking separately: Hit already does "hold at booking, capture at completion" for session bookings
+(`hit-backend/docs/reference/stripe-connect.md`) with no visible handling of the same 7-day limit — if Hit
+allows sessions to be booked more than ~7 days out, it likely has this exact latent issue today, independent
+of anything in Rez. Not this document's scope to fix, but worth flagging to whoever owns that code.
 
 **Stripe routing — decided.** Rez is merchant of record: **destination charges**, not direct charges on the
 facility's connected account. Rez owns refund/dispute handling directly against `PaymentEntity`'s state
@@ -141,22 +155,46 @@ inside that limit without needing the charge-then-refund fallback.
 
 ### 3. Waiting list with priority notify
 
-The novel primitive here is the **hold**, since `ResourceEntity` currently only distinguishes free vs. booked.
+At its core, this is exactly the consumer-on-cancellation-events design it sounds like it should be: a new
+consumer subscribes to `ResourceEntity`'s `ReservationCanceled` events, filters by `(resourceId, dateTime)`,
+and sends a Telegram notification when a slot someone's interested in frees up. No change to the reservation
+core is needed for that part.
 
-- **`WaitlistEntity`**, keyed by `resourceId + dateTime` (same granularity as a `Booking`), holds an ordered
-  (FIFO) list of `{playerId, joinedAt, originContext}`. Populated when `ResourceEntity.reserve` rejects a
-  request — `BookingWorkflow` / `BookingTools` catch the rejection and the agent offers to register interest.
-- `Booking` gains an optional `heldFor` + `holdExpiresAt`. `isReservableAt` treats a HELD (not CONFIRMED)
-  entry as blocking everyone except the held-for player, and as non-blocking once `holdExpiresAt` passes.
-- When `ResourceEntity` emits `ReservationCanceled` for a slot, a new consumer looks up
-  `WaitlistEntity(resourceId#dateTime)`: if non-empty, pop the first entrant, place a HELD booking with a
-  short expiry (e.g. 10 minutes), start a Timer, and notify via the existing `telegramnotifier` module
-  ("Court 1 at 6pm just opened up — reply to confirm within 10 minutes").
-- Confirming routes through the normal `bookCourt` tool call, upgrading HELD → CONFIRMED (and into the
-  payment flow from part 1). Timer expiry with no confirmation pops the next entrant and repeats. An empty
-  queue leaves the slot open to anyone, as today.
-- Multiple players can queue for the same slot; a player already in a queue could in principle join others
-  too (see open questions).
+The one thing plain "notify, then let them call the normal book tool" doesn't deliver is *priority*. The
+instant a cancellation event fires, `ResourceEntity` sees the slot as simply free again — it has no notion of
+who was waiting. If the notified player and everyone else who happens to check that slot are all racing to
+call `bookCourt` through the normal path, whoever completes the call first wins, waitlisted or not. That's
+"you get told first," not "you get the chance, for a limited time, to reserve it" — which is what was asked
+for, and the only thing that makes an ordered queue of multiple waiters meaningful rather than a free-for-all
+every time a slot opens up.
+
+Delivering real priority needs *some* mechanism that makes the slot briefly unavailable to everyone except the
+front-of-queue player — but that mechanism doesn't have to live in `ResourceEntity`. It can live entirely in
+the orchestration layer instead:
+
+- **`WaitlistEntity`**, keyed by `resourceId + dateTime`, holds an ordered (FIFO) queue of
+  `{playerId, joinedAt, originContext}`, plus a single **active offer** field:
+  `{playerId, offeredAt, expiresAt}` or empty. Populated when `ResourceEntity.reserve` rejects a request —
+  `BookingWorkflow` / `BookingTools` catch the rejection and the agent offers to register interest.
+- On `ReservationCanceled`, a new consumer looks up `WaitlistEntity(resourceId#dateTime)`. If the queue is
+  non-empty, it pops the first entrant into the active-offer field with a short expiry (e.g. 10 minutes),
+  starts a Timer, and notifies via the existing `telegramnotifier` module ("Court 1 at 6pm just opened up —
+  reply to confirm within 10 minutes").
+- **`CourtBookingWorkflow.book()`** gains one check before forwarding to `ReservationGateway.submit()`: if
+  `WaitlistEntity` for that slot has an active, unexpired offer whose `playerId` doesn't match the requester,
+  decline with "this slot's currently offered to someone ahead of you — want to join the queue?" instead of
+  submitting. Everyone else — including the front-of-queue player themselves, and anyone at all once the
+  offer is empty or expired — books through the completely ordinary path.
+- Confirming is just the front-of-queue player calling `bookCourt` normally within the window; it succeeds
+  because the check above passes for them specifically (and proceeds into the payment flow from §1). Timer
+  expiry with no confirmation clears the active offer and pops the next entrant, repeating the notify step.
+  An empty queue, or an expired and un-refilled offer, leaves the slot open to anyone, exactly as today.
+
+This keeps `ResourceEntity` / `Booking` completely untouched — the reservation core still only ever sees
+"free" or "booked," and the priority guarantee is enforced one layer up, as a policy check rather than new
+locking state. It also matches this repo's existing architectural goal
+(`conceptual-orchestration-overview.md`) of keeping the reservation core generic and pushing business-specific
+rules into orchestration.
 
 ## Code Mapping
 
@@ -170,10 +208,9 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 
 ### Touched components
 
-- `ResourceEntity` / `ResourceState` — `Booking` record gains `heldFor` + `holdExpiresAt`;
-  `isReservableAt` gains hold-awareness
 - `ReservationEntity` / `ReservationState` — gains `paymentId`
-- `CourtBookingWorkflow` — gains a payment step after fulfillment; gains a waitlist-offer step on rejection
+- `CourtBookingWorkflow` — gains a payment step after fulfillment; gains a waitlist-offer step on rejection;
+  gains an active-offer exclusivity check before submitting a booking (§3)
 - `FacilityEntity` — gains `PricingPolicy` (price, commission %) and Stripe connected-account id
 - `BookingTools` — new `@FunctionTool` methods: join waitlist, confirm waitlist offer; `BookingAgent`'s system
   prompt loses its "payments out of scope" line
@@ -181,8 +218,11 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 
 ### Left alone
 
+- `ResourceEntity` / `ResourceState` / `Booking` — genuinely untouched, not just unchanged in shape. The
+  reservation core still only ever knows free-or-booked; both the payment penalty (§2) and waitlist priority
+  (§3) are enforced entirely outside it, in the orchestration layer.
 - The reservation-core locking correctness itself (`ReservationEntity`/`ResourceEntity`'s core competition and
-  event handshake) is unchanged in shape — payments and holds extend it, they don't replace it.
+  event handshake) is unchanged — payments and the waitlist extend the system around it, not the core.
 
 ## Migration Sequence
 
@@ -190,9 +230,10 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 
 - `PaymentEntity`, `PricingPolicy` on `FacilityEntity`, Stripe connected-account onboarding
 - Destination charges (Rez as merchant of record) — decided, see §1 above
-- `CourtBookingWorkflow` payment step after `FULFILLED`: manual-capture hold, captured by a Timer at slot
-  start/end rather than immediately — decided, see §1 above
-- Compensation (cancel reservation) on payment-authorization failure
+- `CourtBookingWorkflow` payment step after `FULFILLED`: charge immediately (automatic capture) — corrected,
+  see §1 above (an earlier revision proposed a hold captured at slot time; reverted due to Stripe's 7-day
+  authorization limit)
+- Compensation (cancel reservation) on payment failure
 - Independently shippable — this alone makes Rez charge for bookings
 
 ### Phase 2: Late cancellation + resale refund
@@ -203,8 +244,9 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 
 ### Phase 3: Waiting list
 
-- Depends on the hold primitive on `ResourceEntity` + Timers; loosely depends on Phase 1 (final confirm
-  reuses the normal paid-booking path)
+- Depends on `WaitlistEntity` (queue + active offer) and Timers, plus the exclusivity check in
+  `CourtBookingWorkflow.book()`; no dependency on `ResourceEntity` at all (§3). Loosely depends on Phase 1
+  (final confirm reuses the normal paid-booking path)
 - Can be built in parallel with Phase 2 — they only share the `resourceId + dateTime` lookup convention, not
   code
 
@@ -213,31 +255,29 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 1. ~~Stripe Connect: destination charges vs. direct charges on the facility's account.~~ **Resolved** —
    destination charges, Rez as merchant of record. See §1 above.
 2. Penalty cutoff: capture exactly at slot start, or some buffer before it (facilities may need prep-time
-   certainty rather than a last-second cancellation-to-capture)? Now doubles as the same Timer Phase 1's
-   normal-booking capture uses (see §1) — one cutoff decision governs both, not two separate ones.
-3. Waitlist confirmation window length, and whether a player can queue for multiple slots or multiple
-   overlapping waitlists at once.
+   certainty rather than a last-second cancellation-to-capture)?
+3. Waitlist confirmation window length, whether a player can queue for multiple slots or multiple overlapping
+   waitlists at once, and whether an active offer should ever go to more than one person simultaneously (this
+   design assumes strictly one-at-a-time, front-of-queue-only — see §3).
 4. Does `BookingEndpoint`'s direct-HTTP cancel path (bypassing `BookingApplicationService` today) also need
    to trigger the penalty-hold logic, or is penalty logic scoped to the agent/Telegram path only?
 5. Who configures `PricingPolicy` per facility, and through what interface — is this an admin-only Telegram
    command, or does it require a non-conversational admin surface?
-6. **New, raised by the Phase 1 capture-timing decision above:** since a normal booking (Phase 1) now already
-   holds an uncaptured `PaymentEntity` for the full slot price until slot time, does Phase 2's late-cancellation
-   penalty need its *own* second `PaymentEntity`/hold at all — or can it just reuse the original booker's
-   already-open Phase 1 hold (void it if the slot resells before the cutoff Timer, otherwise let it capture
-   exactly as it would have if never cancelled)? Creating a second, separate hold on top of an already-open one
-   for the same slot would double-authorize the same card. Worth resolving before implementing §2 — it may
-   simplify Phase 2 down to "conditionally void or don't void the Phase 1 hold," with no new payment primitive.
+6. ~~Since Phase 1 held payment uncaptured until slot time, could Phase 2 reuse that same hold instead of a
+   second one?~~ **Moot** — Phase 1 reverted to immediate capture at booking (see §1's correction), so there's
+   no open Phase 1 hold to reuse. Phase 2's penalty hold is its own, separate authorization.
 
 ## Recommendation Summary
 
 - Introduce payment as a first-class new entity (`PaymentEntity`) joined to reservations by id, not folded
   into `ReservationState` — keeps the reservation core's booking-correctness concern separate from money.
 - Model the late-cancellation penalty as an authorize-then-capture hold, not an immediate charge-then-refund
-  — it means PlayerA is never actually charged in the common case where the slot resells, and it reuses the
-  Timer primitive the waiting list also needs.
-- Treat "hold with expiry" as a genuinely new primitive on the reservation core (`ResourceEntity`), since both
-  the waiting list and (indirectly) the penalty-vs-resale race depend on a slot being neither fully free nor
-  fully booked for a bounded window.
+  — it means PlayerA is never actually charged in the common case where the slot resells. This hold is
+  necessarily separate from Phase 1's payment, and only safe because the late-cancellation window is short by
+  construction — an open-ended hold from booking time to slot time is not, per Stripe's 7-day authorization
+  limit (§1).
+- Treat waitlist "priority" as an orchestration-layer policy (`WaitlistEntity`'s active-offer field, checked
+  in `CourtBookingWorkflow.book()`), not a new primitive on the reservation core. `ResourceEntity` stays
+  exactly as generic as it is today.
 - Ship payments (Phase 1) first — it's independently valuable and both other features build on it or its
   supporting `SlotPaymentView`.
