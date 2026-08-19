@@ -142,11 +142,22 @@ New components:
 - **`SlotPaymentView`** — a new Akka View keyed by `resourceId + dateTime`, sourced from `PaymentEntity` /
   `ReservationEntity` events. This is the lookup the rescue-refund behavior (§2) needs: "is there still an
   open hold on exactly this slot?"
-- **`PlayerPaymentProfile`** — a new, deliberately minimal component mapping stable player identity (Telegram
-  user id today; origin-agnostic key long-term, consistent with `MemberDirectory` in
-  `conceptual-orchestration-overview.md`) to a Stripe `customerId` and default `paymentMethodId`. This is the
-  one new piece of "who is this player, payment-wise" Rez needs to hold locally — kept as minimal as the rest
-  of Rez's member-data philosophy: nothing beyond what's needed to reuse a saved card.
+- **`PlayerPaymentProfile`** — a new, deliberately minimal component mapping a player's canonical `identity`
+  `userId` to a Stripe `customerId` and default `paymentMethodId`. Rez resolves that `userId` via
+  `identity.resolveOrCreate(TELEGRAM, senderExternalId, claims)` on a player's first message — see
+  `hit-backend/docs/cross-product-identity.md` for the full shared-identity design. Its own flagged
+  prerequisite applies here too: `TelegramEndpoint` currently captures `senderExternalId` but drops it,
+  persisting only the chat-scoped `recipientId` — that needs fixing before `resolveOrCreate` has anything real
+  to call with.
+
+  Keying by `userId` from day one, rather than a Rez-local id with a cross-product link bolted on later, costs
+  nothing here: every product is pre-launch, so there's no existing Rez user base to migrate, and every player
+  goes through the same `identity` provisioning regardless of which product they arrive through first. This
+  does **not** mean Rez shares a Stripe customer with Hit from day one, though — Rez still mints its own Stripe
+  customer under that `userId` unless and until Hit and Rez share one Stripe account, a separate, open
+  business-entity decision tracked in `hit-backend/docs/implementation-plan.md`. Keying by `userId` now just
+  means that once that decision resolves, `PlayerPaymentProfile` can pick up the already-linked Hit customer
+  with no migration — the key doesn't change, only which Stripe customer it resolves to.
 - **`StripeWebhookEndpoint`** — mirrors `hit-backend`'s equivalent. Receives `setup_intent.succeeded` /
   `payment_method.attached` (populates `PlayerPaymentProfile` after card-on-file collection) and the
   `PaymentIntent` lifecycle events needed to reconcile `PaymentEntity`.
