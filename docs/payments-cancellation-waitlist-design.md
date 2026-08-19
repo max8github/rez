@@ -107,6 +107,13 @@ unconsumed hold) releases the reservation of funds — nothing ever transacts, n
 exactly **one** hold per reservation; it's the single mechanism behind both ordinary payment collection and
 the rescue refund (§1/§2).
 
+### Card on file
+
+A saved Stripe payment method attached to a `Customer`, collected once at booking time (or reused from an
+earlier booking) — separate from, and prior to, the payment hold. Putting a card on file charges or holds
+nothing by itself; it's what makes the later, unattended hold-creation at the commitment cutoff possible at
+all. See §1.
+
 ### Rescue refund, rescue booker, rescued cancellation
 
 The player who books a slot freed up by a late cancellation is the **rescue booker**; a cancellation that
@@ -135,6 +142,35 @@ New components:
 - **`SlotPaymentView`** — a new Akka View keyed by `resourceId + dateTime`, sourced from `PaymentEntity` /
   `ReservationEntity` events. This is the lookup the rescue-refund behavior (§2) needs: "is there still an
   open hold on exactly this slot?"
+- **`PlayerPaymentProfile`** — a new, deliberately minimal component mapping stable player identity (Telegram
+  user id today; origin-agnostic key long-term, consistent with `MemberDirectory` in
+  `conceptual-orchestration-overview.md`) to a Stripe `customerId` and default `paymentMethodId`. This is the
+  one new piece of "who is this player, payment-wise" Rez needs to hold locally — kept as minimal as the rest
+  of Rez's member-data philosophy: nothing beyond what's needed to reuse a saved card.
+- **`StripeWebhookEndpoint`** — mirrors `hit-backend`'s equivalent. Receives `setup_intent.succeeded` /
+  `payment_method.attached` (populates `PlayerPaymentProfile` after card-on-file collection) and the
+  `PaymentIntent` lifecycle events needed to reconcile `PaymentEntity`.
+
+**Card on file — collected at booking time, not at the commitment cutoff.** The hold needs a payment method to
+authorize against, and asking for it at the commitment cutoff would mean prompting the player out of nowhere,
+days or weeks after they last talked to the bot — bad UX, and mechanically impossible besides, since a backend
+Timer can't pop a card form onto someone's phone. So card collection and hold creation happen at different
+times, for different reasons:
+
+- **At booking time**: `CourtBookingWorkflow` checks `PlayerPaymentProfile` for the requester. A returning
+  player with a Stripe customer + saved payment method already on file sees nothing different in the
+  conversation at all. A first-time player gets a Stripe-hosted link (Checkout in setup mode, or a Payment
+  Link — there's no native card form to embed in a Telegram message) to enter their card once; Rez learns the
+  result via `StripeWebhookEndpoint` and populates `PlayerPaymentProfile`. This happens once per player, not
+  once per booking — same "ask once" behavior as Hit's own `stripeCustomerId`, set "at registration or first
+  booking" (`hit-backend/docs/reference/stripe-connect.md`).
+- **At the commitment cutoff**: the hold's `PaymentIntent` is created and confirmed **off-session**, using the
+  payment method already in `PlayerPaymentProfile` — no player interaction, no message sent, purely a
+  Timer-triggered backend step.
+
+**Known gap, not solved here**: off-session confirmation can occasionally fail with `authentication_required`
+even against a saved card — a bank-side 3D-Secure/SCA re-check, rare but real. What happens then isn't
+designed yet — see Open Questions.
 
 **Timing — anchored to the commitment cutoff, not to booking time.** Rather than charging at booking time, or
 holding uncaptured all the way from booking to slot time, the hold is created at the reservation's
@@ -263,6 +299,9 @@ rules into orchestration.
 
 - `PaymentEntity`, `PaymentState`, `PaymentEvent` — new package, e.g. `com.rezhub.reservation.payment`
 - `SlotPaymentView` — Akka View, keyed by `resourceId + dateTime`
+- `PlayerPaymentProfile` — new, minimal component mapping player identity to Stripe `customerId` +
+  `paymentMethodId` (§1)
+- `StripeWebhookEndpoint` — receives card-on-file and `PaymentIntent` lifecycle events (§1)
 - `WaitlistEntity`, `WaitlistState`, `WaitlistEvent` — new package, e.g. `com.rezhub.reservation.waitlist`
 - Stripe client wrapper (module boundary TBD — likely a sibling module to `telegramnotifier` /
   `notifierstub`, following the existing `spi` + swappable-implementation pattern)
@@ -272,8 +311,9 @@ rules into orchestration.
 - `ReservationEntity` / `ReservationState` — gains `paymentId`; `FULFILLED` triggers scheduling of the
   commitment-cutoff Timer (exact owning component TBD — likely a `CourtBookingWorkflow` step rather than the
   entity itself, to keep `ReservationEntity` from taking on payment-timing responsibility)
-- `CourtBookingWorkflow` — gains the commitment/resolution payment flow (§1); gains a waitlist-offer step on
-  rejection; gains an active-offer exclusivity check before submitting a booking (§3)
+- `CourtBookingWorkflow` — gains a card-on-file check before submitting a booking, and the commitment/
+  resolution payment flow after fulfillment (§1); gains a waitlist-offer step on rejection; gains an
+  active-offer exclusivity check before submitting a booking (§3)
 - `FacilityEntity` — gains `PricingPolicy` (price, commission %, commitment window) and Stripe
   connected-account id
 - `BookingTools` — new `@FunctionTool` methods: join waitlist, confirm waitlist offer; `BookingAgent`'s system
@@ -338,6 +378,12 @@ rules into orchestration.
 7. Should `commitmentWindow` be hard-capped in `PricingPolicy` validation (e.g. reject anything over a
    few days) to stay safely under Stripe's ~7-day authorization limit, or just documented as a guideline for
    facility onboarding?
+8. Off-session hold-creation failure at the commitment cutoff (`authentication_required`, or the saved card
+   simply got declined/expired since it was put on file) — what's the fallback? Notify the player with a
+   re-authentication/new-card link and a grace window before the resolution point, most likely — but what
+   happens if that grace window also lapses? Force-cancel the reservation for free (not really the player's
+   fault their card needs rechecking), or let it fall through to the same unrescued-penalty outcome as an
+   ordinary late cancellation? Not designed yet.
 
 ## Recommendation Summary
 
@@ -351,5 +397,9 @@ rules into orchestration.
 - Treat waitlist "priority" as an orchestration-layer policy (`WaitlistEntity`'s active-offer field, checked
   in `CourtBookingWorkflow.book()`), not a new primitive on the reservation core. `ResourceEntity` stays
   exactly as generic as it is today.
+- Separate card collection from hold creation. A player provides card details once, at booking time (skipped
+  entirely for returning players via `PlayerPaymentProfile`); the commitment-cutoff hold is created
+  off-session against that saved card, with no prompt or message sent at that moment. Conflating the two would
+  mean asking someone for a credit card out of nowhere, days or weeks after they last opened the chat.
 - Ship payments (Phase 1) first — it's independently valuable and both other features build on it or its
   supporting `SlotPaymentView`.
