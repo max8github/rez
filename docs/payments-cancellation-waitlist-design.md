@@ -93,18 +93,27 @@ New components:
   list need: "what's the current payment state of exactly this slot?"
 
 Flow: `CourtBookingWorkflow` gains a payment step after `ReservationEntity` reaches `FULFILLED` — create a
-`PaymentEntity`, charge via Stripe, and only then consider the booking complete from the player's perspective.
-Failure to pay should compensate the reservation (cancel it), the same way a composite-workflow failure would
-compensate an earlier step per `conceptual-orchestration-overview.md`'s saga pattern.
+`PaymentEntity` with a Stripe `PaymentIntent` on **manual capture** (a hold, not an immediate charge), and only
+then consider the booking complete from the player's perspective. Failure to pay should compensate the
+reservation (cancel it), the same way a composite-workflow failure would compensate an earlier step per
+`conceptual-orchestration-overview.md`'s saga pattern.
 
-**Open decision — Stripe routing.** Two viable shapes, not decided yet:
+**Capture timing — decided.** The hold is captured by an Akka Timer set for the slot's start/end (facility-
+configurable), not immediately at booking. This reuses the exact same hold-then-capture-via-Timer primitive
+Phase 2 already needs for the late-cancellation penalty (§2 below), so Phase 1 and Phase 2 share one mechanism
+instead of introducing two. It also keeps Rez's payment timing origin-agnostic: a direct Telegram booking has
+no external "session" to key off, so capture-at-slot-time is the only trigger that makes sense for every
+caller uniformly. For Hit-originated bookings specifically, this happens to land at roughly the same real-world
+moment as Hit's own session-completion capture (see `hit-backend/docs/reference/stripe-connect.md`) — the two
+systems weren't made to depend on each other's timing, they just converge because "slot end" and "session
+completion" are approximately the same instant.
 
-- *Destination charges*: Rez is merchant of record on its own Stripe account, and automatically transfers the
-  facility's share to their connected account. Rez owns refund/dispute handling directly against
-  `PaymentEntity` — simpler to build against the state machine above.
-- *Direct charges on the facility's connected account*: the facility is merchant of record; Rez's cut is
-  skipped off as an application fee. Shifts refund/dispute liability to the facility, and the charge appears
-  on the facility's own Stripe dashboard/statements.
+**Stripe routing — decided.** Rez is merchant of record: **destination charges**, not direct charges on the
+facility's connected account. Rez owns refund/dispute handling directly against `PaymentEntity`'s state
+machine, and automatically transfers the facility's share to their connected account per the existing
+`createTransferFromCharge`-style pattern (see hit-backend's `StripeService` for the equivalent teacher-payout
+mechanics — same shape, different payee). The facility's Stripe dashboard shows a transfer received, not a
+charge made; disputes go to Rez, not the facility.
 
 Manual invoicing (no Stripe at all, for a first facility partner) is a reasonable bridge but isn't designed
 further here.
@@ -180,9 +189,10 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 ### Phase 1: Payment core
 
 - `PaymentEntity`, `PricingPolicy` on `FacilityEntity`, Stripe connected-account onboarding
-- Decide destination vs. direct charges
-- `CourtBookingWorkflow` payment step after `FULFILLED`, with compensation (cancel reservation) on payment
-  failure
+- Destination charges (Rez as merchant of record) — decided, see §1 above
+- `CourtBookingWorkflow` payment step after `FULFILLED`: manual-capture hold, captured by a Timer at slot
+  start/end rather than immediately — decided, see §1 above
+- Compensation (cancel reservation) on payment-authorization failure
 - Independently shippable — this alone makes Rez charge for bookings
 
 ### Phase 2: Late cancellation + resale refund
@@ -200,16 +210,24 @@ The novel primitive here is the **hold**, since `ResourceEntity` currently only 
 
 ## Open Questions
 
-1. Stripe Connect: destination charges vs. direct charges on the facility's account (blocks Phase 1's
-   payment-capture code specifically).
+1. ~~Stripe Connect: destination charges vs. direct charges on the facility's account.~~ **Resolved** —
+   destination charges, Rez as merchant of record. See §1 above.
 2. Penalty cutoff: capture exactly at slot start, or some buffer before it (facilities may need prep-time
-   certainty rather than a last-second cancellation-to-capture)?
+   certainty rather than a last-second cancellation-to-capture)? Now doubles as the same Timer Phase 1's
+   normal-booking capture uses (see §1) — one cutoff decision governs both, not two separate ones.
 3. Waitlist confirmation window length, and whether a player can queue for multiple slots or multiple
    overlapping waitlists at once.
 4. Does `BookingEndpoint`'s direct-HTTP cancel path (bypassing `BookingApplicationService` today) also need
    to trigger the penalty-hold logic, or is penalty logic scoped to the agent/Telegram path only?
 5. Who configures `PricingPolicy` per facility, and through what interface — is this an admin-only Telegram
    command, or does it require a non-conversational admin surface?
+6. **New, raised by the Phase 1 capture-timing decision above:** since a normal booking (Phase 1) now already
+   holds an uncaptured `PaymentEntity` for the full slot price until slot time, does Phase 2's late-cancellation
+   penalty need its *own* second `PaymentEntity`/hold at all — or can it just reuse the original booker's
+   already-open Phase 1 hold (void it if the slot resells before the cutoff Timer, otherwise let it capture
+   exactly as it would have if never cancelled)? Creating a second, separate hold on top of an already-open one
+   for the same slot would double-authorize the same card. Worth resolving before implementing §2 — it may
+   simplify Phase 2 down to "conditionally void or don't void the Phase 1 hold," with no new payment primitive.
 
 ## Recommendation Summary
 
