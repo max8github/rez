@@ -14,15 +14,16 @@ No single blocker currently tracked here.
 
 ## Backlog
 
-### Payments, late-cancellation refunds, waiting lists
+### Payments, rescue refund, waiting list
 
 Design proposed, not started. See
 [payments-cancellation-waitlist-design.md](payments-cancellation-waitlist-design.md) for the full target
-design: a `PaymentEntity` + `PricingPolicy` payment core (Stripe, facility/Rez split), a resale-refund
-mechanic for late cancellations (authorize-then-capture hold, voided if the slot resells before the
-original start time), and a priority waiting list (soft hold + timer on `ResourceEntity`, FIFO queue per
-`(resourceId, dateTime)`, Telegram notify-and-confirm). Several open decisions block Phase 1 (Stripe Connect
-routing) — see the design doc's Open Questions section.
+design: a `PaymentEntity` + `PricingPolicy` payment core (Stripe destination charges, facility/Rez split)
+anchored to a per-reservation commitment cutoff rather than booking time, so one payment hold safely serves
+both ordinary capture and the rescue refund for late cancellations (voided if a rescue booker takes the slot
+before it resolves); and a waiting list (`WaitlistEntity` FIFO queue + active-offer exclusivity check in
+`CourtBookingWorkflow`, no changes to `ResourceEntity`). Open questions remain around commitment-window
+validation limits and waitlist confirmation timing — see the design doc's Open Questions section.
 
 ### Make MatrixEndpoint fully async
 
