@@ -143,21 +143,28 @@ New components:
   `ReservationEntity` events. This is the lookup the rescue-refund behavior (§2) needs: "is there still an
   open hold on exactly this slot?"
 - **`PlayerPaymentProfile`** — a new, deliberately minimal component mapping a player's canonical `identity`
-  `userId` to a Stripe `customerId` and default `paymentMethodId`. Rez resolves that `userId` via
-  `identity.resolveOrCreate(TELEGRAM, senderExternalId, claims)` on a player's first message — see
-  `hit-backend/docs/cross-product-identity.md` for the full shared-identity design. Its own flagged
-  prerequisite applies here too: `TelegramEndpoint` currently captures `senderExternalId` but drops it,
-  persisting only the chat-scoped `recipientId` — that needs fixing before `resolveOrCreate` has anything real
-  to call with.
+  `userId` to a Stripe `customerId` and default `paymentMethodId`. Getting that `userId` requires Rez to have
+  real auth first, which it doesn't today. **Decided** (superseding the Telegram-id-keyed approach this
+  section described earlier): Rez gets its own Google/Apple sign-in, mirroring Hit's
+  `AuthEndpoint`/`AuthService` shape, and calls `identity.resolveOrCreate` the same symmetric way Hit does —
+  not keyed by `TelegramEndpoint`'s `senderExternalId`. Telegram drops out of the identity story entirely and
+  stays purely a messaging/notification channel; the bot can trigger the sign-in flow via a link, but the
+  sign-in itself happens through the same OAuth providers Hit uses. See
+  `hit-backend/docs/cross-product-identity.md` for the full shared-identity design.
+
+  One real prerequisite this depends on, tracked but not yet resolved: for the *same* Google/Apple account to
+  resolve to the *same* `userId` across Hit and Rez, both need to either share one OAuth client registration
+  per provider, or `identity` needs a verified-email fallback for when the provider's own id differs by
+  client. Not designed in detail yet — a decision to make before this ships, not before it's designed.
 
   Keying by `userId` from day one, rather than a Rez-local id with a cross-product link bolted on later, costs
-  nothing here: every product is pre-launch, so there's no existing Rez user base to migrate, and every player
-  goes through the same `identity` provisioning regardless of which product they arrive through first. This
-  does **not** mean Rez shares a Stripe customer with Hit from day one, though — Rez still mints its own Stripe
+  nothing here: every product is pre-launch, so there's no existing Rez user base to migrate. This does
+  **not** mean Rez shares a Stripe customer with Hit from day one, though — Rez still mints its own Stripe
   customer under that `userId` unless and until Hit and Rez share one Stripe account, a separate, open
   business-entity decision tracked in `hit-backend/docs/implementation-plan.md`. Keying by `userId` now just
-  means that once that decision resolves, `PlayerPaymentProfile` can pick up the already-linked Hit customer
-  with no migration — the key doesn't change, only which Stripe customer it resolves to.
+  means that once both decisions resolve (shared OAuth client, shared Stripe account), `PlayerPaymentProfile`
+  picks up the already-linked Hit customer with no migration — the key doesn't change, only which Stripe
+  customer it resolves to.
 - **`StripeWebhookEndpoint`** — mirrors `hit-backend`'s equivalent. Receives `setup_intent.succeeded` /
   `payment_method.attached` (populates `PlayerPaymentProfile` after card-on-file collection) and the
   `PaymentIntent` lifecycle events needed to reconcile `PaymentEntity`.
@@ -168,13 +175,16 @@ days or weeks after they last talked to the bot — bad UX, and mechanically imp
 Timer can't pop a card form onto someone's phone. So card collection and hold creation happen at different
 times, for different reasons:
 
-- **At booking time**: `CourtBookingWorkflow` checks `PlayerPaymentProfile` for the requester. A returning
-  player with a Stripe customer + saved payment method already on file sees nothing different in the
-  conversation at all. A first-time player gets a Stripe-hosted link (Checkout in setup mode, or a Payment
-  Link — there's no native card form to embed in a Telegram message) to enter their card once; Rez learns the
-  result via `StripeWebhookEndpoint` and populates `PlayerPaymentProfile`. This happens once per player, not
-  once per booking — same "ask once" behavior as Hit's own `stripeCustomerId`, set "at registration or first
-  booking" (`hit-backend/docs/reference/stripe-connect.md`).
+- **At booking time**: `CourtBookingWorkflow` checks `PlayerPaymentProfile` for the requester. A returning,
+  signed-in player with a Stripe customer + saved payment method already on file sees nothing different in
+  the conversation at all. A first-time player now has two things to do once, not one: sign in (Google/Apple,
+  per the identity decision above — and if they've already linked a Hit account with a saved card, this step
+  alone is enough, nothing further to enter) and, only if no payment link came back with that sign-in, a
+  Stripe-hosted link (Checkout in setup mode, or a Payment Link — there's no native card form to embed in a
+  Telegram message) to enter their card. Rez learns the card result via `StripeWebhookEndpoint` and populates
+  `PlayerPaymentProfile`. Both steps happen once per player, not once per booking — same "ask once" behavior
+  as Hit's own `stripeCustomerId`, set "at registration or first booking"
+  (`hit-backend/docs/reference/stripe-connect.md`).
 - **At the commitment cutoff**: the hold's `PaymentIntent` is created and confirmed **off-session**, using the
   payment method already in `PlayerPaymentProfile` — no player interaction, no message sent, purely a
   Timer-triggered backend step.
