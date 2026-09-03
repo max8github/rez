@@ -1,13 +1,14 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Understanding](index.html)
-- [Memory models](state-model.html)
+- State and execution
+- [State model](state-model.html)
 
 <!-- </nav> -->
 
-# Memory models
+# State model
 
-Akka provides an in-memory, durable store for stateful data. Stateful data can be scoped to a single agent, or made available system-wide. Stateful data is persisted in an embedded event store that tracks incremental state changes, which enables recovery of system state (resilience) to its last known modification. State is automatically sharded and rebalanced across Akka nodes running in a cluster to support elastic scaling to terabytes of memory. State can also be replicated across regions for failover and disaster recovery.
+Akka provides an in-memory, durable store for stateful data. Stateful data can be scoped to a single agent, or made available system-wide. Stateful data is persisted in an embedded event store that tracks incremental state changes, which enables recovery of system state (resilience) to its last known modification. State is automatically sharded and rebalanced across Akka nodes running in a cluster to support elastic scaling. State can also be replicated across regions for failover and disaster recovery.
 
 Memory in Akka is structured around [entities](../reference/glossary.html#entity). An entity holds a particular slice of application state and evolves it over time according to a defined [state model](../reference/glossary.html#state_model). These state models determine how state is stored, updated, and replicated. This approach provides consistency and durability across the system, even in the face of failure. [Agents](../sdk/agents.html), for example, manage their memory through entities, whether for short-lived context or persistent behavior.
 
@@ -135,7 +136,7 @@ In order to have multi-writer (or write anywhere) capabilities you must implemen
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Delegation with Effects](declarative-effects.html) [Multi-region operations](multi-region.html)
+[Deployment model](deployment-model.html) [Declarative effects](declarative-effects.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

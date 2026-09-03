@@ -1,11 +1,11 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
 - [Reference](../index.html)
-- [View reference](index.html)
+- [Views](index.html)
 
 <!-- </nav> -->
 
-# View reference
+# Views
 
 This reference guide provides comprehensive documentation for Akka Views and the View query language, which enables you to query and filter data from your Views using SQL-like syntax.
 
@@ -120,7 +120,7 @@ Views are implemented in Java by extending the `akka.javasdk.view.View` class an
 
 1. **Table updaters** - Define how entity events or state changes update the view
 2. **Query methods** - Define the queries that can be executed against the view
-Here’s a simple example:
+Here is a simple example:
 
 ```java
 @Component(id = "customers-view")
@@ -146,7 +146,7 @@ For detailed information, see [implementing Views in your application](../../sdk
 
 <!-- <footer> -->
 <!-- <nav> -->
-[API documentation](../api-docs.html) [View query syntax](syntax/index.html)
+[Policies](../specify/policies.html) [View query syntax](syntax/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -95,7 +95,7 @@ Another possible use is to add a `traceparent` header when calling your Akka end
 
 #### <a href="about:blank#_setting_sampling"></a> Setting sampling
 
-By default, Akka filters traces and exports them to your Akka Console. You’ll get 1% of the traces produced by your services. You can adjust this percentage according to your needs.
+By default, Akka filters traces and exports them to your Akka Console. You will get 1% of the traces produced by your services. You can adjust this percentage according to your needs.
 
 This filtering is known as [head sampling](https://opentelemetry.io/docs/concepts/sampling/#head-sampling). Sampling is configured at the top level of the observability descriptor using `traceSampling` and applies to all configured trace exporters. To configure it, set your observability descriptor as follows and [update the observability configuration](about:blank#_updating_the_observability_configuration):
 
@@ -113,6 +113,49 @@ spec:
       percentage: "2"
 ```
 With this configuration, 2% of the traces are sent while the 98% are filtered. More on how much sampling [here](https://opentelemetry.io/docs/concepts/sampling/#when-to-sample).
+
+### <a href="about:blank#_exporting_runtime_logs"></a> Exporting runtime logs
+
+Besides the logs your application produces, the Akka runtime emits its own logs, identified by the `origin: runtime` attribute on the log record. By default, runtime logs with severity `warn` or higher are exported to your configured log exporters, alongside your application logs. Logs produced by your application are always exported in full, regardless of this setting.
+
+To tune which runtime logs are exported, set `runtimeLogs` at the top level of the observability descriptor and [update the observability configuration](about:blank#_updating_the_observability_configuration):
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  exporters:
+    - kalixConsole: {}
+  logs:
+    - otlpHttp:
+        endpointBaseUrl: https://logs.example.com
+  runtimeLogs:
+    minSeverity: info
+```
+`minSeverity` accepts the following values:
+
+| Value | Behavior |
+| --- | --- |
+| `none` | No runtime logs are exported. |
+| `error` | Runtime logs with severity `error` or higher are exported. |
+| `warn` | Runtime logs with severity `warn` or higher are exported. This is the default. |
+| `info` | Runtime logs with severity `info` or higher are exported. |
+| `debug` | Runtime logs with severity `debug` or higher are exported. |
+Runtime log records whose severity cannot be determined, for example a raw stack trace emitted during service startup, are always exported unless `minSeverity` is set to `none`.
+
+Removing `runtimeLogs` from the descriptor reverts the project to the default for the region it is deployed in.
+
+|  | Lowering the minimum severity increases the volume of log data sent to your exporter. If your logging backend bills by ingested volume, prefer `warn` or `error`. |
+The same setting can be changed without a descriptor, using the `config runtime-logs` command:
+
+```command
+akka project observability config runtime-logs --min-severity info
+```
+To remove the project-level setting and revert to the region default, run:
+
+```command
+akka project observability config runtime-logs --min-severity default
+```
 
 ## <a href="about:blank#_updating_the_configuration_using_commands"></a> Updating the configuration using commands
 
@@ -188,7 +231,7 @@ In addition, the OTLP exporter supports [TLS configuration](about:blank#_tls_con
 
 ### <a href="about:blank#_otlp_http"></a> OTLP HTTP
 
-OTLP HTTP is the HTTP-based protocol used by OpenTelemetry, as an alternative to the gRPC-based OTLP exporter. It is supported for logs, metrics, and traces. This exporter is useful in environments where HTTP is preferred over gRPC, such as when behind proxies or firewalls that don’t support HTTP/2.
+OTLP HTTP is the HTTP-based protocol used by OpenTelemetry, as an alternative to the gRPC-based OTLP exporter. It is supported for logs, metrics, and traces. This exporter is useful in environments where HTTP is preferred over gRPC, such as when behind proxies or firewalls that do not support HTTP/2.
 
 The primary piece of configuration it needs is a base URL endpoint. The exporter will automatically append the appropriate path for logs, metrics, or traces (e.g., `/v1/logs`, `/v1/metrics`, `/v1/traces`).
 
@@ -282,7 +325,7 @@ Google Cloud is supported for exporting logs, metrics, and traces. The primary p
 - If exporting logs to Google Cloud, it must have the `roles/logging.logWriter` role.
 To create such a service account and key using the `gcloud` command, assuming you are logged in and have a Google project configured:
 
-1. Create a service account. In this example, we’ll call it `akka-exporter`.
+1. Create a service account. In this example, we will call it `akka-exporter`.
 
 ```shellscript
 gcloud iam service-accounts create akka-exporter
@@ -297,13 +340,13 @@ gcloud projects add-iam-policy-binding <gcp-project-id> \
     --member "serviceAccount:akka-exporter@<gcp-project-id>.iam.gserviceaccount.com" \
     --role "roles/logging.logWriter"
 ```
-3. Generate a key file for your service account, we’ll place it into a file called `key.json`.
+3. Generate a key file for your service account, we will place it into a file called `key.json`.
 
 ```shellscript
 gcloud iam service-accounts keys create key.json \
     --iam-account akka-exporter@<gcp-project-id>.iam.gserviceaccount.com
 ```
-4. Place the key file in an Akka secret, we’ll call the secret `gcp-credentials`. The key for key file must be `key.json`.
+4. Place the key file in an Akka secret, we will call the secret `gcp-credentials`. The key for key file must be `key.json`.
 
 ```shellscript
 akka secret create generic gcp-credentials \
@@ -433,6 +476,98 @@ akka project observability add default otlp \
   --header-secret X-Token=my-token/token
 ```
 
+## <a href="about:blank#_exporting_heap_dumps"></a> Exporting heap dumps
+
+Akka can export JVM heap dumps generated by your services to a configurable storage destination, allowing you to retrieve and analyze them when diagnosing memory issues.
+
+|  | Please contact Akka support to ensure this feature is enabled in your region. |
+Heap dump configuration is set at the top level of the observability descriptor under `heapDump`, alongside signal exporter configuration. Exactly one storage backend — `aws` or `platformManaged` — must be configured.
+
+### <a href="about:blank#_aws_s3"></a> AWS S3
+
+To export heap dumps to an AWS S3 bucket, configure the `heapDump.aws` section. You can authenticate using either static credentials or workload identity.
+
+#### <a href="about:blank#_using_static_credentials"></a> Using static credentials
+
+Store the AWS access key ID and secret access key in an Akka secret, then reference them from the observability descriptor:
+
+```shellscript
+akka secret create generic aws-heap-dump-credentials \
+  --literal awsAccessKeyId=AKIAIOSFODNN7EXAMPLE \
+  --literal awsSecretAccessKey=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+```
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  heapDump:
+    aws:
+      bucket: my-heap-dumps
+      region: us-east-1
+      pathPrefix: my-project/
+      credentialsSecretRef:
+        awsAccessKeyId:
+          name: aws-heap-dump-credentials
+          key: awsAccessKeyId
+        awsSecretAccessKey:
+          name: aws-heap-dump-credentials
+          key: awsSecretAccessKey
+```
+
+#### <a href="about:blank#_using_workload_identity"></a> Using workload identity
+
+If your Akka project runs on AWS and has workload identity configured, you can use that instead of static credentials:
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  heapDump:
+    aws:
+      bucket: my-heap-dumps
+      region: us-east-1
+      workloadIdentity: {}
+```
+To override the IAM role ARN used for the upload, set `roleArnOverride`:
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  heapDump:
+    aws:
+      bucket: my-heap-dumps
+      region: us-east-1
+      workloadIdentity:
+        roleArnOverride: arn:aws:iam::123456789012:role/my-heap-dump-role
+```
+
+### <a href="about:blank#_platform_managed_storage"></a> Platform-managed storage
+
+On supported regions, Akka can store heap dumps using platform-managed storage, requiring no cloud credentials:
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  heapDump:
+    platformManaged: {}
+```
+An optional path prefix can be added to organise stored dumps:
+
+```yaml
+resource: Observability
+resourceVersion: v2
+spec:
+  heapDump:
+    platformManaged:
+      pathPrefix: my-project/
+```
+
+|  | Platform-managed heap dump storage is not available in all regions. |
+A full reference of configuration options is available in [the reference documentation](../../reference/descriptors/observability-descriptor.html#_heapdump).
+
 ## <a href="about:blank#_debugging_observability_configuration"></a> Debugging observability configuration
 
 After updating your observability configuration, you will need to restart a service to use it. This can be done by running the `akka service restart` command. Once the service has been restarted, if there are any issues, you can check the observability agent logs, by running the following command:
@@ -450,7 +585,7 @@ This will show the observability agent logs for all instances of the service. An
 
 <!-- <footer> -->
 <!-- <nav> -->
-[View traces](traces.html) [Integrating with CI/CD tools](../integrating-cicd/index.html)
+[View traces](traces.html) [Alerting baselines](alerting-baselines.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -31,7 +31,7 @@ See [System Configuration](system-config.html) for details.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[CI/CD with GitHub Actions](../integrating-cicd/github-actions.html) [Install the Akka CLI](installation.html)
+[Platform API](../platform-api.html) [Install the Akka CLI](installation.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../../index.html)
 - [Reference](../../../index.html)
-- [View reference](../../index.html)
+- [Views](../../index.html)
 - [View query syntax](../index.html)
 - [Operators](index.html)
 - [= ANY](any.html)
@@ -95,7 +95,7 @@ Both variations check for membership in the array.
 - Arrays can be passed as parameters from Java code using collections or arrays
 - Empty arrays are handled gracefully - nothing will match if the array is empty
 - The operation is equivalent to checking if the array contains the specified value
-- The order of elements in the array doesn’t affect the results
+- The order of elements in the array does not affect the results
 
 ## <a href="about:blank#_related_features"></a> Related Features
 

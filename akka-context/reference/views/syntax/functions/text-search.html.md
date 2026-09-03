@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../../index.html)
 - [Reference](../../../index.html)
-- [View reference](../../index.html)
+- [Views](../../index.html)
 - [View query syntax](../index.html)
 - [Functions](index.html)
 - [text_search()](text-search.html)

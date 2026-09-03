@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [Multi-agent planner](index.html)
+- [Getting Started](../index.html)
+- [Multi-agent tutorial](index.html)
 - [Activity agent](activity.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -24,14 +24,14 @@ In this part of the guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
 
 ## <a href="about:blank#_create_the_empty_project"></a> Create the empty project
 
-1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you haven’t installed the CLI yet.
+1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you have not installed the CLI yet.
 
 ```command
 akka code init --name helloworld-agent --repo akka-samples/empty.git
@@ -57,9 +57,13 @@ ActivityAgent.java
 ```java
 import akka.javasdk.agent.Agent;
 import akka.javasdk.annotations.Component;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(id = "activity-agent") // (1)
 public class ActivityAgent extends Agent { // (2)
+
+  private static final Logger logger = LoggerFactory.getLogger(ActivityAgent.class);
 
   private static final String SYSTEM_MESSAGE =
     """
@@ -69,6 +73,7 @@ public class ActivityAgent extends Agent { // (2)
     """.stripIndent();
 
   public Effect<String> query(String message) { // (3)
+    logger.info("Invoked with: {}", message);
     return effects()
       .systemMessage(SYSTEM_MESSAGE) // (4)
       .userMessage(message) // (5)
@@ -177,7 +182,7 @@ the Prado and Reina Sofia art museums, savor local cuisine at Mercado de San Mig
 guided walking tour through lively neighborhoods such as Malasaña and Chueca.
 ```
 If you decide to use the local console’s request builder instead of `curl`, you might see something similar to the
-following screenshot (if you’re following along step-by-step, your output will show fewer steps):
+following screenshot (if you are following along step-by-step, your output will show fewer steps):
 
 ![Request builder output in the local console](../_images/multiagent_request_builder.png)
 
@@ -191,7 +196,7 @@ following screenshot (if you’re following along step-by-step, your output will
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Multi-agent planner](index.html) [User preferences](preferences.html)
+[Multi-agent tutorial](index.html) [User preferences](preferences.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Setup and dependency injection](setup-and-dependency-injection.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 ## <a href="about:blank#_service_lifecycle"></a> Service lifecycle
 
-It is possible to define logic that runs on service instance start up.
+It is possible to define logic that runs on service instance start up and shut down.
 
 This is done by creating a class implementing `akka.javasdk.ServiceSetup` and annotating it with `akka.javasdk.annotations.Setup`.
 Only one such class may exist in the same service.
@@ -33,13 +33,49 @@ public class Bootstrap implements ServiceSetup {
     var result = componentClient.forEventSourcedEntity("123").method(Counter::get).invoke();
     logger.info("Initial value for entity 123 is [{}]", result);
   }
+
+  @Override
+  public void onShutdown() { // (4)
+    logger.info("Service shutting down");
+  }
 ```
 
 | **1** | One annotated implementation of `ServiceSetup` |
 | **2** | A few different objects can be dependency injected, see below |
 | **3** | `onStartup` is invoked at service start, but before the service is completely started up |
+| **4** | `onShutdown` is invoked when the service instance is shutting down, after it has stopped handling requests |
 It is important to remember that an Akka service consists of one to many distributed instances that can be restarted
-individually and independently, for example during a rolling upgrade. Each such instance starting up will invoke `onStartup` when starting up, even if other instances run it before.
+individually and independently, for example during a rolling upgrade. Each such instance starting up will invoke `onStartup` when starting up, even if other instances run it before. The same applies to `onShutdown`: it runs on each
+instance as it shuts down, not once for the service as a whole.
+
+`onShutdown` runs after the instance has stopped accepting requests and any in-flight requests have completed,
+which makes it a good place to release resources allocated in the `ServiceSetup` constructor or in `onStartup` —
+for example, closing a connection pool. Exceptions thrown from `onShutdown` are logged but do not block subsequent
+shutdown steps.
+
+## <a href="about:blank#_handling_uncaught_exceptions"></a> Handling uncaught exceptions
+
+When user code in a component or endpoint throws an exception that is not turned into a `CommandException`, a deliberate HTTP error response, or for gRPC endpoints, a `akka.grpc.GrpcServiceException`, the runtime catches it, logs it with a correlation id, and returns a generic 500 (or `INTERNAL` gRPC status) response carrying that correlation id to the client.
+
+A service can be notified about each such exception by making the `ServiceSetup` class also implement `akka.javasdk.UnhandledExceptionHandler`. The typical use is forwarding the exception to an external error tracker such as Sentry.
+
+```java
+@Setup
+public class Bootstrap implements ServiceSetup, UnhandledExceptionHandler {
+  @Override
+  public void onUnhandledException(UnhandledExceptionContext context) {
+    Sentry.captureException(context.throwable());
+  }
+}
+```
+The `UnhandledExceptionContext` passed to the callback exposes:
+
+- `throwable()` — the original exception with full stack trace and causes.
+- `correlationId()` — the id surfaced to the client and present in the runtime log MDC at the time the exception was caught, useful for joining the error tracker event with runtime logs.
+- `subjectId()` — the entity, workflow or agent id when the exception originated in a stateful component; empty for endpoints and other stateless components.
+- `componentId()` — the value of `@ComponentId` for components that declare one, or the simple class name for endpoints.
+- `componentClassName()` — the fully-qualified class name of the user component the exception originated in.
+The callback is invoked once per caught exception on the service instance that handled the failing request, so in a service running multiple distributed instances each instance reports its own failures.
 
 ## <a href="about:blank#_disabling_components"></a> Disabling components
 
@@ -83,11 +119,13 @@ The following types can be injected in all component types:
 | `akka.javasdk.agent.AgentRegistry` | Contains information about all agents, see [Agents](agents.html) |
 | `com.typesafe.config.Config` | Access the user defined configuration picked up from `application.conf` |
 | `akka.javasdk.Sanitizer` | Allows for applying sanitization, see [Data sanitization](sanitization.html) |
+| `io.opentelemetry.api.metrics.Meter` | Allows creating custom Open Telemetry metrics, see [Metrics](metric.html) |
 The following types can be injected in Service Setup, HTTP Endpoints, gRPC Endpoints, Agents, Consumers, Timed Actions, and Workflows:
 
 | Injectable class | Description |
 | --- | --- |
 | `akka.javasdk.client.ComponentClient` | For interaction between components, see [Component and service calls](component-and-service-calls.html) |
+| `akka.javasdk.objectstorage.ObjectStorageProvider` | For storing and retrieving binary objects in named buckets, see [Object storage](integrations/object-storage.html) |
 | `akka.javasdk.http.HttpClientProvider` | For creating clients to make calls between Akka services and also to other HTTP servers, see [Component and service calls](component-and-service-calls.html) |
 | `akka.javasdk.grpc.GrpcClientProvider` | For creating clients to make calls between Akka services and also to other gRPC servers, see [Component and service calls](component-and-service-calls.html) |
 | `akka.javasdk.timer.TimerScheduler` | For scheduling timed actions, see [Timers](timed-actions.html) |
@@ -261,7 +299,7 @@ akka.javasdk {
 
 To access the configuration in application code you can use a constructor parameter `com.typesafe.config.Config` in all components and the `ServiceSetup` class. An example of this is shown in [Disabling components](about:blank#_disabling_components).
 
-|  | Don’t use `ConfigFactory.load()` since that will not load the `application.conf` as you intended. Use dependency injection of `Config` instead. |
+|  | Do not use `ConfigFactory.load()` since that will not load the `application.conf` as you intended. Use dependency injection of `Config` instead. |
 
 ### <a href="about:blank#_test_configuration"></a> Test configuration
 
@@ -294,13 +332,13 @@ public class ConfigIntegrationTest extends TestKitSupport {
 
 ### <a href="about:blank#_reference_configuration"></a> Reference configuration
 
-The complete default configuration for the Akka SDK is presented on [Service reference configuration (HOCON)](../reference/config/reference.html).
+The complete default configuration for the Akka SDK is presented on [Service configuration](../reference/config/reference.html).
 
 In addition, there is also [AI model provider configuration](model-provider-details.html).
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Setup and configuration](setup-and-configuration/index.html) [Serialization](serialization.html)
+[Configuration](setup-and-configuration/index.html) [Serialization](serialization.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -21,6 +21,7 @@ Follow the detailed steps to configure the desired message broker service for us
 - [Confluent Cloud](broker-confluent.html)
 - [Amazon MSK](broker-aws-msk.html)
 - [Aiven for Apache Kafka](broker-aiven.html)
+- [Self-hosted Kafka or another provider](broker-kafka.html)
 - [Azure Event Hubs](broker-azure-eventhubs.html)
 We continuously evaluate additional integrations for potential built-in support in Akka. If you have specific requirements, please contact us at [support@akka.io](mailto:support@akka.io).
 
@@ -29,10 +30,6 @@ For running Akka services that integrate with a message broker locally, see [run
 ## <a href="about:blank#_see_also"></a> See also
 
 - <a href="../../reference/cli/akka-cli/akka_projects_config.html#_see_also">`akka projects config` commands</a>
-- [Google Cloud Pub/Sub](https://cloud.google.com/pubsub/docs/overview)
-- [Confluent Cloud](https://www.confluent.io/confluent-cloud)
-- [Amazon MSK](https://aws.amazon.com/msk/)
-- [Aiven for Apache Kafka](https://aiven.io/kafka)
 
 <!-- <footer> -->
 <!-- <nav> -->

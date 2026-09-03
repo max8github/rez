@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [Multi-agent planner](index.html)
+- [Getting Started](../index.html)
+- [Multi-agent tutorial](index.html)
 - [Weather agent](weather.html)
 
 <!-- </nav> -->
@@ -10,11 +10,11 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
-Activities may depend on the weather, so let’s add an agent that retrieves a weather forecast.
+Activities may depend on the weather, so add an agent that retrieves a weather forecast.
 
 In this part of the guide you will:
 
@@ -23,7 +23,7 @@ In this part of the guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
@@ -43,9 +43,13 @@ import akka.javasdk.http.HttpClientProvider;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(id = "weather-agent")
 public class WeatherAgent extends Agent {
+
+  private static final Logger logger = LoggerFactory.getLogger(WeatherAgent.class);
 
   private static final String SYSTEM_MESSAGE = // (1)
     """
@@ -65,6 +69,7 @@ public class WeatherAgent extends Agent {
   }
 
   public Effect<String> query(String message) {
+    logger.info("Invoked with: {}", message);
     return effects().systemMessage(SYSTEM_MESSAGE).userMessage(message).thenReply();
   }
 
@@ -98,7 +103,7 @@ public class WeatherAgent extends Agent {
 | **3** | Provide the weather forecast as a function tool. |
 Methods annotated with `@FunctionTool` in the agent will automatically be made available to the AI model, which will extract the location from the original query and request to execute the tool to retrieve the forecast.
 
-If you don’t want to use the real weather service, you can change the implementation to return a hard-coded weather, such as `"It’s always sunny"`.
+If you do not want to use the real weather service, you can change the implementation to return a hard-coded weather, such as `"It is always sunny"`.
 
 We could make a request to the `WeatherAgent` from the endpoint before calling the `ActivityAgent` but a better approach is to introduce a workflow that orchestrates the calls between the agents.
 
@@ -134,7 +139,7 @@ public class WeatherAgentIntegrationTest extends TestKitSupport { // (1)
 
 | **1** | Extend `TestKitSupport`. |
 | **2** | Use the component client to call the agent. |
-| **3** | Not much we can assert, since the weather is different every day, but at least we can see the result and that it doesn’t fail. |
+| **3** | Not much we can assert, since the weather is different every day, but at least we can see the result and that it does not fail. |
 You can sign up for a free API for the weather service at [https://www.weatherapi.com](https://www.weatherapi.com/) and then expose it as an environment variable:
 
 Linux or macOS

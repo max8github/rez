@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [Multi-agent planner](index.html)
+- [Getting Started](../index.html)
+- [Multi-agent tutorial](index.html)
 - [User preferences](preferences.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -24,7 +24,7 @@ In this part of the guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
@@ -116,11 +116,15 @@ import akka.javasdk.agent.Agent;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.client.ComponentClient;
 import java.util.stream.Collectors;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 @Component(id = "activity-agent")
 public class ActivityAgent extends Agent {
 
   public record Request(String userId, String message) {}
+
+  private static final Logger logger = LoggerFactory.getLogger(ActivityAgent.class);
 
   private static final String SYSTEM_MESSAGE =
     """
@@ -136,6 +140,7 @@ public class ActivityAgent extends Agent {
   }
 
   public Effect<String> query(Request request) { // (2)
+    logger.info("Invoked for user [{}] with: {}", request.userId(), request.message());
     var allPreferences = componentClient
       .forEventSourcedEntity(request.userId())
       .method(PreferencesEntity::getPreferences)
@@ -213,7 +218,7 @@ import akka.javasdk.http.HttpResponses;
 
 ## <a href="about:blank#_running_the_service"></a> Running the service
 
-Stop the service with `ctrl-c` if it’s still running.
+Stop the service with `ctrl-c` if it is still running.
 
 Start your service locally:
 

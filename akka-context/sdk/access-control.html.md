@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Access Control Lists (ACLs)](access-control.html)
 
 <!-- </nav> -->
@@ -12,8 +12,6 @@ The simplest access control that the Akka offers is through Access Control Lists
 specify lists of what can access your services, at multiple granularity. For example, you can configure a method that
 initiates a payment on a payment service to only accept requests from the shopping cart service. You can also control
 whether services or methods can be invoked from the Internet.
-
-For a conceptual introduction, see [Access control lists](../concepts/acls.html) in the **Concepts** section.
 
 ## <a href="about:blank#_principals"></a> Principals
 
@@ -34,7 +32,7 @@ least one principal matcher in the allow list, and no principals associated with
 matchers in the deny list.
 
 An ACL can be configured at the class level, or at the method level. If an ACL is configured at the class level it
-applies to all methods in the class. Unless it’s overridden by an ACL added at method level.
+applies to all methods in the class. Unless it is overridden by an ACL added at method level.
 
 Here is an example of an ACL added at the class level on an HTTP Endpoint:
 
@@ -154,7 +152,7 @@ public class UserEndpoint extends AbstractHttpEndpoint { // (1)
 You can access the current Principals through method `RequestContext.getPrincipals()`
 
 If the request came from another service, the `Principals.getLocalService()` method will return a non-empty `Optional` containing the name of the service that made the request. Akka guarantees that this field will only be
-present from an authenticated principal, it can’t be spoofed.
+present from an authenticated principal, it cannot be spoofed.
 
 Further, you can use `Principals.isInternet`, `Principals.isSelf` or `Principals.isBackoffice` to verify if the request
 was made from the Internet, from the current service or from the Backoffice API respectively. Backoffice requests are
@@ -198,7 +196,7 @@ Note that the setting above does not apply to integration tests. See below for h
 If running multiple services in local development, you may want to run with ACLs enabled to verify that they work for
 cross-service communication.
 
-Let’s consider the existence of two distinct services called `shopping-cart` and `payment`.
+Consider two distinct services called `shopping-cart` and `payment`.
 
 The payment service only accepts request from the shopping cart service and has an ACL defined as
 such:
@@ -234,7 +232,7 @@ coming from the shopping cart service, you can add the header `impersonate-servi
 curl -i localhost:9000/payments/{cart-id}/check-transaction \
   --header "impersonate-service: shopping-cart"
 ```
-Note that in local development, the services don’t actually authenticate with each other, they only pass their identity in a header. It is assumed in local development that a client can be trusted to set that header correctly.
+Note that in local development, the services do not actually authenticate with each other, they only pass their identity in a header. It is assumed in local development that a client can be trusted to set that header correctly.
 
 ### <a href="about:blank#_running_unit_tests"></a> Running unit tests
 

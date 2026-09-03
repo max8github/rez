@@ -9,7 +9,7 @@
 
 # Create a new project
 
-When creating a new project in Akka, you’ll need to provide a **name**, an optional **description**, and select a **region**. The region determines both the cloud provider and geographical location where your project will be hosted.
+When creating a new project in Akka, you will need to provide a **name**, an optional **description**, and select a **region**. The region determines both the cloud provider and geographical location where your project will be hosted.
 
 ## <a href="about:blank#_project_names"></a> Project names
 
@@ -31,7 +31,7 @@ Regions define the cloud provider and geographical location where your project w
 To create a new project, use either the Akka CLI or the [Akka Console](https://console.akka.io/):
 
 CLI
-1. If you haven’t done so yet, [install the Akka CLI](../cli/installation.html) and log into your account:
+1. If you have not done so yet, [install the Akka CLI](../cli/installation.html) and log into your account:
 
 ```command
 akka auth login

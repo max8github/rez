@@ -1,35 +1,31 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Developer best practices](dev-best-practices.html)
+- [Design considerations](dev-best-practices.html)
 
 <!-- </nav> -->
 
-# Developer best practices
+# Design considerations
 
 ## <a href="about:blank#_reactive_principles"></a> Reactive principles
 
 Akka is ideally suited for the creation of *Microservices*. Microservices generally follow the Unix philosophy of "Do one thing and do it well." Akka allows developers to build systems that follow [the Reactive Principles](https://principles.reactive.foundation/) without having to become distributed data or distributed computing experts. As a best practice, following the Reactive Principles in your design makes it easier to build distributed systems. [Akkademy](https://akkademy.akka.io/learn/public/catalog/view/3) offers free courses on Reactive Architecture.
 
-## <a href="about:blank#_domain_driven_design"></a> Domain Driven Design
+## <a href="about:blank#_domain_driven_design"></a> Domain-driven design
 
-Domain-driven design (DDD) is the concept that the structure and language of software code (class names, class methods, class variables) should match the business domain. For example, if a software processes loan applications, it might have classes such as LoanApplication and Customer, and methods such as AcceptOffer and Withdraw. — [Wikipedia](https://en.wikipedia.org/wiki/Domain-driven_design) Akka makes it easy and fast to build services using the concepts of Domain Driven Design (DDD). While it’s not necessary to understand all the ins and outs of Domain Driven Design, you’ll find a few of the concepts that make building services even more straightforward below. See [Architecture](../concepts/architecture-model.html) for more information on the role of your domain model in Akka. Akkademy provides a free course on [Domain Driven Design](https://akkademy.akka.io/learn/courses/6/reactive-architecture2-domain-driven-design).
+Domain-driven design (DDD) is the concept that the structure and language of software code (class names, class methods, class variables) should match the business domain. For example, if a software processes loan applications, it might have classes such as LoanApplication and Customer, and methods such as AcceptOffer and Withdraw. — [Wikipedia](https://en.wikipedia.org/wiki/Domain-driven_design) Akka makes it easy and fast to build services using the concepts of Domain Driven Design (DDD). While it is not necessary to understand all the ins and outs of Domain Driven Design, you will find a few of the concepts that make building services even more straightforward below. See [Architecture model](../concepts/architecture-model.html) for more information on the role of your domain model in Akka. Akkademy provides a free course on [Domain Driven Design](https://akkademy.akka.io/learn/courses/6/reactive-architecture2-domain-driven-design).
 
 ### <a href="about:blank#bounded-context"></a> Bounded context
 
 [Bounded context](https://martinfowler.com/bliki/BoundedContext.html) is a concept that divides large domain models into smaller groups that are explicit about their interrelationships. Normally a microservice is a bounded context. You *may* choose to have multiple bounded contexts in a microservice.
 
-Each of these contexts will have autonomy to evolve the models it owns. Keeping each model within strict boundaries allows different modelling for entities that look similar but have slightly different meaning in each of the contexts. Each bounded context should have its own domain, application, and API layers as described in [Architecture](../concepts/architecture-model.html).
+Each of these contexts will have autonomy to evolve the models it owns. Keeping each model within strict boundaries allows different modelling for entities that look similar but have slightly different meaning in each of the contexts. Each bounded context should have its own domain, application, and API layers as described in [Architecture model](../concepts/architecture-model.html).
 
 ![Bounded Context](_images/bounded-context.svg)
 
 ### <a href="about:blank#_events_first"></a> Events first
 
-Defining your data structures first, and splitting them into bounded contexts, will also help you think about all the different interactions your data needs to have. These interactions, like `ItemAddedToShoppingCart` or `LightbulbTurnedOn` are the events that are persisted and processed in Akka. Defining your data structures first, makes it easier to think about which events are needed and where they fit into your design. These data structures and events will live in your domain model layer as described in [Architecture](../concepts/architecture-model.html).
-
-### <a href="about:blank#_message_migration"></a> Message migration
-
-Behind the scenes everything in Akka is ultimately message driven. Plan for the evolution of your messages. Commands and events use data structures that often must evolve over time. Fields get added, fields get removed, the meaning of fields may change. How do you handle this over time as your system grows and evolves? Akka will make this easier, but you are ultimately responsible for schema evolution.
+Defining your data structures first, and splitting them into bounded contexts, will also help you think about all the different interactions your data needs to have. These interactions, like `ItemAddedToShoppingCart` or `LightbulbTurnedOn` are the events that are persisted and processed in Akka. Defining your data structures first, makes it easier to think about which events are needed and where they fit into your design. These data structures and events will live in your domain model layer as described in [Architecture model](../concepts/architecture-model.html).
 
 ## <a href="about:blank#_right_sizing_your_services"></a> Right-sizing your services
 
@@ -37,7 +33,7 @@ Each Akka Service consists of one or more Components and is packaged and deploye
 
 ### <a href="about:blank#_how_big_to_make_your_services"></a> How big to make your services
 
-Deciding how many components and concepts to fit into a single service can be complex. Generally smaller is better hence the name microservices often being used. When you design a series of small services that don’t share code and can be deployed independently, you reap these benefits:
+Deciding how many components and concepts to fit into a single service can be complex. Generally smaller is better hence the name microservices often being used. When you design a series of small services that do not share code and can be deployed independently, you reap these benefits:
 
 - **Your development velocity is higher**. It is faster and less complex to write and debug them because they focus on a small set of operations, usually around a single business concern (be it with one or multiple types of <a href="../reference/glossary.html#entity">*Entities*</a>).
 - **Your operating velocity is higher**. Using smaller independent services simplifies operational concerns and provide scalability because they can be deployed, stopped and started independently of the rest of the system.
@@ -46,7 +42,7 @@ Deciding how many components and concepts to fit into a single service can be co
 - **Your development team is more productive**. A team can focus on features of a single service at a time, without worrying about what other services or teams are doing, or when they are releasing, allowing more parallel teams to focus on other services, allowing your development efforts to scale as needed.
 - **You gain flexibility for upgrades**. You can upgrade services in a "rolling" fashion, where new instances are started before older instances are removed, allowing new versions to be deployed with no downtime or interruption.
 - **You gain security**. Services serve as a security boundary both in your system overall and between teams.
-- **You get granular visibility into costs**. Services are all billed separately, so it’s easier to see and understand costs and billing on a per-service basis if you break your services up in some way that matches your organizational needs overall.
+- **You get granular visibility into costs**. Services are all billed separately, so it is easier to see and understand costs and billing on a per-service basis if you break your services up in some way that matches your organizational needs overall.
 
 ### <a href="about:blank#_payload_and_state_size"></a> Payload and state size
 
@@ -60,13 +56,13 @@ When designing your entity state and the messages (commands and events) that flo
 | Service-to-Service Eventing | 1 MB | Events larger than 1 MB cannot be replicated or consumed by other services. |
 | Timed Action Parameters | 1 KB | Strict limit for input parameters. Use an Entity ID reference for larger payloads. |
 
-#### <a href="about:blank#_the_1_mb_replication_ceiling"></a> The 1 MB Replication Ceiling
+#### <a href="about:blank#_the_1_mb_replication_ceiling"></a> The 1 MB replication ceiling
 
 While an entity can technically store a state or snapshot up to **10 MB**, any state change or event exceeding **1 MB** will fail to replicate across regions.
 
 |  | If an entity stores state or events larger than 1 MB, it becomes "isolated." It cannot be synchronized to other regions, nor can it be consumed by other services via eventing. |
 
-#### <a href="about:blank#_performance_recommendations"></a> Performance Recommendations
+#### <a href="about:blank#_performance_recommendations"></a> Performance recommendations
 
 - **Entity Latency & Throughput**: For optimal performance, aim to keep individual requests and responses **targeting** entities below **500 KB**.
 - **Large Assets**: If you need to associate large assets (like images or large documents) with an entity, store the asset in an external blob store and keep only the reference (URL/ID) in the entity state.
@@ -76,15 +72,15 @@ While an entity can technically store a state or snapshot up to **10 MB**, any s
 In the realm of distributed systems, Akka embraces an at-least-once delivery guarantee, for components like Consumer or Views (view updaters). Redeliveries occur in distributed systems due to their inherent uncertainty and failure characteristics. Network failures, process crashes, restarts, and temporary unavailability of nodes can all lead to situations where an acknowledgment for a delivered message is lost, even if the recipient successfully processed it. To ensure eventual consistency and guarantee delivery, the sender must retry messages when acknowledgments are missing.
 
 |  | When consuming from Akka components like Event Sourced Entity, Key Value Entity or another Akka service, the Akka runtime not only guarantees at-least-once delivery, but also the order of messages. Meaning that a series of duplicated messages might be redelivered but always in the same order as they were produced. |
-To ensure system integrity, consumers must be capable of handling duplicate messages gracefully. Effective deduplication is not just an optimization — it’s a core architectural requirement, turning the challenge of message redeliveries into a structured and predictable system behavior.
+To ensure system integrity, consumers must be capable of handling duplicate messages gracefully. Effective deduplication is not just an optimization — it is a core architectural requirement, turning the challenge of message redeliveries into a structured and predictable system behavior.
 
-There is no one-size-fits-all solution to this challenge. Usually it’s a mix of business requirements and possible technical tricks in a given context.
+There is no one-size-fits-all solution to this challenge. Usually it is a mix of business requirements and possible technical tricks in a given context.
 
 ### <a href="about:blank#_idempotent_updates"></a> Idempotent updates
 
 The most common approach to deduplication is to make the processing of messages idempotent. An idempotent operation is one that can be applied multiple times without changing the result beyond the initial application. This means that if the same message is processed multiple times, the result will be the same as if it were processed only once.
 
-To demonstrate this, let’s consider a simple example of a `CustomerStore` that persist customer data outside Akka ecosystem.
+To demonstrate this, consider a simple example of a `CustomerStore` that persist customer data outside Akka ecosystem.
 
 [CustomerStore.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/main/java/customer/application/CustomerStore.java)
 ```java
@@ -242,7 +238,7 @@ For cases when events enrichment is not possible or not desired, a sequence numb
 |  | A monotonically increased sequence number is available only when consuming updates from Akka components like Event Sourced Entity, Key Value Entity, or another Akka service. The sequence number is **not globally unique**, but unique per entity instance. |
 
 |  | Akka View component has a built-in support for sequence number tracking. [CounterByValueViewTest](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterByValueViewTest.java) demonstrates how it can be verified. |
-Let’s assume that we want to populate a view storage outside Akka ecosystem. To focus on the deduplication aspect, the following snippet shows the in-memory implementation of the `CounterStore`.
+Assume that we want to populate a view storage outside Akka ecosystem. To focus on the deduplication aspect, the following snippet shows the in-memory implementation of the `CounterStore`.
 
 [CounterStore.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/application/CounterStore.java)
 ```java
@@ -333,16 +329,16 @@ public class CounterStoreUpdater extends Consumer {
 | **3** | When sequence number is lower or equal to the last processed one, the event is ignored. |
 | **4** | Otherwise, the event is processed and the last processed sequence number is updated. |
 | **5** | Updates are not idempotent, but the deduplication mechanism ensures that the view is correct in case of processing duplicates. |
-Keep in mind that the `CounterEntry` corresponds to a single entity instance, that’s why we can use the sequence number as a deduplication token.
+Keep in mind that the `CounterEntry` corresponds to a single entity instance, that is why we can use the sequence number as a deduplication token.
 
-It’s important to test your deduplication mechanism. The [CounterStoreUpdaterTest](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterStoreUpdaterTest.java) demonstrates how it can be done with the `EventingTestKit`.
+It is important to test your deduplication mechanism. The [CounterStoreUpdaterTest](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterStoreUpdaterTest.java) demonstrates how it can be done with the `EventingTestKit`.
 
 **Benefits**
 
 - Tracking sequence numbers is very effective and the additional storage overhead is minimal.
 **Challenges**
 
-- Only works per entity instance, can’t be used globally.
+- Only works per entity instance, cannot be used globally.
 
 ### <a href="about:blank#_deterministic_hashing"></a> Deterministic hashing
 
@@ -373,7 +369,7 @@ The token might be also [precalculated](about:blank#events-enrichment) and store
 
 ## <a href="about:blank#request-deduplication"></a> Request deduplication
 
-A different aspect of deduplication is how to deal with, possibly duplicated, incoming commands that mutate Akka stateful components. Let’s examine this based on a `WalletEntity` example.
+A different aspect of deduplication is how to deal with, possibly duplicated, incoming commands that mutate Akka stateful components. The `WalletEntity` example below shows how to handle this.
 
 [WalletEntity.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow-compensation/src/main/java/com/example/wallet/application/WalletEntity.java)
 ```java
@@ -462,7 +458,7 @@ public record Wallet(String id, int balance, LinkedHashSet<String> commandIds) {
 | **2** | Before we process the command we check if it was already processed. |
 | **3** | To rebuild the state we need to store the command ID in the event. |
 | **4** | To keep the collection size constrained we can remove old command IDs. |
-This simple solution reveals a few important limitations of the deduplication that are common across many distributed technologies. It’s very expensive (and often not possible) to have a total deduplication of all incoming requests/commands. There will always be some constraints like:
+This simple solution reveals a few important limitations of the deduplication that are common across many distributed technologies. It is very expensive (and often not possible) to have a total deduplication of all incoming requests/commands. There will always be some constraints like:
 
 - the size of the collection, e.g. keep only last 1000 command IDs, like in the example above,
 - the time window, e.g. keep only command IDs from the last 24 hours,
@@ -473,16 +469,26 @@ Keep in mind that using collection types not supported by the Jackson serializat
 
 **Benefits**
 
-- Solution doesn’t require additional infrastructure to store already processed command IDs.
+- Solution does not require additional infrastructure to store already processed command IDs.
 **Challenges**
 
 - Memory and storage requirements for keeping command IDs.
 - Performance consideration for effective data structure for command IDs.
 - Custom serialization for non-standard collection types.
 
+## <a href="about:blank#saga-patterns"></a> Saga patterns
+
+Saga patterns manage long-running business processes in distributed systems by dividing them into a series of transactions. Each transaction either completes or triggers compensating actions if something goes wrong. There are two approaches, orchestrator-based and choreography-based; both keep the system consistent and differ only in how coordination is handled.
+
+| Orchestrator pattern | Choreography pattern |
+| --- | --- |
+| A central controller coordinates the process, managing the sequence of steps and the compensating actions on failure. Implement it with the [Workflow](workflows.html) component, which defines each step and manages retries, timeouts, and compensation. | Each service listens for events and acts independently, emitting an event that triggers the next service and handling its own rollback on failure. Implement it by combining [Entities](event-sourced-entities.html) and [Consumers](consuming-producing.html) that produce and react to events. |
+| Example: [Funds transfer workflow](https://github.com/akka-samples/transfer-workflow-orchestration) | Example: [User registration service](https://github.com/akka-samples/choreography-saga-quickstart) |
+Use **orchestration** when steps are tightly coordinated and you need central visibility, consistent retry and compensation, and clear state tracking. Use **choreography** when services are autonomous, you prefer low coupling and high scalability, and eventual consistency is acceptable. You can combine the two: an orchestrator manages the main flow while individual services use choreography for local side effects.
+
 <!-- <footer> -->
 <!-- <nav> -->
-[Data sanitization](sanitization.html) [Using an AI coding assistant](ai-coding-assistant.html)
+[Run a local cluster](local-cluster.html) [Operating](../operations/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

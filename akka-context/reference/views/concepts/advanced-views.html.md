@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Advanced views](advanced-views.html)
 
@@ -387,7 +387,7 @@ public record OrderItem(
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Pagination](pagination.html) [JSON Web Tokens (JWTs)](../../jwts.html)
+[Pagination](pagination.html) [Telemetry](../../telemetry/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

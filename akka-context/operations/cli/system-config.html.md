@@ -20,7 +20,11 @@ The following settings can be configured at the system level:
 | `code-templates-url` | URL of project templates used by `akka code init` | `https://doc.akka.io/_attachments/akka-code-init.json` |
 | `context-url` | URL of documentation context used by AI coding assistants | `https://doc.akka.io/java/_attachments/akka-docs-md.zip` |
 | `context-subdir` | Subdirectory name where context files are stored | `akka-context` |
+| `additional-constitution-url` | URL of an organization-specific constitution, downloaded and appended to the Akka SDK constitution at `akka specify init` | *(none)* |
+| `governance-policy-url` | URL of the organization’s Akka Specify governance policy (`policy.yaml` — the organization’s mandatory exit conditions). Downloaded at `/akka:setup` and enforced by default; a developer’s `--policy` flag cannot loosen it. See [Specify policies](../../reference/specify/policies.html). | *(none)* |
 To disable a feature, set its value to `none`. For example, setting `context-url` to `none` disables automatic context downloading.
+
+The last two settings are the organization’s governance controls for [Akka Specify](../../sdk/spec-driven-development.html): `additional-constitution-url` extends the AI’s guidance, and `governance-policy-url` distributes the mandatory exit-condition policy. Both use the same managed channel as the template and context settings above, so IT deploys them the same way.
 
 ## <a href="about:blank#_configuration_file_locations"></a> Configuration File Locations
 
@@ -58,6 +62,8 @@ Create a YAML file at the appropriate location for your platform:
 code-templates-url: https://internal.example.com/akka-templates.json
 context-url: https://internal.example.com/akka-context.zip
 context-subdir: akka-context
+additional-constitution-url: https://internal.example.com/akka-constitution.md
+governance-policy-url: https://internal.example.com/akka-specify-governance/policy.yaml
 ```
 To disable context downloading:
 
@@ -83,6 +89,10 @@ Create a configuration profile with the bundle identifier `io.akka.cli` containi
     <string>https://internal.example.com/akka-context.zip</string>
     <key>context-subdir</key>
     <string>akka-context</string>
+    <key>additional-constitution-url</key>
+    <string>https://internal.example.com/akka-constitution.md</string>
+    <key>governance-policy-url</key>
+    <string>https://internal.example.com/akka-specify-governance/policy.yaml</string>
 </dict>
 </plist>
 ```

@@ -3,11 +3,11 @@
 - [Developing](../index.html)
 - [Components](../components/index.html)
 - [Agents](../agents.html)
-- [Choosing the prompt](prompt.html)
+- [Prompts](prompt.html)
 
 <!-- </nav> -->
 
-# Choosing the prompt
+# Prompts
 
 The prompt consists of essential instructions to the model.
 
@@ -39,7 +39,7 @@ public class ActivityAgent extends Agent {
 | **1** | Define the system message as a constant, but it could also be a method that adapts the system message based on the request. |
 | **2** | Use the system message in the effect builder. |
 | **3** | Define the user message for the specific request, and use in the effect builder. |
-Keep in mind that some models have preferences in how you wrap or label user input within the system prompt and you’ll need to take that into account when defining your system message.
+Keep in mind that some models have preferences in how you wrap or label user input within the system prompt and you will need to take that into account when defining your system message.
 
 ## <a href="about:blank#_multimodal_user_message"></a> Multimodal user message
 
@@ -55,7 +55,7 @@ public Effect<String> ask() {
     .userMessage(
       UserMessage.from( // (1)
         TextMessageContent.from("What do you see?"), // (2)
-        ImageMessageContent.fromUrl("https://example/image.png") // (3)
+        ImageMessageContent.fromUri("https://example/image.png") // (3)
       )
     )
     .thenReply();
@@ -68,7 +68,53 @@ public Effect<String> ask() {
 
 |  | Not all AI models support vision or PDF capabilities. Ensure your configured model provider supports the input types before using multimodal messages. |
 
-### <a href="about:blank#_custom_content_loading"></a> Custom content loading
+### <a href="about:blank#object-storage-content"></a> Loading content from object storage
+
+When you store images or PDFs in [object storage](../integrations/object-storage.html), you can pass them to an agent without writing a custom `ContentLoader`.
+
+If one of the `*UrlMessageContent` message content classes are used and the URI in it has the format `object://[bucket-name]/[key]` the runtime will look for a configured bucket with that name and load the payload from `key` in it.
+
+Use the factory methods `ImageUrlMessageContent.create(bucket, key)` or `PdfUrlMessageContent.create(bucket, key)` to create a content reference backed by an `object://` URI and the bucket `ObjectStorage` is in scope.
+
+Upload an image and create the content reference in an endpoint:
+
+[ImageUploadEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/api/ImageUploadEndpoint.java)
+```java
+@Post("/describe")
+public String describeImage(HttpEntity.Strict body) {
+  var key = UUID.randomUUID().toString();
+  var imageBucket = objectStorageProvider.forBucket("images"); // (2)
+  imageBucket.put(key, body.getData(), body.getContentType()); // (1)
+  var imageContent = MessageContent.ImageUrlMessageContent.create(imageBucket, key); // (2)
+
+  return componentClient
+    .forAgent()
+    .inSession("image-" + key)
+    .method(ImageDescriptionAgent::describe)
+    .invoke(imageContent); // (3)
+}
+```
+
+| **1** | Store the uploaded bytes in the bucket, preserving the original content type. |
+| **2** | Create an `ImageUrlMessageContent` that references the stored object via `object://images/<key>` — no download happens here. |
+| **3** | Pass the content reference to the agent; the SDK fetches the image from the bucket before forwarding it to the model. |
+Receive and use the content reference in the agent:
+
+[ImageDescriptionAgent.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/ImageDescriptionAgent.java)
+```java
+public Effect<String> describe(MessageContent.ImageUrlMessageContent imageContent) {
+  var userMessage = UserMessage.from(
+    MessageContent.TextMessageContent.from("Please describe this image in detail."),
+    imageContent // (1)
+  );
+  return effects().systemMessage(SYSTEM_MESSAGE).userMessage(userMessage).thenReply();
+}
+```
+
+| **1** | The `ImageUrlMessageContent` passed by the caller is included directly in the `UserMessage`. |
+The same pattern works for PDFs using `PdfUrlMessageContent.create(bucket, key)`. See [Object storage](../integrations/object-storage.html) for how to configure buckets and how the backend behaves in dev mode and tests.
+
+### <a href="about:blank#custom-content-loading"></a> Custom content loading
 
 Some AI models are able to fetch images or PDF from publicly accessible URLs. When you need to load content from authenticated endpoints, private storage systems, or custom sources, you can implement a custom `ContentLoader`.
 
@@ -98,7 +144,7 @@ public class CustomContentLoadingAgent extends Agent {
       return switch (content) {
         case MessageContent.ImageUrlMessageContent image -> {
           StrictResponse<ByteString> response = httpClient // (2)
-            .GET(image.url().toString())
+            .GET(image.uri().toString())
             .addCredentials(HttpCredentials.createOAuth2BearerToken(userToken))
             .invoke();
 
@@ -137,8 +183,8 @@ public Effect<String> analyzeImage(AnalyzeRequest request) {
     .userMessage(
       UserMessage.from(
         TextMessageContent.from("Describe this image and summarize the PDF"),
-        ImageMessageContent.fromUrl(request.imageUri), // (2)
-        PdfMessageContent.fromUrl(request.pdfUri) // (3)
+        ImageMessageContent.fromUri(request.imageUri), // (2)
+        PdfMessageContent.fromUri(request.pdfUri) // (3)
       )
     )
     .thenReply();
@@ -208,7 +254,7 @@ public class ActivityPromptEndpoint {
 | **1** | Prompt key is used as entity id. |
 | **2** | `PromptTemplate::update` update the prompt value. |
 | **3** | `PromptTemplate::get` retrieves the current prompt value. |
-Keeping the prompt in the Event Sourced Entity lets you see the history of all changes. It’s also possible to subscribe to changes in the prompt template entity, so that you can build a [View](../views.html) or react to changes in the prompt.
+Keeping the prompt in the Event Sourced Entity lets you see the history of all changes. It is also possible to subscribe to changes in the prompt template entity, so that you can build a [View](../views.html) or react to changes in the prompt.
 
 The following table describes all of the methods available for the `PromptTemplate` entity:
 
@@ -223,11 +269,17 @@ Although the system message has a dedicated method to use the prompt template, y
 
 ## <a href="about:blank#_adding_more_context"></a> Adding more context
 
-[RAG](../use-cases/rag-and-knowledge.html) is a technique to provide additional, relevant content in the user message.
+[RAG](../../getting-started/ask-akka-agent/index.html) is a technique to provide additional, relevant content in the user message.
+
+## <a href="about:blank#_see_also"></a> See also
+
+- [Agents](../agents.html)
+- [Session memory](memory.html)
+- [Structured responses](structured.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Agents](../agents.html) [Calling agents](calling.html)
+[Agents](../agents.html) [Agent invocation](calling.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Data sanitization](sanitization.html)
 
 <!-- </nav> -->
@@ -111,13 +111,11 @@ In tests you can access the sanitizer directly from the `getSanitizer` method in
 
 ## <a href="about:blank#_see_also"></a> See also
 
-- [Governance & the runtime](../concepts/governance-and-the-runtime.html) — How the Akka runtime enforces governance policies including sanitization, guardrails, and audit logging.
 - [Guardrails](agents/guardrails.html) — Input and output guardrails that complement data sanitization for responsible AI.
-- [Building Trustworthy AI](https://akka.io/blog/trustworthy-ai-with-akka) — Background on the design principles behind Akka’s governance capabilities.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[AI model provider configuration](model-provider-details.html) [Developer best practices](dev-best-practices.html)
+[AI model provider configuration](model-provider-details.html) [Metrics](metric.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

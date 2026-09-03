@@ -44,11 +44,11 @@ Akka’s Entity components (Event Sourced Entities, Key Value Entities) are in-m
 
 - [Event Sourced Entities](../event-sourced-entities.html)
 - [Key Value Entities](../key-value-entities.html)
-- [RAG & knowledge use case](../use-cases/rag-and-knowledge.html)
+- [RAG chat tutorial](../../getting-started/ask-akka-agent/index.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[AI & models](ai-and-models.html) [Messaging & events](messaging-and-events.html)
+[AI & models](ai-and-models.html) [Object storage](object-storage.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

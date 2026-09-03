@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [RAG chat agent](index.html)
+- [Getting Started](../index.html)
+- [RAG chat tutorial](index.html)
 - [Knowledge indexing with a workflow](indexer.html)
 
 <!-- </nav> -->
@@ -10,23 +10,23 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
 The first step in building a RAG agent is *indexing*. Each time a user submits a query or prompt to the agent, the agent *retrieves* relevant documents by performing a semantic search on a vector database. Before we can perform that search, we need to populate the vector database with all the knowledge that we want to make available to the agent.
 
-Populating the vector database by creating embeddings is the *indexing* step. In this guide we’re going to use an Akka workflow to manage the indexing of a large number of documents as a long-running process.
+Populating the vector database by creating embeddings is the *indexing* step. In this guide we are going to use an Akka workflow to manage the indexing of a large number of documents as a long-running process.
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
-You can either create a [Mongo DB Atlas](https://www.mongodb.com/atlas) account or run MongoDB locally using Docker. We’ll be using the vector indexing capability of this database for the retrieval portion of the RAG flow. You can do all the indexing necessary for this sample with a free account if you choose so. Once you’ve created the account, make note of the secure connection string as you’ll need it later. If you choose to run a local instance, further instructions are provided in [Running the service](about:blank#_running_the_service).
+You can either create a [Mongo DB Atlas](https://www.mongodb.com/atlas) account or run MongoDB locally using Docker. We will be using the vector indexing capability of this database for the retrieval portion of the RAG flow. You can do all the indexing necessary for this sample with a free account if you choose so. Once you have created the account, make note of the secure connection string as you will need it later. If you choose to run a local instance, further instructions are provided in [Running the service](about:blank#_running_the_service).
 
-If you are following along with each step rather than using the completed solution, then you’ll need the code you wrote in the previous step.
+If you are following along with each step rather than using the completed solution, then you will need the code you wrote in the previous step.
 
 ## <a href="about:blank#_unfamiliar_with_concepts_like_vectors_embeddings_or_rag"></a> Unfamiliar with concepts like vectors, embeddings or RAG?
 
@@ -34,7 +34,7 @@ We recommend reviewing our [foundational explainer on AI concepts](../../concept
 
 ## <a href="about:blank#_updating_the_pom"></a> Updating the pom
 
-We’re going to use `langchain4j` for this sample, so add those dependencies to your Maven pom file. The full file should look like this when done:
+We are going to use `langchain4j` for this sample, so add those dependencies to your Maven pom file. The full file should look like this when done:
 
 [pom.xml](https://github.com/akka/akka-sdk/blob/main/samples/ask-akka-agent/pom.xml)
 ```xml
@@ -48,7 +48,7 @@ We’re going to use `langchain4j` for this sample, so add those dependencies to
     <parent>
         <groupId>io.akka</groupId>
         <artifactId>akka-javasdk-parent</artifactId>
-        <version>3.5.18</version>
+        <version>3.6.3</version>
     </parent>
 
     <groupId>akka.ask</groupId>
@@ -58,7 +58,7 @@ We’re going to use `langchain4j` for this sample, so add those dependencies to
 
     <name>ask-akka</name>
     <properties>
-        <langchain4j.version>1.11.0</langchain4j.version>
+        <langchain4j.version>1.15.0</langchain4j.version>
     </properties>
     <dependencies>
         <dependency>
@@ -69,7 +69,7 @@ We’re going to use `langchain4j` for this sample, so add those dependencies to
         <dependency>
             <groupId>dev.langchain4j</groupId>
             <artifactId>langchain4j-mongodb-atlas</artifactId>
-            <version>1.11.0-beta19</version>
+            <version>1.15.0-beta25</version>
         </dependency>
     </dependencies>
 </project>
@@ -77,9 +77,9 @@ We’re going to use `langchain4j` for this sample, so add those dependencies to
 
 ## <a href="about:blank#_adding_a_workflow"></a> Adding a workflow
 
-In your code, add a new empty Java file at `src/main/java/akka/ask/indexer/application/RagIndexingWorkflow.java`. The imports section is large enough that we won’t show it here (you can see it in the source code link).
+In your code, add a new empty Java file at `src/main/java/akka/ask/indexer/application/RagIndexingWorkflow.java`. The imports section is large enough that we will not show it here (you can see it in the source code link).
 
-Let’s start with the outer shell of the workflow class (this won’t compile yet as we haven’t included the workflow definition).
+Start with the outer shell of the workflow class (this will not compile yet as we have not included the workflow definition).
 
 [RagIndexingWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/ask-akka-agent/src/main/java/akka/ask/indexer/application/RagIndexingWorkflow.java)
 ```java
@@ -171,7 +171,7 @@ private StepEffect processingFileStep() { // (1)
 | **2** | Check if we have more work to do |
 | **3** | If there is more work, transition to `processing` again |
 | **4** | If there are no files pending, the workflow will *pause* |
-Because this workflow only ever transitions to and from the same state, it might help to think of it as a *recursive* workflow. An interesting aspect of this workflow is that it never ends. If it runs out of files to process, then it simply pauses itself. We haven’t coded it in this sample, but it would be fairly easy to add an endpoint that allowed a user to enqueue more files for the indexer and wake/unpause it.
+Because this workflow only ever transitions to and from the same state, it might help to think of it as a *recursive* workflow. An interesting aspect of this workflow is that it never ends. If it runs out of files to process, then it simply pauses itself. We have not coded it in this sample, but it would be fairly easy to add an endpoint that allowed a user to enqueue more files for the indexer and wake/unpause it.
 
 The actual work of doing the indexing is in the `indexFile` function:
 
@@ -221,7 +221,7 @@ private void addSegment(TextSegment seg) {
 ```
 
 | **1** | Send the embedding segment to the vector database |
-Everything that we’ve done so far has been completely asynchronous. When the workflow starts (shown below), it builds the list of pending documents by walking the documents directory and adding each markdown (`*.md`) file it finds. You can find all of these documents in the sample folder `src/main/resources/md-docs`.
+Everything that we have done so far has been completely asynchronous. When the workflow starts (shown below), it builds the list of pending documents by walking the documents directory and adding each markdown (`*.md`) file it finds. You can find all of these documents in the sample folder `src/main/resources/md-docs`.
 
 [RagIndexingWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/ask-akka-agent/src/main/java/akka/ask/indexer/application/RagIndexingWorkflow.java)
 ```java
@@ -256,7 +256,7 @@ public Effect<Done> start() {
 
 ## <a href="about:blank#_injecting_the_mongodb_client"></a> Injecting the MongoDB client
 
-If you’ve been following along, then you might be wondering how we inject an `embeddingStore` field into this workflow. This field is of type `MongoDbEmbeddingStore`, and to create an instance of that we need to inject a `MongoClient` to the workflow’s constructor:
+If you have been following along, then you might be wondering how we inject an `embeddingStore` field into this workflow. This field is of type `MongoDbEmbeddingStore`, and to create an instance of that we need to inject a `MongoClient` to the workflow’s constructor:
 
 [RagIndexingWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/ask-akka-agent/src/main/java/akka/ask/indexer/application/RagIndexingWorkflow.java)
 ```java
@@ -341,7 +341,7 @@ public class IndexerEndpoint {
 
 ## <a href="about:blank#_running_the_service"></a> Running the service
 
-As you’ll see in the next step in this guide, we’ll add the indexed knowledge to the agent.
+As you will see in the next step in this guide, we will add the indexed knowledge to the agent.
 
 For now, we suggest that you play around with indexing and the kind of results you see in MongoDB. Parameters like the size of chunks can sometimes impact the reliability or quality of the semantic search results. There are also several other types of document splitters. Explore those and see how it impacts the index.
 
@@ -363,7 +363,7 @@ The documentation files are located in `src/main/resources/md-docs/`. That said,
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Next we’ll [add the indexed knowledge to the agent](rag.html) to be able to run meaningful queries against the *Ask Akka* AI assistant!
+Next we will [add the indexed knowledge to the agent](rag.html) to be able to run meaningful queries against the *Ask Akka* AI assistant!
 
 <!-- <footer> -->
 <!-- <nav> -->

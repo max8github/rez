@@ -1,129 +1,157 @@
 <!-- <nav> -->
 - [Akka](../index.html)
-- [Getting started & Tutorials](index.html)
-- [Spec-first greeting agent](spec-your-first-agent.html)
+- [Getting Started](index.html)
+- [Spec-first hello agent](spec-your-first-agent.html)
 
 <!-- </nav> -->
 
-# Build your first agent with Spec-Driven Development
+# Spec-first hello agent
 
-## <a href="about:blank#_introduction"></a> Introduction
+This guide builds a "hello world" greeting agent with spec-driven development. The agent greets each user in a new language every turn and tracks the languages it has already used in the session.
 
-In this guide, you will:
+Spec-driven development runs in two modes, and you can build this agent either way. Choose your style below.
 
-- Verify your development environment
-- Specify the "hello world" agent, following the pattern described in the [Spec-Driven Development](../sdk/spec-driven-development.html) documentation.
-- Explore a basic AI Agent that acts as a creative greeter.
-- Explore a basic HTTP Endpoint to interact with the agent.
-- Run your service locally with the `/akka.build` agent command.
+## <a href="about:blank#_choose_your_style"></a> Choose your style
+
+- **[À la carte mode](../sdk/a-la-carte-mode.html)** (the default) — you run each specification command yourself, one at a time. Faster and lighter; you own the rigor. Follow [Build À la carte](about:blank#a-la-carte).
+- **[Enforced mode](../sdk/enforced-mode.html)** — you define "done" as machine-checkable exit conditions and the assistant drives the build until they are met. A cleaner, auditable result. Follow [Build in Enforced mode](about:blank#enforced).
+New installs start in **À la carte** mode. To use Enforced, switch first:
+
+```none
+/akka:mode enforced
+```
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- An AI coding assistant like Claude Code to build and implement the specification
-- [OpenAI API key](https://platform.openai.com/api-keys)
-Akka has support for many AI providers, and this sample code uses OpenAI. Sign up for free at [platform.openai.com/api-keys](https://platform.openai.com/api-keys). Note that the *application code* uses OpenAI, not necessarily your AI coding assistant.
+- Complete [Set up your AI harness](set-up-dev-env.html#_set_up_your_ai_harness) — install the Akka Specify Plugin and run `/akka:setup`.
+- An [OpenAI API key](https://platform.openai.com/api-keys). The application code calls OpenAI, independently of your AI coding assistant. Set `OPENAI_API_KEY` in your environment before starting your assistant; on Mac/Linux use `export` so child processes inherit it.
 
-|  | Before proceeding, you **MUST** set the `OPENAI_API_KEY` environment variable and make it available to child processes (on Mac/Linux, that means using `export`) before running `akka specify` or starting your coding assistant in the terminal. |
+## <a href="about:blank#enforced"></a> Build in Enforced mode
 
-### <a href="about:blank#_additional_prerequisites_for_those_without_an_ai_marketplace"></a> Additional prerequisites for those without an AI marketplace
-
-If you are not using the Akka plugin (which installs these automatically), you will need:
-
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
-- [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
-- <a href="https://curl.se/download.html">`curl` command-line tool</a>
-- Git
-- [Akka CLI](quick-install-cli.html)
-
-## <a href="about:blank#_install_the_claude_code_plugin"></a> Install the Claude Code Plugin
-
-If you’re using Claude Code, then you can take advantage of the plugin marketplace to install the [Akka specification plugin](https://github.com/akka/ai-marketplace), which will also automatically install and verify the Akka CLI for you.
-
-With Claude Code running within the directory you plan to use for your new project, issue the following commands:
+Enforced mode is opt-in; switch to it first (new installs default to À la carte):
 
 ```none
-/plugin marketplace add akka/ai-marketplace
-/plugin install akka@ai-marketplace
-/reload-plugins
-/akka:setup
+/akka:mode enforced
 ```
-You should now have everything you need to easily use Spec-Driven Development to build Akka applications, including the CLI. A typical output from Claude Code looks as follows (your output will vary slightly):
+In Enforced mode you drive the whole build through one re-entrant command, `/akka:specify`, instead of running `clarify`, `plan`, `tasks`, and `implement` individually — `/akka:specify` sequences those phases for you.
+
+### <a href="about:blank#_specify_the_feature"></a> Specify the feature
+
+| **/akka:specify** greeter agent - *greet each user in a new language every turn, remembering which languages were used per session* |
+The engine infers a **definition of done** from your intent and Akka’s own surfaces, and shows it grouped by tier — Product, Project, and Process. Some conditions are guaranteed by the platform, some are the machine’s to build, some need a receipt from an external system, and a few need a decision from you. Prohibitions — the conditions that must never become true — print in a separate `NEVER` section:
 
 ```none
-/akka:setup — Complete
+DEFINITION OF DONE — 17 conditions (17 applicable)    mode: enforced · policy: none (library defaults)
+🔒 locked   ✓ green   ✗ red   ○ open   — not applicable   [akka] platform-guaranteed
+──────────────────────────────────────────────────────────────────────────────
+PRODUCT
+  operability             ✓  AKKA-OBS-TRACES            [akka]  green — platform-guaranteed
+  reliability             ✓  AKKA-RES-RECOVERY          [akka]  green — platform-guaranteed
+  reliability             ✓  AKKA-SCALE-SHARDING        [akka]  green — platform-guaranteed
+  operability             ○  OPS-COMPILES                       needs your action — machine will build
+  functional              ○  FUNC-TESTS-PASS                    needs your action — machine will build
+  data-integrity          ○  DATA-ENTITY-INVARIANTS             blocked outside this project — needs a running service
+  security-compliance     ○  SEC-AUTHZ-ENFORCED                 blocked outside this project — needs a running service
+PROJECT
+  pipeline-scanning       ○  PROJ-SCAN-SAST-CLEAN               needs your action — external SAST run receipt required
+  code-test-health        ○  PROJ-TEST-COVERAGE                 needs your action — decide the coverage threshold
+  environment-dependencies ○ ENV-DEPS-RESOLVE                   needs your action — machine will build
+PROCESS
+  process-integrity       ○  PROC-SOURCE-GROUNDING              needs your action — APIs cited, none invented
+  process-integrity       🔒○ PROC-AUDITOR-COVERAGE              needs your action — every surface needs a check
+  process-integrity       🔒○ PROC-ADEQUACY-REVIEWED             needs your action — checks need an adequacy review
+  build-efficiency        ○  BUILD-WITHIN-BUDGET                needs your action — sign-off required
 
-    Java 25 (Temurin)      ✓ installed
-    Maven 3.9.11           ✓ installed
-    Akka CLI dev-3.0.53    ✓ installed
-    Akka download token    ⚠ could not verify (dot-directory restriction)
-    Docker                 ✓ available
-    MCP capabilities       ✓ all available (sdd, build, local, platform, git)
-    SDK version            ✓ 3.5.16 (latest)
-    Project scaffolded     ✓ com.example:akka-ssd-test-19
-    Akka context docs      ✓ 203 files
-    AI keys                ⏭ deferred (not needed for standard development)
-
-  One thing to verify: I couldn't check ~/.m2/settings.xml due to the dot-directory permission restriction. If you haven't previously run `akka code token`, you'll need to do so before Maven can download Akka SDK dependencies. You can run it with `! akka code token` — it will open a browser for a free Akka account login.
-
-  IMPORTANT: The MCP server configuration (.mcp.json) was created during setup. Claude Code only loads MCP servers at session start, so you need to restart. Use `claude --resume` to restart without losing your session context. After restarting, the Akka MCP tools will be available.
-
-  Ready to go! After restarting, run /akka:specify to start building your first feature.
+NEVER
+PROJECT
+  pipeline-scanning       ✓  SEC-SECRETS-NOT-COMMITTED          green — no secret committed
+  repository-hygiene      ✓  NEVER-COMMIT-BUILD-OUTPUT          green — no build output tracked
+  environment-dependencies ✓ NEVER-UNPINNED-DEP                 green — lockfile present
+──────────────────────────────────────────────────────────────────────────────
+rollup — product: 3✓ 4○ 0✗   project: 3✓ 3○ 0✗   process: 0✓ 4○ 0✗
 ```
-As the instructions say, you’ll need to restart Claude Code in order to load the newly installed MCP server from the Akka CLI.
+Every condition is in one of three [states](../reference/specify/exit-condition-states.html): `open`, `green`, or `red`. An `open` condition carries a reason: `needs-user-action` (a person on this project can move it forward) or `blocked-outside-project` (a required tool is missing, or a receipt from an external system is required). The two locked (🔒) process-integrity conditions — `PROC-AUDITOR-COVERAGE` and `PROC-ADEQUACY-REVIEWED` — are always on and cannot be struck; they make the verification apparatus check itself. See [Definition-of-Done types](../sdk/enforced-mode.html#dod-types) for what each tier covers.
 
-|  | From now on, any time you see `/akka.{command}` in the documentation referring to using Claude Code *without* the marketplace plugin, you should substitute the `/akka:{command}` plugin-based alternative. |
+### <a href="about:blank#_answer_the_open_conditions"></a> Answer the open conditions
 
-|  | Not using Claude Code? Akka supports 30 different AI assist utilities. Visit [Spec-Driven Development](../sdk/spec-driven-development.html) for details on how to configure each. |
-Now you’re ready to initialize a specification.
-
-## <a href="about:blank#_initialize_a_new_spec_driven_project"></a> Initialize a new spec-driven project
-
-If you’re using the Claude Code Akka marketplace plugin, you can skip this step and go directly to specifying the main feature.
-
-If you’re using the CLI to start a new project using Spec-Driven Development, we use the `akka specify init` command. You have a few options here:
-
-- Type `akka specify init helloworld-agent` to create a new directory called `helloworld-agent`
-- Manually create your own directory, `cd` into that directory, and run `akka specify init .`
-This will copy the default Akka template files, give you a chance to add your own additional constitution (which you can skip for this exercise), and set up an empty Akka service project with a Maven `pom.xml` file. It will also set the directory up as a git repository.
-
-Once you’ve successfully initialized the project, you can start Claude Code in your terminal. This guide doesn’t cover using the web app.
-
-## <a href="about:blank#_specify_the_main_feature"></a> Specify the main feature
-
-To specify the main feature of the application, we use `/akka.specify` (`/akka:specify` in the Claude Code plugin). The following prompt shows this in action. If you’re feeling adventurous, you can experiment with changing the prompt to see how it affects the final results. Copy and paste this `/akka.specify` (or `/akka:specify`) command into your agent session:
-
-| **/akka.specify** main feature - *The greeter agent generates greetings in different languages using an LLM. The consumer of the agent supplies a name and some greeting text in their native language. The agent will then respond with a friendly greeting in English. Each subsequent message sent by a given user will result in a greeting in a randomly chosen language that hasn’t yet been used in that agent session.* |
-After submitting that prompt, you will be asked for permission to run a number of MCP tools. These relate to setting up a new git branch and creating the first specification file (you’re likely to be asked for permission to overwrite the spec file). If you typed the prompt exactly as above, then you will have a new branch called `001-main-feature`.
-
-When using Claude, you will get a summary of the specification as the assistant understands it. It might look like the following:
+Enforced mode reports `NOT_READY` while any condition is `open`. The engine ends every turn with a definitive verdict and the exact next command, and calls out the conditions that need action from you:
 
 ```none
-Branch: 001-greeter-agent
-  Spec file: specs/001-greeter-agent/spec.md
-  Checklist: specs/001-greeter-agent/checklists/requirements.md — all items pass
-
-  What the spec covers:
-
-  - User Story 1 (P1): First greeting always in English, personalized with the user's name
-  - User Story 2 (P1): Subsequent greetings in randomly chosen, non-repeating languages per
-  session
-  - User Story 3 (P2): Session isolation — independent language tracking across sessions
-  - 7 functional requirements, 4 success criteria, 4 edge cases
-
-  No clarification questions needed — the feature description was clear enough to make
-  reasonable assumptions (documented in the Assumptions section).
+NOT_READY — an action to close before I can build:
+  • Code & Test Health — coverage threshold?     I suggest 80%
+NEXT → /akka:specify <your answer>
 ```
-If this summary is different than what you expected or intended, then you should re-run the specify command with a new specification prompt.
+Answer in your own words — accept the suggestion or set your own:
 
-Under normal circumstances you would use `/akka.clarify` to fill in potential gaps in the specification. For a very simple 1-feature application like this, we can skip that step.
+| **/akka:specify** keep the suggested 80% coverage threshold |
+The engine records your decisions, locks the definition of done, and starts building.
 
-## <a href="about:blank#_create_a_plan"></a> Create a plan
+### <a href="about:blank#_let_the_build_run"></a> Let the build run
 
-Once we’ve got a specification we’re pleased with, we need to create an implementation plan. This plan tells the coding assistant *how* to implement the specification. Here is where we dictate the technical architecture and requirements.
+The machine derives the exit conditions, wires [auditors](../sdk/enforced-mode.html#auditors), plans, implements, and loops until every locally runnable condition is `green`. It reports `NOT_READY` and interrupts only if it cannot reach a condition, hits an unresolved ambiguity, or finds a conflict with the organization’s policy.
 
-Copy and paste this slash command into your Claude session (use `/akka:plan` if you’re using the marketplace plugin):
+```none
+NOT_READY — 17 applicable conditions
+  plan → tasks → implement → verify
+  ✓ OPS-COMPILES   ✓ FUNC-TESTS-PASS 6/6   ✓ ENV-DEPS-RESOLVE
+NEXT → wait, or /akka:status
+```
+Check progress at any time without interrupting the build with `/akka:status`.
 
-| **/akka.plan** The greeter application is a single RESTful endpoint that exposes a `/greet` route. This accepts a JSON payload with the `user` and `text` fields, which are then incorporated into the user message sent to the OpenAI model. This service has no authentication or other guardrails. Session history for agent conversations is to be implemented using the default and provided agent session support in the SDK. The system prompt for the greeter agent should include the following points without modification:
+### <a href="about:blank#_add_a_check_with_feedback"></a> Add a check with feedback
+
+`/akka:specify` is re-entrant: send it plain-language feedback at any time and it materializes the change as a new exit condition with a covering auditor. Ask for a compile-clean guarantee on every build:
+
+| **/akka:specify** every build must compile with no errors before it ships |
+The engine adds one exit condition and wires an *introspective* auditor — an inline command that inspects the working tree directly, delegating to the project’s own toolchain. Here that is `mvn -q compile`, whose non-zero exit is the red verdict:
+
+```none
++ Code & Test Health — build compiles clean ........ auditor: mvn -q compile
+```
+Adding an auditor recomputes the two locked process-integrity gates. Check them with `/akka:status`:
+
+```none
+NOT_READY — 18 applicable conditions
+  ✓ PROC-AUDITOR-COVERAGE   every build surface has a covering auditor
+  ○ PROC-ADEQUACY-REVIEWED  adversarial review re-running for the new check
+NEXT → wait, or /akka:status
+```
+`PROC-ADEQUACY-REVIEWED` re-runs because the set of checks changed; once the review clears, the gate turns `green`.
+
+### <a href="about:blank#_ship"></a> Ship
+
+When every applicable condition is `green` and not stale, the engine reports `READY_TO_SHIP`:
+
+```none
+READY_TO_SHIP — every applicable condition is green
+  18 conditions · 15 auditor-verified · 3 platform-guaranteed
+  ✓ PROC-AUDITOR-COVERAGE   ✓ PROC-ADEQUACY-REVIEWED
+NEXT → /akka:ship
+```
+Run `/akka:ship release`. It runs the auditors for every applicable exit condition at any tier one last time, then runs the ship steps your organization declared for a release ship, and writes a [conformance receipt](../sdk/enforced-mode.html#shipping) recording what was verified.
+
+## <a href="about:blank#a-la-carte"></a> Build À la carte
+
+In À la carte mode you run each command yourself. It is the default, so no switch is needed unless you previously moved to Enforced.
+
+### <a href="about:blank#_specify_the_feature_2"></a> Specify the feature
+
+Run `/akka:specify` with the feature description:
+
+| **/akka:specify** greeter agent - *The greeter agent generates greetings in different languages using an LLM. The consumer of the agent supplies a name and some greeting text in their native language. The agent will then respond with a friendly greeting in English. Each subsequent message sent by a given user will result in a greeting in a randomly chosen language that hasn’t yet been used in that agent session.* |
+Approve the MCP tool calls when prompted. The assistant creates a new git branch (`001-greeter-agent`), writes the specification file, and summarizes what the spec covers:
+
+- User Story 1 (P1): first greeting always in English, personalized with the user’s name
+- User Story 2 (P1): subsequent greetings in randomly chosen, non-repeating languages per session
+- User Story 3 (P2): session isolation — independent language tracking across sessions
+- 7 functional requirements, 4 success criteria, 4 edge cases
+If the summary does not match your intent, re-run `/akka:specify` with a revised prompt. For a single-feature application like this, skip `/akka:clarify`.
+
+### <a href="about:blank#_create_a_plan"></a> Create a plan
+
+Run `/akka:plan` with the technical implementation prompt. The plan defines *how* to implement the specification — architecture, components, and constraints:
+
+| **/akka:plan** The greeter application is a single RESTful endpoint that exposes a `/greet` route. This accepts a JSON payload with the `user` and `text` fields, which are then incorporated into the user message sent to the OpenAI model. This service has no authentication or other guardrails. Session history for agent conversations is to be implemented using the default and provided agent session support in the SDK. The system prompt for the greeter agent should include the following points without modification:
 
 * You are a cheerful AI assistant with a passion for teaching greetings in new languages
 
@@ -146,172 +174,82 @@ Copy and paste this slash command into your Claude session (use `/akka:plan` if 
 * At the end, append a list of previous greetings
 
 This implementation should result in a single agent, the `HelloWorldAgent`, and a single endpoint, the `HelloWorldEndpoint`. There are no domain objects nor are there any entity components. The application should obtain its model target configuration from the standard Akka SDK model provider configuration. If insufficient configuration is provided, then the endpoint request should fail with a 500 error code. |
-As usual with AI, the results will vary. Here’s an example of a summary of the plan that we might get with Claude Code:
+Results vary between runs. The assistant works on branch `001-greeter-agent` and generates these artifacts:
 
-```none
-Branch: 001-greeter-agent
+| File | Purpose |
+| --- | --- |
+| `specs/001-greeter-agent/plan.md` | Implementation plan and component design |
+| `specs/001-greeter-agent/research.md` | Decisions on memory, model config, and errors |
+| `specs/001-greeter-agent/data-model.md` | API record types only (no entities) |
+| `specs/001-greeter-agent/contracts/http-api.md` | HTTP API contract for `POST /greet` |
+| `specs/001-greeter-agent/quickstart.md` | Build, run, and test instructions |
+The architecture summary describes:
 
-  Generated Artifacts
+- `HelloWorldAgent` — a single Akka Agent with the verbatim system prompt, SDK session memory, and a config-driven model provider
+- `HelloWorldEndpoint` — `POST /greet` taking `{"user","text"}`, using `user` as the session ID, returning 500 on model-config failure
+- No domain objects, entities, or views — a pure agent plus endpoint
+- Tests — an agent unit test (`TestModelProvider`) and an endpoint integration test (`httpClient`)
+All four constitution principles pass: Akka SDK First, Design Principles, Test Coverage, and Simplicity. No code has been written yet.
 
-  ┌───────────────────────────────────────────────┬──────────────────────────────────────┐
-  │                     File                      │               Purpose                │
-  ├───────────────────────────────────────────────┼──────────────────────────────────────┤
-  │ specs/001-greeter-agent/plan.md               │ Implementation plan with component   │
-  │                                               │ design                               │
-  ├───────────────────────────────────────────────┼──────────────────────────────────────┤
-  │                                               │ Decisions on session memory, model   │
-  │ specs/001-greeter-agent/research.md           │ config, session ID strategy, error   │
-  │                                               │ handling                             │
-  ├───────────────────────────────────────────────┼──────────────────────────────────────┤
-  │ specs/001-greeter-agent/data-model.md         │ Data model (API records only, no     │
-  │                                               │ entities)                            │
-  ├───────────────────────────────────────────────┼──────────────────────────────────────┤
-  │ specs/001-greeter-agent/contracts/http-api.md │ HTTP API contract for POST /greet    │
-  ├───────────────────────────────────────────────┼──────────────────────────────────────┤
-  │ specs/001-greeter-agent/quickstart.md         │ Build, run, and test instructions    │
-  └───────────────────────────────────────────────┴──────────────────────────────────────┘
+### <a href="about:blank#_generate_tasks"></a> Generate tasks
 
-  Architecture Summary
+Run `/akka:tasks` to convert the plan into an ordered task list. The assistant marks which tasks can run in parallel:
 
-  - HelloWorldAgent — single Akka Agent with the verbatim system prompt, using SDK session
-  memory and config-driven model provider
-  - HelloWorldEndpoint — POST /greet accepting {"user": "...", "text": "..."}, using user as
-   session ID, returning 500 on model config failure
-  - No domain objects, no entities, no views — pure agent + endpoint
-  - Tests — agent unit test with TestModelProvider, endpoint integration test with
-  httpClient
+| Metric | Value |
+| --- | --- |
+| Total tasks | 8 |
+| Phase 1 (Setup) | 1 task — `application.conf` |
+| Phase 2 (Foundational) | 1 task — `HelloWorldAgent` |
+| Phase 3 (US1 & US2 — MVP) | 3 tasks — endpoint + 2 tests |
+| Phase 4 (US3) | 1 task — session isolation test |
+| Phase 5 (Polish) | 2 tasks — README + quickstart validation |
+T004 and T005 can run in parallel after T003; T007 and T008 can run in parallel. The MVP (User Stories 1 and 2) is functional after the first five tasks.
 
-  Constitution Check
+### <a href="about:blank#_implement_the_agent"></a> Implement the agent
 
-  All four principles pass: Akka SDK First, Design Principles, Test Coverage, Simplicity.
+Run `/akka:implement` and approve the operations it requests. Expect the assistant to hit compilation or test failures and correct them on its own; step in only if it stops converging after repeated attempts. To change the result, re-run `/akka:implement` with a different model or effort level.
+
+| Task | Status | File |
+| --- | --- | --- |
+| T001 | Done | `src/main/resources/application.conf` |
+| T002 | Done | `src/main/java/com/example/application/HelloWorldAgent.java` |
+| T003 | Done | `src/main/java/com/example/api/HelloWorldEndpoint.java` |
+| T004 | Done | `src/test/java/com/example/application/HelloWorldAgentTest.java` |
+| T005 | Done | `src/test/java/com/example/api/HelloWorldEndpointIntegrationTest.java` |
+| T006 | Done | session isolation test (in T005’s file) |
+| T007 | Done | `README.md` |
+| T008 | Done | build verified via `mvn verify` |
+All four tests pass (1 agent unit, 3 endpoint integration) and `mvn verify` succeeds.
+
+Exercise the application before reviewing the code. If it does not meet the requirements, re-run `/akka:plan` or `/akka:specify` and regenerate. Do not merge the feature branch to `main` until you have exercised the result.
+
+### <a href="about:blank#_exercise_the_agent_api"></a> Exercise the agent API
+
+Run `/akka:build`. This compiles the project, runs the tests, starts the service, and issues a sample request to the endpoint. The AI picks a default port for the service, usually port `9000`.
+
+| Step | Status |
+| --- | --- |
+| Compilation | PASS |
+| Tests | 4 passed, 0 failed |
+| Local service | Running on `localhost:9000` |
+The endpoint is available at `POST http://localhost:9000/greet`. Test it with:
+
+```bash
+curl -X POST http://localhost:9000/greet \
+  -H "Content-Type: application/json" \
+  -d '{"user": "Maria", "text": "Buenos dias, soy Maria"}'
 ```
-Remember that this is just the plan - *no code has been written yet.*
 
-This plan looks good and the architecture is exactly what we wanted, so now we can convert this plan into an itemized set of working tasks.
-
-## <a href="about:blank#_generate_tasks"></a> Generate tasks
-
-To generate the tasks from this plan, run `/akka.tasks` (or `/akka:tasks` when using the plugin)
-
-Here’s a sample summary output from generating tasks. Note that it has analyzed which tasks can be done in parallel.
-
-```none
-Summary
-
-  ┌───────────────────────────┬──────────────────────────────────────────┐
-  │          Metric           │                  Value                   │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Total tasks               │ 8                                        │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Phase 1 (Setup)           │ 1 task — application.conf                │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Phase 2 (Foundational)    │ 1 task — HelloWorldAgent                 │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Phase 3 (US1 & US2 - MVP) │ 3 tasks — endpoint + 2 tests             │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Phase 4 (US3)             │ 1 task — session isolation test          │
-  ├───────────────────────────┼──────────────────────────────────────────┤
-  │ Phase 5 (Polish)          │ 2 tasks — README + quickstart validation │
-  └───────────────────────────┴──────────────────────────────────────────┘
-
-  Parallel Opportunities
-
-  - T004 (agent test) and T005 (endpoint integration test) can run in parallel after T003
-  - T007 (README) and T008 (quickstart) can run in parallel
-
-  MVP Scope
-
-  User Stories 1 & 2 (Phase 3) — after just 5 tasks (T001–T005), the service is fully
-  functional with a tested greeting flow.
-```
-With the plan and tasks ready to go, we can move on to implementation. It’s worth noting that the actual writing of the code is one of the smaller parts of the process, and is done at the end of the feature definition, not the beginning.
-
-## <a href="about:blank#_implement_the_agent"></a> Implement the agent
-
-Now it’s time to generate some code. Run the `/akka.implement` (or `/akka:implement` with the plugin) command and allow it to proceed with any operations for which it requests permission.
-
-During implementation it is not unusual to see your AI assistant get a number of things wrong. Code may fail to compile and tests might not pass. We should try and leave the agent alone and let it try and fix the problems on its own before we intervene. Only if it looks like the agent is stuck (>5 attempts to fix the same thing) should we step in and provide instructions to solve the problem. This implementation is simple enough that errors and failure loops are unlikely.
-
-If you’re not happy with the generated results, consider re-running the implement phase with a different model and/or effort level.
-
-Here’s an example summary of an implementation phase:
-
-```none
-Summary
-
-  ┌──────┬────────┬──────────────────────────────────────────────────────────────────────┐
-  │ Task │ Status │                                 File                                 │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T001 │ Done   │ src/main/resources/application.conf                                  │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T002 │ Done   │ src/main/java/com/example/application/HelloWorldAgent.java           │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T003 │ Done   │ src/main/java/com/example/api/HelloWorldEndpoint.java                │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T004 │ Done   │ src/test/java/com/example/application/HelloWorldAgentTest.java       │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T005 │ Done   │ src/test/java/com/example/api/HelloWorldEndpointIntegrationTest.java │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T006 │ Done   │ (session isolation test in T005's file)                              │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T007 │ Done   │ README.md                                                            │
-  ├──────┼────────┼──────────────────────────────────────────────────────────────────────┤
-  │ T008 │ Done   │ Build verified via mvn verify                                        │
-  └──────┴────────┴──────────────────────────────────────────────────────────────────────┘
-
-  All 4 tests pass (1 agent unit + 3 endpoint integration). mvn verify succeeds.
-```
-If you can, resist the temptation to go look at the code right now. Exercise the application and make sure it does what you want before looking at the code. If the app fails to meet core requirements, then the code is all going to be thrown away anyway as you’ll re-do the `plan` or `specify` phases.
-
-It’s also a recommended practice to not commit this feature branch back to `main` until you’ve exercised the final result.
-
-If we’re satisfied with these results, we can move on to the next step.
-
-## <a href="about:blank#_exercise_the_agent_api"></a> Exercise the agent API
-
-Exercising the agent API is easy. At this point, run `/akka.build` (or `/akka:build`). This will recompile your project, run tests, and issue a sample command to the RESTful API endpoint.
-
-If you can verify that no previous instances of your service are running and that no stale processes are running on port `9000`, this will save time by not making your AI assistant do that check.
-
-```none
-Local Build Results
-
-  ┌───────────────┬─────────────────────────────────────────────────────┐
-  │     Step      │                       Status                        │
-  ├───────────────┼─────────────────────────────────────────────────────┤
-  │ Compilation   │ PASS                                                │
-  ├───────────────┼─────────────────────────────────────────────────────┤
-  │ Tests         │ 4 passed, 0 failed                                  │
-  ├───────────────┼─────────────────────────────────────────────────────┤
-  │ Local service │ Running on localhost:9000                           │
-  └───────────────┴─────────────────────────────────────────────────────┘
-
-  Endpoint available: POST http://localhost:9000/greet
-
-  You can test it with:
-
-  curl -X POST http://localhost:9000/greet \
-    -H "Content-Type: application/json" \
-    -d '{"user": "Maria", "text": "Buenos dias, soy Maria"}'
-
-  Note: You'll need OPENAI_API_KEY set for live LLM responses. Without it, the request will
-  return a 500 error as designed.
-
-  Next steps: Iterate with /akka.implement or ship with /akka.deploy.
-```
-We shouldn’t have to leave the Claude session for any reason.
+|  | Set `OPENAI_API_KEY` for live LLM responses. Without it, the request returns a 500 as designed. |
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Next we move on to a more involved tutorial that uses multiple components to create a multi-agent trip planning system. We also encourage you to take a look at the various samples and tutorials and see if you can work backwards from the implementation to come up with the specification and then go through a spec-driven flow.
-
-The more you go through the spec-driven process, the better and more precise you’ll find your specs.
-
-If you want to see how the code-first version of this tutorial unfolds, see [Build your first agent](author-your-first-service.html).
+- [Multi-agent tutorial](planner-agent/index.html) — orchestrate multiple agents with a workflow.
+- [Code-first hello agent](author-your-first-service.html) — build the same agent by hand in Java.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Getting started & Tutorials](index.html) [Hello world agent](author-your-first-service.html)
+[Set up your dev env](set-up-dev-env.html) [Code-first hello agent](author-your-first-service.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

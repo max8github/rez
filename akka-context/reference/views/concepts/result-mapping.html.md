@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Result mapping](result-mapping.html)
 

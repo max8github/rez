@@ -56,7 +56,7 @@ akka config set project <project name>
 ## <a href="about:blank#_granting_a_role"></a> Granting a role
 
 |  | When using *OpenID Connect* (OIDC), see [OIDC setup](../../reference/security/oidc-setup.html#assigning_project_level_roles). |
-You can grant a project role to a user in two ways:
+You can grant a project role to a user in two ways, or grant a role directly to a service:
 
 ### <a href="about:blank#_1_invite_a_user_to_the_project_by_e_mail"></a> 1. Invite a user to the project by e-mail
 
@@ -81,6 +81,15 @@ akka roles add-binding --email <email address> --role <role>
 ```command
 akka roles add-binding --username <username> --role <role>
 ```
+
+### <a href="about:blank#_3_grant_a_role_to_a_service"></a> 3. Grant a role to a service
+
+A service can also authenticate as itself against the Akka platform API using workload identity, and be granted a role directly:
+
+```command
+akka roles add-binding --service <service name> --role <role>
+```
+For the full walkthrough, including how to configure the service to authenticate, see [Authenticating with the Akka platform API](../services/workload-identity.html#authenticating-with-the-akka-platform-api).
 
 ## <a href="about:blank#_deleting_a_project_role_bindings"></a> Deleting a project role bindings
 
@@ -125,6 +134,7 @@ To resend an invitation, first delete the expired invitation and then issue a ne
 ## <a href="about:blank#_see_also"></a> See also
 
 - [Managing organization users](../organizations/manage-users.html)
+- [Workload Identity](../services/workload-identity.html)
 - <a href="../../reference/cli/akka-cli/akka_roles.html#_see_also">`akka roles` commands</a>
 
 <!-- <footer> -->

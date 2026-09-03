@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [AI model provider configuration](model-provider-details.html)
 
 <!-- </nav> -->
@@ -40,7 +40,7 @@ values (like 50) allow for more diversity.
 
 ### <a href="about:blank#_max_tokens_or_max_completion_tokens"></a> max-tokens or max-completion-tokens
 
-If this value is supplied and the model supports this property, then it will stop operations in mid flight if the token quota runs out. It’s important to check *how* the model counts tokens, as some may count differently. Be aware of the fact that this parameter name frequently varies from one provider to the next. Make sure you’re using the right property name.
+If this value is supplied and the model supports this property, then it will stop operations in mid flight if the token quota runs out. It is important to check *how* the model counts tokens, as some may count differently. Be aware of the fact that this parameter name frequently varies from one provider to the next. Make sure you are using the right property name.
 
 ### <a href="about:blank#_thinking"></a> Thinking
 
@@ -53,7 +53,7 @@ by a toggle. Thinking is disabled for all models by default.
 
 ## <a href="about:blank#_model_configuration"></a> Model configuration
 
-The following is a list of all natively supported model configurations. Remember that if you don’t see your model or model format here, you can always create your own custom configuration and still use all of the Agent-related components.
+The following is a list of all natively supported model configurations. Remember that if you do not see your model or model format here, you can always create your own custom configuration and still use all of the Agent-related components.
 
 ### <a href="about:blank#_anthropic"></a> Anthropic
 
@@ -71,8 +71,34 @@ The following is a list of all natively supported model configurations. Remember
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
 | `thinking-budget-tokens` | Integer | A maximum number of tokens to spend on thinking, use 0 to disable thinking |
+| `cache-system-messages` | Boolean | Enable prompt caching of the last system message. Disabled by default. See [Anthropic prompt caching](https://docs.anthropic.com/en/docs/build-with-claude/prompt-caching) for details. |
+| `cache-tools` | Boolean | Enable prompt caching of the last tool definition. Disabled by default. |
 | `additional-model-request-headers` | List<String> | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_ANTHROPIC_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Anthropic.html">`ModelProvider.Anthropic`</a> for programmatic settings.
+
+### <a href="about:blank#_azure_openai"></a> Azure OpenAI
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `provider` | "azure-openai" | Name of the provider. Must always be `azure-openai` |
+| `endpoint` | Url | The endpoint of the Azure OpenAI resource, e.g. `https://my-resource.openai.azure.com`. See the [Azure OpenAI documentation](https://learn.microsoft.com/azure/ai-services/openai/) for details |
+| `deployment-name` | String | The name of the Azure OpenAI deployment to use |
+| `api-key` | String | The API key. Defaults to the value of the `AZURE_OPENAI_API_KEY` environment variable |
+| `temperature` | Float | Model randomness. The default is not supplied so check with the model documentation for default behavior |
+| `top-p` | Float | Nucleus sampling parameter |
+| `max-tokens` | Integer | Max token quota. Leave as –1 for model default |
+| `max-completion-tokens` | Integer | Max token quota. Leave as –1 for model default |
+| `frequency-penalty` | Float | Penalizes repeated tokens based on their frequency in the text so far (-2.0 to 2.0) |
+| `presence-penalty` | Float | Penalizes tokens that have already appeared in the text (-2.0 to 2.0) |
+| `seed` | Long | Seed for deterministic sampling, for reproducible outputs. Leave as –1 for unset |
+| `stop` | List of String | Sequences where the model will stop generating further tokens |
+| `reasoning-effort` | String | Reasoning effort level for o-series models. One of `low`, `medium`, `high` |
+| `service-version` | String | Azure OpenAI API service version override, e.g. `2024-02-15-preview` |
+| `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
+| `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
+| `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_AZURE_OPENAI_REQUEST_HEADERS_N` environment variables. |
+See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.AzureOpenAi.html">`ModelProvider.AzureOpenAi`</a> for programmatic settings.
 
 ### <a href="about:blank#_bedrock"></a> Bedrock
 
@@ -90,6 +116,7 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Anthropic.html">`
 | `max-tokens` | Integer | Maximum number of tokens to generate. Leave as –1 for model default |
 | `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
 | `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `prompt-caching` | String | Enable prompt caching for Anthropic Claude or Amazon Nova models by selecting where the cache point is placed. Valid values: `""` (disabled, default), `"after-system"`, `"after-user-message"`, `"after-tools"`. See [AWS Bedrock prompt caching](https://docs.aws.amazon.com/bedrock/latest/userguide/capacity-limits-cost-optimization.html#prompt-caching) for details. |
 | `additional-model-request-headers` | List<String> | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_BEDROCK_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.Bedrock.html">`ModelProvider.Bedrock`</a> for programmatic settings.
 
@@ -144,6 +171,29 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.HuggingFace.html"
 | `max-tokens` | Integer | Max number of tokens to generate (–1 for model default) |
 | `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_LOCAL_AI_REQUEST_HEADERS_N` environment variables. |
 See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.LocalAI.html">`ModelProvider.LocalAI`</a> for programmatic settings.
+
+### <a href="about:blank#_mistral_ai"></a> Mistral AI
+
+| Property | Type | Description |
+| --- | --- | --- |
+| `provider` | "mistral-ai" | Name of the provider. Must always be `mistral-ai` |
+| `api-key` | String | The API key. Defaults to the value of the `MISTRAL_AI_API_KEY` environment variable |
+| `model-name` | String | The name of the model to use, e.g. "mistral-large-latest". See vendor documentation for a list of available models |
+| `base-url` | Url | Optional override to the base URL of the API |
+| `temperature` | Float | Model randomness. The default is not supplied so check with the model documentation for default behavior |
+| `top-p` | Float | Nucleus sampling parameter |
+| `max-tokens` | Integer | Maximum number of tokens to generate. Leave as –1 for model default |
+| `safe-prompt` | Boolean | When enabled, a safety prompt is injected in front of all conversations |
+| `random-seed` | Integer | Random seed for deterministic sampling. Leave as –1 to disable |
+| `frequency-penalty` | Float | Penalty for frequent tokens. Leave as `NaN` for model default |
+| `presence-penalty` | Float | Penalty for repeated topics. Leave as `NaN` for model default |
+| `stop-sequences` | List of String | Stop sequences at which the model stops generating |
+| `thinking` | Boolean | Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling. |
+| `connection-timeout` | Duration | Fail the request if connecting to the model API takes longer than this |
+| `response-timeout` | Duration | Fail the request if getting a response from the model API takes longer than this |
+| `max-retries` | Integer | Retry this many times if the request to the model fails |
+| `additional-model-request-headers` | List of String | List of `"name:value"` strings for HTTP headers to include in every request to the model API. Inherits from `akka.javasdk.agent.additional-model-request-headers` by default. Can also be set via `ADDITIONAL_MISTRAL_AI_REQUEST_HEADERS_N` environment variables. |
+See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.MistralAi.html">`ModelProvider.MistralAi`</a> for programmatic settings.
 
 ### <a href="about:blank#_ollama"></a> Ollama
 
@@ -203,7 +253,7 @@ See <a href="_attachments/api/akka/javasdk/agent/ModelProvider.VertexAi.html">`M
 
 ## <a href="about:blank#_default_model_configuration"></a> Default model configuration
 
-The default model will be used if the agent doesn’t specify another model.
+The default model will be used if the agent does not specify another model.
 
 You can define a default model in `application.conf`:
 
@@ -275,6 +325,7 @@ You can also set headers for a specific model provider using provider-specific e
 | Provider | Environment variable prefix |
 | --- | --- |
 | `Anthropic` | `ADDITIONAL_ANTHROPIC_REQUEST_HEADERS_N` |
+| `Azure OpenAI` | `ADDITIONAL_AZURE_OPENAI_REQUEST_HEADERS_N` |
 | `OpenAI` | `ADDITIONAL_OPENAI_REQUEST_HEADERS_N` |
 | `Google AI Gemini` | `ADDITIONAL_GOOGLE_AI_GEMINI_REQUEST_HEADERS_N` |
 | `Google Cloud Vertex AI` | `ADDITIONAL_VERTEX_AI_REQUEST_HEADERS_N` |
@@ -282,6 +333,7 @@ You can also set headers for a specific model provider using provider-specific e
 | `Local AI` | `ADDITIONAL_LOCAL_AI_REQUEST_HEADERS_N` |
 | `Hugging Face` | `ADDITIONAL_HUGGING_FACE_REQUEST_HEADERS_N` |
 | `Bedrock` | `ADDITIONAL_BEDROCK_REQUEST_HEADERS_N` |
+| `Mistral AI` | `ADDITIONAL_MISTRAL_AI_REQUEST_HEADERS_N` |
 For example, to set a header only for Anthropic requests:
 
 ```bash
@@ -361,10 +413,64 @@ akka.javasdk.agent.anthropic {
   max-retries = 2
   # A maximum number of tokens to spend on thinking, use 0 to disable thinking
   thinking-budget-tokens = 0
+  # Enable prompt caching of the last system message (reduces cost and latency for repeated
+  # system prompts). Disabled by default. See the Anthropic prompt caching documentation.
+  cache-system-messages = false
+  # Enable prompt caching of the last tool definition (reduces cost and latency for repeated
+  # tool specifications). Disabled by default.
+  cache-tools = false
   # Additional HTTP headers to include in each request to the model API.
   # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
   additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
   additional-model-request-headers = ${?ADDITIONAL_ANTHROPIC_REQUEST_HEADERS[]}
+}
+```
+
+### <a href="about:blank#_azure_openai_2"></a> Azure OpenAI
+
+```hocon
+# Configuration for Azure OpenAI large language models
+akka.javasdk.agent.azure-openai {
+  # The provider name, must be "azure-openai"
+  provider = "azure-openai"
+  # The endpoint of the Azure OpenAI resource, e.g. "https://my-resource.openai.azure.com"
+  endpoint = ""
+  # The name of the Azure OpenAI deployment to use
+  deployment-name = ""
+  # The API key for authentication with the Azure OpenAI resource
+  api-key = ""
+  # Environment variable override for the API key
+  api-key = ${?AZURE_OPENAI_API_KEY}
+  # Controls randomness in the model's output (0.0 to 1.0)
+  temperature = NaN
+  # Nucleus sampling parameter (0.0 to 1.0).
+  top-p = NaN
+  # Maximum number of tokens to generate (-1 for model default)
+  max-tokens = -1
+  # Maximum number of completion tokens to generate (-1 for model default)
+  max-completion-tokens = -1
+  # Penalizes repeated tokens based on their frequency in the text so far (-2.0 to 2.0)
+  frequency-penalty = NaN
+  # Penalizes tokens that have already appeared in the text (-2.0 to 2.0)
+  presence-penalty = NaN
+  # Seed for deterministic sampling, for reproducible outputs (-1 for unset)
+  seed = -1
+  # Sequences where the model will stop generating further tokens
+  stop = []
+  # Reasoning effort level for o-series models ("low", "medium", "high", "" for unset)
+  reasoning-effort = ""
+  # Azure OpenAI API service version override (e.g. "2024-02-15-preview", "" for default)
+  service-version = ""
+  # Fail the request if connecting to the model API takes longer than this
+  connection-timeout = 15s
+  # Fail the request if getting a response from the model API takes longer than this
+  response-timeout = 1m
+  # Retry this many times if the request to the model fails
+  max-retries = 2
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_AZURE_OPENAI_REQUEST_HEADERS[]}
 }
 ```
 
@@ -407,6 +513,10 @@ akka.javasdk.agent.bedrock {
   response-timeout = 1m
   # Retry this many times if the request to the model fails
   max-retries = 2
+  # Enable prompt caching for Anthropic Claude or Amazon Nova models by selecting where the
+  # cache point is placed. Valid values: "", "after-system", "after-user-message", "after-tools".
+  # Empty disables prompt caching (default). See the AWS Bedrock prompt caching documentation.
+  prompt-caching = ""
   # Additional HTTP headers to include in each request to the model API.
   # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
   additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
@@ -531,6 +641,56 @@ akka.javasdk.agent.local-ai {
   # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
   additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
   additional-model-request-headers = ${?ADDITIONAL_LOCAL_AI_REQUEST_HEADERS[]}
+}
+```
+
+### <a href="about:blank#_mistral_ai_2"></a> Mistral AI
+
+```hocon
+# Configuration for large language models from Mistral AI https://mistral.ai
+akka.javasdk.agent.mistral-ai {
+  # The provider name, must be "mistral-ai"
+  provider = "mistral-ai"
+  # The API key for authentication with Mistral AI's API
+  api-key = ""
+  api-key = ${?MISTRAL_AI_API_KEY}
+  # The Mistral model name, e.g. "mistral-large-latest"
+  model-name = ""
+  # Optional base URL override for the Mistral AI API
+  base-url = ""
+  # Controls randomness in the model's output (0.0 to 1.0)
+  temperature = NaN
+  # Nucleus sampling parameter (0.0 to 1.0). Controls text generation by
+  # only considering the most likely tokens whose cumulative probability
+  # exceeds the threshold value. It helps balance between diversity and
+  # quality of outputs—lower values (like 0.3) produce more focused,
+  # predictable text while higher values (like 0.9) allow more creativity
+  # and variation.
+  top-p = NaN
+  # Maximum number of tokens to generate (-1 for model default)
+  max-tokens = -1
+  # When enabled, a safety prompt is injected in front of all conversations
+  safe-prompt = false
+  # Random seed for deterministic sampling (-1 for none)
+  random-seed = -1
+  # Penalty for frequent tokens (NaN for model default)
+  frequency-penalty = NaN
+  # Penalty for repeated topics (NaN for model default)
+  presence-penalty = NaN
+  # Stop sequences at which the model stops generating
+  stop-sequences = []
+  # Enable thinking, only supported for some models. Make sure the chosen model supports thinking before enabling.
+  thinking = false
+  # Fail the request if connecting to the model API takes longer than this
+  connection-timeout = 15s
+  # Fail the request if getting a response from the model API takes longer than this
+  response-timeout = 1m
+  # Retry this many times if the request to the model fails
+  max-retries = 2
+  # Additional HTTP headers to include in each request to the model API.
+  # Inherits from akka.javasdk.agent.additional-model-request-headers by default.
+  additional-model-request-headers = ${akka.javasdk.agent.additional-model-request-headers}
+  additional-model-request-headers = ${?ADDITIONAL_MISTRAL_AI_REQUEST_HEADERS[]}
 }
 ```
 
@@ -723,7 +883,7 @@ public class MyModelProvider implements ModelProvider.Custom {
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Run a service locally](running-locally.html) [Data sanitization](sanitization.html)
+[JSON Web Tokens (JWT)](auth-with-jwts.html) [Data sanitization](sanitization.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

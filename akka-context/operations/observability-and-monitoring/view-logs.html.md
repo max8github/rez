@@ -33,7 +33,7 @@ Logs can be exported for searching, reporting, alerting and long term storage by
 
 The JSON log messages include a `trace_id` field when tracing is [enabled](observability-exports.html#activating_tracing).
 
-This way, the trace ID that’s passed through your components will be added to your logs. For more information on tracing, click [here](traces.html).
+This way, the trace ID that is passed through your components will be added to your logs. For more information on tracing, click [here](traces.html).
 
 ## <a href="about:blank#_see_also"></a> See also
 

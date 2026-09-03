@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [JSON Web Tokens (JWT)](auth-with-jwts.html)
 
 <!-- </nav> -->
@@ -167,7 +167,7 @@ private String bearerTokenWith(Map<String, String> claims) throws JsonProcessing
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Access Control Lists (ACLs)](access-control.html) [Run a service locally](running-locally.html)
+[Access Control Lists (ACLs)](access-control.html) [AI model provider configuration](model-provider-details.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

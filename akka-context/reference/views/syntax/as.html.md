@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View query syntax](index.html)
 - [AS](as.html)
 
@@ -194,9 +194,9 @@ Aliases are mandatory in the following cases:
 
 ## <a href="about:blank#_notes"></a> Notes
 
-- Aliases defined in the SELECT clause can’t be referenced in WHERE clauses
+- Aliases defined in the SELECT clause cannot be referenced in WHERE clauses
 - Table aliases can be referenced in SELECT, WHERE, and ON clauses
-- Aliases are primarily for result mapping and don’t affect the underlying data
+- Aliases are primarily for result mapping and do not affect the underlying data
 - For complex nested structures, ensure that your Java classes have matching structure
 - The mapping between SQL aliases and Java fields is case-sensitive
 

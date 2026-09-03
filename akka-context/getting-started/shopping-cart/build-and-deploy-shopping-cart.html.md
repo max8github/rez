@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [Shopping cart](index.html)
+- [Getting Started](../index.html)
+- [Shopping cart tutorial](index.html)
 - [A simple shopping cart service](build-and-deploy-shopping-cart.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 This guide walks you through the design and implementation of a shopping cart service, illustrating the use of some of Akka’s components.
 
 ## <a href="about:blank#_overview"></a> Overview
@@ -27,7 +27,7 @@ In this guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - An [Akka account](https://console.akka.io/register)
@@ -35,7 +35,7 @@ In this guide you will:
 
 ## <a href="about:blank#_create_the_empty_project"></a> Create the empty project
 
-1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you haven’t installed the CLI yet.
+1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you have not installed the CLI yet.
 
 ```command
 akka code init --name helloworld-agent --repo akka-samples/empty.git
@@ -57,7 +57,7 @@ Shopping carts are excellent examples of agentic [[1](about:blank#_footnotedef_1
 
 For the purposes of this initial quickstart, we will just have a single endpoint and a single event-sourced entity to keep things easy to digest.
 
-Through our entity we expect to manage our cart, adding and removing items as we please. Being event-sourced means it will represent changes to state as a series of domain events. Let’s have a look at what kind of model we use to store the events our entity generates.
+Through our entity we expect to manage our cart, adding and removing items as we please. Being event-sourced means it will represent changes to state as a series of domain events. Have a look at what kind of model we use to store the events our entity generates.
 
 ### <a href="about:blank#_the_domain_model"></a> The domain model
 
@@ -84,7 +84,7 @@ public record ShoppingCart(String cartId, List<LineItem> items, boolean checkedO
 
 | **1** | Our `ShoppingCart` is fairly simple, being composed only by a `cartId` and a list of line items. |
 | **2** | A `LineItem` represents a single product and the quantity we intend to buy. |
-Next, we have a domain event for adding items to the cart. Here we’ve created an interface `ShoppingCartEvent` with the `ItemAdded` domain event in package `shoppingcart.domain`. This file is in the `src/main/java/shoppingcart/domain/` directory and named `ShoppingCartEvent.java`:
+Next, we have a domain event for adding items to the cart. Here we have created an interface `ShoppingCartEvent` with the `ItemAdded` domain event in package `shoppingcart.domain`. This file is in the `src/main/java/shoppingcart/domain/` directory and named `ShoppingCartEvent.java`:
 
 [ShoppingCartEvent.java](https://github.com/akka/akka-sdk/blob/main/samples/shopping-cart-quickstart/src/main/java/shoppingcart/domain/ShoppingCartEvent.java)
 ```java
@@ -230,7 +230,7 @@ public ReadOnlyEffect<ShoppingCart> getCart() {
 | **1** | Store the `entityId` in an internal attribute, to be used elsewhere. |
 | **2** | Define the initial state. |
 | **3** | Return the current state as a reply to the request. |
-You should be intentional about when you query views versus when you query entity state. Views are *eventually* consistent while entities are *strongly* consistent. You don’t have to worry about views yet, though, as there are none in this quickstart.
+You should be intentional about when you query views versus when you query entity state. Views are *eventually* consistent while entities are *strongly* consistent. You do not have to worry about views yet, though, as there are none in this quickstart.
 
 ### <a href="about:blank#_the_external_api"></a> The external API
 
@@ -309,7 +309,7 @@ public class ShoppingCartEndpoint {
 mvn compile exec:java
 ```
 Once successfully started, any defined endpoints become available at `localhost:9000`.
-2. Let’s send some requests using `curl`. Add some T-shirts to a shopping cart:
+2. Send some requests using `curl`. Add some T-shirts to a shopping cart:
 
 ```command
 curl -i -XPUT -H "Content-Type: application/json" localhost:9000/carts/123/item -d '
@@ -366,7 +366,7 @@ Here, you can view not only the [current state of the cart](http://localhost:988
 
 ## <a href="about:blank#_deploy_to_akka_io"></a> Deploy to akka.io
 
-Now that you’ve built and started the shopping cart service locally, it’s time to run it on the Akka Agentic Platform without having to change any code.
+Now that you have built and started the shopping cart service locally, it is time to run it on the Akka Agentic Platform without having to change any code.
 
 1. If you have not already done so, [install the Akka CLI](../../operations/cli/installation.html).
 2. Authenticate the CLI with your Akka account:
@@ -445,7 +445,7 @@ curl https://spring-tooth-3406.gcp-us-east1.akka.services/carts/123
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Now that you’ve built and deployed a shopping cart service, take your Akka skills to the next level:
+Now that you have built and deployed a shopping cart service, take your Akka skills to the next level:
 
 1. **Add a view**: Continue to the [next step](addview.html) in the tour.
 2. **Expand on your own**: Explore [other Akka components](../../sdk/components/index.html) to enhance your application with additional features.
@@ -453,7 +453,7 @@ Now that you’ve built and deployed a shopping cart service, take your Akka ski
 [1](about:blank#_footnoteref_1). Defined as a stateful behavior capable of acting on its own.
 <!-- <footer> -->
 <!-- <nav> -->
-[Shopping cart](index.html) [Authenticated user-specific lookup](addview.html)
+[Shopping cart tutorial](index.html) [Authenticated user-specific lookup](addview.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

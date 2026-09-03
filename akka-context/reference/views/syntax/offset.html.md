@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View query syntax](index.html)
 - [OFFSET](offset.html)
 
@@ -9,7 +9,7 @@
 
 # OFFSET
 
-The `OFFSET` clause specifies the number of rows to skip before starting to return rows from the query. It’s primarily used for implementing pagination or skipping initial results.
+The `OFFSET` clause specifies the number of rows to skip before starting to return rows from the query. It is primarily used for implementing pagination or skipping initial results.
 
 ## <a href="about:blank#_syntax"></a> Syntax
 

@@ -202,7 +202,7 @@ Now that we have our workflow state defined, the remaining tasks can be summariz
 
 ## <a href="about:blank#_starting_workflow"></a> Starting workflow
 
-Let’s have a look at what our transfer workflow will look like for the first 2 points from the above list. We will now define how to launch a workflow with a `startTransfer` command handler that will return an `Effect` to start a workflow by providing a transition to the first step. Also, we will update the state with an initial value.
+Have a look at what our transfer workflow will look like for the first 2 points from the above list. We will now define how to launch a workflow with a `startTransfer` command handler that will return an `Effect` to start a workflow by providing a transition to the first step. Also, we will update the state with an initial value.
 
 [TransferWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow/src/main/java/com/example/transfer/application/TransferWorkflow.java)
 ```java
@@ -315,7 +315,7 @@ public ReadOnlyEffect<TransferState> getTransferState() {
 
 | **1** | Return the current state as reply for the request. |
 
-|  | We are returning the internal state directly back to the requester. In the endpoint, it’s usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
+|  | We are returning the internal state directly back to the requester. In the endpoint, it is usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
 A full transfer workflow source code sample can be downloaded as a [zip file](../java/_attachments/workflow-quickstart.zip). Follow the `README` file to run and test it.
 
 ## <a href="about:blank#_deleting_state"></a> Deleting state
@@ -332,11 +332,72 @@ public Effect<Done> delete() {
 ```
 
 | **1** | Instruction to delete the workflow. |
-When you give the instruction to delete a running workflow, it’s equivalent to ending and deleting a workflow. For already finished workflows, it is possible to delete them in the command handler. The actual removal of the workflow state is delayed to give downstream consumers time to process all prior updates. Including the fact that the workflow has been deleted (via method annotated with `@DeleteHandler`). By default, the existence of the workflow is completely cleaned up after a week.
+When you give the instruction to delete a running workflow, it is equivalent to ending and deleting a workflow. For already finished workflows, it is possible to delete them in the command handler. The actual removal of the workflow state is delayed to give downstream consumers time to process all prior updates. Including the fact that the workflow has been deleted (via method annotated with `@DeleteHandler`). By default, the existence of the workflow is completely cleaned up after a week.
 
 You can still handle read requests to the workflow until it has been completely removed, but the current state will be empty (or null). To check whether the workflow has been deleted, you can use the `isDeleted` method inherited from the `Workflow` class.
 
 It is best to not reuse the same workflow id after deletion, but if that happens after the workflow has been completely removed it will be instantiated as a completely new workflow without any knowledge of previous state.
+
+## <a href="about:blank#_terminating_workflow"></a> Terminating workflow
+
+A running workflow can be terminated from the outside by calling `terminate` directly on the component client. Once
+terminated, the workflow cannot be resumed, and calling `terminate` again is safe — it is a no-op on an already-finished workflow.
+
+If a step is in flight, the workflow does not wait for it to complete, and any result is ignored.
+
+After termination, the workflow is passivated and does not consume any runtime resources.
+
+[TransferEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow/src/main/java/com/example/transfer/api/TransferEndpoint.java)
+```java
+@Post("/transfer/{id}/terminate")
+public HttpResponse terminate(String id) {
+  log.info("Terminating transfer [{}].", id);
+  componentClient.forWorkflow(id).terminate(TransferWorkflow.class, "terminated by user"); // (1)
+  return HttpResponses.accepted();
+}
+```
+
+| **1** | Terminate the workflow with a short, human-readable reason. The reason is persisted in the workflow’s event journal and written to the runtime logs at termination time, so it must not contain secrets or PII. |
+The reason is optional — there is also an overload that takes only the workflow class. An async variant `terminateAsync` is available, returning a `CompletionStage<Done>`.
+
+|  | Termination preserves the workflow state — it only prevents further execution. If you also want to remove the state, use `delete` from within a command handler (see [Deleting state](about:blank#_deleting_state)). |
+
+## <a href="about:blank#_suspending_and_resuming_workflow"></a> Suspending and resuming workflow
+
+In addition to terminating a workflow, you can pause execution from the outside with `suspend` and bring it back with `resume`. This is useful when you need to halt a workflow temporarily — for example, during maintenance or while investigating an in-flight execution — without giving up the option to continue later.
+
+Suspension behaves like termination: if a step is in flight, the workflow does not wait for it to complete, and any result it produces after the suspend takes effect is ignored. On `resume`, execution restarts at the step in flight, giving it a fresh chance to run. Both calls are idempotent — suspending an already-suspended workflow, or resuming a workflow that is not suspended, is a successful no-op.
+
+Timeouts remain active while a workflow is suspended:
+
+- If a workflow timeout fires while suspended, the workflow fails with a timeout.
+- If a workflow timeout with a failover step fires while suspended, the failover step is executed on resume.
+- If a pause timer fires while suspended, the configured timeout handler is called on resume.
+While suspended, the workflow is passivated and does not consume any runtime resources.
+
+[TransferEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow/src/main/java/com/example/transfer/api/TransferEndpoint.java)
+```java
+@Post("/transfer/{id}/suspend")
+public HttpResponse suspend(String id) {
+  log.info("Suspending transfer [{}].", id);
+  componentClient.forWorkflow(id).suspend(TransferWorkflow.class, "suspended by user"); // (1)
+  return HttpResponses.accepted();
+}
+```
+
+| **1** | Suspend the workflow with a short, human-readable reason. As with `terminate`, the reason is persisted and logged, so it must not contain secrets or PII. |
+[TransferEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow/src/main/java/com/example/transfer/api/TransferEndpoint.java)
+```java
+@Post("/transfer/{id}/resume")
+public HttpResponse resume(String id) {
+  log.info("Resuming transfer [{}].", id);
+  componentClient.forWorkflow(id).resume(TransferWorkflow.class); // (1)
+  return HttpResponses.accepted();
+}
+```
+
+| **1** | Resume a previously suspended workflow. |
+The reason on `suspend` is optional — there is also an overload that takes only the workflow class. Async variants `suspendAsync` and `resumeAsync` are available, returning `CompletionStage<Done>`.
 
 ## <a href="about:blank#_calling_external_services"></a> Calling external services
 
@@ -500,7 +561,6 @@ public class WorkflowEndpoint {
 
 | **1** | Define API-specific records to avoid exposing internal domain types outside the service. |
 | **2** | Map notifications to API records using the `map` operator on the notification source. The result can be wrapped with `HttpResponses.serverSentEvents()` for SSE delivery to HTTP clients. |
-You can find the full source code of workflow notification sample in the [akka-samples/multi-agent GitHub Repository](https://github.com/akka-samples/multi-agent).
 
 |  | The notification stream is a live stream that emits messages only after the client creates the stream—it does not replay historical messages. While the stream is running, it delivers all messages in order without message loss. If the stream detects missing messages, it will fail, allowing clients to reconnect and recover. |
 
@@ -508,7 +568,7 @@ You can find the full source code of workflow notification sample in the [akka-s
 
 ## <a href="about:blank#_error_handling"></a> Error handling
 
-Design for failure is one of the key attributes of all Akka components. Workflow has the richest set of configurations from all of them. It’s essential to build robust and reliable solutions.
+Design for failure is one of the key attributes of all Akka components. Workflow has the richest set of configurations from all of them. It is essential to build robust and reliable solutions.
 
 ### <a href="about:blank#_timeouts"></a> Timeouts
 
@@ -536,7 +596,7 @@ public WorkflowSettings settings() {
 
 ### <a href="about:blank#_recover_strategy"></a> Recover strategy
 
-It’s time to define what should happen in case of step timeout or any other unhandled error.
+It is time to define what should happen in case of step timeout or any other unhandled error.
 
 [TransferWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow-compensation/src/main/java/com/example/transfer/application/TransferWorkflow.java)
 ```java
@@ -559,7 +619,7 @@ public WorkflowSettings settings() {
 
 ### <a href="about:blank#_compensation"></a> Compensation
 
-The idea behind the Workflow error handling is that workflows should only fail due to unknown errors during execution. In general, you should always write your workflows so that they do not fail on any known edge cases. If you expect an error, it’s better to be explicit about it, possibly with your domain types. Based on this information and the flexible Workflow API you can define a compensation for any workflow step.
+The idea behind the Workflow error handling is that workflows should only fail due to unknown errors during execution. In general, you should always write your workflows so that they do not fail on any known edge cases. If you expect an error, it is better to be explicit about it, possibly with your domain types. Based on this information and the flexible Workflow API you can define a compensation for any workflow step.
 
 [TransferWorkflow.java](https://github.com/akka/akka-sdk/blob/main/samples/transfer-workflow-compensation/src/main/java/com/example/transfer/application/TransferWorkflow.java)
 ```java
@@ -607,7 +667,7 @@ private StepEffect compensateWithdrawStep() { // (4)
 | **4** | Compensation step is like any other step, with the same set of functionalities. |
 | **5** | Correct compensation can finish the workflow. |
 | **6** | Any other result might be handled by a default recovery strategy. |
-Compensating a workflow step(s) might involve multiple logical steps and thus is part of the overall business logic that must be defined within the workflow itself. For simplicity, in the example above, the compensation is applied only to `withdraw` step. Whereas `deposit` step itself might also require a compensation. In case of a step timeout we can’t be certain about step successful or error outcome.
+Compensating a workflow step(s) might involve multiple logical steps and thus is part of the overall business logic that must be defined within the workflow itself. For simplicity, in the example above, the compensation is applied only to `withdraw` step. Whereas `deposit` step itself might also require a compensation. In case of a step timeout we cannot be certain about step successful or error outcome.
 
 A full error handling and compensation sample can be downloaded as a [zip file](../java/_attachments/workflow-quickstart.zip). Run `TransferWorkflowIntegrationTest` and examine the logs from the application.
 
@@ -639,7 +699,7 @@ This also means that you might not see your own writes, immediately. Consider th
 - send a write request and that is routed to a primary in another region
 - after receiving the response of the write request, you send a read request that is served by the non-primary region
 - the stateful component instance in the non-primary region might not have seen the replicated changes yet, and therefore replies with "stale" information
-If it’s important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
+If it is important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
 
 The operational aspects are described in [Regions](../operations/regions/index.html).
 

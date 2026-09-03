@@ -58,7 +58,7 @@ Optionally, you can deploy your agentic services into [Akka Automated Operations
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Running a local cluster](../sdk/local-cluster.html) [Self-managed operations](configuring.html)
+[Design considerations](../sdk/dev-best-practices.html) [Self-managed operations](configuring.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -135,13 +135,11 @@ You can use this for other things than jailbreak attempt detection.
 
 ## <a href="about:blank#_see_also"></a> See also
 
-- [Governance & the runtime](../../concepts/governance-and-the-runtime.html) — Why governance must live in the runtime, not in a sidecar.
 - [Data sanitization](../sanitization.html) — Complementary PII protection through input and output sanitization.
-- [Building Trustworthy AI](https://akka.io/blog/trustworthy-ai-with-akka) — Background on the design principles behind Akka’s risk controls.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Orchestrating multiple agents](orchestrating.html) [LLM evaluation](llm_eval.html)
+[Multi-agent orchestration](orchestrating.html) [LLM evaluation](llm_eval.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

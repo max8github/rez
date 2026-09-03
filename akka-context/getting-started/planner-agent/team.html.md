@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [Multi-agent planner](index.html)
+- [Getting Started](../index.html)
+- [Multi-agent tutorial](index.html)
 - [Orchestrate the agents](team.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -23,7 +23,7 @@ In this part of the guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
@@ -136,11 +136,11 @@ public class AgentTeamWorkflow extends Workflow<AgentTeamWorkflow.State> {
 | **4** | Next step is to find activities. |
 | **5** | Request to the `ActivityAgent`. |
 | **6** | The final result is stored in the workflow state. |
-You might have noticed that we don’t pass the forecast as a parameter to the `ActivityAgent`. How would it then know about the weather? The `WeatherAgent` and `Activity` agents share the same session memory and thereby the `ActivityAgent` will have the weather forecast in the context that is sent to the AI model.
+You might have noticed that we do not pass the forecast as a parameter to the `ActivityAgent`. How would it then know about the weather? The `WeatherAgent` and `Activity` agents share the same session memory and thereby the `ActivityAgent` will have the weather forecast in the context that is sent to the AI model.
 
 ## <a href="about:blank#_adjust_the_endpoint"></a> Adjust the endpoint
 
-Let’s modify the endpoint to use the `AgentTeamWorkflow` workflow instead of calling the agent directly.
+Modify the endpoint to use the `AgentTeamWorkflow` workflow instead of calling the agent directly.
 
 ActivityEndpoint.java
 ```java
@@ -158,7 +158,7 @@ public HttpResponse suggestActivities(String userId, Request request) {
 ```
 
 | **1** | Spawn the workflow by calling the `start` method. |
-| **2** | Since the workflow is running in the background we can’t wait for the final answer, but instead reply with a HTTP `CREATED` status code. |
+| **2** | Since the workflow is running in the background we cannot wait for the final answer, but instead reply with a HTTP `CREATED` status code. |
 This is returning `akka.http.javadsl.model.HttpResponse`, which is created with `akka.javasdk.http.HttpResponses`.
 
 We need another method to retrieve the actual answer:
@@ -202,12 +202,12 @@ Does it take the current weather forecast into account? You should see the `Weat
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-- It would be nice to see all previous suggestions for a user. Continue with [List by user](list.html)
+- In a larger system with more agents, we could let the AI model coordinate which agents to consult for each request, rather than encoding the orchestration as workflow steps. Continue with [Dynamic orchestration](dynamic-team.html) to introduce an Autonomous Agent coordinator with built-in delegation.
 - Learn more about the <a href="../../sdk/workflows.html">`Workflow` component</a>.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Weather agent](weather.html) [List by user](list.html)
+[Weather agent](weather.html) [Dynamic orchestration](dynamic-team.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

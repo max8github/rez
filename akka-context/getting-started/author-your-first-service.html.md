@@ -1,13 +1,13 @@
 <!-- <nav> -->
 - [Akka](../index.html)
-- [Getting started & Tutorials](index.html)
-- [Hello world agent](author-your-first-service.html)
+- [Getting Started](index.html)
+- [Code-first hello agent](author-your-first-service.html)
 
 <!-- </nav> -->
 
-# Build your first agent
+# Code-first hello agent
 
-|  | The recommended way to build your first agent is with [Spec-Driven Development](spec-your-first-agent.html). The tutorial below walks through the manual, hands-on Java approach — ideal for understanding how Akka components work under the hood. |
+|  | The recommended way to build your first agent is the [Spec-first hello agent](spec-your-first-agent.html) tutorial. The tutorial below walks through the manual, hands-on Java approach — ideal for understanding how Akka components work under the hood. |
 
 ## <a href="about:blank#_introduction"></a> Introduction
 
@@ -23,16 +23,13 @@ In this guide, you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
-- [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
-- <a href="https://curl.se/download.html">`curl` command-line tool</a>
-- Git
-- [OpenAI API key](https://platform.openai.com/api-keys)
-Akka has support for many AI providers, and this sample is using OpenAI. Sign up for free at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
+- Complete [Set up your env without AI](set-up-dev-env.html#_set_up_your_env_without_ai) — install the Akka CLI, Java, and Maven.
+- Git.
+- An [OpenAI API key](https://platform.openai.com/api-keys). This sample uses OpenAI; sign up for free at [platform.openai.com/api-keys](https://platform.openai.com/api-keys).
 
 ## <a href="about:blank#clone_sample"></a> Clone the sample project
 
-1. From a command line, use the Akka CLI to create a new project. See [installation instructions](quick-install-cli.html) if you haven’t installed the CLI yet.
+1. From a command line, use the Akka CLI to create a new project. See [installation instructions](quick-install-cli.html) if you have not installed the CLI yet.
 
 ```command
 akka code init --name helloworld-agent --repo akka-samples/helloworld-agent.git
@@ -209,7 +206,7 @@ Previous greetings:
 
 |  | What just happened?
 
-The greetings will be in different languages each time. The AI model itself is stateless, so it wouldn’t know what languages it had used previously unless we included that information in each request to the model. Akka Agents automatically track context using **session memory**. In this case, the Agent is able to remember all the past messages and languages that were used in this session.
+The greetings will be in different languages each time. The AI model itself is stateless, so it would not know what languages it had used previously unless we included that information in each request to the model. Akka Agents automatically track context using **session memory**. In this case, the Agent is able to remember all the past messages and languages that were used in this session.
 
 Here we use the user `alice` as the session identifier. Give it a try to change the user field in the HTTP request, and you will see that it starts over without previous knowledge about Alice or the used languages. |
 
@@ -321,18 +318,18 @@ You can also see the details of the session in the `SessionMemoryEntity`.
 ![Session memory in the Local Console](_images/hello-world-session-memory.png)
 
 
-If you’re curious about which components are called and for how long when you make a request of this agent, you can use the request creation console feature. Simply click on the `HelloworldEndpoint` and you will see the *Create a request* box. Fill in the fields the way you might if you were manually using `curl`. After the request executes (it could take a few seconds), you will see an analysis of the request, as shown in this screenshot:
+If you are curious about which components are called and for how long when you make a request of this agent, you can use the request creation console feature. Simply click on the `HelloworldEndpoint` and you will see the *Create a request* box. Fill in the fields the way you might if you were manually using `curl`. After the request executes (it could take a few seconds), you will see an analysis of the request, as shown in this screenshot:
 
 ![An HTTP post calls the agent](_images/flowview_helloworld.png)
 
 
 A key insight to take away from this image is that 99.9% of the request’s execution time was spent talking to OpenAI.
 
-This is a simple Hello World service, so there isn’t much to see here yet. However, as you build more complex services, the console will become a more valuable tool for monitoring and debugging.
+This is a simple Hello World service, so there is not much to see here yet. However, as you build more complex services, the console will become a more valuable tool for monitoring and debugging.
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Now that you have a basic service running, it’s time to learn more about building real services in Akka.
+Now that you have a basic service running, it is time to learn more about building real services in Akka.
 
 - See the [Spec-first greeting agent](spec-your-first-agent.html) sample if you use an AI assistant and want to see a [Spec-Driven Development](../sdk/spec-driven-development.html) alternative to this example.
 - See [multi-agent planner](planner-agent/index.html) to build a more realistic application.
@@ -342,11 +339,10 @@ Now that you have a basic service running, it’s time to learn more about build
 
 - [Spec-driven development](../sdk/spec-driven-development.html)
 - [Build an AI multi-agent planner](planner-agent/index.html)
-- [Akkademy training](https://akkademy.akka.io/)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Spec-first greeting agent](spec-your-first-agent.html) [Multi-agent planner](planner-agent/index.html)
+[Spec-first hello agent](spec-your-first-agent.html) [Multi-agent tutorial](planner-agent/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

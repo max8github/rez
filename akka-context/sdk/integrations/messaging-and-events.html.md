@@ -35,14 +35,14 @@ For more advanced streaming needs, you can use Akka Streams directly. See the [A
 
 When you need to integrate with systems outside Akka, use external message brokers. Akka offers built-in integrations for:
 
-- **Kafka** — via hosted services (Confluent Cloud, AWS MSK, Aiven)
-- **Google Cloud Pub/Sub**
-- **Azure Event Hubs**
+- **Kafka** — [Confluent Cloud](../../operations/projects/broker-confluent.html), [AWS MSK](../../operations/projects/broker-aws-msk.html), [Aiven for Apache Kafka](../../operations/projects/broker-aiven.html), or [a self-hosted or other Kafka cluster](../../operations/projects/broker-kafka.html)
+- [Google Cloud Pub/Sub](../../operations/projects/broker-google-pubsub.html)
+- [Azure Event Hubs](../../operations/projects/broker-azure-eventhubs.html)
 For these built-in technologies, Akka decouples the broker configuration from the implementation of the Consumer or Producer. The topic name is referenced independently of the broker technology, as demonstrated in [Consume from a message broker Topic](../consuming-producing.html#consume_topic) and [Producing to a message broker Topic](../consuming-producing.html#topic_producing). All connection details are managed at the Akka project level. For configuration instructions, refer to [Configure message brokers](../../operations/projects/message-brokers.html).
 
 ### <a href="about:blank#_testing_with_message_brokers"></a> Testing with message brokers
 
-The Akka SDK testkit has built-in support for simulating message brokers. See [Testing the integration](../consuming-producing.html#testing) for details. For running locally with a broker, refer to [running a service with broker support](../running-locally.html#_local_broker_support).
+The Akka SDK testkit has built-in support for simulating message brokers. See [Testing the integration](../consuming-producing.html#testing) for details. For running locally against a real broker (Kafka or the Google Pub/Sub emulator), see [Running locally with a message broker](../running-with-broker.html).
 
 ### <a href="about:blank#_other_broker_technologies"></a> Other broker technologies
 
@@ -58,11 +58,10 @@ Implement webhooks for external system callbacks using [HTTP Endpoints](../http-
 - [Streaming](../streaming.html)
 - [Configure message brokers](../../operations/projects/message-brokers.html)
 - <a href="../../reference/cli/akka-cli/akka_projects_config.html#_see_also">`akka projects config` commands</a>
-- [Alpakka connectors](https://doc.akka.io/libraries/alpakka/current)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Data & knowledge](data-and-knowledge.html) [APIs & protocols](apis-and-protocols.html)
+[Object storage](object-storage.html) [APIs & protocols](apis-and-protocols.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [RAG chat agent](index.html)
+- [Getting Started](../index.html)
+- [RAG chat tutorial](index.html)
 - [Executing RAG queries](rag.html)
 
 <!-- </nav> -->
@@ -10,15 +10,15 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
-In this step of the guide to building the *Ask Akka* application, you’ll be creating a class that wraps the OpenAI API and the MongoDB client API. It’s this class that will provide the abstraction for the rest of the application to use when making RAG queries. You’ll use Akka’s `@Setup` to configure the dependency injection for this class.
+In this step of the guide to building the *Ask Akka* application, you will be creating a class that wraps the OpenAI API and the MongoDB client API. It is this class that will provide the abstraction for the rest of the application to use when making RAG queries. You will use Akka’s `@Setup` to configure the dependency injection for this class.
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
@@ -29,7 +29,7 @@ We recommend reviewing our [foundational explainer on AI concepts](../../concept
 
 ## <a href="about:blank#_creating_the_knowledge_class"></a> Creating the Knowledge class
 
-We’re going to add a utility that will retrieve content from MongoDB that is related to the user’s query.
+We are going to add a utility that will retrieve content from MongoDB that is related to the user’s query.
 
 The following is the basic RAG-specific code that you can add to a new file `Knowledge.java` in `src/main/java/akka/ask/agent/application/`.
 
@@ -169,7 +169,7 @@ curl localhost:9000/api/ask --header "Content-Type: application/json" -XPOST \
 --data '{ "userId": "001", "sessionId": \
           "foo", "question":"What are the core components of Akka?"}'
 ```
-In the first part of this guide, the AI model couldn’t answer that question meaningfully, but now it will answer something like:
+In the first part of this guide, the AI model could not answer that question meaningfully, but now it will answer something like:
 
 ```none
 1. Event Sourced Entities ...
@@ -180,7 +180,7 @@ In the first part of this guide, the AI model couldn’t answer that question me
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Next we’ll create [UI endpoints](endpoints.html).
+Next we will create [UI endpoints](endpoints.html).
 
 <!-- <footer> -->
 <!-- <nav> -->

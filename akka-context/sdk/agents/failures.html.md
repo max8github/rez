@@ -3,13 +3,13 @@
 - [Developing](../index.html)
 - [Components](../components/index.html)
 - [Agents](../agents.html)
-- [Handling failures](failures.html)
+- [Failure handling](failures.html)
 
 <!-- </nav> -->
 
-# Handling failures
+# Failure handling
 
-The `onFailure` method in the agent’s effect API provides comprehensive error handling capabilities for various types of failures that can occur during model processing. This allows you to implement robust fallback strategies and provide meaningful responses even when things go wrong.
+The `onFailure` method in the agent’s effect API handles failures that occur during model processing. Use it to implement fallback strategies and return a meaningful response when a request fails.
 
 ## <a href="about:blank#_types_of_exceptions_handled"></a> Types of exceptions handled
 
@@ -32,8 +32,8 @@ The `onFailure` method can handle the following types of exceptions:
   - `JsonParsingException` - Response parsing failures (as shown in structured responses)
 - **Unknown exceptions:**
 
-  - `RuntimeException` - For any unexpected errors that don’t fall into the above categories
-Apart from the listed specific exceptions, users can still encounter `RuntimeException` instances that wrap unexpected errors. Therefore, when handling errors in the `onFailure` method, it’s recommended to always include a `default` case to handle any unknown exception types gracefully.
+  - `RuntimeException` - For any unexpected errors that do not fall into the above categories
+Apart from the listed specific exceptions, users can still encounter `RuntimeException` instances that wrap unexpected errors. Therefore, when handling errors in the `onFailure` method, it is recommended to always include a `default` case to handle any unknown exception types gracefully.
 
 ## <a href="about:blank#_implementing_fallback_strategies"></a> Implementing fallback strategies
 
@@ -61,9 +61,15 @@ public Effect<String> query(String message) {
 | **3** | For unknown or unexpected exceptions, define a default matching branch providing a generic fallback response. |
 This approach ensures your agents remain resilient and can provide meaningful responses even when encountering various types of failures during model interaction.
 
+## <a href="about:blank#_see_also"></a> See also
+
+- [Agents](../agents.html)
+- [Errors and failures](../errors-and-failures.html)
+- [Guardrails](guardrails.html)
+
 <!-- <footer> -->
 <!-- <nav> -->
-[Structured responses](structured.html) [Extending with function tools](extending.html)
+[Structured responses](structured.html) [Function tools](extending.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

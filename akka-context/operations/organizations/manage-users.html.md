@@ -46,7 +46,7 @@ fd21044c-b973-4220-8f65-0f7d317bb23b   superuser   jane.citizen   jane.citizen@e
 ## <a href="about:blank#_granting_a_role"></a> Granting a role
 
 |  | When using *OpenID Connect* (OIDC), see [OIDC setup](../../reference/security/oidc-setup.html#assigning_organization_level_roles). |
-You can grant a role to a user in two ways:
+You can grant a role to a user in two ways, or grant a role directly to a service:
 
 ### <a href="about:blank#_1_invite_a_user_by_email"></a> 1. Invite a User by Email
 
@@ -68,6 +68,16 @@ akka organization users add-binding --organization <organization name> \
 - By username:
 akka organizations users add-binding --organization <organization name> \
   --username <username> --role <role>
+### <a href="about:blank#_3_grant_a_role_to_a_service"></a> 3. Grant a role to a service
+
+A service can also authenticate as itself against the Akka platform API using workload identity, and be granted a role directly:
+
+```command
+akka organizations users add-binding --organization <organization name> \
+  --service <service name> --role <role>
+```
+For the full walkthrough, including how to configure the service to authenticate, see [Authenticating with the Akka platform API](../services/workload-identity.html#authenticating-with-the-akka-platform-api).
+
 ## <a href="about:blank#_deleting_a_role_binding"></a> Deleting a role binding
 
 To delete a role binding, first list the users to get the role binding ID. Then, use the following command:
@@ -101,6 +111,7 @@ To resend an invitation, cancel the previous one and reissue the invite.
 ## <a href="about:blank#_see_also"></a> See also
 
 - [Managing project users](../projects/manage-project-access.html)
+- [Workload Identity](../services/workload-identity.html)
 - [OpenID Connect Setup](../../reference/security/oidc-setup.html)
 - <a href="../../reference/cli/akka-cli/akka_organizations_users.html#_see_also">`akka organizations users` commands</a>
 - <a href="../../reference/cli/akka-cli/akka_organizations_invitations.html#_see_also">`akka organizations invitations` commands</a>

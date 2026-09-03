@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View query syntax](index.html)
 
 <!-- </nav> -->
@@ -93,7 +93,7 @@ Start with the [Query](query.html) reference for more examples and detailed synt
 
 <!-- <footer> -->
 <!-- <nav> -->
-[View reference](../index.html) [Query](query.html)
+[Views](../index.html) [Query](query.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

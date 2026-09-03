@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Optional fields](optional-fields.html)
 
@@ -152,7 +152,7 @@ Fields should be optional when:
 - The information might not be available for all entities
 - The field represents optional behavior or characteristics
 - The field is added in a schema evolution and might not exist for older entities
-- There’s a meaningful semantic difference between "not applicable" and "not provided"
+- There is a meaningful semantic difference between "not applicable" and "not provided"
 
 ### <a href="about:blank#_handling_optional_fields"></a> Handling Optional Fields
 
@@ -164,7 +164,7 @@ Fields should be optional when:
 
 ### <a href="about:blank#_avoiding_null_issues"></a> Avoiding NULL Issues
 
-- Don’t use `= NULL` or `!= NULL` - these won’t work as expected
+- Do not use `= NULL` or `!= NULL` - these will not work as expected
 - Check for null parent objects before accessing nested fields
 - Watch for default value behavior when mapping nulls to primitive types
 - Consider using the `Optional` API for safer handling of potentially missing values

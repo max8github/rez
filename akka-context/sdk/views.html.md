@@ -95,11 +95,11 @@ public class CustomersByEmail extends View { // (2)
 | **5** | Define the query, including a table name (i.e. `customers_by_email`) of our choice. |
 | **6** | Use method `queryResult()` to return the result of the query. |
 
-|  | Assigning a component identifier (i.e. `@Component`) to your View is mandatory, it must be unique, and it should be stable. This allows you to refactor the name of the class later on without the risk of losing the view. If you change this identifier later, Akka will not recognize this component as the same view and will create a brand-new view. For a view consuming from an Event Sourced Entity this becomes very resource consuming because it will reprocess all the events of that entity to rebuild it. While for a view built from a topic, you can lose all the previous events because, depending on the topic configuration, you may only process events from the current time forwards. Last but not least, it’s also a problem for Key Value Entities because it will need to index them again when grouping them by some value. |
+|  | Assigning a component identifier (i.e. `@Component`) to your View is mandatory, it must be unique, and it should be stable. This allows you to refactor the name of the class later on without the risk of losing the view. If you change this identifier later, Akka will not recognize this component as the same view and will create a brand-new view. For a view consuming from an Event Sourced Entity this becomes very resource consuming because it will reprocess all the events of that entity to rebuild it. While for a view built from a topic, you can lose all the previous events because, depending on the topic configuration, you may only process events from the current time forwards. Last but not least, it is also a problem for Key Value Entities because it will need to index them again when grouping them by some value. |
 
 ### <a href="about:blank#_using_a_transformed_model"></a> Using a transformed model
 
-Often, you will want to transform the entity model to which the view is subscribing into a different representation. To do that, let’s have a look at the example in which we store a summary of the `Customer` used in the previous section instead of the original one:
+Often, you will want to transform the entity model to which the view is subscribing into a different representation. To do that, have a look at the example in which we store a summary of the `Customer` used in the previous section instead of the original one:
 
 [CustomersByName.java](https://github.com/akka/akka-sdk/blob/main/samples/key-value-customer-registry/src/main/java/customer/application/CustomersByName.java)
 ```java
@@ -222,7 +222,7 @@ public sealed interface CustomerEvent {
 
 | **1** | Includes the logical type name using `@TypeName` annotation. |
 
-|  | It’s highly recommended to add a `@TypeName` to your persisted events. Akka needs to identify each event in order to deliver them to the right event handlers. If no logical type name is specified, Akka uses the FQCN, check [type name](serialization.html#_type_name) documentation for more details. |
+|  | It is highly recommended to add a `@TypeName` to your persisted events. Akka needs to identify each event in order to deliver them to the right event handlers. If no logical type name is specified, Akka uses the FQCN, check [type name](serialization.html#_type_name) documentation for more details. |
 
 ### <a href="about:blank#_define_the_view_to_consume_events"></a> Define the View to consume events
 
@@ -437,7 +437,7 @@ Akka creates indexes for the View based on the queries. For example, the followi
 ```sql
 SELECT * FROM customers WHERE name = :customer_name
 ```
-You may realize after a deployment that you forgot adding some parameters to the query parameters that aren’t exposed to the endpoint of the View. After adding these parameters the query is changed and therefore Akka will add indexes for these new columns. For example, changing the above query to filter by active users would mean a new index on the `is-active` column. This is handled automatically behind the scenes.
+You may realize after a deployment that you forgot adding some parameters to the query parameters that are not exposed to the endpoint of the View. After adding these parameters the query is changed and therefore Akka will add indexes for these new columns. For example, changing the above query to filter by active users would mean a new index on the `is-active` column. This is handled automatically behind the scenes.
 
 ```sql
 SELECT * FROM customers WHERE name = :customer_name AND is-active = true

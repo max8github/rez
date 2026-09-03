@@ -1,13 +1,14 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Understanding](index.html)
+- Foundations
 - [Distributed systems](distributed-systems.html)
 
 <!-- </nav> -->
 
 # Distributed systems
 
-Modern distributed systems—whether agentic AI, microservices applications, or edge computing—demand more than just scalable infrastructure. They require systems that are resilient under stress, responsive under load, elastic with demand, and maintainable at scale. Akka is built from the ground up on proven battle-tested principles of distributed computing, reflecting more than a decade-long commitment to applying architectural discipline to the nondeterminism and chaos of concurrency, distribution, and failure.
+Modern distributed systems—whether agentic AI, microservices applications, or edge computing—demand more than just scalable infrastructure. They require systems that are resilient under stress, responsive under load, elastic with demand, and maintainable at scale. Akka is built on proven principles of distributed computing, applying architectural discipline to the nondeterminism and chaos of concurrency, distribution, and failure.
 
 |  | Akka’s approach is to make the *inherent complexity* of the problem space—the *nondeterminism* of distributed systems and *stochastic* nature of LLMs—first-class in the programming model, allowing it to be managed and kept under control as the system grows over time. |
 This is to avoid leaky abstractions that force you to pay the price later (when moving to production) through unbounded and undefined compounded *accidental complexity*. Accidental complexity can, if not kept under control, add exponential cost in terms of maintainability, understandability, extensibility, and overall infrastructure costs.
@@ -38,7 +39,7 @@ Akka embodies these principles as concrete implementation guidelines. Every feat
 
 ## <a href="about:blank#_grounded_in_distributed_systems_patterns_and_principles"></a> Grounded in distributed systems patterns and principles
 
-The foundation of Akka is detailed in the [O’Reilly Technical Guide: Principles and Patterns for Distributed Application Architecture](https://content.akka.io/guide/principles-and-patterns-for-distributed-application-architecture) (authored by Akka CTO and founder Jonas Bonér). Psst - get a free copy by clicking the link! This guide outlines architectural patterns that are essential for building robust systems, including how to leverage:
+The foundation of Akka is detailed in the [O’Reilly Technical Guide: Principles and Patterns for Distributed Application Architecture](https://www.oreilly.com/library/view/principles-and-patterns/9781098181260/) (authored by Akka CTO and founder Jonas Bonér). This guide outlines architectural patterns that are essential for building robust systems, including how to leverage:
 
 - Event sourcing and CQRS for reliable state management and auditability.
 - Event-driven communication, coordination, and integration.
@@ -48,7 +49,7 @@ The foundation of Akka is detailed in the [O’Reilly Technical Guide: Principle
 - Backpressure and flow control, ensuring that communication channels between services or agents never become bottlenecks or cause failure due to data overload.
 - Failure signaling and supervision, allowing systems to self-heal and degrade gracefully.
 - Automatic and transparent self-replication of agents and services for failover, redundancy, and scale.
-These constructs are operationalized in Akka’s runtime through [Agents](../sdk/agents.html), [Entities](../sdk/event-sourced-entities.html), [Views](../sdk/views.html), [Endpoints](../sdk/http-endpoints.html), [Workflows](../sdk/workflows.html), and [Consumers](../sdk/consuming-producing.html) backed by actors, event-sourced persistence, multi-region replication, durable streaming real-time projections, and sharded clusters—all battle-tested in production systems across industries for over a decade, providing a tuned and proven runtime for enterprise-grade services.
+These constructs are operationalized in Akka’s runtime through [Agents](../sdk/agents.html), [Entities](../sdk/event-sourced-entities.html), [Views](../sdk/views.html), [Endpoints](../sdk/http-endpoints.html), [Workflows](../sdk/workflows.html), and [Consumers](../sdk/consuming-producing.html) backed by actors, event-sourced persistence, multi-region replication, durable streaming real-time projections, and sharded clusters.
 
 ## <a href="about:blank#_designed_for_multi_agent_ai"></a> Designed for multi-agent AI
 
@@ -64,15 +65,15 @@ The demands of multi-agent AI systems—which involve large numbers of autonomou
 - Loose coupling and evolvability, aided by schema-versioned messages and contract-first APIs.
 - Multi-region replication based on CRDTs for collaborative knowledge sharing and eventual consistency without global locking.
 
-## <a href="about:blank#_why_it_matters"></a> Why It Matters
+## <a href="about:blank#_why_it_matters"></a> Why it matters
 
-Building agentic AI systems—or modern cloud-native microservices—on unstable foundations leads to brittle architectures that fail under real-world conditions. Akka mitigates this risk by enforcing principles and patterns anticipating failure, load, inconsistency, and change.
+Building agentic AI systems—or modern cloud-native microservices—on unstable foundations can lead to brittle architectures that fail under real-world conditions. Akka addresses this by applying principles and patterns that anticipate failure, load, inconsistency, and change.
 
-Whether deploying thousands of autonomous AI agents or orchestrating business-critical microservices, Akka gives you the architectural clarity and operational reliability to build systems that thrive in the real world, not just in theory.
+Whether you deploy many autonomous AI agents or orchestrate business-critical microservices, these foundations are intended to provide architectural clarity and operational reliability under real-world conditions.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Concepts](concepts.html) [Architecture](architecture-model.html)
+[Concepts](concepts.html) [Architecture model](architecture-model.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

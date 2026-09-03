@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [RAG chat agent](index.html)
+- [Getting Started](../index.html)
+- [RAG chat tutorial](index.html)
 - [Adding UI endpoints](endpoints.html)
 
 <!-- </nav> -->
@@ -10,21 +10,23 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
-In this step of the guide, you’ll add some endpoints to provide a client-friendly API in front of all of the RAG components you’ve been building. You’ll create an API for submitting your "Ask Akka" questions (prompts), and one that serves up a self-hosted, static asset web UI.
+In this step of the guide, you will add some endpoints to provide a client-friendly API in front of all of the RAG components you have been building. You will create an API for submitting your "Ask Akka" questions (prompts), and one that serves up a self-hosted, static asset web UI.
+
+By the end of this step the service hosts its own web application: the browser loads the page from the same service that answers its questions, with no separate web server involved. See [Web applications](../../sdk/web-applications.html) for what else a service can serve to a browser.
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
 You will need to have your MongoDB Atlas database URL and your Open AI API key available, as they are required to run the Ask Akka service.
 
-If you are following along with each step rather than using the completed solution, then you’ll need the code you wrote in the previous step.
+If you are following along with each step rather than using the completed solution, then you will need the code you wrote in the previous step.
 
 ## <a href="about:blank#_unfamiliar_with_concepts_like_vectors_embeddings_or_rag"></a> Unfamiliar with concepts like vectors, embeddings or RAG?
 
@@ -32,7 +34,7 @@ We recommend reviewing our [foundational explainer on AI concepts](../../concept
 
 ## <a href="about:blank#_add_a_session_history_view"></a> Add a session history view
 
-You probably noticed that in the endpoint and in the agent, we’re tracking both session IDs and user IDs. If you’ve ever used the ChatGPT web interface, then you’re familiar with the layout where a user’s conversation history is shown on the left and you can click on each to view and continue that conversation.
+You probably noticed that in the endpoint and in the agent, we are tracking both session IDs and user IDs. If you have ever used the ChatGPT web interface, then you are familiar with the layout where a user’s conversation history is shown on the left and you can click on each to view and continue that conversation.
 
 Communication with an LLM is *stateless*. Everything that you get back from a model like ChatGPT is directly related to the prompt you submit. The Agent component in Akka has a built-in session memory, which enables agents to maintain context across multiple interactions. When an agent interacts with an AI model, both the user message and the AI response are automatically stored in the session memory. These messages are then included as additional context in subsequent requests to the model, allowing it to reference previous parts of the interaction.
 
@@ -125,7 +127,7 @@ public class ConversationHistoryView extends View {
 }
 ```
 
-| **1** | We’re using a view-specific message type here to avoid bleeding logic across tiers |
+| **1** | We are using a view-specific message type here to avoid bleeding logic across tiers |
 | **2** | Retrieves a full history of all sessions for a given user |
 | **3** | Convenience method to either get the current row state or make a new one |
 
@@ -182,22 +184,22 @@ There is far too much code in the HTML file to list out here. If you want to run
 
 Running the service should now just be a matter of running `mvn compile exec:java`. Make sure that you have set both the `OPENAI_API_KEY` and `MONGODB_ATLAS_URI` environment variables before running `exec:java`.
 
-If you haven’t run the indexer yet, do so with:
+If you have not run the indexer yet, do so with:
 
 ```command
 curl -XPOST localhost:9000/api/index/start
 ```
-Once you’ve made sure that your MongoDB Atlas database has a functioning and properly named vector index, you can open the Ask Akka UI in the browser: [localhost:9000](http://localhost:9000/).
+Once you have made sure that your MongoDB Atlas database has a functioning and properly named vector index, you can open the Ask Akka UI in the browser: [localhost:9000](http://localhost:9000/).
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-Now that you’ve gone through the process of building the Ask Akka sample, you should start playing with it and even breaking it. Change the indexing parameters like chunk size and see if that affects how the LLM performs. The key is to roll up your sleeves and get dirty, as that’s the best way to extend your learning beyond what’s covered in this guide.
+Now that you have gone through the process of building the Ask Akka sample, you should start playing with it and even breaking it. Change the indexing parameters like chunk size and see if that affects how the LLM performs. The key is to roll up your sleeves and get dirty, as that is the best way to extend your learning beyond what is covered in this guide.
 
 Make sure you check out our thorough discussion of [agentic AI](https://akka.io/what-is-agentic-ai) and where Akka fits in the ecosystem.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Executing RAG queries](rag.html) [Shopping cart](../shopping-cart/index.html)
+[Executing RAG queries](rag.html) [Shopping cart tutorial](../shopping-cart/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

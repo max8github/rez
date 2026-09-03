@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Array types](array-types.html)
 
@@ -189,7 +189,7 @@ Empty arrays are handled as follows:
 
 ### <a href="about:blank#_null_vs_empty_array"></a> NULL vs. Empty Array
 
-There’s a distinction between NULL arrays and empty arrays:
+There is a distinction between NULL arrays and empty arrays:
 
 - NULL array: The array field itself is missing (`array IS NULL`)
 - Empty array: The array exists but contains no elements (`array = '{}'`)

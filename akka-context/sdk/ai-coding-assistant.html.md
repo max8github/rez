@@ -1,12 +1,14 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
+- Building with AI
 - [Using an AI coding assistant](ai-coding-assistant.html)
 
 <!-- </nav> -->
 
 # Using an AI coding assistant
 
+|  | These guidelines are for enabling AI assistants to use the Akka CLI natively. If you are using the [Akka Specify Plugin](spec-driven-development.html) with spec-driven development, all of this configuration and these best practices are enabled within the Akka Specify Plugin automatically. |
 AI coding assistants can increase your productivity when developing Akka services. This guide will give you some practical hints of how to setup Akka knowledge and how to prompt the AI assistant. We are using [Claude code](https://docs.claude.com/en/docs/claude-code/overview), [Qodo](https://www.qodo.ai/), [Cursor](https://www.cursor.com/) and [IntelliJ IDEA](https://www.jetbrains.com/help/idea/ai-assistant-in-jetbrains-ides.html) as examples of such coding assistants, but the techniques are applicable for other tools as well.
 
 Some key benefits of using an AI coding assistant:
@@ -24,9 +26,9 @@ In summary, we will look at the following:
 4. Use our coding guidelines template for better code generation
 5. Follow the prompt examples for common Akka development tasks
 
-## <a href="about:blank#_why_doesnt_ai_know_about_latest_akka"></a> Why doesn’t AI know about latest Akka?
+## <a href="about:blank#_why_does_not_ai_know_about_latest_akka"></a> Why does not AI know about latest Akka?
 
-The LLMs have been trained on web content that didn’t include the latest documentation of the Akka SDK. If you ask it questions about Akka it will answer based on the knowledge it was trained on, which most certainly was about the Akka libraries. Some assistants will try to use web search to retrieve the latest information, but that is typically not enough and not an efficient way for a coding assistant. For example, if you ask:
+The LLMs have been trained on web content that did not include the latest documentation of the Akka SDK. If you ask it questions about Akka it will answer based on the knowledge it was trained on, which most certainly was about the Akka libraries. Some assistants will try to use web search to retrieve the latest information, but that is typically not enough and not an efficient way for a coding assistant. For example, if you ask:
 
 ```none
 What are the core components of Akka?
@@ -75,7 +77,7 @@ The `akka-context` documentation bundle is also available as [akka-docs-md.zip](
 
 Add `akka-context` to your `.gitignore` file, if you use git.
 
-If your AI coding assistant isn’t included in the Akka CLI you can use the [AGENTS.md](https://agents.md/) option in the Akka CLI, or download it from [Akka AGENTS.md](../_attachments/AGENTS.md).
+If your AI coding assistant is not included in the Akka CLI you can use the [AGENTS.md](https://agents.md/) option in the Akka CLI, or download it from [Akka AGENTS.md](../_attachments/AGENTS.md).
 
 ### <a href="about:blank#_notes_about_claude_code"></a> Notes about Claude code
 
@@ -115,11 +117,11 @@ Make sure that you download the latest documentation regularly to make use of do
 
 For Gemini CLI you can use `akka code init` and select Claude as coding assistant. Then rename the file `CLAUDE.md` to `GEMINI.md`.
 
-If Gemini CLI doesn’t make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
+If Gemini CLI does not make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
 
 ### <a href="about:blank#_notes_about_openai_codex"></a> Notes about OpenAI Codex
 
-If Codex doesn’t make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
+If Codex does not make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
 
 ## <a href="about:blank#_verify_that_it_works"></a> Verify that it works
 
@@ -141,7 +143,7 @@ it should answer with something like
 
 Even though the documentation includes comprehensive code snippets it can be good to include the full source code of one or a few samples. This makes it easier for the coding assistant to follow the same structure as the sample.
 
-1. Pick one or a few samples from [Additional samples](../getting-started/samples.html), which are relevant to what you are developing. If you are just getting started learning Akka you can pick the Shopping Cart sample.
+1. Pick one or a few samples from [Samples and blueprints](../getting-started/samples.html), which are relevant to what you are developing. If you are just getting started learning Akka you can pick the Shopping Cart sample.
 2. Clone the sample GitHub repository. Pull latest if you have already cloned the repository before.
 3. Copy the source code to a folder `akka-context/` in your development project, e.g. `akka-context/travel-agent/src`.
 4. Add `akka-context/` to your `.gitignore` file, if you use git.
@@ -155,7 +157,7 @@ The coding assistant will generate more accurate code if we give it some detaile
 
 For some assistants you can define instructions in configuration settings or files like `AGENTS.md` or `CLAUDE.md`.
 
-If your AI coding assistant doesn’t support that, you can include the guidelines directly in the chat session prompt like this:
+If your AI coding assistant does not support that, you can include the guidelines directly in the chat session prompt like this:
 
 ```none
 Don't generate any code yet, but remember the following guidelines and use them when writing code in this project.
@@ -170,11 +172,11 @@ Here are some examples of prompts that you can use as templates when giving inst
 
 ### <a href="about:blank#_general_advise"></a> General advise
 
-- Develop incrementally and don’t ask for too much at the same time.
+- Develop incrementally and do not ask for too much at the same time.
 - Compile and test after each step using `mvn test` or `mvn verify`. Fix compilation errors and test failures before proceeding too far.
 - Commit the changes often so that you can compare and revert if something goes wrong.
-- Be precise in the instructions and make corrections by further instructions if it doesn’t generate what you want.
-- Even with custom docs, AI might still occasionally "hallucinate" or provide slightly off answers. It’s important to include time for human review in the development loop.
+- Be precise in the instructions and make corrections by further instructions if it does not generate what you want.
+- Even with custom docs, AI might still occasionally "hallucinate" or provide slightly off answers. It is important to include time for human review in the development loop.
 - Make sure that the AI does not introduce security vulnerabilities. You are still responsible for the generated code.
 - Some things are just easier with ordinary IDE tooling, such as simple refactoring.
 
@@ -249,7 +251,7 @@ If you see an error message when running the application or tests you can try to
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Developer best practices](dev-best-practices.html) [Running a local cluster](local-cluster.html)
+[À la carte mode](a-la-carte-mode.html) [Components](components/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

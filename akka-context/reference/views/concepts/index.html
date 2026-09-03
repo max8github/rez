@@ -7,7 +7,7 @@
     <link rel="canonical" href="https://doc.akka.io/reference/views/concepts/index.html">
     <link rel="prev" href="../syntax/functions/page-token-offset.html">
     <link rel="next" href="table-updaters.html">
-    <meta name="generator" content="Antora 3.1.14">
+    <meta name="generator" content="Antora 3.1.15">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wdth,wght@0,75..100,400..700;1,75..100,400..700&family=Roboto+Mono:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
@@ -17,7 +17,9 @@
 	<meta itemprop="image" content="https://content.akka.io/hubfs/website/social-share-images/akka-1200-628.jpg">
 	<meta name="twitter:image:src" content="https://content.akka.io/hubfs/website/social-share-images/akka-1200-628.jpg">
 	<meta property="og:image" content="https://content.akka.io/hubfs/website/social-share-images/akka-1200-628.jpg" />
-	<meta property="og:image:secure_url" content="https://content.akka.io/hubfs/website/social-share-images/akka-1200-628.jpg" />	<script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js"  type="text/javascript" charset="UTF-8" data-domain-script="28b912e7-09e9-43d5-91e4-3d1897044004" ></script>
+	<meta property="og:image:secure_url" content="https://content.akka.io/hubfs/website/social-share-images/akka-1200-628.jpg" />
+	<meta property="og:title" content="View Concepts | Akka SDK" />
+	<script type="application/ld+json">{"@context":"https://schema.org","@type":"TechArticle","headline":"View Concepts","isPartOf":{"@type":"SoftwareApplication","name":"Akka SDK","applicationCategory":"DeveloperApplication"},"publisher":{"@type":"Organization","name":"Akka","url":"https://akka.io"},"about":"Akka SDK documentation","sameAs":"https://doc.akka.io/libraries/"}</script>	<script src="https://cdn.cookielaw.org/scripttemplates/otSDKStub.js"  type="text/javascript" charset="UTF-8" data-domain-script="28b912e7-09e9-43d5-91e4-3d1897044004" ></script>
 <!-- Google Tag Manager | Google Analytics is handled by GTM -->
 <script>(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
 new Date().getTime(),event:'gtm.js'});var f=d.getElementsByTagName(s)[0],
@@ -28,10 +30,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <link rel="apple-touch-icon" sizes="180x180" href="../../../_/img/favicon/apple-touch-icon.png" />
 <link rel="icon" type="image/png" sizes="32x32" href="../../../_/img/favicon/favicon-32x32.png" />
 <link rel="icon" type="image/png" sizes="16x16" href="../../../_/img/favicon/favicon-16x16.png" />
-<link rel="manifest" href="../../../_/img/favicon/site.webmanifest" />  </head>
+<link rel="manifest" href="../../../_/img/favicon/site.webmanifest" />    <link rel="stylesheet" href="../../../_/css/tabs.css">
+  </head>
   <body class="bg-white text-akka-black dark:bg-black dark:text-white article">
   <chatlio-widget widgetid="b611b988-9e2b-4e36-566e-01a6d042121c"></chatlio-widget>
-<header id="nav-header" class="header fixed border-b border-b-akka-black dark:border-b-akka-gray-dark z-40 top-0 block standard-page-padding-x px-0 py-0  h-[calc(var(--navbarHeight)+1px)] mx-auto w-full bg-black">
+<script type="module">import mermaid from 'https://cdn.jsdelivr.net/npm/mermaid@11/dist/mermaid.esm.min.mjs'; mermaid.initialize({"startOnLoad":true}); </script><header id="nav-header" class="header fixed border-b border-b-akka-black dark:border-b-akka-gray-dark z-40 top-0 block standard-page-padding-x px-0 py-0  h-[calc(var(--navbarHeight)+1px)] mx-auto w-full bg-black">
   <div class="w-full max-w-screen-2xl mx-auto h-full flex gap-3 lg:gap-12 justify-between text-white px-4">
 
     
@@ -46,31 +49,21 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
           placeholder="Search Akka Docs" >
       </div>
       <nav class="flex flex-col sm:flex-row gap-2 font-space-grotesk text-xs font-normal h-full">
-        <span class="drop-down">
-    <span>Developers<span class="child-triggerm"></span></span>
-    <div class="drop-down-content-wrapper">
-        <div class="drop-down-content">
-            <div class="col">
-            <h3>Docs</h3>
-            <a data-context="Mega Menu - Developers - Docs" href="/java/index.html">SDK</a>
-            <a data-context="Mega Menu - Developers - Docs" href="https://doc.akka.io/libraries/">Libraries</a>
-            </div>
-            <div class="col">
-                <h3>Resources</h3>
-                <a data-context="Mega Menu - Developers - Docs" class="kapa-trigger kapa-modal-open-ai hidden">Ask AI</a>
-                <a data-context="Mega Menu - Developers - Docs" href="https://www.akka.io/blog">Blog</a>
-                <a data-context="Mega Menu - Developers - Docs" href="/reference/release-notes.html">Release Notes</a>
-                <a data-context="Mega Menu - Developers - Docs" href="https://portal.akka.io">Support</a>
-            </div>
-            <div class="col">
-            <h3>Architecture</h3>
-            <a data-context="Mega Menu - Developers - Docs" href="https://www.reactiveprinciples.org/">Principles</a>
-            <a data-context="Mega Menu - Developers - Docs" href="https://akkademy.akka.io/">Free Training</a>
-            </div>
-        </div>
-    </div>
-</span>
-
+        <span class="akka-doc-switch" role="note">You're reading the <b>SDK</b> docs&nbsp;&middot; <a href="https://doc.akka.io/libraries/akka-dependencies/current/overview.html" target="new">Switch to Libraries</a></span>
+<style>
+  .akka-doc-switch{font-size:.82rem;line-height:1.4;color:rgba(255,255,255,.62);white-space:nowrap;align-self:center}
+  .akka-doc-switch b{color:#fff;font-weight:600}
+  .akka-doc-switch a{color:rgba(255,255,255,.62);text-decoration:none;border-bottom:1px solid rgba(255,255,255,.22);padding-bottom:1px;transition:color .15s,border-color .15s}
+  .akka-doc-switch a:hover{color:#fff;border-bottom-color:#fff}
+  @media (max-width:1024px){.akka-doc-switch{display:none}}
+</style>
+<script>
+  document.addEventListener('DOMContentLoaded', function () {
+    var bar = document.querySelector('.akka-doc-switch');
+    var top = document.querySelector('#topbar-nav');
+    if (bar && top && bar.parentNode !== top) { top.insertBefore(bar, top.firstChild); }
+  });
+</script>
         <div class="w-full h-[1px] sm:w-[0] lg:w-[1px] sm:h-full inline-block bg-akka-gray-dark">&nbsp;</div>
         <a data-context="Mega Menu - Top Level" class="sm:hidden lg:inline-block !m-0 hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="https://www.akka.io/contact">Contact Us</a>
         <a data-context="Mega Menu - Top Level" class="sm:hidden lg:inline-block !m-0 hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="https://console.akka.io/login">Sign In</a>
@@ -108,17 +101,42 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../why-akka.html">Why Akka</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../about-akka.html">About Akka</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../what-is-akka.html">What is Akka</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../what-is-akka.html">What is Akka?</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../who-uses-akka.html">Who uses Akka</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-agents.html">Agents</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-orchestration.html">Orchestration</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-memory.html">Memory</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-streaming.html">Streaming</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-automated-operations.html">Automated Operations</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../akka-internals.html">Akka Internals</a>
 
   </li>
 </ul>
@@ -133,24 +151,29 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/index.html">Getting started &amp; Tutorials</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/index.html">Getting Started</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/spec-your-first-agent.html">Spec-first greeting agent</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/set-up-dev-env.html">Set up your dev env</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/author-your-first-service.html">Hello world agent</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/spec-your-first-agent.html">Spec-first hello agent</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/author-your-first-service.html">Code-first hello agent</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/index.html">Multi-agent planner</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/index.html">Multi-agent tutorial</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -175,17 +198,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/list.html">List by user</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/dynamic-team.html">Dynamic orchestration</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/eval.html">Evaluation on changes</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/planner-agent/eval.html">Evaluating task results</a>
 
   </li>
 </ul>
@@ -194,7 +212,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/ask-akka-agent/index.html">RAG chat agent</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/ask-akka-agent/index.html">RAG chat tutorial</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -223,7 +241,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/shopping-cart/index.html">Shopping cart</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/shopping-cart/index.html">Shopping cart tutorial</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -240,7 +258,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/samples.html">Additional samples</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../getting-started/samples.html">Samples and blueprints</a>
 
   </li>
 </ul>
@@ -265,77 +283,74 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Foundations</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
+    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/distributed-systems.html">Distributed systems</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
+  <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/architecture-model.html">Architecture</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/architecture-model.html">Architecture model</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
+  <li class="mt-2 nav-item" data-depth="3">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/deployment-model.html">Deployment model</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/development-process.html">Development process</a>
-
+</ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/background-execution.html">Background execution</a>
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">State and execution</span>
 
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/declarative-effects.html">Delegation with Effects</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/state-model.html">State model</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
+  <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/state-model.html">Memory models</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/declarative-effects.html">Declarative effects</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
+  <li class="mt-2 nav-item" data-depth="3">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/multi-region.html">Multi-region operations</a>
 
   </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/saga-patterns.html">Saga patterns</a>
-
+</ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/grpc-vs-http-endpoints.html">Endpoints</a>
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Agentic concepts</span>
 
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/ai-agents.html">AI agents</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/ai-orchestration-patterns.html">AI orchestration patterns</a>
+
+  </li>
+</ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/ai-agents.html">AI Agents</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/inter-agent-comms.html">Inter-agent communications</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/ms-agent-patterns.html">AI orchestration patterns</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/acls.html">Access control lists</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../concepts/governance-and-the-runtime.html">Governance &amp; the runtime</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../resources.html">Resources</a>
 
   </li>
 </ul>
@@ -355,8 +370,32 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="2">
     
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Building with AI</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
+    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/spec-driven-development.html">Spec-driven development</a>
 
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/enforced-mode.html">Enforced mode</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/a-la-carte-mode.html">À la carte mode</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/ai-coding-assistant.html">Using an AI coding assistant</a>
+
+  </li>
+</ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
@@ -374,17 +413,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/prompt.html">Choosing the prompt</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/prompt.html">Prompts</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/calling.html">Calling agents</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/calling.html">Agent invocation</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/memory.html">Managing session memory</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/memory.html">Session memory</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
@@ -394,12 +433,12 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/failures.html">Handling failures</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/failures.html">Failure handling</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/extending.html">Extending with function tools</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/extending.html">Function tools</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
@@ -409,7 +448,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="4">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/orchestrating.html">Orchestrating multiple agents</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/orchestrating.html">Multi-agent orchestration</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="4">
@@ -425,6 +464,50 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <li class="mt-2 nav-item" data-depth="4">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/agents/testing.html">Testing</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents.html">Autonomous Agents</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/defining.html">Agent definition</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/tasks.html">Tasks</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/coordination.html">Coordination patterns</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/capabilities.html">Coordination capabilities</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/client.html">Client API</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/notifications.html">Notifications</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/autonomous-agents/testing.html">Testing</a>
 
   </li>
 </ul>
@@ -478,62 +561,8 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/index.html">Use cases</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/web-applications.html">Web applications</a>
 
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/conversational-ai.html">Conversational AI</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/autonomous-agents.html">Autonomous agents</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/multi-agent-systems.html">Multi-agent systems</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/memory-and-state.html">Memory &amp; state</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/rag-and-knowledge.html">RAG &amp; knowledge</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/streaming-ai.html">Streaming AI</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/orchestration-and-durability.html">Orchestration &amp; durability</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/apis-and-exposure.html">APIs &amp; exposure</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/governance-and-compliance.html">Governance &amp; compliance</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/use-cases/enterprise-patterns.html">Enterprise patterns</a>
-
-  </li>
-</ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
@@ -555,6 +584,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <li class="mt-2 nav-item" data-depth="3">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/integrations/data-and-knowledge.html">Data &amp; knowledge</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/integrations/object-storage.html">Object storage</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
@@ -588,7 +622,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/setup-and-configuration/index.html">Setup and configuration</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/setup-and-configuration/index.html">Configuration</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -618,11 +652,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/running-locally.html">Run a service locally</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/model-provider-details.html">AI model provider configuration</a>
 
   </li>
@@ -631,21 +660,31 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/sanitization.html">Data sanitization</a>
 
   </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/metric.html">Metrics</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/running-locally.html">Run a service locally</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/running-with-broker.html">Run locally with a broker</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/local-cluster.html">Run a local cluster</a>
+
+  </li>
 </ul>
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/dev-best-practices.html">Developer best practices</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/ai-coding-assistant.html">Using an AI coding assistant</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/local-cluster.html">Running a local cluster</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../sdk/dev-best-practices.html">Design considerations</a>
 
   </li>
 </ul>
@@ -677,6 +716,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
     
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/technical-overview.html">Technical Overview</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
     <button class="nav-item-toggle border-none outline-none">
     </button>
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/organizations/index.html">Organizations</a>
@@ -690,11 +734,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <li class="mt-2 nav-item" data-depth="4">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/organizations/regions.html">Regions</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/organizations/billing.html">Billing</a>
 
   </li>
 </ul>
@@ -759,6 +798,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="5">
     
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/projects/broker-kafka.html">Self-hosted Kafka</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/projects/broker-azure-eventhubs.html">Azure Event Hubs</a>
 
   </li>
@@ -811,6 +855,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <li class="mt-2 nav-item" data-depth="4">
     
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/services/custom-truststore.html">Configuring a custom JVM truststore</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/services/workload-identity.html">Workload Identity</a>
 
   </li>
 </ul>
@@ -866,6 +915,11 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/observability-and-monitoring/observability-exports.html">Exporting metrics, logs, and traces</a>
 
   </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/observability-and-monitoring/alerting-baselines.html">Alerting baselines</a>
+
+  </li>
 </ul>
   </li>
   <li class="mt-2 nav-item" data-depth="3">
@@ -880,7 +934,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/integrating-cicd/github-actions.html">CI/CD with GitHub Actions</a>
 
   </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/integrating-cicd/scanning-dependencies.html">Scanning vulnerabilities</a>
+
+  </li>
 </ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/platform-api.html">Platform API</a>
+
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
@@ -918,18 +982,88 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/operator-best-practices.html">Operator best practices</a>
 
   </li>
-</ul>
-  </li>
-</ul>
-  </li>
-  <li class="mt-2 nav-item" data-depth="0">
+  <li class="mt-2 nav-item" data-depth="2">
     
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/index.html">Production readiness</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="1">
+  <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../resources.html">Resources</a>
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Dedicated</span>
 
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/dedicated/shared-responsibility.html">Shared responsibility model</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/dedicated/raci.html">RACI</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/dedicated/checklist.html">Production readiness checklist</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">BYOC</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byoc/shared-responsibility.html">Shared responsibility model</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byoc/raci.html">RACI</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byoc/checklist.html">Production readiness checklist</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">BYOK8s</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byok8s/shared-responsibility.html">Shared responsibility model</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byok8s/raci.html">RACI</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../operations/production-readiness/byok8s/checklist.html">Production readiness checklist</a>
+
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+</ul>
   </li>
 </ul>
   </li>
@@ -946,9 +1080,19 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="2">
     
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../glossary.html">Glossary of terms</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../api-docs.html">API documentation</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../descriptors/index.html">Descriptors reference</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../descriptors/index.html">Descriptors</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -980,333 +1124,14 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../config/reference.html">Service reference configuration (HOCON)</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../glossary.html">Glossary of terms</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../security-announcements/index.html">Security announcements</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../release-notes.html">Release notes</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../support.html">Support resources</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../migration-guide.html">Migration guide</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../api-docs.html">API documentation</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../config/reference.html">Service configuration</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="2">
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../index.html">View reference</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/index.html">View query syntax</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/query.html">Query</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/select.html">SELECT</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/from.html">FROM</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/where.html">WHERE</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/as.html">AS</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/limit.html">LIMIT</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/offset.html">OFFSET</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/order-by.html">ORDER BY</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/group-by.html">GROUP BY</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/join.html">JOIN</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/index.html">Operators</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/comparison.html">Comparison operators</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/logical.html">Logical operators</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/in.html">IN</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/any.html">= ANY</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/like.html">LIKE</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/is-null.html">IS NULL/IS NOT NULL</a>
-
-  </li>
-</ul>
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/index.html">Functions</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/collect.html">collect()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/count.html">count()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/distinct.html">DISTINCT</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/text-search.html">text_search()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/total-count.html">total_count()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/has-more.html">has_more()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/next-page-token.html">next_page_token()</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="5">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/page-token-offset.html">page_token_offset()</a>
-
-  </li>
-</ul>
-  </li>
-</ul>
-  </li>
-  <li class="mt-2 nav-item is-current-page" data-depth="3">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="index.html">View concepts</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="table-updaters.html">Table updaters</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="data-types.html">Data types</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="result-mapping.html">Result mapping</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="optional-fields.html">Optional fields</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="array-types.html">Array types</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="pagination.html">Pagination</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="4">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="advanced-views.html">Advanced views</a>
-
-  </li>
-</ul>
-  </li>
-</ul>
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../jwts.html">JSON Web Tokens (JWTs)</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../security/oidc-setup.html">OpenID connect</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/index.html">Specify reference</a>
-
-<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/analyze.html">/akka.analyze</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/build.html">/akka.build</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/checklist.html">/akka.checklist</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/clarify.html">/akka.clarify</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/constitution.html">/akka.constitution</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/deploy.html">/akka.deploy</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/implement.html">/akka.implement</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/inspect.html">/akka.inspect</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/issues.html">/akka.issues</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/plan.html">/akka.plan</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/review.html">/akka.review</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/setup.html">/akka.setup</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/specify.html">/akka.specify</a>
-
-  </li>
-  <li class="mt-2 nav-item" data-depth="3">
-    
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/tasks.html">/akka.tasks</a>
-
-  </li>
-</ul>
-  </li>
-  <li class="mt-2 nav-item" data-depth="2">
-    
-    <button class="nav-item-toggle border-none outline-none">
-    </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/index.html">CLI command reference</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/index.html">CLI commands</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -1586,7 +1411,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_local_services_components_get-workflow.html">akka local services components get-workflow</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_local_services_components_workflows_get.html">akka local services components workflows get</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
@@ -2651,7 +2476,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_services_components_get-workflow.html">akka services components get-workflow</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_services_components_workflows_get.html">akka services components workflows get</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
@@ -2891,12 +2716,17 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_specify.html">akka specify</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_specify_init.html">akka specify init</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_specify.html">akka specify</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../cli/akka-cli/akka_specify_mode.html">akka specify mode</a>
 
   </li>
   <li class="mt-2 nav-item" data-depth="3">
@@ -2915,7 +2745,526 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     
     <button class="nav-item-toggle border-none outline-none">
     </button>
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../telemetry/index.html">Telemetry reference</a>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/index.html">Specify</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Commands</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/analyze.html">/akka:analyze</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/build.html">/akka:build</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/checklist.html">/akka:checklist</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/clarify.html">/akka:clarify</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/conform.html">/akka:conform</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/constitution.html">/akka:constitution</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/converge.html">/akka:converge</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/deploy.html">/akka:deploy</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/docs.html">/akka:docs</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/harnesses.html">/akka:harnesses</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/implement.html">/akka:implement</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/inspect.html">/akka:inspect</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/issues.html">/akka:issues</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/mode.html">/akka:mode</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/plan.html">/akka:plan</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/reliability.html">/akka:reliability</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/review.html">/akka:review</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/setup.html">/akka:setup</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/ship.html">/akka:ship</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/specify.html">/akka:specify</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/status.html">/akka:status</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/tasks.html">/akka:tasks</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Auditors &amp; gates</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/auditors.html">Auditors</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/auditor-kinds.html">Auditor kinds</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/coverage-gate.html">The coverage gate</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/adequacy-review.html">The adequacy review</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/requirement-analysis.html">Requirement analysis</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Project surface</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/project-surface.html">Project surface coverage</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/content-governance.html">Content governance</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/attestations.html">Attestations</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <span class="nav-text leading-5">Exit conditions</span>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/exit-condition-schema.html">Exit condition schema</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/exit-condition-states.html">Exit condition states</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/prohibitions.html">Prohibitions</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/default-library.html">Default exit-condition library</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/index.html">Exit condition catalog</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/functional.html">Functional</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/data-integrity.html">Data Integrity</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/reliability.html">Reliability</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/performance.html">Performance</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/security-compliance.html">Security &amp; Compliance</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/operability.html">Operability</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/experience.html">Experience</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/agentic-ai-safety.html">Agentic AI Safety</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/documentation.html">Documentation &amp; Training</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/content-brand-governance.html">Content &amp; Brand Governance</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/enterprise-integration.html">Enterprise Integration</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/infrastructure-deployment.html">Infrastructure &amp; Deployment</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/repository-hygiene.html">Repository Hygiene</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/pipeline-scanning.html">Pipeline &amp; Scanning</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/code-test-health.html">Code &amp; Test Health</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/environment-dependencies.html">Environment &amp; Dependencies</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/process-integrity.html">Process Integrity</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/catalog/build-efficiency.html">Build Efficiency</a>
+
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../specify/policies.html">Policies</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../index.html">Views</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/index.html">View query syntax</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/query.html">Query</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/select.html">SELECT</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/from.html">FROM</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/where.html">WHERE</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/as.html">AS</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/limit.html">LIMIT</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/offset.html">OFFSET</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/order-by.html">ORDER BY</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/group-by.html">GROUP BY</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/join.html">JOIN</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/index.html">Operators</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/comparison.html">Comparison operators</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/logical.html">Logical operators</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/in.html">IN</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/any.html">= ANY</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/like.html">LIKE</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/operators/is-null.html">IS NULL/IS NOT NULL</a>
+
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/index.html">Functions</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/collect.html">collect()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/count.html">count()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/distinct.html">DISTINCT</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/text-search.html">text_search()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/total-count.html">total_count()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/has-more.html">has_more()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/next-page-token.html">next_page_token()</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="5">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../syntax/functions/page-token-offset.html">page_token_offset()</a>
+
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item is-current-page" data-depth="3">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="index.html">View concepts</a>
+
+<ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="table-updaters.html">Table updaters</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="data-types.html">Data types</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="result-mapping.html">Result mapping</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="optional-fields.html">Optional fields</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="array-types.html">Array types</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="pagination.html">Pagination</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="4">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="advanced-views.html">Advanced views</a>
+
+  </li>
+</ul>
+  </li>
+</ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <button class="nav-item-toggle border-none outline-none">
+    </button>
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../telemetry/index.html">Telemetry</a>
 
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="3">
@@ -2923,7 +3272,47 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
     <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../telemetry/metrics.html">Metrics reference</a>
 
   </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../telemetry/deprecated-metrics.html">(Deprecated) Prometheus metrics reference</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="3">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../telemetry/tracing.html">Tracing reference</a>
+
+  </li>
 </ul>
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../jwts.html">JSON Web Tokens (JWTs)</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../security/oidc-setup.html">OpenID connect</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../migration-guide.html">Migration guide</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../release-notes.html">Release notes</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../security-announcements/index.html">Security announcements</a>
+
+  </li>
+  <li class="mt-2 nav-item" data-depth="2">
+    
+    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../support.html">Support resources</a>
+
   </li>
 </ul>
   </li>
@@ -2935,7 +3324,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <ul class="nav-list p-0 m-0 ml-2 font-light font-sans dark:text-akka-gray-300">
   <li class="mt-2 nav-item" data-depth="1">
     
-    <a data-context="Docs - Navigation - Sidebar" class="nav-link leading-5" href="../../../libraries/index.html">Akka Libraries</a>
+    <span class="nav-text leading-5"><a href="https://doc.akka.io/libraries/akka-dependencies/current/overview.html" target="new">Akka Libraries</a></span>
 
   </li>
 </ul>
@@ -2964,7 +3353,7 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
   <ul class="flex gap-2 gap-y-0 font-light px-8 text-akka-gray-600 dark:text-akka-gray-300 text-sm md:text-base flex-wrap">
     <li class="after:content-['/'] after:pl-2 after:last:content-['']"><a class="hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="../../../index.html">Akka</a></li>
     <li class="after:content-['/'] after:pl-2 after:last:content-['']"><a data-context="Docs - Breadcrumbs" class="hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="../../index.html">Reference</a></li>
-    <li class="after:content-['/'] after:pl-2 after:last:content-['']"><a data-context="Docs - Breadcrumbs" class="hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="../index.html">View reference</a></li>
+    <li class="after:content-['/'] after:pl-2 after:last:content-['']"><a data-context="Docs - Breadcrumbs" class="hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="../index.html">Views</a></li>
     <li class="after:content-['/'] after:pl-2 after:last:content-['']"><a data-context="Docs - Breadcrumbs" class="hover:text-akka-blue-dkr dark:hover:text-akka-blue" href="index.html">View concepts</a></li>
   </ul>
 </nav>
@@ -3211,5 +3600,6 @@ j=d.createElement(s),dl=l!='dataLayer'?'&l='+l:'';j.async=true;j.src=
 <script src="../../../_/js/vendor/lunr.js"></script>
 <script src="../../../_/js/search-ui.js" id="search-ui-script" data-site-root-path="../../.." data-snippet-length="100" data-stylesheet="../../../_/css/search.css"></script>
 <script async src="../../../search-index.js"></script>
+    <script src="../../../_/js/tabs.js"></script>
   </body>
 </html>

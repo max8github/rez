@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Run a service locally](running-locally.html)
 
 <!-- </nav> -->
@@ -12,9 +12,9 @@ Running a service locally is helpful to test and debug. The following sections p
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-In order to run your service locally, you’ll need to have the following prerequisites:
+In order to run your service locally, you will need to have the following prerequisites:
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 
@@ -90,6 +90,14 @@ mvn compile exec:java -Dakka.javasdk.dev-mode.persistence.enabled=true
 ```
 To clean the local database look for `db.mv.db` file in the root of your project and delete it.
 
+The path of the database file can be changed by passing the `akka.persistence.r2dbc.connection-factory.database` system property when starting the service. H2 appends `.mv.db` to the configured value, so the following produces `./target/my-service-db.mv.db`:
+
+```command
+mvn compile exec:java -Dakka.javasdk.dev-mode.persistence.enabled=true -Dakka.persistence.r2dbc.connection-factory.database=./target/my-service-db
+```
+
+|  | This must be set as a system property — the runtime does not read it from your service’s `application.conf`. |
+
 ## <a href="about:blank#_local_broker_support"></a> Running a service with broker support
 
 By default, when running locally, broker support is disabled. When running a service that declares consumers or producers locally, you need to configure the broker with property `akka.javasdk.dev-mode.eventing.support=kafka` in `application.conf` or as a system property when starting the service.
@@ -100,6 +108,7 @@ mvn compile exec:java -Dakka.javasdk.dev-mode.eventing.support=kafka
 For Google PubSub Emulator, use `akka.javasdk.dev-mode.eventing.support=google-pubsub-emulator`.
 
 |  | For Kafka, the local Kafka broker is expected to be available on `localhost:9092`. For Google PubSub, the emulator is expected to be available on `localhost:8085`. |
+For a deeper walkthrough — `docker-compose.yml` snippets, alternate hosts, authentication for Kafka, and Pub/Sub emulator setup — see [Running locally with a message broker](running-with-broker.html).
 
 ## <a href="about:blank#multiple_services"></a> Running multiple services locally
 
@@ -119,7 +128,7 @@ With both services configured, we can start them independently by running `mvn c
 
 ## <a href="about:blank#_invoking_cloud_based_services_from_local_services"></a> Invoking cloud based services from local services
 
-Sometimes, when developing services locally that depend on other services, rather than running those services locally as well, it’s more convenient to use instances of those services running in the cloud. Akka allows this through its backoffice proxy. The cloud services do not need to be exposed to the internet, rather, requests are forwarded through a proxy that authenticates and authorizes developers using their Akka platform credentials.
+Sometimes, when developing services locally that depend on other services, rather than running those services locally as well, it is more convenient to use instances of those services running in the cloud. Akka allows this through its backoffice proxy. The cloud services do not need to be exposed to the internet, rather, requests are forwarded through a proxy that authenticates and authorizes developers using their Akka platform credentials.
 
 |  | By default, local services use an in-memory data store, so state is lost on each restart. When connecting to cloud-based services, this means views and consumers subscribed to cloud event streams must replay events from the beginning on each restart, which can be slow for large event stores. To preserve local state and offsets across restarts, see [Running a service with persistence enabled](about:blank#persistence-enabled). |
 To do this, you will need to have the [Akka CLI](../operations/cli/index.html) installed on your path, and be logged in with the backoffice or admin role on the project you wish to use. Alternatively, if the Akka CLI is not installed, the `AKKA_REFRESH_TOKEN` environment variable can be set with a valid refresh or service token.
@@ -162,7 +171,7 @@ akka.javasdk {
 - `project` - This can either be the project UUID, or the project name.
 - `organization` - This is usually not necessary, however if you ar referring to the project by its name, and you are a member of two organizations that have projects with that same name, this will be used to disambiguate them. Either an organization UUID or an organization name can be set here.
 - `service-name` - Can be used if you wish to use a service with a different name running in the cloud to the one referenced from your locally running service.
-- `region` - If you have a multi-region project, and you don’t want to use the primary region, this can be used to select the region.
+- `region` - If you have a multi-region project, and you do not want to use the primary region, this can be used to select the region.
 
 ## <a href="about:blank#local_cluster"></a> Running a local cluster
 
@@ -170,7 +179,7 @@ To run a service project as a local cluster, see [this page](local-cluster.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[JSON Web Tokens (JWT)](auth-with-jwts.html) [AI model provider configuration](model-provider-details.html)
+[Metrics](metric.html) [Run locally with a broker](running-with-broker.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

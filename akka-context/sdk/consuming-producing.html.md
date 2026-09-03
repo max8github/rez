@@ -33,6 +33,14 @@ A Consumer Effect can either:
 - ignore the incoming message
 For additional details, refer to [Declarative Effects](../concepts/declarative-effects.html).
 
+## <a href="about:blank#consumer-error-handling"></a> Consumer error handling
+
+To signal that a message was not processed successfully, throw an exception from the consumer method instead of returning an Effect.
+
+If a consumer method throws an exception, or an `asyncDone`, `asyncProduce`, or `asyncEffect` Effect completes with a failure, Akka does not advance to the next message. It redelivers the same message and retries until the method processes it without throwing. This applies to every consumer source: Event Sourced Entities, Key Value Entities, Workflows, service-to-service streams, and message broker topics.
+
+Because redelivery retries indefinitely, an exception that a message will always trigger, for example a bug in the handling logic or a message that can never be deserialized correctly, blocks that consumer from making progress until the underlying issue is fixed and a new version of the service is deployed.
+
 ## <a href="about:blank#consume-from-event-sourced-entity"></a> Consume from Event Sourced Entity
 
 You can consume event from an Event Sourced Entity by adding `@Consume.FromEventSourcedEntity` as a type level annotation of your Consumer implementation.
@@ -58,7 +66,7 @@ public class CounterEventsConsumer extends Consumer { // (3)
 | **4** | Add handler for `CounterEvent` events. |
 | **5** | Return `effect().done()` when processing is completed. |
 | **6** | Return `effect().ignore()` to ignore the event and continue the processing. |
-If an exception is raised during the event processing. Akka runtime will redelivery the event until the application process it without failures.
+See [Consumer error handling](about:blank#consumer-error-handling) for what happens when processing fails.
 
 When deleting Event Sourced Entities, and want to act on it in a consumer, make sure to persist a final event representing
 the deletion before triggering delete.
@@ -147,7 +155,7 @@ The source of the events is an [Event Sourced Entity](event-sourced-entities.htm
 
 The event producer is a Consumer that consumes the events from a local source and makes them available for consumption from another service. This is done with an additional `@Produce.ServiceStream` annotation, the stream `id` is what identifies the specific stream of events from the consuming services. The ACL configuration is set to allow access from specific (or all) Akka services.
 
-To illustrate how to publish entity events, let’s assume the existence of a `CustomerEntity` that emits events of types: `CustomerCreated`, `NameChanged` and `AddressChanged`. You will get the events delivered to a Consumer, transform them to a public set of event types and let them be published to a stream.
+To illustrate how to publish entity events, assume the existence of a `CustomerEntity` that emits events of types: `CustomerCreated`, `NameChanged` and `AddressChanged`. You will get the events delivered to a Consumer, transform them to a public set of event types and let them be published to a stream.
 
 [CustomerEvents.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/main/java/customer/api/CustomerEvents.java)
 ```java
@@ -217,7 +225,7 @@ public class CustomersByNameView extends View {
 | **3** | The public identifier of the specific stream. Corresponds to the `@Produce.ServiceStream id` in the service publishing the event stream. |
 | **4** | Handler method per message type that the stream may contain. |
 
-|  | If you’re looking to test this locally, you will likely need to run the 2 services with different ports. For more details, consult [Running multiple services](running-locally.html#multiple_services). |
+|  | If you are looking to test this locally, you will likely need to run the 2 services with different ports. For more details, consult [Running multiple services](running-locally.html#multiple_services). |
 
 ## <a href="about:blank#consume_topic"></a> Consume from a message broker Topic
 
@@ -366,11 +374,11 @@ When an Akka service relies on a broker, it might be useful to use integration t
   - this offers a general API to inject messages into topics or read the messages written to another topic, regardless of the specific broker integration you have configured.
 - Run an external broker instance:
 
-  - if you’re interested in running your integration tests against a real instance, you need to provide the broker instance yourself by running it in a separate process in your local setup and make sure to disable the use of TestKit’s test broker. Currently, the only external broker supported in integration tests is Google PubSub Emulator.
+  - if you are interested in running your integration tests against a real instance, you need to provide the broker instance yourself by running it in a separate process in your local setup and make sure to disable the use of TestKit’s test broker. Currently, the only external broker supported in integration tests is Google PubSub Emulator.
 
 ### <a href="about:blank#_testkit_mocked_incoming_messages"></a> TestKit Mocked Incoming Messages
 
-Following up on the counter entity example used above, let’s consider an example (composed by 2 Consumer and 1 Event Sourced Entity) as pictured below:
+Following up on the counter entity example used above, consider an example (composed by 2 Consumer and 1 Event Sourced Entity) as pictured below:
 
 ![eventing testkit sample](_images/eventing-testkit-sample.svg)
 In this example:
@@ -509,6 +517,144 @@ protected TestKit.Settings testKitSettings() {
 }
 ```
 
+### <a href="about:blank#_service_to_service_streams"></a> Service-to-Service Streams
+
+The TestKit also supports [Service to Service Eventing](about:blank#s2s-eventing) in both directions — mocking the upstream stream a consuming service reads from, and capturing the public events a producing service emits for downstream consumers.
+
+#### <a href="about:blank#_testing_a_consumer"></a> Testing a Consumer
+
+In a service that consumes another service’s stream via `@Consume.FromServiceStream`, the TestKit can stand in for the upstream producer. Messages published to the mocked stream flow through the consumer’s or view’s real logic.
+
+The <a href="https://github.com/akka/akka-sdk/tree/main/samples/event-sourced-customer-registry-subscriber">`event-sourced-customer-registry-subscriber`</a> sample consumes the `customer_events` stream produced by `customer-registry` (see [Service to Service Eventing](about:blank#s2s-eventing)). Its integration test mocks that upstream stream:
+
+[CustomersByNameViewIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry-subscriber/src/test/java/customer/api/CustomersByNameViewIntegrationTest.java)
+```java
+@Override
+protected TestKit.Settings testKitSettings() {
+  return super.testKitSettings()
+    .withStreamIncomingMessages("customer-registry", "customer_events"); // (1)
+}
+```
+
+| **1** | Mock the upstream stream by service and stream id — matches the values in the consumer’s `@Consume.FromServiceStream` annotation. |
+[CustomersByNameViewIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry-subscriber/src/test/java/customer/api/CustomersByNameViewIntegrationTest.java)
+```java
+public class CustomersByNameViewIntegrationTest extends CustomerRegistryIntegrationTest {
+
+  @Override
+  protected TestKit.Settings testKitSettings() {
+    return super.testKitSettings()
+      .withStreamIncomingMessages("customer-registry", "customer_events"); // (1)
+  }
+
+
+  @Test
+  public void shouldReturnCustomersFromViews() {
+    IncomingMessages customerEvents = testKit.getStreamIncomingMessages( // (2)
+      "customer-registry",
+      "customer_events"
+    );
+
+    String bob = "bob";
+    Created created1 = new Created("bob@gmail.com", bob);
+    Created created2 = new Created("alice@gmail.com", "alice");
+
+    customerEvents.publish(created1, "b"); // (3)
+    customerEvents.publish(created2, "a");
+
+    Awaitility.await()
+      .ignoreExceptions()
+      .atMost(20, TimeUnit.SECONDS)
+      .pollInterval(1, TimeUnit.SECONDS)
+      .untilAsserted(() -> {
+        CustomerEntry customer = componentClient
+          .forView()
+          .method(CustomersByNameView::findByName)
+          .invoke(created1.name())
+          .customers()
+          .stream()
+          .findFirst()
+          .get();
+
+        assertThat(customer).isEqualTo(
+          new CustomerEntry("b", created1.email(), created1.name())
+        );
+
+        CustomerEntry customer2 = componentClient
+          .forView()
+          .method(CustomersByEmailView::findByEmail)
+          .invoke(created2.email())
+          .customers()
+          .stream()
+          .findFirst()
+          .get();
+
+        assertThat(customer2).isEqualTo(
+          new CustomerEntry("a", created2.email(), created2.name())
+        );
+      });
+  }
+}
+```
+
+| **1** | Register the mocked stream in the `TestKit` settings. |
+| **2** | Retrieve an `IncomingMessages` handle for that stream. |
+| **3** | Publish messages of the public event type the producing service would emit. The second argument is the subject id (for example, an entity id). |
+
+#### <a href="about:blank#_testing_a_producer"></a> Testing a Producer
+
+For a service that produces a stream via `@Produce.ServiceStream` — typically with a transformation from internal events to a narrower public event type — the TestKit can capture what is emitted so the transformation can be asserted. Unlike the consumer case, nothing is mocked: the real transformation path runs and the TestKit observes the emitted public events.
+
+The <a href="https://github.com/akka/akka-sdk/tree/main/samples/event-sourced-customer-registry">`event-sourced-customer-registry`</a> sample has a `CustomerEvents` producer that transforms internal `CustomerEvent` values into `CustomerPublicEvent` values for downstream services. Its integration test verifies that transformation:
+
+[CustomerEventsOutgoingIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/test/java/customer/api/CustomerEventsOutgoingIntegrationTest.java)
+```java
+@Override
+protected TestKit.Settings testKitSettings() {
+  return super.testKitSettings()
+    .withStreamOutgoingMessages("customer-registry", "customer_events"); // (1)
+}
+```
+
+| **1** | Register the outgoing stream to capture. The values must match the producer’s `@Produce.ServiceStream` id and the service name that downstream consumers use. |
+[CustomerEventsOutgoingIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/test/java/customer/api/CustomerEventsOutgoingIntegrationTest.java)
+```java
+public class CustomerEventsOutgoingIntegrationTest extends TestKitSupport {
+
+  @Override
+  protected TestKit.Settings testKitSettings() {
+    return super.testKitSettings()
+      .withStreamOutgoingMessages("customer-registry", "customer_events"); // (1)
+  }
+
+
+  @Test
+  public void shouldCaptureCreatedEvent() {
+    OutgoingMessages outgoing = testKit.getStreamOutgoingMessages( // (2)
+      "customer-registry",
+      "customer_events"
+    );
+
+    String id = UUID.randomUUID().toString();
+    componentClient // (3)
+      .forEventSourcedEntity(id)
+      .method(CustomerEntity::create)
+      .invoke(
+        new Customer("foo@example.com", "Johanna", new Address("Regent Street", "London"))
+      );
+
+    var msg = outgoing.expectOneTyped(CustomerPublicEvent.Created.class, ofSeconds(20)); // (4)
+    assertThat(msg.getPayload().email()).isEqualTo("foo@example.com");
+    assertThat(msg.getPayload().name()).isEqualTo("Johanna");
+  }
+```
+
+| **1** | Register the outgoing stream in the `TestKit` settings. |
+| **2** | Retrieve an `OutgoingMessages` handle for the stream. |
+| **3** | Drive the service as usual — invoking the entity here triggers the internal event that the producer transforms. |
+| **4** | Assert against the transformed public event type. |
+`OutgoingMessages` exposes the same assertions used for topic outgoing messages, such as `expectN(…​)` to read several messages or `expectNone(…​)` to verify that a given internal event produces no public event (for example, when the transformation uses `effects().ignore()`).
+
 ## <a href="about:blank#_multi_region_replication"></a> Multi-region replication
 
 Consumers are not replicated directly in the same way as for example [Event Sourced Entity replication](event-sourced-entities.html#_replication). A Consumer receives events from entities in the same service, or another service, in the same region. The entities will replicate all events across regions and identical processing can occur in the consumers of each region.
@@ -519,7 +665,7 @@ A Consumer can also receive messages from a broker topic, and that could be regi
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Timers](timed-actions.html) [Use cases](use-cases/index.html)
+[Timers](timed-actions.html) [Web applications](web-applications.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

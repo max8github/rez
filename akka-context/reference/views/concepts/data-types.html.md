@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Data types](data-types.html)
 
@@ -9,7 +9,7 @@
 
 # Data Types
 
-The View query language supports a range of data types that map to Java types in your View components. This page explains the supported data types, how they’re used in queries, and how they map between the query language and Java.
+The View query language supports a range of data types that map to Java types in your View components. This page explains the supported data types, how they are used in queries, and how they map between the query language and Java.
 
 ## <a href="about:blank#_supported_data_types"></a> Supported Data Types
 
@@ -149,7 +149,7 @@ WHERE category = :categoryParam
 WHERE price < :maxPrice
 WHERE tags = ANY(:tagList)
 ```
-The Java type of the parameter must be compatible with how it’s used in the query.
+The Java type of the parameter must be compatible with how it is used in the query.
 
 ## <a href="about:blank#_related_features"></a> Related Features
 

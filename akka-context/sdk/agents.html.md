@@ -17,20 +17,23 @@ An Agent interacts with an AI model to perform a specific task. It is typically 
 
 Use an Agent when you need to:
 
-- Interact with a large language model to interpret user intent, generate content, or make decisions.
+- Interact with a model to interpret user intent, generate content, or make decisions.
 - Maintain conversational context across multiple turns via session memory.
 - Call tools dynamically based on model responses (function calling).
-- Collaborate across multiple agents sharing the same session.
+- Collaborate across multiple agents sharing the same session, orchestrated externally by a [Workflow](workflows.html).
+If the work runs as a durable multi-step model-driven loop, or if multiple agents need to coordinate without writing the orchestration as workflow steps, use an [Autonomous Agent](autonomous-agents.html) instead.
 
 ### <a href="about:blank#_when_not_to_use_agents"></a> When NOT to use Agents
 
-- **Stateful business logic without AI** — use [Entities](key-value-entities.html) to manage state with deterministic rules.
-- **Multi-step deterministic orchestration** — use [Workflows](workflows.html) to coordinate steps that do not require LLM reasoning.
+- **Stateful business logic without AI**, use [Entities](key-value-entities.html) to manage state with deterministic rules.
+- **Multi-step deterministic orchestration**, use [Workflows](workflows.html) to coordinate steps that do not require model reasoning.
+- **Durable multi-step model-driven processes or model-led multi-agent coordination**, use [Autonomous Agents](autonomous-agents.html) for built-in task lifecycle, iteration loop, and coordination capabilities (delegation, handoff, teams, moderation).
 - If the task can be handled by a simple request/response with no model interaction, an [Endpoint](http-endpoints.html) is sufficient.
 
 ### <a href="about:blank#_how_agents_relate_to_other_components"></a> How Agents relate to other components
 
-- **Workflows** orchestrate multi-step processes and can invoke Agents as one of those steps.
+- **Workflows** orchestrate multi-step processes and can invoke Agents as one of those steps. Use a Workflow when the orchestration sequence is fixed in code.
+- **Autonomous Agents** drive their own model loop and coordinate other agents through declared capabilities (delegation, handoff, teams, moderation). Use an Autonomous Agent when the orchestration sequence is itself a model judgment. See [Autonomous Agents](autonomous-agents.html).
 - **Entities** hold durable state that Agents can read or write via the `ComponentClient`.
 - **Endpoints** expose Agents over HTTP so external clients can reach them.
 
@@ -40,7 +43,7 @@ Every component in Akka needs to be identifiable by the rest of the system. This
 
 As with all other components, you supply an identifier for the component class using the `@Component` annotation.
 
-In the case of agents, you don’t supply a unique identifier for the instance of the agent. Instead, you supply an identifier for the *session* to which the agent is bound. This lets you have multiple components with different component IDs all performing various agentic tasks within the same shared session.
+In the case of agents, you do not supply a unique identifier for the instance of the agent. Instead, you supply an identifier for the *session* to which the agent is bound. This lets you have multiple components with different component IDs all performing various agentic tasks within the same shared session.
 
 ## <a href="about:blank#_effect_api"></a> Agent’s effect API
 
@@ -57,7 +60,7 @@ The Agent’s Effect defines the operations that Akka should perform when an inc
 - transform responses from a model and reply to incoming commands
 For additional details, refer to [Declarative Effects](../concepts/declarative-effects.html).
 
-## <a href="about:blank#_basic_agent_structure"></a> Basic Agent Structure
+## <a href="about:blank#_basic_agent_structure"></a> Basic agent structure
 
 An agent implementation has the following code structure.
 
@@ -123,7 +126,7 @@ akka.javasdk {
 ```
 The API key can be defined with an environment variable, `OPENAI_API_KEY` or `ANTHROPIC_API_KEY` in the above examples.
 
-The default model will be used if the agent doesn’t specify another model. Different agents can use different models by defining the `ModelProvider` in the Agent effect:
+The default model will be used if the agent does not specify another model. Different agents can use different models by defining the `ModelProvider` in the Agent effect:
 
 MyAgent.java
 ```java
@@ -150,10 +153,12 @@ Available model providers for hosted models are:
 | Provider | Site |
 | --- | --- |
 | Anthropic | [anthropic.com](https://www.anthropic.com/) |
+| Azure OpenAI | [azure.microsoft.com](https://learn.microsoft.com/azure/ai-services/openai/) |
 | Bedrock | [aws.amazon.com](https://aws.amazon.com/bedrock/) |
 | GoogleAIGemini | [gemini.google.com](https://gemini.google.com/) |
 | Hugging Face | [huggingface.co](https://huggingface.co/) |
-| OpenAi | [openai.com](https://openai.com/) |
+| OpenAI | [openai.com](https://openai.com/) |
+| Vertex AI | [cloud.google.com](https://cloud.google.com/vertex-ai) |
 Additionally, these model providers for locally running models are supported:
 
 | Provider | Site |
@@ -206,21 +211,24 @@ public class ActivityAgent extends Agent {
 | **1** | Inject the `ComponentClient` as a constructor parameter. |
 | **2** | Retrieve preferences from an entity. |
 | **3** | Enrich the user message with the preferences. |
-This also illustrates the important point that the context of the request to the AI model can be built from additional information in the service and doesn’t only have to come from the session memory.
+This also illustrates the important point that the context of the request to the AI model can be built from additional information in the service and does not only have to come from the session memory.
 
 The ability to reach into the rest of a distributed Akka application to *augment* requests makes behavior like Retrieval Augmented Generation (RAG) simple and less error prone than doing things manually without Akka.
 
-## <a href="about:blank#_see_also"></a> See Also
+## <a href="about:blank#_testing"></a> Testing
+
+Test agents with the testkit’s `TestModelProvider`, which substitutes configured responses for a real model so tests exercise the agent’s logic, tools, and effects deterministically, without calling a real model. See [Testing the agent](agents/testing.html).
+
+## <a href="about:blank#_see_also"></a> See also
 
 - [AI Agents concepts](../concepts/ai-agents.html)
+- [Autonomous Agents](autonomous-agents.html)
 - [Guardrails](agents/guardrails.html)
 - [Agent Memory](agents/memory.html)
-- [Akka Agents deep-dive](https://akka.io/blog/akka-agents-quickly-create-agents-mcp-grpc-api)
-- [MCP](https://akka.io/blog/mcp-a2a-acp-what-does-it-all-mean)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Components](components/index.html) [Choosing the prompt](agents/prompt.html)
+[Components](components/index.html) [Prompts](agents/prompt.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -17,7 +17,7 @@ This gives you a high level of control for managing failure domains or fault bou
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Configuring a custom JVM truststore](../services/custom-truststore.html) [Multi-region setup](setup.html)
+[Workload Identity](../services/workload-identity.html) [Multi-region setup](setup.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

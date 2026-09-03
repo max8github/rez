@@ -15,7 +15,7 @@ gRPC was designed to support service evolution and decoupling by enforcing a pro
 
 gRPC Endpoint components make it possible to conveniently define APIs accepting and responding in protobuf — the binary, typed protocol used by gRPC which is designed to handle evolution of a service over time.
 
-|  | Our recommendation is to use gRPC Endpoints for cross-service calls (be it with another Akka service or other backend services) and HTTP Endpoints for APIs consumed directly by client-facing / frontend applications — for which the use of gRPC comes at a greater cost. For a deeper dive into the differences between gRPC and HTTP Endpoints, see [Endpoints](../concepts/grpc-vs-http-endpoints.html). |
+|  | Our recommendation is to use gRPC Endpoints for cross-service calls (be it with another Akka service or other backend services) and HTTP Endpoints for APIs consumed directly by client-facing / frontend applications — for which the use of gRPC comes at a greater cost. |
 
 ## <a href="about:blank#_basics"></a> Basics
 
@@ -121,7 +121,7 @@ Akka’s gRPC endpoints can be secured by multiple approaches:
 
 Endpoints are commonly used to interact with other components in a service. This is done through
 the `akka.javasdk.client.ComponentClient`. If the constructor of the endpoint class has a parameter of this type,
-it will be injected by the SDK and can then be available for use when processing requests. Let’s see how this is done:
+it will be injected by the SDK and can then be available for use when processing requests. This is done as follows:
 
 [CustomerGrpcEndpointImpl.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/main/java/customer/api/CustomerGrpcEndpointImpl.java)
 ```java

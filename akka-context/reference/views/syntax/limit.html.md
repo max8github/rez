@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View query syntax](index.html)
 - [LIMIT](limit.html)
 
@@ -9,7 +9,7 @@
 
 # LIMIT
 
-The `LIMIT` clause restricts the number of rows returned by a query, specifying the maximum number of results to return. It’s primarily used for pagination and controlling result set size.
+The `LIMIT` clause restricts the number of rows returned by a query, specifying the maximum number of results to return. It is primarily used for pagination and controlling result set size.
 
 ## <a href="about:blank#_syntax"></a> Syntax
 
@@ -134,7 +134,7 @@ ProductsResponse response = client.forView()
 - Results cannot be sorted with `ORDER BY` when using token-based paging (`page_token_offset`)
 - Using `has_more()` with `LIMIT` can efficiently indicate if there are additional results beyond the current page
 - Very large limit values may impact performance - use reasonable page sizes for better user experience
-- It’s generally better to explicitly specify a LIMIT value that makes sense for your use case rather than relying on the defaults
+- It is generally better to explicitly specify a LIMIT value that makes sense for your use case rather than relying on the defaults
 
 ## <a href="about:blank#_performance_considerations"></a> Performance considerations
 
@@ -143,7 +143,7 @@ ProductsResponse response = client.forView()
   - UI pagination: typically 10-50 items per page
   - API responses: typically 50-100 items per page
   - Data processing: balance between memory usage and request count
-- For large data sets, consider using `has_more()` instead of `total_count()` as it’s more efficient
+- For large data sets, consider using `has_more()` instead of `total_count()` as it is more efficient
 
 ## <a href="about:blank#_related_features"></a> Related features
 

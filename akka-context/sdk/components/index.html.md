@@ -43,7 +43,7 @@ Consumers</a>
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Spec-driven development](../spec-driven-development.html) [Agents](../agents.html)
+[Using an AI coding assistant](../ai-coding-assistant.html) [Agents](../agents.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

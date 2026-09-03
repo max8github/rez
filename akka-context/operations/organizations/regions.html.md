@@ -30,7 +30,7 @@ akka project new myproject --organization myorg --region aws-us-east-2
 
 ### <a href="about:blank#_finding_available_regions"></a> Finding Available Regions
 
-If you’re unsure which regions your organization has access to, there are two options:
+If you are unsure which regions your organization has access to, there are two options:
 
 1. **Error Prompt**: If you omit the `--region` flag when creating a new project, Akka will inform you of the available regions in the error message. For instance:
 
@@ -72,7 +72,7 @@ To learn more about self-hosted Akka regions please To get a BYOC region setup y
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Manage users](manage-users.html) [Billing](billing.html)
+[Manage users](manage-users.html) [Projects](../projects/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

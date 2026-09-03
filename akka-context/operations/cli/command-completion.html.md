@@ -58,7 +58,7 @@ akka completion powershell | Out-String | Invoke-Expression
 
 ## <a href="about:blank#_related_documentation"></a> Related documentation
 
-- [CLI command reference](../../reference/cli/akka-cli/index.html)
+- [CLI commands](../../reference/cli/akka-cli/index.html)
 
 <!-- <footer> -->
 <!-- <nav> -->

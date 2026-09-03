@@ -1,11 +1,12 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Running a local cluster](local-cluster.html)
+- [Configuration](setup-and-configuration/index.html)
+- [Run a local cluster](local-cluster.html)
 
 <!-- </nav> -->
 
-# Running a local cluster
+# Run a local cluster
 
 For testing clustering behavior and high availability scenarios, you can run your Akka service as a local cluster with multiple nodes. This allows you to simulate a distributed environment on your local machine. A *cluster* is a group of instances of the same service all running in high availability mode.
 
@@ -19,7 +20,7 @@ In order to run a local Akka cluster, you will need all of the SDK requirements 
 
 ## <a href="about:blank#_starting_a_cluster"></a> Starting a cluster
 
-Once you’ve met the prerequisites you will need to open a terminal window (command prompt) to the root directory of an Akka service. This is where the main `pom.xml` file will be. Running `akka local cluster` with no arguments will present you with output similar to the following:
+Once you have met the prerequisites you will need to open a terminal window (command prompt) to the root directory of an Akka service. This is where the main `pom.xml` file will be. Running `akka local cluster` with no arguments will present you with output similar to the following:
 
 ```none
 $ akka local cluster
@@ -46,11 +47,11 @@ If you choose to run with 1 node, that is still not *quite* the same thing as us
 
 It will take a few moments for each of the service instances to start, but the interactive console will display the startup progress. As each service instance starts, that instance’s HTTP port number will be displayed.
 
-You’re now ready to use the Akka local console or `curl` or your favorite HTTP client to start interacting with your service cluster.
+You are now ready to use the Akka local console or `curl` or your favorite HTTP client to start interacting with your service cluster.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Using an AI coding assistant](ai-coding-assistant.html) [Operating](../operations/index.html)
+[Run locally with a broker](running-with-broker.html) [Design considerations](dev-best-practices.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

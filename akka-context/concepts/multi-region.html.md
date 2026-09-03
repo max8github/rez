@@ -1,6 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Understanding](index.html)
+- State and execution
 - [Multi-region operations](multi-region.html)
 
 <!-- </nav> -->
@@ -15,7 +16,7 @@ Akka ensures regardless of which region receives a request, the request can be s
 
 Multi-region operations are ideal for:
 
-- Applications that require 99.9999% availability
+- Applications that require very high availability
 - Geographic failover
 - Geo-homing of data for low latency access
 - Low latency global reads
@@ -121,7 +122,7 @@ and get an immediate reply
 
 The replicated write replication strategy allows every region to be capable of handling writes for all entities. This is done through the use of CRDTs, which can be modified concurrently in different regions, and their changes safely merged without conflict.
 
-## <a href="about:blank#_replication_guarantees"></a> Replication Guarantees
+## <a href="about:blank#_replication_guarantees"></a> Replication guarantees
 
 Akka guarantees that all events created within one region are eventually replicated to all other regions in the project.
 
@@ -133,7 +134,7 @@ Events are delivered to other regions over a brokerless, streaming gRPC transpor
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Memory models](state-model.html) [Saga patterns](saga-patterns.html)
+[Declarative effects](declarative-effects.html) [AI agents](ai-agents.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

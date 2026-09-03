@@ -41,8 +41,8 @@ curl -sL https://doc.akka.io/install-cli.sh | bash -s -- --prefix /tmp && \
 You can pass options to the installer script with `-s --` e.g.:
 
 ```bash
-curl -sL https://doc.akka.io/install-cli.sh | bash -s -- --prefix=$HOME --version=3.0.59 --verbose
-curl -sL https://doc.akka.io/install-cli.sh | bash -s -- -P $HOME -v 3.0.59 -V
+curl -sL https://doc.akka.io/install-cli.sh | bash -s -- --prefix=$HOME --version=3.0.73 --verbose
+curl -sL https://doc.akka.io/install-cli.sh | bash -s -- -P $HOME -v 3.0.73 -V
 ```
 macOS **Recommended approach**
 
@@ -62,8 +62,8 @@ brew upgrade akka
 curl -sL https://doc.akka.io/install-cli.sh | bash You can pass options to the installer script with `-s --` e.g.:
 
 ```bash
-curl -sL https://doc.akka.io/install-cli.sh | bash -s -- --prefix=$HOME --version=3.0.59 --verbose
-curl -sL https://doc.akka.io/install-cli.sh | bash -s -- -P $HOME -v 3.0.59 -V
+curl -sL https://doc.akka.io/install-cli.sh | bash -s -- --prefix=$HOME --version=3.0.73 --verbose
+curl -sL https://doc.akka.io/install-cli.sh | bash -s -- -P $HOME -v 3.0.73 -V
 ```
 Windows **Recommended approach**
 
@@ -94,7 +94,7 @@ akka help
 
 - [Using the Akka CLI](using-cli.html)
 - [Enable CLI command completion](command-completion.html)
-- [CLI command reference](../../reference/cli/akka-cli/index.html)
+- [CLI commands](../../reference/cli/akka-cli/index.html)
 
 <!-- <footer> -->
 <!-- <nav> -->

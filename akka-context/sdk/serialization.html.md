@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Serialization](serialization.html)
 
 <!-- </nav> -->
@@ -12,7 +12,7 @@
 
 You need to make the messages, events, or the state of Akka components serializable with [Jackson](https://github.com/FasterXML/jackson). The same is true for inputs and outputs of HTTP Endpoints. There are two ways to do this.
 
-1. If you are using Java [record](https://openjdk.org/jeps/395) then no annotation is needed. It just works. It’s as simple as using `record` instead of `class`. Akka leverages [Jackson](https://github.com/FasterXML/) under the hood and makes these records serializable for you.
+1. If you are using Java [record](https://openjdk.org/jeps/395) then no annotation is needed. It just works. It is as simple as using `record` instead of `class`. Akka leverages [Jackson](https://github.com/FasterXML/) under the hood and makes these records serializable for you.
 2. If you are using Java `class` then you need to annotate them with the [proper Jackson annotation](https://github.com/FasterXML/jackson-annotations#usage-general).
 Akka uses a predefined `Jackson` configuration, for serialization. Use the `JsonSupport` utility to update the `ObjectMapper` with your custom requirements. To minimize the number of `Jackson` annotations, Java classes are compiled with the `-parameters` flag.
 
@@ -33,9 +33,11 @@ public class Bootstrap implements ServiceSetup {
 
 ## <a href="about:blank#_type_name"></a> Type name
 
-It’s **highly recommended** to add a `@TypeName` annotation to all persistent classes: entity states, events, Workflow step inputs/results. Information about the type, persisted together with the JSON payload, is used to deserialize the payload and to route it to an appropriate `Subscription` or `View` handler. By default, a FQCN is used, which requires extra attention in case of renaming or repacking. Therefore, we recommend using a logical type name to simplify refactoring tasks. Migration from the old name is also possible, see [renaming class](about:blank#_renaming_class).
+It is **highly recommended** to add a `@TypeName` annotation to sealed interfaces, such as events. Information about the type, persisted together with the JSON payload, is used to deserialize the payload and to route it to an appropriate `Consumer` or `TableUpdater` (from the `View`) handler. By default, a FQCN is used, which requires extra attention in case of renaming or repacking. Therefore, we recommend using a logical type name to simplify refactoring tasks. Migration from the old name is also possible, see [renaming class](about:blank#_renaming_class).
 
 ## <a href="about:blank#_schema_evolution"></a> Schema evolution
+
+Everything in Akka is ultimately message-driven, so plan for your messages to evolve. Commands and events use data structures that change over time as fields are added, removed, or repurposed. Akka makes this manageable, but you are responsible for schema evolution.
 
 When using Event Sourcing, but also for rolling updates, schema evolution becomes an important aspect of your application development. A production-ready solution should be able to update any persisted models. The requirements as well as our own understanding of the business domain may (and will) change over time.
 
@@ -63,7 +65,7 @@ record NameChanged(String newName, Optional<String> oldName, String reason)
 
 ### <a href="about:blank#_adding_a_mandatory_field"></a> Adding a mandatory field
 
-Let’s say we want to have a mandatory `reason` field. Always set to a some (non-null) value. One solution could be to override the constructor, but with more complex and nested types, this might quickly become a hard to follow solution.
+Suppose we want to have a mandatory `reason` field. Always set to a some (non-null) value. One solution could be to override the constructor, but with more complex and nested types, this might quickly become a hard to follow solution.
 
 Another approach is to use the `JsonMigration` extension that allows you to create a complex migration logic based on the payload version number.
 
@@ -195,7 +197,7 @@ public class CustomerCreatedMigration extends JsonMigration {
 
 ### <a href="about:blank#_renaming_class"></a> Renaming class
 
-Renaming the class doesn’t require any additional work when @TypeName annotation is used. For other cases, the `JsonMigration` implementation can specify all old class names.
+Renaming the class does not require any additional work for the entity or the workflow state classes and when @TypeName annotation is used. For other cases, the `JsonMigration` implementation can specify all old class names.
 
 [AddressChangedMigration.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/test/java/customer/domain/schemaevolution/AddressChangedMigration.java)
 ```java
@@ -219,7 +221,7 @@ public class AddressChangedMigration extends JsonMigration {
 
 ### <a href="about:blank#_testing"></a> Testing
 
-It’s highly recommended to cover all schema changes with unit tests. In most cases it won’t be possible to reuse the same class for serialization and deserialization, since the model is different from version 0 to version N. One solution could be to create a byte array snapshot of each version and save it to a file. To generate the snapshot use `SerializationTestkit` utility.
+It is highly recommended to cover all schema changes with unit tests. In most cases it will not be possible to reuse the same class for serialization and deserialization, since the model is different from version 0 to version N. One solution could be to create a byte array snapshot of each version and save it to a file. To generate the snapshot use `SerializationTestkit` utility.
 
 [CustomerEventSerializationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-customer-registry/src/test/java/customer/domain/CustomerEventSerializationTest.java)
 ```java

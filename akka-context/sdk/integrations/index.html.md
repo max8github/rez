@@ -24,7 +24,7 @@ Akka connects to any data store with a Java client library.
 - **Relational databases:** PostgreSQL, MySQL — via R2DBC or JDBC
 - **NoSQL databases:** MongoDB, DynamoDB, Cassandra — via their Java client libraries
 - **Search engines:** Elasticsearch, OpenSearch — via their Java client libraries
-- [Retrieval-Augmented Generation (RAG)](../use-cases/rag-and-knowledge.html) — semantic search on vector databases to enrich AI model requests
+- [Retrieval-Augmented Generation (RAG)](../../getting-started/ask-akka-agent/index.html) — semantic search on vector databases to enrich AI model requests
 
 ### <a href="about:blank#_no_caching_layer_needed"></a> No caching layer needed
 
@@ -72,7 +72,7 @@ The Akka CLI also provides a built-in MCP server (`akka mcp serve`) that exposes
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Enterprise patterns](../use-cases/enterprise-patterns.html) [Component and service calls](../component-and-service-calls.html)
+[Web applications](../web-applications.html) [Component and service calls](../component-and-service-calls.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

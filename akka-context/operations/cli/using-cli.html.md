@@ -41,8 +41,8 @@ This command opens the Akka console login screen in your default web browser. Th
 Upon successful authentication:
 
 - If you have one project, it is automatically set as the `current` project.
-- If no projects exist, you’ll need to create one and set it manually.
-- If you have multiple projects, you’ll need to specify the target project manually (see below).
+- If no projects exist, you will need to create one and set it manually.
+- If you have multiple projects, you will need to specify the target project manually (see below).
 To set your current project:
 
 ```shell
@@ -57,14 +57,14 @@ You can also refer to the [auth](../../reference/cli/akka-cli/akka_auth.html) pa
 
 ### <a href="about:blank#_handling_proxies"></a> Handling Proxies
 
-In corporate environments with HTTP proxy servers that don’t support HTTP/2, you may encounter issues since the `akka` CLI uses gRPC. To bypass these limitations, you can configure the CLI to use grpc-web, which works over HTTP/1.1 and HTTP/2.
+In corporate environments with HTTP proxy servers that do not support HTTP/2, you may encounter issues since the `akka` CLI uses gRPC. To bypass these limitations, you can configure the CLI to use grpc-web, which works over HTTP/1.1 and HTTP/2.
 
 Log in with grpc-web enabled:
 
 ```shell
 akka auth login --use-grpc-web
 ```
-If you’re already logged in but need to switch to grpc-web, configure it with:
+If you are already logged in but need to switch to grpc-web, configure it with:
 
 ```shell
 akka config set api-server-use-grpc-web true
@@ -139,7 +139,7 @@ To deploy a service using a Docker image, run:
 ```shell
 akka services deploy my-service my-container-uri/container-name:tag-name
 ```
-Ensure you’ve set up your container registry credentials before deploying. For more details, see [container registry](../projects/container-registries.html) page.
+Ensure you have set up your container registry credentials before deploying. For more details, see [container registry](../projects/container-registries.html) page.
 
 ### <a href="about:blank#_exposing_a_route_for_inbound_traffic"></a> Exposing a route for inbound traffic
 
@@ -193,7 +193,7 @@ More information about this command in [components](../../reference/cli/akka-cli
 ## <a href="about:blank#_related_documentation"></a> Related documentation
 
 - [Enable CLI command completion](command-completion.html)
-- [CLI command reference](../../reference/cli/akka-cli/index.html)
+- [CLI commands](../../reference/cli/akka-cli/index.html)
 
 <!-- <footer> -->
 <!-- <nav> -->

@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../../index.html)
 - [Reference](../../../index.html)
-- [View reference](../../index.html)
+- [Views](../../index.html)
 - [View query syntax](../index.html)
 - [Operators](index.html)
 - [LIKE](like.html)
@@ -67,7 +67,7 @@ For optimal performance, LIKE operations require specific index structures:
 
 - `column LIKE 'prefix%'` - Requires a prefix index on the column
 - `column LIKE '%suffix'` - Requires a suffix index on the column
-Patterns that don’t have a non-wildcard prefix or suffix cannot be efficiently indexed and are therefore not supported.
+Patterns that do not have a non-wildcard prefix or suffix cannot be efficiently indexed and are therefore not supported.
 
 ## <a href="about:blank#_limitations"></a> Limitations
 

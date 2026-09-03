@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Getting started & Tutorials](../index.html)
-- [RAG chat agent](index.html)
+- [Getting Started](../index.html)
+- [RAG chat tutorial](index.html)
 - [Creating the agent](the-agent.html)
 
 <!-- </nav> -->
@@ -10,7 +10,7 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+Use the [Spec-first hello agent](../spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
 
 ## <a href="about:blank#_overview"></a> Overview
 
@@ -24,7 +24,7 @@ In this part of the guide you will:
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 21, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
@@ -35,7 +35,7 @@ We recommend reviewing our [foundational explainer on AI concepts](../../concept
 
 ## <a href="about:blank#_create_the_empty_project"></a> Create the empty project
 
-1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you haven’t installed the CLI yet.
+1. From a command line, use the Akka CLI to create a new project. See [installation instructions](../quick-install-cli.html) if you have not installed the CLI yet.
 
 ```command
 akka code init --name helloworld-agent --repo akka-samples/empty.git
@@ -209,11 +209,11 @@ This is correct for the Akka libraries, but we want to know about the components
 
 ## <a href="about:blank#_next_steps"></a> Next steps
 
-It’s time to explore our first aspect of the agentic RAG flow: [Knowledge indexing](indexer.html).
+It is time to explore our first aspect of the agentic RAG flow: [Knowledge indexing](indexer.html).
 
 <!-- <footer> -->
 <!-- <nav> -->
-[RAG chat agent](index.html) [Knowledge indexing with a workflow](indexer.html)
+[RAG chat tutorial](index.html) [Knowledge indexing with a workflow](indexer.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

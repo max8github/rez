@@ -320,7 +320,7 @@ public class CustomerRegistryEndpoint {
 | **3** | Issue an HTTP POST request to the service |
 | **4** | Turn the response it into our own response |
 
-|  | If you’re looking to test this locally, you will likely need to run the 2 services with different ports. For more details, consult [Running multiple services](running-locally.html#multiple_services). |
+|  | If you are looking to test this locally, you will likely need to run the 2 services with different ports. For more details, consult [Running multiple services](running-locally.html#multiple_services). |
 It is also possible to interact with arbitrary non-Akka services using the `HttpClientProvider`, for such use,
 pass a string with `https://example.com` or `http://example.com` instead of a service name.
 
@@ -452,11 +452,13 @@ public class ExampleEndpoint extends AbstractHttpEndpoint { // (1)
 | **2** | Make sure to discard the request body when failing |
 | **3** | Or collect the bytes into memory |
 
-### <a href="about:blank#_serving_static_content"></a> Serving static content
+### <a href="about:blank#_serving_static_content"></a> Serving web application assets
 
-Static resources such as HTML, CSS files can be packaged together with the service. This is done
-by placing the resource files in `src/main/resources/static-resources` and returning them from an endpoint
+The files of a web application, such as HTML, CSS, JavaScript, and images, can be packaged together with the service and served from an endpoint. This is done
+by placing the files in `src/main/resources/static-resources` and returning them from an endpoint
 method using [HttpResponses.staticResource](_attachments/api/akka/javasdk/http/HttpResponses.html#staticResource).
+
+This section covers the endpoint API. For serving a single-page application, using your own domain name, pushing updates to an open page, and the boundaries of what the service delivers, see [Web applications](web-applications.html).
 
 This can be done for a single filename:
 
@@ -499,9 +501,6 @@ public HttpResponse webPageResources(HttpRequest request) { // (2)
 | **2** | Accept `akka.http.javadsl.model.HttpRequest` for further inspection of the actual path. |
 | **3** | Strip the `/pages` prefix from the request path and serve the matching file from `static-resources`. For example, a request to `/pages/images/example.png` serves `src/main/resources/static-resources/images/example.png`. |
 When the request path ends with `/` or is exactly the prefix with no trailing slash (e.g. `GET /pages` or `GET /pages/`), `index.html` from that directory is served automatically. This makes it straightforward to serve single-page applications where the root of the static subtree should return the application HTML page.
-
-|  | This is convenient for service documentation or small self-contained services with web user interface but is not intended
- for production, where coupling of the service lifecycle with the user interface would mean that a new service version would need to be deployed for any changes in the user interface. |
 
 ### <a href="about:blank#_openapi_endpoint_schema"></a> OpenAPI endpoint schema
 
@@ -700,7 +699,7 @@ A WebSocket endpoint is created by annotating a method with `@WebSocket()` and h
 The `Flow` can be a request-response type of interaction where each incoming message from a client leads to one or more response messages.
 Another alternative is separate, detached, input and output streams using `Flow.fromSinkAndSource`.
 
-Here’s an example that streams view updates from the server to the client WebSocket:
+Here is an example that streams view updates from the server to the client WebSocket:
 
 [WebSocketsEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/key-value-customer-registry/src/main/java/customer/api/WebSocketsEndpoint.java)
 ```java

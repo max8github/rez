@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Developing](index.html)
-- [Setup and configuration](setup-and-configuration/index.html)
+- [Configuration](setup-and-configuration/index.html)
 - [Errors and failures](errors-and-failures.html)
 
 <!-- </nav> -->
@@ -12,9 +12,9 @@ The Akka SDK provides several mechanisms dealing with validation or when somethi
 
 ## <a href="about:blank#_errors"></a> Errors
 
-The first line of the defense is the validation of the incoming data on the `Endpoint` level. Already described is details in the [request and response](http-endpoints.html#_advanced_http_requests_and_responses) section. This is a basic request validation, which doesn’t require domain state. It’s better to handle it as soon as possible, since it will reduce the load on the system. The logic can reject the request before it reaches the entity.
+The first line of the defense is the validation of the incoming data on the `Endpoint` level. Already described is details in the [request and response](http-endpoints.html#_advanced_http_requests_and_responses) section. This is a basic request validation, which does not require domain state. It is better to handle it as soon as possible, since it will reduce the load on the system. The logic can reject the request before it reaches the entity.
 
-The next phase is domain validation error. An incoming command doesn’t fulfil the requirements or the current state doesn’t allow the command to be handled. Such errors can be signalled back to the client as an error effect using the `effects().error(message)` function.
+The next phase is domain validation error. An incoming command does not fulfil the requirements or the current state does not allow the command to be handled. Such errors can be signalled back to the client as an error effect using the `effects().error(message)` function.
 
 [CounterEntity.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/application/CounterEntity.java)
 ```java
@@ -52,7 +52,7 @@ Date: Wed, 25 Sep 2024 10:44:22 GMT
 Content-Type: text/plain; charset=UTF-8
 Content-Length: 28
 
-Increasing counter above 10000 is blocked For more fine-tuned control over the error handling it’s possible to catch the `CommandException` and transform it into a proper HTTP error.
+Increasing counter above 10000 is blocked For more fine-tuned control over the error handling it is possible to catch the `CommandException` and transform it into a proper HTTP error.
 
 [CounterEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/api/CounterEndpoint.java)
 ```java
@@ -73,7 +73,7 @@ public HttpResponse increaseWithErrorHandling(String counterId, Integer value) {
 | **1** | Catching the `CommandException` and transforming it into 400 Bad Request error. |
 Remember that the [called component](component-and-service-calls.html#_akka_components) can be on a different node. Only the `CommandException` and its subtypes are serialized and sent over the network. The [Jackson](serialization.html) serialization is configured to ignore fields like stack trace or cause from the Java `java.lang.Throwable` class. Other exceptions are not serializable and will be transformed into a generic HTTP 500 error.
 
-Using the `effects().error(commandException)` method or simply throwing a `CommandException` will have the same effect. It’s possible to have a more dedicated exceptions that will be used to signal different situations. For example, you can create a `CounterLimitExceededException` that extends `CommandException` and use it in the command handler.
+Using the `effects().error(commandException)` method or simply throwing a `CommandException` will have the same effect. It is possible to have a more dedicated exceptions that will be used to signal different situations. For example, you can create a `CounterLimitExceededException` that extends `CommandException` and use it in the command handler.
 
 [CounterEntity.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/application/CounterEntity.java)
 ```java
@@ -126,7 +126,7 @@ Custom exceptions are not the only option to deal with errors in a more structur
 
 ## <a href="about:blank#_failures"></a> Failures
 
-All unexpected exception (that doesn’t extend `CommandException`) thrown by the user code are transformed into an HTTP 500 error. When running the service locally in dev mode, a stack trace will be a part of the HTTP response. In production, this information is hidden, to not leak internal details about the service to a client. The client will receive a non-descriptive message with a correlation ID, like below.
+All unexpected exception (that does not extend `CommandException`) thrown by the user code are transformed into an HTTP 500 error. When running the service locally in dev mode, a stack trace will be a part of the HTTP response. In production, this information is hidden, to not leak internal details about the service to a client. The client will receive a non-descriptive message with a correlation ID, like below.
 
 ```none
 Unexpected error [2c74bdfb-3130-464c-8852-cf9c3c2180ad]

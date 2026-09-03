@@ -140,7 +140,7 @@ public class OrderEntity extends KeyValueEntity<Order> {
 
 ## <a href="about:blank#_handling_the_timer_call"></a> Handling the timer call
 
-Now let’s examine the `OrderTimedAction.expireOrder` method.
+Now examine the `OrderTimedAction.expireOrder` method.
 
 [OrderTimedAction.java](https://github.com/akka/akka-sdk/blob/main/samples/reliable-timers/src/main/java/com/example/application/OrderTimedAction.java)
 ```java
@@ -210,7 +210,7 @@ Retries continue indefinitely by default. To limit retries, set the `maxRetries`
 
 ## <a href="about:blank#_deleting_a_timer"></a> Deleting a timer
 
-Let’s review the implementation of the confirmation endpoint.
+Review the implementation of the confirmation endpoint.
 
 [OrderEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/reliable-timers/src/main/java/com/example/api/OrderEndpoint.java)
 ```java
@@ -245,7 +245,7 @@ Once `OrderEntity` completes the operation, the timer is deleted. This sequence 
 timer fails, the `OrderEntity.cancel` method, as seen earlier, ensures proper handling for obsolete timers, signaling Akka that they can be removed.
 
 |  | You could entirely skip timer deletion when handling confirmation. In this case, the registered timer would be
-triggered later, and `OrderEntity.cancel` would handle this case gracefully. However, it’s always good practice to perform housekeeping to save resources. |
+triggered later, and `OrderEntity.cancel` would handle this case gracefully. However, it is always good practice to perform housekeeping to save resources. |
 
 ## <a href="about:blank#_best_practices"></a> Best practices
 
@@ -258,7 +258,7 @@ A timer will fail to execute if any of the following conditions occur:
 - The payload format changes, leading to deserialization errors for the payload.
 If any of these changes happen in a new deployment, the timer becomes broken. This means the timer will repeatedly fail to execute and will be rescheduled indefinitely. Only a compatible deployment restoring the component will allow the timer to function correctly.
 
-If you need to refactor a method used by a timer, it’s recommended to keep the old method and delegate calls to the updated method.
+If you need to refactor a method used by a timer, it is recommended to keep the old method and delegate calls to the updated method.
 
 For example, suppose `OrderTimedAction` had a legacy method called `expire` that took `ExpireOrder` as a parameter.
 

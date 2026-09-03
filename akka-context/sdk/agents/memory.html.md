@@ -3,13 +3,13 @@
 - [Developing](../index.html)
 - [Components](../components/index.html)
 - [Agents](../agents.html)
-- [Managing session memory](memory.html)
+- [Session memory](memory.html)
 
 <!-- </nav> -->
 
-# Managing session memory
+# Session memory
 
-Session Memory provides a history mechanism that enables agents to maintain context across multiple interactions. This feature is essential for building agents that can remember previous exchanges with users, understand context, and provide coherent responses over time.
+Session Memory provides a history mechanism that enables agents to maintain context across multiple interactions. Agents use it to remember previous exchanges with users and provide coherent responses over time.
 
 When an agent interacts with an AI model, both the user message and the AI response are automatically stored in the session memory. These messages are then included as additional context in subsequent requests to the model, allowing it to reference previous parts of the interaction.
 
@@ -64,7 +64,7 @@ The <a href="../_attachments/api/akka/javasdk/agent/MemoryProvider.html">`Memory
 - `MemoryProvider.none()` - Disables both reading from and writing to session memory
 - `MemoryProvider.limitedWindow()` - Configures memory with options to, e.g.:
 
-  - Setup **read only** memory, in which the agent reads the memory but does not allow write any interactions to it. This is ideal for multi-agent sessions where some agents can store memory and others can’t.
+  - Setup **read only** memory, in which the agent reads the memory but does not allow write any interactions to it. This is ideal for multi-agent sessions where some agents can store memory and others cannot.
   - Setup **write only** memory, in which the agent register the interactions to the session memory but does not take those in consideration when processing the user message.
   - Limit the amount of messages used as context in each interaction, i.e. use only the last N number of messages for context (good for token usage control).
   - Apply **filters** to selectively include or exclude messages based on agent component ID or role.
@@ -196,7 +196,51 @@ Example:
 var filter = MemoryFilter.excludeFromAgentId("debug-agent")
     .excludeFromAgentRole("internal");
 ```
-This creates a single Exclude filter that will exclude messages from "debug-agent" OR messages with the "internal" role. Only messages that don’t match either criterion will be included.
+This creates a single Exclude filter that will exclude messages from "debug-agent" OR messages with the "internal" role. Only messages that do not match either criterion will be included.
+
+## <a href="about:blank#_intercepting_interaction_writes"></a> Intercepting interaction writes
+
+For cases where you want to transform the memory messages before they are persisted — for example, to redact secrets,
+normalize whitespace, or truncate overly long input — without replacing the entire `SessionMemory` implementation, you can attach a <a href="../_attachments/api/akka/javasdk/agent/SessionMemoryInterceptor.html">`SessionMemoryInterceptor`</a> to any memory provider with `withInterceptor(…​)`.
+
+`SessionMemoryInterceptor` is an interface with default identity implementations for `beforeWrite` overloads covering each top-level `SessionMessage` variant: user messages (text and multimodal), AI replies, and tool call responses. Each method receives the message about to be persisted and returns the (possibly transformed) message that will actually be written. You only need to override the overload(s) you care about; the others continue to pass the message through unchanged.
+
+```java
+private static final Pattern CARD_NUMBER = Pattern.compile(
+  "\\b\\d{4}[ -]?\\d{4}[ -]?\\d{4}[ -]?\\d{4}\\b"
+); // (1)
+
+private static final SessionMemoryInterceptor REDACTOR = new SessionMemoryInterceptor() { // (2)
+  @Override
+  public SessionMessage.UserMessage beforeWrite( // (3)
+    String sessionId,
+    SessionMessage.UserMessage userMessage
+  ) {
+    return new SessionMessage.UserMessage( // (4)
+      userMessage.timestamp(),
+      CARD_NUMBER.matcher(userMessage.text()).replaceAll("[REDACTED-CARD]"),
+      userMessage.componentId()
+    );
+  }
+};
+
+public Effect<String> ask(String question) {
+  return effects()
+    .memory(MemoryProvider.fromConfig().withInterceptor(REDACTOR)) // (5)
+    .systemMessage("You are a helpful...")
+    .userMessage(question)
+    .thenReply();
+}
+```
+
+| **1** | Precompile any heavy state (here, the regex pattern) into a constant so it is reused across calls. |
+| **2** | Hold the interceptor in a `private static final` field. The same instance is invoked by every session that goes through this agent, so it must not hold mutable state of its own — `Pattern` matchers are thread-safe. |
+| **3** | Override only the overload(s) you want to transform; the multimodal overload is left as the default identity. |
+| **4** | Return the message to persist. Returning the input unchanged is equivalent to the default no-op. |
+| **5** | `withInterceptor` wraps the configured memory provider with your interceptor. |
+The configured read/write/filter behavior of the underlying provider is preserved. Read-side concerns (history limit, filters, read-only/write-only) are configured through `MemoryProvider` itself. Tool call requests are not exposed as a dedicated hook — they are nested inside `AiMessage.toolCallRequests`, so override the AI message hook to rewrite them.
+
+|  | A `SessionMemoryInterceptor` is shared across every session and concurrent request that uses it; the SDK does not synchronize, copy, or pool it. Keep interceptors stateless, or rely only on immutable / thread-safe state (a precompiled `Pattern`, a final config object). Mutable fields on the interceptor will be hit concurrently — avoid them unless you guard the access yourself. |
 
 ## <a href="about:blank#_accessing_session_memory"></a> Accessing session memory
 
@@ -231,7 +275,7 @@ public class SessionMemoryConsumer extends Consumer {
 ```
 This can be useful for more granular control over token usage but also to allow external integrations and analytics over these details.
 
-## <a href="about:blank#_compaction"></a> Compaction
+## <a href="about:blank#_session_memory_compaction"></a> Session memory compaction
 
 You can update the session memory to reduce the size of the history. One technique is to let an LLM summarize the interaction history and use the new summary instead of the full history. Such agent can look like this:
 
@@ -325,7 +369,7 @@ public class CompactionAgent extends Agent {
 | **1** | Instructions to create the summary of user and AI messages and result as JSON. |
 | **2** | The full history from the `SessionMemoryEntity`. |
 | **3** | Format and concatenate the messages. |
-| **4** | The `CompactionAgent` itself doesn’t need any session memory. |
+| **4** | The `CompactionAgent` itself does not need any session memory. |
 One way to trigger compaction is to use a consumer of the session memory events and call the `CompactionAgent` from that consumer when a threshold is exceeded.
 
 [SessionMemoryConsumer.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/application/SessionMemoryConsumer.java)
@@ -410,9 +454,15 @@ public class SessionMemoryConsumer extends Consumer {
 
 The session memory can be replicated to other regions, but it has the multi-region replication filter enabled to only include the local region when using `request-region` primary selection. When accessed from another region the filter will automatically be expanded to include the other region too, and thereby contain the same information.
 
+## <a href="about:blank#_see_also"></a> See also
+
+- [Agents](../agents.html)
+- [Prompts](prompt.html)
+- [Data sanitization](../sanitization.html)
+
 <!-- <footer> -->
 <!-- <nav> -->
-[Calling agents](calling.html) [Structured responses](structured.html)
+[Agent invocation](calling.html) [Structured responses](structured.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

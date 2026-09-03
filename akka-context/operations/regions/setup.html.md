@@ -151,7 +151,7 @@ You can see throughput, lag, and errors in the replication section in the Contro
 ### <a href="about:blank#_add_a_region"></a> Add a region
 
 1. Follow the instructions in [Adding a region to a project](about:blank#_adding_a_region_to_a_project).
-2. You have to [deploy the services](../services/deploy-service.html) again because the container images don’t exist in the container registry of the new region, unless you use a global container registry.
+2. You have to [deploy the services](../services/deploy-service.html) again because the container images do not exist in the container registry of the new region, unless you use a global container registry.
 3. You need to [expose the services](../services/invoke-service.html) in the new region.
 4. Stateful components are automatically replicated to the new region. This may take some time, and you can see progress in the replication section in the Control Tower. The event consumption lag will at first be high and then close to zero when the replication has been completed.
 
@@ -210,7 +210,7 @@ akka service pause my-service --region gcp-us-east1
 
 ### <a href="about:blank#_bring_up_region_for_disaster_recovery"></a> Bring up region for disaster recovery
 
-When the problems have been solved after [[_fast_downing_of_region_for_disaster_recovery]](about:blank#_fast_downing_of_region_for_disaster_recovery) you can bring up the failed region again.
+When the problems have been solved after [Downing of region for disaster recovery](about:blank#_downing_of_region_for_disaster_recovery) you can bring up the failed region again.
 
 1. Use `bring-up-region` from the CLI:
 
@@ -230,7 +230,7 @@ akka project settings bring-up-region gcp-us-east1 --region gcp-us-east1
 ```
 Events that were written in the failing region and had not been replicated to other regions before the failover will be replicated when the regions are connected again. This means that there is a possibility of conflicting events since events for an entity instance could have been persisted in the respective region without being aware of events from the other region. Thereby violating the single-writer principle of the entity. On an entity instance level, there is a process to automatically handle such conflicts:
 
-- If there were no new writes in the non-downed regions, the events from downed region that hadn’t been replicated before are now replicated and applied as normal.
+- If there were no new writes in the non-downed regions, the events from downed region that had not been replicated before are now replicated and applied as normal.
 - Conflicting events are detected by using [version vectors](https://en.wikipedia.org/wiki/Version_vector). Conflicting events are still stored in the event journal, but not immediately applied to the state of the entity.
 - The entity instance has a primary region in the non-downed regions that has the authority to resolve the conflicts. It replays all events and selectively applies them to the state based on collected conflicts and where the event was originally written. Meaning that conflicting events from the previously downed region are discarded.
 - The resolved state is persisted and used by other regions.

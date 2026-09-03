@@ -8,8 +8,8 @@
 
 |  | **New to Akka? Start here:**
 
-Use the [Build your first agent with Spec-Driven Development](spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
-You’ve built and tried the service locally, it’s time to run it on the Akka Agentic Platform without having to change any code.
+Use the [Spec-first hello agent](spec-your-first-agent.html) guide to use your AI assistant for implementing a simple agentic service, running it locally and interacting with it. |
+You have built and tried the service locally, it is time to run it on the Akka Agentic Platform without having to change any code.
 
 1. If you have not already done so, [install the Akka CLI](../operations/cli/installation.html).
 2. Authenticate the CLI with your Akka account:

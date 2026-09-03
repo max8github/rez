@@ -8,7 +8,7 @@
 
 # Integrating with CI/CD tools
 
-Akka development projects can be integrated into a Continuous Integration/Continuous Delivery (CI/CD) process using the Akka CLI. To use the Akka CLI in your CI/CD workflow, you’ll need a service token. A service token is a token tied to a single project, that allows authenticating and performing actions on that project. Service tokens have the following permissions on the project they are created for:
+Akka development projects can be integrated into a Continuous Integration/Continuous Delivery (CI/CD) process using the Akka CLI. To use the Akka CLI in your CI/CD workflow, you will need a service token. A service token is a token tied to a single project, that allows authenticating and performing actions on that project. Service tokens have the following permissions on the project they are created for:
 
 | View project | ✅ |
 | Admin project | ❌ |
@@ -65,7 +65,7 @@ Token revoked
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Exporting metrics, logs, and traces](../observability-and-monitoring/observability-exports.html) [CI/CD with GitHub Actions](github-actions.html)
+[Alerting baselines](../observability-and-monitoring/alerting-baselines.html) [CI/CD with GitHub Actions](github-actions.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

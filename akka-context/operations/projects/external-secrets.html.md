@@ -35,13 +35,149 @@ CLI `akka secret external delete` command:
 akka secret external delete <secret-name>
 ```
 
+## <a href="about:blank#_aws_secrets"></a> AWS Secrets
+
+Akka services running on AWS can access external secrets from AWS Secrets Manager and AWS Systems Manager Parameter Store.
+
+### <a href="about:blank#_setting_up"></a> Setting up
+
+Before you set up AWS external secrets, you will need the following information:
+
+- The account ID of your AWS account, which we will refer to in the scripts below using the environment variable `AWS_ACCOUNT_ID`.
+- The region for your AWS account, which we will refer to in the scripts below using the environment variable `AWS_REGION`.
+- The ID of the Akka project that you wish to access to the secrets, which we will refer to in the scripts below using the environment variable `AKKA_PROJECT_ID`. This is a UUID, and can be obtained using the `akka project get` command.
+- The name of the service that you wish to access the secrets, which we will refer to in the scripts below using the environment variable `AKKA_SERVICE_NAME`.
+The following script can set them:
+
+```command
+export AWS_ACCOUNT_ID=123456789012
+export AWS_REGION=us-east-2
+export AKKA_PROJECT_ID=bc16cf0c-909f-402d-bbb0-88ea1d582854
+export AKKA_SERVICE_NAME=my-service
+```
+Now, you will need to determine the OIDC issuer for your region. This can be determined by running:
+
+```command
+akka projects regions workload-identity-info
+```
+If you only have one region, the above will give you some helpful snippets that may be used below. If you have more than one region, you can specify the region you want the info for using the `--region` flag.
+
+Copy the issuer and place it in an environment variable called `AKKA_OIDC_ISSUER`, or if you only have a single region, you can do so using the following command:
+
+```command
+export AKKA_OIDC_ISSUER=$(akka projects regions workload-identity-info -o go-template='{{(index .Items 0).WorkloadIdentity.Aws.OidcIssuer}}')
+```
+If you have not run this for your AWS account and this region yet, you will need to create the OIDC provider in your AWS account. This can be done by running:
+
+```command
+aws iam create-open-id-connect-provider --url $AKKA_OIDC_ISSUER \
+  --thumbprint-list 06b25927c42a721631c1efd9431e648fa62e1e39 \
+  --client-id-list sts.amazonaws.com \
+  --tags Key=akka-region,Value=akka-region-name
+```
+AWS often refers to an OIDC provider via the issuer with the `https://` stripped off of it, so for convenience, we will also set that here:
+
+```command
+export AKKA_OIDC_PROVIDER=$(echo $AKKA_OIDC_ISSUER | sed -e "s/^https:\/\///")
+```
+Now create a secret that you want the service to access:
+
+```command
+aws --region "$AWS_REGION" secretsmanager  create-secret --name my-secret \
+  --secret-string '{"username":"some-user", "password":"hunter2"}'
+```
+Now create a policy that allows access to the secret:
+
+```command
+POLICY_ARN=$(aws --region "$AWS_REGION" --query Policy.Arn --output text iam create-policy \
+  --policy-name akka-secret-access-policy --policy-document '{
+    "Version": "2012-10-17",
+    "Statement": [ {
+        "Effect": "Allow",
+        "Action": ["secretsmanager:GetSecretValue", "secretsmanager:DescribeSecret"],
+        "Resource": ["arn:*:secretsmanager:*:*:secret:my-secret-??????"]
+    } ]
+}')
+```
+Now create a role that the Akka service will assume bound to the policy:
+
+```command
+TRUST_POLICY_JSON=$(cat <<EOF
+{
+  "Version":"2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Principal": {
+        "Federated": "arn:aws:iam::${AWS_ACCOUNT_ID}:oidc-provider/$AKKA_OIDC_PROVIDER"
+      },
+      "Action": "sts:AssumeRoleWithWebIdentity",
+      "Condition": {
+        "StringEquals": {
+          "${AKKA_OIDC_PROVIDER}:aud": "sts.amazonaws.com",
+          "${AKKA_OIDC_PROVIDER}:sub": "system:serviceaccount:${AKKA_PROJECT_ID}:klx-$AKKA_SERVICE_NAME"
+        }
+      }
+    }
+  ]
+}
+EOF
+)
+
+aws iam create-role --role-name akka-service-role --assume-role-policy-document "$TRUST_POLICY_JSON" \
+  --description "My Akka service role"
+
+aws iam attach-role-policy --role-name akka-service-role \
+  --policy-arn=arn:aws:iam::$AWS_ACCOUNT_ID:policy/akka-secret-access-policy
+```
+Note the `klx-` prefix before the service name in the OIDC provider subject.
+
+Finally, we can tell Akka to assume this role for your service:
+
+```command
+akka service deploy $AKKA_SERVICE_NAME \
+  --aws-workload-identity-role-arn arn:aws:iam::$AWS_ACCOUNT_ID:role/akka-service-role
+```
+
+### <a href="about:blank#_managing_aws_secrets_using_the_project_descriptor"></a> Managing AWS secrets using the project descriptor
+
+The best way to manage AWS secrets is using the project descriptor. Please refer to [Project Descriptor reference](../../reference/descriptors/project-descriptor.html) for details.
+
+### <a href="about:blank#_adding_aws_secrets_with_the_cli"></a> Adding AWS secrets with the CLI
+
+To add AWS secrets to your Akka project, you can use the Akka CLI.
+
+CLI Use the `akka secrets external create aws` command.
+
+```command
+akka secrets external create aws my-external-secret \ // (1)
+  --object-name arn:aws:secretsmanager:$AWS_REGION:$AWS_ACCOUNT_ID:secret:my-secret-QNTAHI \ // (2)
+  --object-alias some-file-name // (3)
+```
+
+| **1** | External secret name |
+| **2** | The ARN of the secret |
+| **3** | The name of the file to mount the secret as |
+Adding multiple objects can be done by updating the secret after initial creation.
+
+### <a href="about:blank#_updating_aws_secrets"></a> Updating AWS secrets
+
+CLI Use the `akka secrets external update aws` command.
+
+```command
+akka secrets external update aws my-external-secret \
+  --object-name arn:aws:secretsmanager::$AWS_ACCOUNT_ID:secret:some-other-secret-ENTHOI \
+  --object-alias some-other-file-name
+```
+When updating, if the passed in object name exists, the object will be updated, otherwise a new object will be added to the secret.
+
 ## <a href="about:blank#_azure_keyvault"></a> Azure KeyVault
 
 Akka services running on Azure can access external secrets from Azure KeyVault.
 
-### <a href="about:blank#_setting_up"></a> Setting up
+### <a href="about:blank#_setting_up_2"></a> Setting up
 
-Before you setting up Azure KeyVault, you will need the following information:
+Before you set up Azure KeyVault, you will need the following information:
 
 - The name of the Azure KeyVault that you wish to access, which we will refer to in the scripts below using the environment variable `KEYVAULT_NAME`.
 - The ID of the Akka project that you wish to access to the secrets, which we will refer to in the scripts below using the environment variable `AKKA_PROJECT_ID`. This is a UUID, and can be obtained using the `akka project get` command.
@@ -56,14 +192,17 @@ export AKKA_SERVICE_NAME=my-service
 Now, you will need to determine the OIDC issuer for your region. This can be determined by running:
 
 ```command
-akka secrets external info
+akka projects regions workload-identity-info
 ```
+If you only have one region, the above will give you some helpful snippets that may be used below. If you have more than one region, you can specify the region you want the info for using the `--region` flag.
+
 Copy the issuer and place it in an environment variable called `AKKA_OIDC_ISSUER`, or if you only have a single region, you can do so using the following command:
 
 ```command
-export AKKA_OIDC_ISSUER=`akka secrets external info -o go-template='{{(index .Items 0).WorkloadIdentity.Azure.OidcIssuer}}'`
+export AKKA_OIDC_ISSUER=`akka projects regions workload-identity-info
+-o go-template='{{(index .Items 0).WorkloadIdentity.Azure.OidcIssuer}}'`
 ```
-Now you need to create an application to access the secrets on behalf of your service. We’ll place the name of this application in an environment variable called `APPLICATION_NAME`, and then obtain the client ID for the application and place that in an environment variable called `APPLICATION_CLIENT_ID`:
+Now you need to create an application to access the secrets on behalf of your service. We will place the name of this application in an environment variable called `APPLICATION_NAME`, and then obtain the client ID for the application and place that in an environment variable called `APPLICATION_CLIENT_ID`:
 
 ```command
 export APPLICATION_NAME="my-akka-service-application"
@@ -82,7 +221,7 @@ Now to federate the credentials, we need the application object id of the applic
 ```command
 export APPLICATION_OBJECT_ID="$(az ad app show --id ${APPLICATION_CLIENT_ID} --query id -otsv)"
 ```
-Now we’ll create a JSON parameters file for federating the credentials:
+Now we will create a JSON parameters file for federating the credentials:
 
 ```command
 cat <<EOF > params.json
@@ -145,7 +284,7 @@ When updating, if the passed in object name exists, the object will be updated, 
 
 Akka services running on GCP can access external secrets from GCP Secret Manager. Authentication uses Workload Identity Federation. Akka presents an identity token that GCP trusts via a pre-configured identity pool, so no service account keys are needed.
 
-### <a href="about:blank#_setting_up_2"></a> Setting up
+### <a href="about:blank#_setting_up_3"></a> Setting up
 
 Before setting up GCP Secret Manager, you will need:
 
@@ -159,7 +298,7 @@ export GCP_PROJECT_ID=my-gcp-project
 gcloud auth login
 gcloud config set project $GCP_PROJECT_ID
 ```
-Enable the Secret Manager API if you haven’t already:
+Enable the Secret Manager API if you have not already:
 
 ```command
 gcloud services enable secretmanager.googleapis.com
@@ -182,7 +321,7 @@ gcloud secrets versions access latest --secret="my-secret"
 First, retrieve the workload identity information for your Akka project:
 
 ```command
-akka secrets external info
+akka projects regions workload-identity-info
 ```
 This outputs a workload identity pool path, a **principal** (for a specific service), and a **principalSet** (for all services in the project).
 
@@ -195,7 +334,7 @@ gcloud secrets add-iam-policy-binding my-secret \
     --member="principalSet://iam.googleapis.com/projects/GCP_PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/namespace/NAMESPACE_ID" // (1)
 ```
 
-| **1** | Replace the `--member` value with the `principalSet` from the `akka secrets external info` output |
+| **1** | Replace the `--member` value with the `principalSet` from the `akka projects regions workload-identity-info` output |
 To grant access to a specific Akka service only, use the `principal` value instead:
 
 ```command
@@ -205,7 +344,7 @@ gcloud secrets add-iam-policy-binding my-secret \
     --member="principal://iam.googleapis.com/projects/GCP_PROJECT_NUMBER/locations/global/workloadIdentityPools/POOL_ID/subject/ns/NAMESPACE_ID/sa/kalix-SERVICE_NAME" // (1)
 ```
 
-| **1** | Copy the exact `principal` value from the `akka secrets external info` output rather than constructing it manually. Note the `kalix-` prefix before the Akka service name. Akka uses this prefix internally when registering workload identities |
+| **1** | Copy the exact `principal` value from the `akka projects regions workload-identity-info` output rather than constructing it manually. Note the `kalix-` prefix before the Akka service name. Akka uses this prefix internally when registering workload identities |
 Repeat the IAM binding for each secret that your service needs to access.
 
 ### <a href="about:blank#_managing_gcp_secrets_using_the_project_descriptor"></a> Managing GCP secrets using the project descriptor

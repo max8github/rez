@@ -16,7 +16,6 @@ To switch between organizations, you must specify the target organization’s co
 
 - <a href="manage-users.html">**User Membership**</a>: A user can belong to multiple organizations, but membership does not automatically grant access to the organization’s projects.
 - <a href="regions.html">**Regions**</a>: Each organization has access to specific regions. Projects created within the organization are located in one or more of these regions.
-- <a href="billing.html">**Billing**</a>: Billing is handled at the organization level, with all costs collected and paid per organization.
 - <a href="../projects/manage-project-access.html">**Role-Based Access**</a>: Membership and project access within an organization are managed through role bindings.
 
 ## <a href="about:blank#_details"></a> Details
@@ -45,11 +44,10 @@ acme        1a4a9d5d-1234-5678-910a-9c8fb3700da7   superuser
 
 - [Managing organization users](manage-users.html)
 - [Regions](regions.html)
-- [Billing](billing.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Akka Automated Operations](../akka-platform.html) [Manage users](manage-users.html)
+[Technical Overview](../technical-overview.html) [Manage users](manage-users.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

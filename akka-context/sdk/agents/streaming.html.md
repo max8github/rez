@@ -9,9 +9,7 @@
 
 # Streaming responses
 
-In AI chat applications, you’ve seen how responses are displayed word by word as they are generated. There are a few reasons for this. The first is that LLMs are *prediction* engines. Each time a token (usually a word) is streamed to the response, the LLM will attempt to *predict* the next word in the output. This causes the small delays between words.
-
-The other reason why responses are streamed is that it can take a very long time to generate the full response, so the user experience is much better getting the answer as a live stream of tokens. To support this real-time user experience, the agent can stream the model response tokens to an endpoint. These tokens can then be pushed to the client using server-sent events (SSE).
+An agent can stream the model’s response as a live stream of tokens, instead of returning the complete response at once. A model generates its output one token (usually a word) at a time, and a full response can take a long time to produce. Streaming the tokens to the client as they arrive, typically over server-sent events (SSE), lets a chat-style interface display the response word by word while it is generated.
 
 ```java
 @Component(id = "streaming-activity-agent")
@@ -182,9 +180,15 @@ public class ActivityWorkflow extends Workflow<ActivityWorkflow.State> {
 | **6** | Persist the final answer from the agent in the workflow state. |
 Clients subscribe to these notifications as described in [Subscribing to notifications](../workflows.html#_subscribing_to_notifications). The client can handle each notification type appropriately—initializing the UI on `LlmResponseStart`, appending text on `LlmResponseDelta`, and finalizing on `LlmResponseEnd`.
 
+## <a href="about:blank#_see_also"></a> See also
+
+- [Agents](../agents.html)
+- [HTTP Endpoints](../http-endpoints.html)
+- [Streaming](../streaming.html)
+
 <!-- <footer> -->
 <!-- <nav> -->
-[Extending with function tools](extending.html) [Orchestrating multiple agents](orchestrating.html)
+[Function tools](extending.html) [Multi-agent orchestration](orchestrating.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

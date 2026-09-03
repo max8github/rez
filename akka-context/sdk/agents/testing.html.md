@@ -17,114 +17,81 @@ For predictable and repeatable tests of your agent’s business logic and compon
 
 Use the `TestKitSupport` and the `ComponentClient` to call the components from the test. The `ModelProvider` of the agents can be replaced with [TestModelProvider](../_attachments/testkit/akka/javasdk/testkit/TestModelProvider.html), which provides ways to mock the responses without using the real AI model.
 
-[AgentTeamWorkflowTest.java](https://github.com/akka/akka-sdk/blob/main/samples/multi-agent/src/test/java/demo/multiagent/application/AgentTeamWorkflowTest.java)
+[WeatherAgentIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/multi-agent/src/test/java/demo/multiagent/application/WeatherAgentIntegrationTest.java)
 ```java
-public class AgentTeamWorkflowTest extends TestKitSupport { // (1)
+import akka.javasdk.testkit.TestKit;
+import akka.javasdk.testkit.TestKitSupport;
+import akka.javasdk.testkit.TestModelProvider;
+import akka.javasdk.testkit.TestModelProvider.AiResponse;
+import akka.javasdk.testkit.TestModelProvider.ToolInvocationRequest;
+import java.util.UUID;
+import org.junit.jupiter.api.Test;
 
-  private final TestModelProvider selectorModel = new TestModelProvider(); // (2)
-  private final TestModelProvider plannerModel = new TestModelProvider();
-  private final TestModelProvider activitiesModel = new TestModelProvider();
-  private final TestModelProvider weatherModel = new TestModelProvider();
-  private final TestModelProvider summaryModel = new TestModelProvider();
-  private final TestModelProvider toxicityEvalModel = new TestModelProvider();
-  private final TestModelProvider summarizationEvalModel = new TestModelProvider();
+public class WeatherAgentIntegrationTest extends TestKitSupport { // (1)
+
+  private final TestModelProvider weatherModel = new TestModelProvider(); // (2)
 
   @Override
   protected TestKit.Settings testKitSettings() {
     return TestKit.Settings.DEFAULT.withAdditionalConfig(
       "akka.javasdk.agent.openai.api-key = n/a"
-    )
-      .withModelProvider(SelectorAgent.class, selectorModel) // (3)
-      .withModelProvider(PlannerAgent.class, plannerModel)
-      .withModelProvider(ActivityAgent.class, activitiesModel)
-      .withModelProvider(WeatherAgent.class, weatherModel)
-      .withModelProvider(SummarizerAgent.class, summaryModel)
-      .withModelProvider(ToxicityEvaluator.class, toxicityEvalModel)
-      .withModelProvider(SummarizationEvaluator.class, summarizationEvalModel);
+    ).withModelProvider(WeatherAgent.class, weatherModel); // (3)
   }
 
   @Test
-  public void test() {
-    var selection = new AgentSelection(List.of("activity-agent", "weather-agent"));
-    selectorModel.fixedResponse(JsonSupport.encodeToString(selection)); // (4)
+  public void replyWithFixedResponse() {
+    weatherModel.fixedResponse("The weather in Madrid is sunny, 25°C."); // (4)
 
-    var weatherQuery = "What is the current weather in Stockholm?";
-    var activityQuery =
-      "Suggest activities to do in Stockholm considering the current weather.";
-    var plan = new Plan(
-      List.of(
-        new PlanStep("weather-agent", weatherQuery),
-        new PlanStep("activity-agent", activityQuery)
-      )
-    );
-    plannerModel.fixedResponse(JsonSupport.encodeToString(plan));
+    var reply = componentClient
+      .forAgent()
+      .inSession(UUID.randomUUID().toString())
+      .method(WeatherAgent::query)
+      .invoke("What is the weather in Madrid?");
 
+    assertThat(reply).contains("sunny");
+  }
+
+
+  // The runtime prefixes a tool name with the simple name of the registered tool's class;
+  // here the WeatherAgent receives a FakeWeatherService instance (wired by the bootstrap
+  // when WEATHER_API_KEY is unset), so the tool name the model sees is "FakeWeatherService_getWeather".
+  private static final String GET_WEATHER_TOOL = "FakeWeatherService_getWeather";
+
+  @Test
+  public void invokeWeatherTool() {
+    // Turn 1: the mocked model asks the runtime to invoke the getWeather tool.
     weatherModel
-      .whenMessage(req -> req.equals(weatherQuery)) // (5)
-      .reply("The weather in Stockholm is sunny.");
+      .whenMessage(msg -> msg.contains("Stockholm"))
+      .reply(new ToolInvocationRequest(GET_WEATHER_TOOL, "{\"location\":\"Stockholm\"}")); // (5)
 
-    activitiesModel
-      .whenMessage(req -> req.equals(activityQuery))
-      .reply(
-        "You can take a bike tour around Djurgården Park, " +
-        "visit the Vasa Museum, explore Gamla Stan (Old Town)..."
-      );
+    // Turn 2: the mocked model receives the tool result and produces the final answer.
+    // FakeWeatherService returns "It's always sunny <date> in <location>."
+    weatherModel
+      .whenToolResult(tr -> tr.name().equals(GET_WEATHER_TOOL))
+      .thenReply(tr -> new AiResponse("Forecast: " + tr.content())); // (6)
 
-    summaryModel.fixedResponse(
-      "The weather in Stockholm is sunny, so you can enjoy " +
-      "outdoor activities like a bike tour around Djurgården Park, " +
-      "visiting the Vasa Museum, exploring Gamla Stan (Old Town)"
-    );
+    var reply = componentClient
+      .forAgent()
+      .inSession(UUID.randomUUID().toString())
+      .method(WeatherAgent::query)
+      .invoke("What is the weather in Stockholm?");
 
-    toxicityEvalModel.fixedResponse(
-      """
-      {
-        "label" : "non-toxic"
-      }
-      """.stripIndent()
-    );
-
-    summarizationEvalModel.fixedResponse(
-      """
-      {
-        "label" : "good"
-      }
-      """.stripIndent()
-    );
-
-    var query = "I am in Stockholm. What should I do? Beware of the weather";
-
-    var sessionId = UUID.randomUUID().toString();
-    var request = new AgentTeamWorkflow.Request("alice", query);
-
-    componentClient
-      .forWorkflow(sessionId)
-      .method(AgentTeamWorkflow::start) // (6)
-      .invoke(request);
-
-    Awaitility.await()
-      .ignoreExceptions()
-      .atMost(10, SECONDS)
-      .untilAsserted(() -> {
-        var answer = componentClient
-          .forWorkflow(sessionId)
-          .method(AgentTeamWorkflow::getAnswer)
-          .invoke();
-        assertThat(answer).isNotBlank();
-        assertThat(answer).contains("Stockholm");
-        assertThat(answer).contains("sunny");
-        assertThat(answer).contains("bike tour");
-      });
+    assertThat(reply).startsWith("Forecast:");
+    assertThat(reply).contains("sunny");
+    assertThat(reply).contains("Stockholm");
   }
 }
 ```
 
 | **1** | Extend `TestKitSupport` to gain access to testing utilities for Akka components. |
-| **2** | Create one or more `TestModelProvider`. Using one per agent allows for distinct mock behaviors, while sharing one is useful for testing general responses. |
-| **3** | Use the settings of the `TestKit` to replace the agent’s real `ModelProvider` with your test instance. |
-| **4** | For simple tests, define a single, fixed response that the mock model will always return. |
-| **5** | For more complex scenarios, define a response that is only returned if the user message matches a specific condition. This is useful for testing different logic paths within your agent. |
-| **6** | Call the components with the `componentClient`. |
+| **2** | Create a `TestModelProvider`. Use a separate instance per agent for distinct mock behavior. |
+| **3** | Register the test model provider in `testKitSettings()` to replace the agent’s real `ModelProvider`. |
+| **4** | The simplest case: `fixedResponse` always returns the same string. The agent never calls its tools because the model produces a direct answer. |
+| **5** | When the model should drive a tool call, reply with a `ToolInvocationRequest`. The runtime invokes the actual tool method and feeds the result back into the model loop. |
+| **6** | `whenToolResult(…​).thenReply(…​)` runs when the model receives a tool result. Inspect `tr.name()` and `tr.content()` to build the next response. |
+The example mocks the `WeatherAgent` from the multi-agent sample. The bootstrap wires a `FakeWeatherService` whenever the `WEATHER_API_KEY` environment variable is unset, so the tool runs deterministically against a fake. The tool name the model sees is prefixed with the simple class name of the registered tool, here `FakeWeatherService_getWeather`. For agent-local tools annotated with `@FunctionTool` directly on the agent class, the prefix is the agent’s simple class name.
+
+You can also use `whenMessage(predicate).reply(response)` for conditional text responses that vary based on the user message. Invoke the agent through the `componentClient` and assert on the result as in any other integration test.
 
 ## <a href="about:blank#_mocked_model_in_a_deployed_service"></a> Mocked model in a deployed service
 
@@ -244,7 +211,7 @@ To see exactly what is sent to and received from the AI model, you can enable th
 
 <!-- <footer> -->
 <!-- <nav> -->
-[LLM evaluation](llm_eval.html) [Event Sourced Entities](../event-sourced-entities.html)
+[LLM evaluation](llm_eval.html) [Autonomous Agents](../autonomous-agents.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

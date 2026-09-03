@@ -99,6 +99,8 @@ The content of the panels can be filtered using the filters at the top.
 
 **Replication failures:** Failure rate for multi-region replication.
 
+|  | For suggested alerting thresholds on these metrics, see [Alerting baselines](alerting-baselines.html). |
+
 <!-- <footer> -->
 <!-- <nav> -->
 [View logs](view-logs.html) [View traces](traces.html)

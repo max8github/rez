@@ -35,7 +35,7 @@ You find more information about Akka Streams in the [Akka libraries documentatio
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Observability](integrations/observability.html) [Setup and configuration](setup-and-configuration/index.html)
+[Observability](integrations/observability.html) [Configuration](setup-and-configuration/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -1,11 +1,11 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
 - [Reference](../index.html)
-- [Service reference configuration (HOCON)](reference.html)
+- [Service configuration](reference.html)
 
 <!-- </nav> -->
 
-# Service reference configuration (HOCON)
+# Service configuration
 
 ## <a href="about:blank#_akka_sdk_reference_configuration"></a> Akka SDK reference configuration
 
@@ -50,6 +50,31 @@ akka.javasdk {
         auth-password = ""
         broker-ca-pem-file = ""
       }
+    }
+
+    object-storage {
+      # Named bucket configurations for dev mode. When this list is empty (the default), any bucket
+      # name is accepted and objects are stored under a shared local filesystem directory.
+      # When one or more buckets are configured here, only those named buckets are accessible
+      # (same strict-matching behaviour as production).
+      #
+      # Each entry requires a "name" and a "provider". Supported providers:
+      #   filesystem  - local directory (always available, no credentials needed)
+      #   s3          - Amazon S3 or compatible (e.g. MinIO); requires bucket, region and credentials
+      #   gcs         - Google Cloud Storage; requires bucket and credentials
+      #
+      # filesystem example:
+      #   { name = "my-images", provider = "filesystem" }
+      #   { name = "my-images", provider = "filesystem", directory = "/tmp/my-images" }
+      #
+      # s3 example (static credentials, suitable for MinIO or a real S3 bucket with API keys):
+      #   { name = "my-data", provider = "s3", bucket = "real-bucket", region = "us-east-1"
+      #     credentials { type = "static", access-key-id = "AKID", secret-access-key = "secret" } }
+      #
+      # gcs example (service-account key file):
+      #   { name = "my-docs", provider = "gcs", bucket = "real-bucket"
+      #     credentials { type = "service-account-key", path = "/secrets/sa-key.json" } }
+      buckets = []
     }
 
     acl {
@@ -202,6 +227,19 @@ akka.javasdk {
 
     }
 
+    # Settings for autonomous agents
+    autonomous {
+      # Default maximum iterations per task before the agent fails it.
+      # Can be overridden per task group via TaskAcceptance.maxIterationsPerTask().
+      max-iterations-per-task = 10
+
+      delegation {
+        # Default maximum number of worker agents that can execute delegated subtasks concurrently.
+        # Can be overridden per delegation via Delegation.maxParallelWorkers().
+        max-parallel-workers = 3
+      }
+    }
+
     # All agent interactions with the model, including tool calls, are stored in an interaction log.
     # The purpose is for visibility in the console, troubleshooting, and auditing.
     # This has a performance overhead, but compared to the LLM response times it is typically
@@ -239,6 +277,15 @@ akka.javasdk {
       #  * manual - both topic and subscription must be manually created
       mode = "automatic-subscription"
     }
+
+    # All eventing of the service will start from this timestamp and ignore older events. Setting this to a value
+    # leads to the timestamp being persisted for all consumers and views in the service, the only way to start consumers
+    # and views after having set this, is to reset to empty, and use new view and consumer ids.
+    # This is a migration feature and should not generally be used without a very good understanding of the
+    # consequences - using it incorrectly can lead to data loss in views and consumers.
+    # Accepted format is an ISO-8601 instant, for example "2026-02-17T16:50:00Z"
+    # Note: this also applies to dev mode.
+    start-from-timestamp = ""
   }
 
   discovery {
@@ -301,7 +348,7 @@ akka.javasdk {
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Observability descriptor](../descriptors/observability-descriptor.html) [Glossary of terms](../glossary.html)
+[Observability descriptor](../descriptors/observability-descriptor.html) [CLI commands](../cli/akka-cli/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

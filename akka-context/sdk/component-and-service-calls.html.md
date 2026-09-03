@@ -12,7 +12,7 @@ An Akka service comprises many components. These components might depend on one 
 
 ## <a href="about:blank#_calling_akka_components"></a> Calling Akka components
 
-Since Akka is an auto-scaling solution, components run distributed across many nodes within the same service. That’s why calls between Akka components are done via a client rather than through regular method calls. The receiving component instance may be on the same node, but it may also be on a different node.
+Since Akka is an auto-scaling solution, components run distributed across many nodes within the same service. That is why calls between Akka components are done via a client rather than through regular method calls. The receiving component instance may be on the same node, but it may also be on a different node.
 
 Requests and responses are always serialized to JSON during transmission between the client and the component.
 
@@ -165,7 +165,7 @@ public class DelegatingServiceEndpoint {
       .invoke(); // (4)
 
     if (response.status().isSuccess()) { // (5)
-      return "New counter vaue: " + response.body().value;
+      return "New counter value: " + response.body().value;
     } else {
       throw new RuntimeException("Counter returned unexpected status: " + response.status());
     }
@@ -341,6 +341,196 @@ akka.javasdk.grpc.client."hellogrpc.example.com" {
   use-tls = false
 }
 ```
+
+## <a href="about:blank#_mocking_http_and_grpc_services_in_tests"></a> Mocking HTTP and gRPC services in tests
+
+When integration testing a service that calls other services, the testkit can intercept lookups
+via `HttpClientProvider.httpClientFor(…​)` and `GrpcClientProvider.grpcClientFor(…​)` and route
+them to a user-provided mock instead of making real network calls.
+
+The mock lookups are only populated when the runtime is started by the testkit; the default runner
+used in dev mode and production cannot see any mocks, so there is no risk of a mock leaking outside
+of tests.
+
+Mocks are registered either on `TestKit.Settings` (as defaults for all tests in the class) or on
+the live registries returned by `testKit.getMockedHttpServices()` and `testKit.getMockedGrpcServices()` (for per-test overrides). Calling `reset()` on a registry restores it to the defaults declared on
+the settings.
+
+### <a href="about:blank#_mocking_http_services"></a> Mocking HTTP services
+
+Given a service that looks up an HTTP client by service name:
+
+[DelegatingServiceEndpoint.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/main/java/com/example/callanotherservice/DelegatingServiceEndpoint.java)
+```java
+@Acl(allow = @Acl.Matcher(service = "*"))
+@HttpEndpoint
+public class DelegatingServiceEndpoint {
+
+  private final HttpClient httpClient;
+
+  public DelegatingServiceEndpoint(HttpClientProvider httpClient) { // (1)
+    this.httpClient = httpClient.httpClientFor("counter"); // (2)
+  }
+
+  // model for the JSON we accept
+  record IncreaseRequest(int increaseBy) {}
+
+  // model for the JSON the upstream service responds with
+  record Counter(int value) {}
+
+  @Post("/delegate/counter/{counterId}/increase")
+  public String addAndReturn(String counterId, IncreaseRequest request) {
+    var response = httpClient
+      .POST("/counter/" + counterId + "/increase") // (3)
+      .withRequestBody(request)
+      .responseBodyAs(Counter.class)
+      .invoke(); // (4)
+
+    if (response.status().isSuccess()) { // (5)
+      return "New counter value: " + response.body().value;
+    } else {
+      throw new RuntimeException("Counter returned unexpected status: " + response.status());
+    }
+  }
+}
+```
+A test can declare the mocked response(s) either on `TestKit.Settings` (applied to every test in
+the class) or on `testKit.getMockedHttpServices()` inside an individual test:
+
+[DelegatingServiceEndpointMockedTest.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/test/java/com/example/callanotherservice/DelegatingServiceEndpointMockedTest.java)
+```java
+public class DelegatingServiceEndpointMockedTest extends TestKitSupport {
+
+  @Override
+  protected TestKit.Settings testKitSettings() {
+    return TestKit.Settings.DEFAULT.withMockedHttpService( // (1)
+      "counter",
+      request ->
+        HttpResponse.create()
+          .withStatus(StatusCodes.OK)
+          .withEntity(ContentTypes.APPLICATION_JSON, "{\"value\":42}")
+    );
+  }
+
+  @AfterEach
+  public void resetMocks() {
+    testKit.getMockedHttpServices().reset(); // (2)
+  }
+
+  @Test
+  public void delegatingEndpointReturnsValueFromMockedUpstream() {
+    var body = new DelegatingServiceEndpoint.IncreaseRequest(1);
+    var response = httpClient
+      .POST("/delegate/counter/abc/increase")
+      .withRequestBody(body)
+      .responseBodyAs(String.class)
+      .invoke();
+
+    assertThat(response.body()).isEqualTo("New counter value: 42");
+  }
+
+  @Test
+  public void delegatingEndpointFailsWhenUpstreamReturnsError() {
+    testKit
+      .getMockedHttpServices()
+      .mockResponse( // (3)
+        "counter",
+        request -> HttpResponse.create().withStatus(StatusCodes.INTERNAL_SERVER_ERROR)
+      );
+
+    var body = new DelegatingServiceEndpoint.IncreaseRequest(1);
+
+    org.assertj.core.api.Assertions.assertThatThrownBy(
+      () -> httpClient.POST("/delegate/counter/abc/increase").withRequestBody(body).invoke()
+    ).hasMessageContaining("500");
+  }
+}
+```
+
+| **1** | A class-wide default: every call `httpClientFor("counter")` receives this mocked response. |
+| **2** | Reset between tests so per-test overrides do not leak. |
+| **3** | A per-test override: replace the mock for this test only; reverts on the next `reset()`. |
+The mock handler is a plain `Function<HttpRequest, HttpResponse>`. The testkit runs it on the SDK
+dispatcher (virtual thread backed), so blocking inside the handler is safe.
+
+### <a href="about:blank#_mocking_grpc_services"></a> Mocking gRPC services
+
+For gRPC, the mock is an instance of the generated Akka gRPC client interface. The test implements
+the methods it expects to be called and lets the others throw:
+
+[CallExternalGrpcEndpointMockedTest.java](https://github.com/akka/akka-sdk/blob/main/samples/doc-snippets/src/test/java/com/example/callanotherservice/CallExternalGrpcEndpointMockedTest.java)
+```java
+public class CallExternalGrpcEndpointMockedTest extends TestKitSupport {
+
+  @AfterEach
+  public void resetMocks() {
+    testKit.getMockedGrpcServices().reset();
+  }
+
+  @Test
+  public void delegatesToMockedExternalGrpcService() {
+    testKit
+      .getMockedGrpcServices()
+      .mockResponse( // (1)
+        "hellogrpc.example.com",
+        ExampleGrpcEndpointClient.class,
+        new ExampleGrpcEndpointMock("Hello from the mock")
+      );
+
+    var client = getGrpcEndpointClient(CallExternalGrpcEndpointClient.class); // (2)
+    var response = client.callExternalService(
+      HelloRequest.newBuilder().setName("Alice").build()
+    );
+
+    assertThat(response.getMessage()).isEqualTo("Hello from the mock");
+  }
+
+  /** Mock implementation of the generated Akka gRPC client interface. */(3)
+  static final class ExampleGrpcEndpointMock extends ExampleGrpcEndpointClient {
+
+    private final String reply;
+
+    ExampleGrpcEndpointMock(String reply) {
+      this.reply = reply;
+    }
+
+    @Override
+    public HelloReply sayHello(HelloRequest in) {
+      return HelloReply.newBuilder().setMessage(reply).build();
+    }
+
+    @Override
+    public HelloReply itKeepsTalking(Source<HelloRequest, NotUsed> in) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Source<HelloReply, NotUsed> itKeepsReplying(HelloRequest in) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public Source<HelloReply, NotUsed> streamHellos(Source<HelloRequest, NotUsed> in) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public CompletionStage<Done> close() {
+      return CompletableFuture.completedFuture(Done.getInstance());
+    }
+
+    @Override
+    public CompletionStage<Done> closed() {
+      return new CompletableFuture<>();
+    }
+  }
+}
+```
+
+| **1** | Register the mock for the service name (or external host, as here) the service under test passes to `grpcClientFor`. |
+| **2** | Drive the local endpoint via `getGrpcEndpointClient`; when it internally looks up a gRPC client for `hellogrpc.example.com`, it receives the mock. |
+| **3** | The mock extends the generated client interface, implements the methods the test exercises, and throws for the rest. |
+A class-wide default can also be declared via `TestKit.Settings.withMockedGrpcService(name, clientClass, mockInstance)`, paralleling the HTTP API.
 
 <!-- <footer> -->
 <!-- <nav> -->

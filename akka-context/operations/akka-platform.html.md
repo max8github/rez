@@ -9,7 +9,7 @@
 
 ## <a href="about:blank#_overview"></a> Overview
 
-Akka Automated Operations (AAO) is the operational backbone of the Akka platform. It manages, monitors, and gathers insights from your deployed Akka services so you can focus on building rather than babysitting infrastructure.
+Akka Automated Operations (AAO) is the operational backbone of the Akka platform. It manages, monitors, and gathers insights from your deployed Akka services so you can focus on building rather than babysitting infrastructure. For the full architecture and installation reference, see the [AAO Technical Overview](technical-overview.html).
 
 AAO is built on a Kubernetes-based control plane and application plane purpose-designed for executing Akka services with fully automated operations. It handles elasticity, agility, and resilience out of the box — you deploy your service and AAO takes care of the rest.
 
@@ -26,7 +26,7 @@ Reliability is a first-class dimension across every AAO tier. The platform is de
 
 - **99.9999% availability target** — six nines, measured across regions.
 - **Sub-one-minute RTO** — your service resumes serving traffic in under 60 seconds after a region-level failure.
-- **Zero-byte RPO** — event-sourced state is replicated synchronously across regions; no data is lost.
+- **Zero-byte RPO** — event-sourced state is replicated across regions.
 These guarantees are not aspirational — they are architectural. AAO continuously monitors region health, redistributes traffic on anomaly detection, and brings replacement capacity online without human intervention.
 
 ## <a href="about:blank#_deploying_and_managing_services"></a> Deploying and Managing Services
@@ -37,6 +37,7 @@ Operating [Services](services/index.html) provides an overview of what services 
 - [Invoking Akka services](services/invoke-service.html)
 - [Viewing data](services/view-data.html)
 - [Data migration](services/data-management.html)
+- [Workload Identity](services/workload-identity.html)
 - [Integrating with CI/CD tools](integrating-cicd/index.html)
 
 ## <a href="about:blank#_observability_and_monitoring"></a> Observability and Monitoring
@@ -54,7 +55,6 @@ Operating [Services](services/index.html) provides an overview of what services 
 
 - [Managing organization users](organizations/manage-users.html)
 - [Regions](organizations/regions.html)
-- [Billing](organizations/billing.html)
 
 ## <a href="about:blank#_projects"></a> Projects
 
@@ -84,15 +84,9 @@ Using the Akka CLI, you control all aspects of your Akka account from your comma
 - [Using the Akka CLI](cli/using-cli.html)
 - [Enable CLI command completion](cli/command-completion.html)
 
-## <a href="about:blank#_see_also"></a> See Also
-
-- [Akka Automated Operations product page](https://akka.io/automated-operations)
-- [Demo: Surviving the split — how Akka handles disaster scenarios](https://akka.io/blog/demo-surviving-the-split-how-akka-handles-disaster-scenarios)
-- [Demo: Recovering a completely destroyed region](https://akka.io/blog/demo-recovering-a-completely-destroyed-region)
-
 <!-- <footer> -->
 <!-- <nav> -->
-[Self-managed operations](configuring.html) [Organizations](organizations/index.html)
+[Self-managed operations](configuring.html) [Technical Overview](technical-overview.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

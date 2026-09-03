@@ -42,7 +42,7 @@ The following sections walk through these steps using a shopping cart service as
 
 ## <a href="about:blank#_modeling_the_entity"></a> Modeling the entity
 
-Through our "Shopping Cart" Event Sourced Entity we expect to manage our cart, adding and removing items as we please. Being event-sourced means it will represent changes to state as a series of domain events. Let’s have a look at what kind of model we expect to store and the events our entity might generate.
+Through our "Shopping Cart" Event Sourced Entity we expect to manage our cart, adding and removing items as we please. Being event-sourced means it will represent changes to state as a series of domain events. Have a look at what kind of model we expect to store and the events our entity might generate.
 
 [ShoppingCart.java](https://github.com/akka/akka-sdk/blob/main/samples/shopping-cart-quickstart/src/main/java/shoppingcart/domain/ShoppingCart.java)
 ```java
@@ -232,7 +232,7 @@ public ReadOnlyEffect<ShoppingCart> getCart() {
 | **2** | Provides initial state - we recommend always overriding `emptyState()` to return a sensible default. If not overridden, `currentState()` will return `null` until the first event is persisted, which requires null checks in all command and event handlers. |
 | **3** | Returns the current state as reply for the request. |
 
-|  | We are returning the internal state directly back to the requester. In the endpoint, it’s usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
+|  | We are returning the internal state directly back to the requester. In the endpoint, it is usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
 
 ### <a href="about:blank#_deleting_an_entity"></a> Deleting an entity
 
@@ -329,7 +329,7 @@ This also means that you might not see your own writes, immediately. Consider th
 - send a write request and that is routed to a primary in another region
 - after receiving the response of the write request, you send a read request that is served by the non-primary region
 - the stateful component instance in the non-primary region might not have seen the replicated changes yet, and therefore replies with "stale" information
-If it’s important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
+If it is important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
 
 The operational aspects are described in [Regions](../operations/regions/index.html).
 
@@ -361,7 +361,7 @@ public class ShoppingCartEntity extends EventSourcedEntity<ShoppingCart, Shoppin
 
 | **1** | Enable the replication filter feature by adding the `@EnableReplicationFilter` annotation. |
 | **2** | Define the replication filter with the `updateReplicationFilter` effect. |
-After enabling the replication filter the entity is still replicated to all regions until specific regions are defined with the `updateReplicationFilter` effect. This effect can be combined with persisting events and thereby also updating the state of the entity. It can also be used without persisting additional events, e.g. if it’s an explicit command to change the filter, but it’s not changing the state of the entity.
+After enabling the replication filter the entity is still replicated to all regions until specific regions are defined with the `updateReplicationFilter` effect. This effect can be combined with persisting events and thereby also updating the state of the entity. It can also be used without persisting additional events, e.g. if it is an explicit command to change the filter, but it is not changing the state of the entity.
 
 The filter can only be updated from the entity’s primary region. With the `request-region` primary selection strategy, updating the filter from a non-primary region will cause that region to become the new primary. The filter is durable for the specific entity instance and can be changed without deploying a new version.
 
@@ -490,7 +490,7 @@ public class ShoppingCartEndpoint {
 
 ## <a href="about:blank#_side_effects"></a> Side effects
 
-An entity doesn’t perform any external side effects aside from persisting events, replying to the request, and publishing notifications. Other side effects, such as calling external services or other components, should be handled from the Workflow, Consumer, or Endpoint components that are calling the entity.
+An entity does not perform any external side effects aside from persisting events, replying to the request, and publishing notifications. Other side effects, such as calling external services or other components, should be handled from the Workflow, Consumer, or Endpoint components that are calling the entity.
 
 ## <a href="about:blank#_testing_the_entity"></a> Testing the entity
 
@@ -583,7 +583,7 @@ For the above example, this class provides access to all the command handlers of
 
 ### <a href="about:blank#_integration_tests"></a> Integration tests
 
-The skeleton of an Integration Test is included in the [getting started sample](../getting-started/author-your-first-service.html). Let’s see what it could look like to test our `ShoppingCartEntity`:
+The skeleton of an Integration Test is included in the [getting started sample](../getting-started/author-your-first-service.html). The following shows what it could look like to test our `ShoppingCartEntity`:
 
 [ShoppingCartIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/shopping-cart-quickstart/src/test/java/shoppingcart/ShoppingCartIntegrationTest.java)
 ```java
@@ -620,7 +620,7 @@ public class ShoppingCartIntegrationTest extends TestKitSupport { // (1)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Testing](agents/testing.html) [Key Value Entities](key-value-entities.html)
+[Testing](autonomous-agents/testing.html) [Key Value Entities](key-value-entities.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

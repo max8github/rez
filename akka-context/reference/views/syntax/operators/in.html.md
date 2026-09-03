@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../../index.html)
 - [Reference](../../../index.html)
-- [View reference](../../index.html)
+- [Views](../../index.html)
 - [View query syntax](../index.html)
 - [Operators](index.html)
 - [IN](in.html)
@@ -85,7 +85,7 @@ The primary differences are:
 - The `IN` operator is equivalent to multiple OR conditions combined with equals (=) operations
 - All values in the list must be of compatible types with the column being compared
 - Performance is typically better with `IN` than with multiple OR conditions
-- The order of values in the list doesn’t affect the results
+- The order of values in the list does not affect the results
 - Empty lists are not allowed in the `IN` operator
 
 ## <a href="about:blank#_related_features"></a> Related Features

@@ -87,14 +87,20 @@ public class ActivityAgentStructuredResponseSchema extends Agent {
 }
 ```
 
-| **1** | Instructions to the model doesn’t have to include details about the JSON response format. |
+| **1** | Instructions to the model does not have to include details about the JSON response format. |
 | **2** | `Activity` record is used to map the JSON response to a Java object. It can optionally have `akka.javasdk.annotations.Description` of the fields, which will be included in the JSON schema. |
 | **3** | Use the `responseConformsTo` method  to specify the expected response type, which is also used for creating the JSON schema. |
-If you still don’t get expected JSON responses from the model, you can combine those two approaches of both including the JSON schema and giving instructions about the format in the system message.
+If you still do not get expected JSON responses from the model, you can combine those two approaches of both including the JSON schema and giving instructions about the format in the system message.
+
+## <a href="about:blank#_see_also"></a> See also
+
+- [Agents](../agents.html)
+- [Serialization](../serialization.html)
+- [Prompts](prompt.html)
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Managing session memory](memory.html) [Handling failures](failures.html)
+[Session memory](memory.html) [Failure handling](failures.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -12,7 +12,7 @@
 
 To use an external container registry with Akka, you need to give Akka permissions to connect to your registry. To add credentials for your container registry to Akka, you can use the Akka CLI or the Akka Console.
 
-|  | If the container registry you’re using does not require authentication, you don’t have to add any credentials. Akka will automatically pull the container image using the URL you use to deploy your service. |
+|  | If the container registry you are using does not require authentication, you do not have to add any credentials. Akka will automatically pull the container image using the URL you use to deploy your service. |
 External container registries are configured by creating an Akka secret, and then configuring your Akka project to use that secret as docker registry credentials. The secret, and project configuration, are both managed by the `akka docker` command.
 
 There are four parameters you need to specify, depending on the registry you want to connect to:
@@ -87,7 +87,7 @@ To connect your Akka project to Docker Hub, the parameters you need are:
 - Username: Your Docker Hub username.
 - Email: Your Docker Hub email address.
 - Password: Your Docker Hub password or Personal Access Token.
-When you use the Akka Console, you don’t need to provide the Server URL.
+When you use the Akka Console, you do not need to provide the Server URL.
 
 #### <a href="about:blank#_limits_on_unauthenticated_and_free_usage"></a> Limits on unauthenticated and free usage
 
@@ -95,7 +95,7 @@ Docker has [rate limits](https://docs.docker.com/docker-hub/download-rate-limit/
 
 ### <a href="about:blank#_google_artifact_registry"></a> Google Artifact Registry
 
-To connect your Akka project to Google Artifact Registry, you’ll need:
+To connect your Akka project to Google Artifact Registry, you will need:
 
 - An active Google Cloud Platform account.
 - The Artifact Registry API enabled on your Google Cloud project.

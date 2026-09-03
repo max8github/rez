@@ -92,7 +92,7 @@ If no subject metadata is available the events are spread over the partitions in
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Aiven for Kafka](broker-aiven.html) [Manage secrets](secrets.html)
+[Self-hosted Kafka](broker-kafka.html) [Manage secrets](secrets.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

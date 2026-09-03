@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../../index.html)
 - [Reference](../../../index.html)
-- [View reference](../../index.html)
+- [Views](../../index.html)
 - [View query syntax](../index.html)
 - [Functions](index.html)
 - [total_count()](total-count.html)
@@ -103,7 +103,7 @@ The `total_count()` function requires counting all matching rows in the view, wh
 
 - Only include `total_count()` when the count is actually needed by the client
 - Use `has_more()` instead when you only need to know if additional pages exist
-- Consider caching the total count if it doesn’t change frequently
+- Consider caching the total count if it does not change frequently
 - For large datasets, approximate counts might be sufficient for UI purposes
 
 ## <a href="about:blank#_related_features"></a> Related Features

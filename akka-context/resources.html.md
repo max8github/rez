@@ -1,5 +1,6 @@
 <!-- <nav> -->
 - [Akka](index.html)
+- [Understanding](concepts/index.html)
 - [Resources](resources.html)
 
 <!-- </nav> -->
@@ -15,28 +16,6 @@ A curated collection of Akka technical content beyond the SDK documentation.
 - [The Reactive Principles](https://www.reactiveprinciples.org/) — By Jonas Bonér et al. 8 principles and 6 patterns for cloud-native and edge-native design. Companion to the Reactive Manifesto.
 - **Reactive Design Patterns** (Manning) — By Roland Kuhn, Brian Hanafee, Jamie Allen. Patterns for building reactive systems.
 
-## <a href="about:blank#_product_pages"></a> Product Pages
-
-- [Platform Overview](https://akka.io/akka-agentic-ai-platform)
-- [Akka Agents](https://akka.io/akka-agents)
-- [Akka Orchestration](https://akka.io/akka-orchestration)
-- [Akka Memory](https://akka.io/akka-memory)
-- [Akka Streaming](https://akka.io/akka-streaming)
-- [Automated Operations](https://akka.io/automated-operations)
-- [How Akka Works](https://akka.io/how-akka-works)
-- [Pricing](https://akka.io/pricing)
-
-## <a href="about:blank#_application_types"></a> Application Types
-
-- [Agentic AI](https://akka.io/app-types/agentic-ai)
-- [Event-Sourced](https://akka.io/app-types/event-sourced)
-- [Transactional](https://akka.io/app-types/transactional)
-- [Digital Twins](https://akka.io/app-types/digital-twins)
-- [Durable Execution](https://akka.io/app-types/durable-execution)
-- [Analytics](https://akka.io/app-types/analytics)
-- [Streaming](https://akka.io/app-types/streaming)
-- [Edge](https://akka.io/app-types/edge)
-
 ## <a href="about:blank#_blogs_articles"></a> Blogs & Articles
 
 ### <a href="about:blank#_agentic_ai_concepts"></a> Agentic AI Concepts
@@ -46,9 +25,6 @@ A curated collection of Akka technical content beyond the SDK documentation.
 - [Agentic Systems Are Distributed Systems](https://akka.io/blog/agentic-systems-are-distributed-systems)
 - [Event Sourcing: The Backbone of Agentic AI](https://akka.io/blog/event-sourcing-the-backbone-of-agentic-ai)
 - [5 Key Capabilities for Agentic AI](https://akka.io/blog/key-capabilities-for-agentic-ai)
-- [Why Experience Matters More Than Hype](https://akka.io/blog/agentic-ai-why-experience-matters-more-than-hype)
-- [Beyond the Hype: AI Agent Framework Obstacles](https://akka.io/blog/beyond-the-hype-how-to-address-ai-agent-dev-framework-obstacles)
-- [Agentic AI Frameworks: A 2026 Guide](https://akka.io/blog/agentic-ai-frameworks)
 - [Trustworthy AI with Akka](https://akka.io/blog/trustworthy-ai-with-akka)
 - [Demystifying AI](https://akka.io/blog/demystifying-ai-llms-and-rag)
 
@@ -70,11 +46,6 @@ A curated collection of Akka technical content beyond the SDK documentation.
 - [Akka Orchestration: Guide](https://akka.io/blog/akka-orchestration-guide-moderate-and-control-agents)
 - [Akka Memory: Durable](https://akka.io/blog/akka-memory-durable-in-memory-and-sharded-data)
 - [Akka Streaming: High-Performance Stream Processing](https://akka.io/blog/akka-streaming-high-performance-stream-processing-for-real-time-ai)
-
-### <a href="about:blank#_use_cases"></a> Use Cases
-
-- [21 Agentic AI Use Cases](https://akka.io/blog/agentic-ai-use-cases)
-- [Adopting Agentic AI for Financial Services](https://akka.io/blog/adopting-agentic-ai-systems-for-financial-services-applications)
 
 ## <a href="about:blank#_demos_videos"></a> Demos & Videos
 
@@ -105,19 +76,6 @@ A curated collection of Akka technical content beyond the SDK documentation.
 - [Blueprint for Agentic AI Services](https://akka.io/blog/webinar-blueprint-for-agentic-ai-services)
 - [Creating Certainty in the Age of Agentic AI](https://akka.io/blog/webinar-creating-certainty-in-the-age-of-agentic-ai)
 
-## <a href="about:blank#_customer_stories"></a> Customer Stories
-
-- [Swiggy — 2x latency improvement in ML/AI platform](https://akka.io/blog/2x-latency-improvement-in-swiggy-ml-and-ai-platform)
-- [Manulife — Enterprise agentic AI for financial services](https://akka.io/blog/manulife-selects-akka-to-operationalize-agentic-ai)
-- [Llaama — AI-driven biopharma treatments](https://akka.io/customer-stories/llaama-helps-biopharma-companies-create-ai-driven-treatments-with-akka)
-- [MrCall — AI call center](https://akka.io/customer-stories/ai-powered-call-center-mrcall-uses-akka-for-simultaneous-voip-requests)
-- [Capital One — Real-time auto loan decisioning](https://akka.io/customer-stories/capital-one-scales-real-time-auto-loan-decisioning-with-akka)
-- [Doctolib — 1M+ healthcare providers](https://akka.io/customer-stories/1m-healthcare-providers-rely-on-akka-for-resilient-secure-messaging-via-doctolib)
-- [Verizon — Doubled performance on half hardware](https://akka.io/customer-stories/verizon-wireless-deploys-akka-doubles-business-performance-results)
-- [Renault — Digital twin platform for global manufacturing](https://akka.io/customer-stories/reflekio-renault-transform-global-manufacturing-akka-based-saas-digital-twin-execution-platform)
-- [CERN — 2.5M signals per day for physics experiments](https://akka.io/customer-stories/akka-helps-keep-groundbreaking-physics-experiments-running-smoothly)
-- [All Customer Stories](https://akka.io/customer-stories)
-
 ## <a href="about:blank#_benchmarks"></a> Benchmarks
 
 - [Akka Performance Benchmarks](https://akka.io/akka-performance-benchmark) — 1.4M TPS, 9ms latency, $11.77 per 1K TPS
@@ -136,7 +94,7 @@ A curated collection of Akka technical content beyond the SDK documentation.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Operator best practices](operations/operator-best-practices.html) [Reference](reference/index.html)
+[AI orchestration patterns](concepts/ai-orchestration-patterns.html) [Developing](sdk/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

@@ -13,7 +13,7 @@ Use the Akka [setup-akka-cli-action](https://github.com/akka/setup-akka-cli-acti
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-To use the Akka GitHub Action, you’ll need to:
+To use the Akka GitHub Action, you will need to:
 
 - Create a [service token](index.html#create_a_service_token) for your project
 - Get the UUID of your project, which can be obtained by running `akka projects list`
@@ -23,7 +23,7 @@ To use the Akka GitHub Action, you’ll need to:
 The GitHub Action uses two required variables to authenticate and set the project you want to work on correctly:
 
 - `AKKA_TOKEN`: The Akka service token
-- `AKKA_PROJECT_ID`: The project ID for the Akka project you’re using
+- `AKKA_PROJECT_ID`: The project ID for the Akka project you are using
 These variables should be configured as [secrets](https://docs.github.com/en/actions/reference/encrypted-secrets#creating-encrypted-secrets-for-a-repository) for your repository.
 
 ## <a href="about:blank#_create_a_workflow"></a> Create a workflow
@@ -61,7 +61,7 @@ jobs:
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Integrating with CI/CD tools](index.html) [CLI](../cli/index.html)
+[Integrating with CI/CD tools](index.html) [Scanning vulnerabilities](scanning-dependencies.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

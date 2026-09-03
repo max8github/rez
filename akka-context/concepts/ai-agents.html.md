@@ -1,57 +1,26 @@
 <!-- <nav> -->
 - [Akka](../index.html)
 - [Understanding](index.html)
-- [AI Agents](ai-agents.html)
+- Agentic concepts
+- [AI agents](ai-agents.html)
 
 <!-- </nav> -->
 
-# AI Agents
+# AI agents
 
 AI agents are components that integrate with AI to perceive their environment, make decisions, and take actions toward a specific goal. Agents can have varying degrees of human intervention from none (completely autonomous) to requiring a human to approve each action the agent takes.
 
 ## <a href="about:blank#_overview"></a> Overview
 
-In Akka, an AI Agent is a lightweight, single-purpose component that interacts with one or more AI models to accomplish a discrete goal. Agents are first-class citizens of the platform: they benefit from the same durability, scalability, and observability guarantees that Akka provides to all of its components.
+In Akka, an AI Agent is a lightweight, single-purpose component that interacts with one or more AI models to accomplish a discrete goal.
 
 Use AI Agents in Akka when you need to:
 
-- Interact with LLMs or other AI models as part of a larger application.
-- Compose multiple Agents into collaborative Workflows with supervisory control.
+- Interact with models as part of a larger application.
+- Compose multiple Agents under platform-mediated coordination: a Workflow supervisor when the orchestration steps are fixed in code, or an [Autonomous Agent](../sdk/autonomous-agents.html) when the model should decide which agent runs next through delegation, handoff, teams, or moderation.
 - Maintain session memory, context, and audit trails across Agent interactions.
 - Enforce cost controls, governance policies, and risk boundaries on model usage.
-Agents relate to other Akka components in a direct way: [Workflows](ms-agent-patterns.html) orchestrate Agents, [Entities](state-model.html) store the durable state Agents depend on, and [inter-agent communication](inter-agent-comms.html) connects Agents to each other and to external systems via protocols like MCP, A2A, and ACP.
-
-## <a href="about:blank#_the_three_barriers_to_production_ai"></a> The three barriers to production AI
-
-Most AI agent frameworks excel at prototyping but collapse under production demands. Three recurring barriers explain why.
-
-### <a href="about:blank#_the_production_gap"></a> The Production Gap
-
-Frameworks optimized for notebook-style demos rarely address the realities of distributed infrastructure: network partitions, node failures, backpressure, and regional failover. When you move from a single-process prototype to a multi-region deployment, the gap between "it works on my laptop" and "it works in production" becomes enormous. Akka was built for distributed systems from the ground up, closing this gap by default.
-
-### <a href="about:blank#_the_liability_problem"></a> The Liability problem
-
-Every call to an LLM carries risk: hallucinated outputs, uncontrolled token spend, data leakage, and actions taken without audit trails. Most frameworks treat these as the developer’s problem. In regulated industries — finance, healthcare, logistics — liability without platform-level safeguards is a non-starter.
-
-### <a href="about:blank#_the_specialist_trap"></a> The Specialist Trap
-
-Many agent frameworks require deep expertise in both AI/ML and distributed systems simultaneously. This creates a hiring bottleneck and a fragile codebase that only a handful of engineers can maintain. A production-ready platform must separate these concerns so that AI engineers focus on prompts and models while the platform handles resilience and scale.
-
-## <a href="about:blank#_how_akka_solves_these_three_dimensions"></a> How Akka solves these: Three dimensions
-
-Akka addresses the three barriers through three reinforcing dimensions.
-
-### <a href="about:blank#_reliability"></a> Reliability
-
-Akka runs your agents on a distributed runtime with built-in clustering, automatic failover, and durable state. If a node goes down, the agent’s work is not lost. Session memory, conversation history, and in-flight orchestrations survive failures without any custom recovery code on your part. This is the same infrastructure that powers mission-critical systems at [Walmart](https://akka.io/customer-stories/walmart-boosts-conversions-by-20-percent-with-akka), [Verizon](https://akka.io/customer-stories/verizon-wireless-deploys-akka-doubles-business-performance-results), and [Capital One](https://akka.io/customer-stories/capital-one-scales-real-time-auto-loan-decisioning-with-akka).
-
-### <a href="about:blank#_risk_control"></a> Risk control
-
-Akka gives you platform-level controls over token budgets, model access policies, and human-in-the-loop checkpoints. The [governance model](governance-and-the-runtime.html) enforces boundaries declaratively, so you do not rely on every developer remembering to add guardrails in application code. Audit trails are built into the event-sourced state model, making every agent decision traceable.
-
-### <a href="about:blank#_repeatability"></a> Repeatability
-
-Because agents in Akka are small, single-purpose components orchestrated by workflows, you can reuse, recombine, and test them independently. Evaluation runs, prompt refinement, and regression testing become repeatable processes rather than ad-hoc experiments. New team members contribute agents without needing to understand the full distributed systems stack.
+Agents relate to other Akka components in a direct way: [Workflows or Autonomous Agent coordination capabilities](ai-orchestration-patterns.html) orchestrate Agents, [Entities](state-model.html) store the durable state Agents depend on, and [agent-to-agent communication](ai-orchestration-patterns.html) connects Agents to each other and to external systems via protocols like MCP, A2A, and ACP.
 
 ## <a href="about:blank#_tokens_and_streaming"></a> Tokens and streaming
 
@@ -98,7 +67,9 @@ There are protocols and standards rapidly evolving for ways agents can communica
 
 Whether you have 1 agent or 50, you still need to handle things like recovery from network failure, timeouts, failure responses, broken streams, and much more. Even for individual agents you need an orchestrator if you want that agent to be resilient at scale. With dozens of agents working together with shared and isolated sessions, they need to be managed by supervisors.
 
-For more detail on orchestration, check out the [agentic orchestration patterns](ms-agent-patterns.html) section.
+Akka offers two forms of supervision, both running on the Akka runtime with the same durable-execution, retry, and audit guarantees. A [Workflow](../sdk/workflows.html) supervises agents from outside, with explicit steps written by the developer; this is the right choice when the orchestration sequence is fixed in code. An [Autonomous Agent](../sdk/autonomous-agents.html) supervises through declared coordination capabilities (delegation, handoff, teams, moderation), with the framework driving the loop and the model deciding which agent runs next; this is the right choice when the orchestration sequence itself is a model judgment.
+
+For more detail on orchestration, check out the [agentic orchestration patterns](ai-orchestration-patterns.html) section.
 
 ## <a href="about:blank#_agent_evaluation"></a> Agent evaluation
 
@@ -124,17 +95,9 @@ Topics covered in the video include:
 - Why prompt structure, token count, and caching all matter
 - How concepts like agency and stateful workflows connect to agentic AI and Akka
 
-## <a href="about:blank#_see_also"></a> See also
-
-- [What is agentic AI?](https://akka.io/blog/what-is-agentic-ai) — a foundational overview of agentic AI concepts and terminology.
-- [Agentic systems are distributed systems](https://akka.io/blog/agentic-systems-are-distributed-systems) — why distributed systems expertise is essential for production AI agents.
-- [Key capabilities for agentic AI](https://akka.io/blog/key-capabilities-for-agentic-ai) — the platform capabilities that separate prototypes from production-grade agent systems.
-- [Beyond the hype: AI agent framework obstacles](https://akka.io/blog/beyond-the-hype-how-to-address-ai-agent-dev-framework-obstacles) — a deeper look at the barriers most frameworks face.
-- [Trustworthy AI with Akka](https://akka.io/blog/trustworthy-ai-with-akka) — how Akka enables auditable, governed AI agent deployments.
-
 <!-- <footer> -->
 <!-- <nav> -->
-[Endpoints](grpc-vs-http-endpoints.html) [Inter-agent communications](inter-agent-comms.html)
+[Multi-region operations](multi-region.html) [AI orchestration patterns](ai-orchestration-patterns.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

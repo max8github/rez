@@ -35,9 +35,13 @@ Changing primary regions is a serious operation and should be thought out carefu
 
 Container registries are regional in Akka. If you decide to use [Configure an external container registry](projects/external-container-registries.html) be aware that you should have container registries in or near each of the regions in your project. If you only have your container images in one place and that place becomes unavailable your services will not be able to start new instances.
 
+## <a href="about:blank#_alerting"></a> Alerting
+
+Setting up alerts on key metrics is an important part of operating Akka services. For suggested alerting thresholds across endpoints, entities, workflows, consumers, and replication, see [Alerting baselines](observability-and-monitoring/alerting-baselines.html).
+
 <!-- <footer> -->
 <!-- <nav> -->
-[System Configuration](cli/system-config.html) [Resources](../resources.html)
+[System Configuration](cli/system-config.html) [Production readiness](production-readiness/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

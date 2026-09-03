@@ -1,29 +1,14 @@
 <!-- <nav> -->
 - [Akka](../../index.html)
-- [Developing](../index.html)
-- [Use cases](index.html)
+- [Use-case guides](index.html)
 
 <!-- </nav> -->
 
-# Use cases
+# Use-case guides
 
-Use case guides show you how to build common patterns with Akka. Each guide explains the pattern, identifies which Akka components are involved, and walks through a real sample project showing how the system is composed.
-
-- [Conversational AI](conversational-ai.html)
-- [Autonomous agents](autonomous-agents.html)
-- [Multi-agent systems](multi-agent-systems.html)
-- [Memory & state](memory-and-state.html)
-- [RAG & knowledge](rag-and-knowledge.html)
-- [Streaming AI](streaming-ai.html)
-- [Orchestration & durability](orchestration-and-durability.html)
-- [APIs & exposure](apis-and-exposure.html)
-- [Governance & compliance](governance-and-compliance.html)
-- [Enterprise patterns](enterprise-patterns.html)
+The use-case guides have moved. Browse runnable samples and generate systems from blueprints in the [Samples and blueprints](../../getting-started/samples.html) catalog, filtered by AI use case, pattern, domain, components, and governance.
 
 <!-- <footer> -->
-<!-- <nav> -->
-[Consumers](../consuming-producing.html) [Conversational AI](conversational-ai.html)
-<!-- </nav> -->
 
 <!-- </footer> -->
 

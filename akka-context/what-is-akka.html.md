@@ -1,66 +1,44 @@
 <!-- <nav> -->
 - [Akka](index.html)
-- [Why Akka](why-akka.html)
-- [What is Akka](what-is-akka.html)
+- [About Akka](about-akka.html)
+- [What is Akka?](what-is-akka.html)
 
 <!-- </nav> -->
 
-# What is Akka
+# What is Akka?
 
-Akka is the only full-stack platform for agentic AI: developer experience, runtime, and governance in one integrated system.
+Akka is an agentic AI platform for enterprises: a full-stack system for building, running, and governing production-grade agentic AI. It brings developer experience, runtime, and governance together in one integrated system. You describe what you need. Akka generates a production-ready system, and that system runs as a durable, event-driven, distributed application.
 
-## <a href="about:blank#_platform_overview"></a> Platform Overview
+![The Akka agentic platform — build](_images/capabilities/akka-platform-intro.png)
 
-Akka combines everything you need to build, run, and govern agentic AI systems:
+## <a href="about:blank#_the_platform_layers"></a> The platform layers
 
-- **Spec-Driven Development** — Describe what you need in plain language. Akka generates the full specification and a production-ready system. Engineers, product managers, and non-technical builders can all contribute.
-- **Professional SDK** — Multi-agent orchestration (A2A, ACP, MCP), autonomous and sequential agents with tools and handoffs, real-time stream processing, durable memory with sub-10ms read/write, and HTTP/gRPC APIs.
-- **Runtime** — Clustering, resilience, zero trust networking, data sharding, and traffic steering. Deploy on Akka’s cloud, within your hyperscaler VPC, or on your own Kubernetes infrastructure.
-- **Integrated Tooling** — Developers get tracing, debugging, and agent analysis. Operations gets a control tower with OTEL export. Compliance gets explainability and interaction logging. FinOps gets token tracking and cost optimization. InfoSec gets policy enforcement and guardrails.
-- **Automated Operations (AAO)** — A private, regionalized installation within your VPC. Active-active HA/DR, elastic scaling to 10 million agentic TPS with scale-to-zero, no-downtime rolling updates, and live CVE patching.
+The graphic above shows how Akka is organized into four layers:
 
-## <a href="about:blank#_what_makes_akka_unique"></a> What Makes Akka Unique
+- **Components** — the building blocks you compose into a system: agents, workflows, entities, endpoints, views, and consumers.
+- **Runtime** — the engine that handles the hard distributed-systems problems for you: clustering, resilience, zero-trust networking, data sharding, and traffic steering. It keeps state in memory, persists every change, routes messages, and recovers from failure.
+- **Cloud Stack** — the infrastructure behind [Automated Operations](akka-automated-operations.html): active-active HA/DR, runtime patching, rolling updates, elastic scaling, and shared compute.
+- **Harnesses** — the tooling to build, test, and evaluate agentic AI: the dev sandbox, operations console, TestKit, EvalKit, [spec-driven development](sdk/spec-driven-development.html), infosec controls, and cost management.
 
-These are guarantees no other agentic AI vendor makes:
+## <a href="about:blank#_the_capabilities"></a> The capabilities
 
-- 99.9999% availability guarantee for your agentic AI applications and services
-- Resilience guarantee backed by indemnities on the security and integrity of your data
-- Sub-10ms read/write of agentic AI memory (most vendors offer ~200ms bolt-on memory)
-- Shared compute model that lowers cloud infrastructure costs up to 90%
-- Sub-1 minute Recovery Time Objective with 0 byte Recovery Point Objective
-- Fully sovereign cloud deployment option preserving HA/DR across China, EU, Singapore, and more
-- Real-time AI policy enforcement engine fully embedded within the runtime
+Akka brings the building blocks of agentic systems together under one model:
 
-## <a href="about:blank#_application_types"></a> Application Types
+- [Agents](akka-agents.html) — model-backed components with memory, tools, and multi-agent collaboration.
+- [Orchestration](akka-orchestration.html) — durable, multi-step coordination of agents and workflows.
+- [Memory](akka-memory.html) — durable, in-memory, sharded state for agents and entities.
+- [Streaming](akka-streaming.html) — real-time stream processing for event-driven and AI workloads.
+- [Automated Operations](akka-automated-operations.html) — run services with elastic scaling, resilience, and no-downtime updates.
+For how these pieces fit together under the hood, see [Akka Internals](akka-internals.html).
 
-Akka supports a range of application patterns:
+## <a href="about:blank#_next_steps"></a> Next steps
 
-- [Agentic AI](https://akka.io/app-types/agentic-ai) — Conversational, autonomous, composable, fault-tolerant agents
-- [Event-Sourced](https://akka.io/app-types/event-sourced) — Immutable event log, state reconstruction, CQRS
-- [Transactional](https://akka.io/app-types/transactional) — ACID compliance, distributed consensus, 1.4M TPS
-- [Digital Twins](https://akka.io/app-types/digital-twins) — Real-time sync, bidirectional data flow
-- [Durable Execution](https://akka.io/app-types/durable-execution) — Long-lived workflows, persistent state
-- [Analytics](https://akka.io/app-types/analytics) — Real-time and batch processing, materialized views
-- [Streaming](https://akka.io/app-types/streaming) — Unbounded data flows, backpressure, stateful operations
-- [Edge](https://akka.io/app-types/edge) — Edge-to-cloud services, 25MB binaries, millions of nodes
-
-## <a href="about:blank#_next_steps"></a> Next Steps
-
-- [Who Uses Akka](who-uses-akka.html) — Find the documentation path for your role
-- [Tutorials](getting-started/index.html) — Start building
-- [Spec-Driven Development](sdk/spec-driven-development.html) — The primary development approach
-
-## <a href="about:blank#_see_also"></a> See Also
-
-- [Akka Platform Overview](https://akka.io/akka-agentic-ai-platform)
-- [How Akka Works](https://akka.io/how-akka-works)
-- [Pricing](https://akka.io/pricing)
-- [Trust Center](https://trust.akka.io/) — Compliance certifications
-- [Professional Services](https://akka.io/professional-services)
+- [Getting started](getting-started/index.html) — build your first Akka service.
+- [Spec-driven development](sdk/spec-driven-development.html) — the primary way to build with Akka.
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Why Akka](why-akka.html) [Who uses Akka](who-uses-akka.html)
+[About Akka](about-akka.html) [Agents](akka-agents.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

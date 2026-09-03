@@ -9,7 +9,7 @@
 # Implementing key value entities
 
 ![Key value entity](../_images/key-value-entity.png)
-[Key Value Entities](../reference/glossary.html#key_value_entity) are entities that persist the full state on every change. Only the latest state is stored, so we don’t have access to any of the history of changes, unlike the event sourced storage used by [Event Sourced Entities](event-sourced-entities.html).
+[Key Value Entities](../reference/glossary.html#key_value_entity) are entities that persist the full state on every change. Only the latest state is stored, so we do not have access to any of the history of changes, unlike the event sourced storage used by [Event Sourced Entities](event-sourced-entities.html).
 
 
 Entity and Workflow sharding [Stateful components](../reference/glossary.html#stateful_component), such as Entities and Workflows, offer strong consistency guarantees. Each stateful component can have many instances, identified by [ID](../reference/glossary.html#id). Akka distributes them across every service instance in the cluster. We guarantee that there is only one stateful component instance in the whole service cluster. If a command arrives to a service instance not hosting that stateful component instance, the command is forwarded by the Akka Runtime to the one that hosts that particular component instance. This forwarding is done transparently via [Component Client](../reference/glossary.html#component_client) logic. Because each stateful component instance lives on exactly one service instance, messages can be handled sequentially. Hence, there are no concurrency concerns, each Entity or Workflow instance handles one message at a time.
@@ -139,7 +139,7 @@ public ReadOnlyEffect<Counter> get() {
 | **1** | Reply with the current state. |
 What if this is the first command we are receiving for this entity? The initial state is provided by overriding `emptyState()`. We recommend always overriding `emptyState()` to return a sensible default. If not overridden, `currentState()` will return `null` until the first state update, which requires null checks in all command handlers.
 
-|  | We are returning the internal state directly back to the requester. In the endpoint, it’s usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
+|  | We are returning the internal state directly back to the requester. In the endpoint, it is usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
 
 ### <a href="about:blank#deleting-state"></a> Deleting state
 
@@ -159,7 +159,7 @@ When you give the instruction to delete the entity it will still exist with an e
 
 It is not allowed to make further changes after the entity has been "marked" as deleted. You can still handle read requests to the entity until it has been completely removed, but the current state will be empty. To check whether the entity has been deleted, you can use the `isDeleted` method inherited from the `KeyValueEntity` class.
 
-|  | If you don’t want to permanently delete an entity, you can instead use the `updateState` effect with an empty state. This will work the same as resetting the entity to its initial state. |
+|  | If you do not want to permanently delete an entity, you can instead use the `updateState` effect with an empty state. This will work the same as resetting the entity to its initial state. |
 It is best to not reuse the same entity id after deletion, but if that happens after the entity has been completely removed it will be instantiated as a completely new entity without any knowledge of previous state.
 
 Note that [deleting View state](views.html#ve_delete) must be handled explicitly.
@@ -210,7 +210,7 @@ This also means that you might not see your own writes, immediately. Consider th
 - send a write request and that is routed to a primary in another region
 - after receiving the response of the write request, you send a read request that is served by the non-primary region
 - the stateful component instance in the non-primary region might not have seen the replicated changes yet, and therefore replies with "stale" information
-If it’s important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
+If it is important for some read requests to have seen latest writes you can use `Effect` for such command handler, even though it is not persisting any events. Then the request will be routed to the primary and use the latest fully consistent state.
 
 The operational aspects are described in [Regions](../operations/regions/index.html).
 
@@ -241,7 +241,7 @@ public class CounterEntity extends KeyValueEntity<Counter> {
 
 | **1** | Enable the replication filter feature by adding the `@EnableReplicationFilter` annotation. |
 | **2** | Define the replication filter with the `updateReplicationFilter` effect. |
-After enabling the replication filter the entity is still replicated to all regions until specific regions are defined with the `updateReplicationFilter` effect. This effect can be combined with updating the state of the entity. It can also be used without persisting state update, e.g. if it’s an explicit command to change the filter, but it’s not changing the state of the entity.
+After enabling the replication filter the entity is still replicated to all regions until specific regions are defined with the `updateReplicationFilter` effect. This effect can be combined with updating the state of the entity. It can also be used without persisting state update, e.g. if it is an explicit command to change the filter, but it is not changing the state of the entity.
 
 The filter can only be updated from the entity’s primary region. With the `request-region` primary selection strategy, updating the filter from a non-primary region will cause that region to become the new primary. The filter is durable for the specific entity instance and can be changed without deploying a new version.
 
@@ -363,7 +363,7 @@ public class UserEndpoint {
 
 ## <a href="about:blank#_side_effects"></a> Side effects
 
-An entity doesn’t perform any external side effects aside from persisting state changes, replying to the request, and publishing notifications. Other side effects, such as calling external services or other components, should be handled from the Workflow, Consumer, or Endpoint components that are calling the entity.
+An entity does not perform any external side effects aside from persisting state changes, replying to the request, and publishing notifications. Other side effects, such as calling external services or other components, should be handled from the Workflow, Consumer, or Endpoint components that are calling the entity.
 
 ## <a href="about:blank#_testing_the_entity"></a> Testing the entity
 
@@ -405,7 +405,7 @@ public void testSetAndIncrease() {
 
 ### <a href="about:blank#_integration_tests"></a> Integration tests
 
-The skeleton of an Integration Test is included in the [getting started sample](../getting-started/author-your-first-service.html). Let’s see what it could look like to test our Counter Entity:
+The skeleton of an Integration Test is included in the [getting started sample](../getting-started/author-your-first-service.html). The following shows what it could look like to test our Counter Entity:
 
 [CounterIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/key-value-counter/src/test/java/com/example/CounterIntegrationTest.java)
 ```java

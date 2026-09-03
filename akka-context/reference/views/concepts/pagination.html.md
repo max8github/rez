@@ -1,7 +1,7 @@
 <!-- <nav> -->
 - [Akka](../../../index.html)
 - [Reference](../../index.html)
-- [View reference](../index.html)
+- [Views](../index.html)
 - [View concepts](index.html)
 - [Pagination](pagination.html)
 
@@ -106,7 +106,7 @@ int totalPages = (int) Math.ceil((double) response.totalCount() / pageSize);
 1. **First Request**: Use an empty string as the `pageToken`
 2. **Store Token**: Save the `nextPageToken` from the response
 3. **Subsequent Requests**: Pass the saved token as `pageToken` in the next request
-4. **Last Page Detection**: When an empty token is returned, you’ve reached the end
+4. **Last Page Detection**: When an empty token is returned, you have reached the end
 **Example in Java:**
 
 ```java
@@ -233,7 +233,7 @@ boolean showLoadMore = !nextPageToken.isEmpty() || response.hasMore();
 
 - Use reasonable page sizes (typically 10-50 items)
 - Always include `ORDER BY` with paginated queries
-- Consider using `has_more()` instead of `total_count()` when the exact total isn’t needed
+- Consider using `has_more()` instead of `total_count()` when the exact total is not needed
 - For large data sets, prefer token-based pagination
 
 ### <a href="about:blank#_user_experience"></a> User Experience

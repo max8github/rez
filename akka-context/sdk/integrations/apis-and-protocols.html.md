@@ -15,6 +15,7 @@ Akka provides built-in support for exposing your services through multiple proto
 - **REST APIs** — Define JSON-based HTTP endpoints with routing, request/response handling, and access control. See [HTTP Endpoints](../http-endpoints.html).
 - **OpenAPI** — Schema generation is built in. See [OpenAPI Endpoint schema](../http-endpoints.html#_openapi_endpoint_schema).
 - **WebSockets** — Real-time bidirectional communication is built in. See [WebSocket support](../http-endpoints.html#websocket).
+- **Web application assets** — Serve the files of a single-page application, or HTML generated at request time, from the same service that serves the API. See [Web applications](../web-applications.html).
 
 ## <a href="about:blank#_grpc"></a> gRPC
 
@@ -39,6 +40,7 @@ A2A, ACP, and MCP clients are baked into Akka’s Agent component. Agents native
 - [HTTP Endpoints](../http-endpoints.html)
 - [gRPC Endpoints](../grpc-endpoints.html)
 - [MCP Endpoints](../mcp-endpoints.html)
+- [Web applications](../web-applications.html)
 - [Agents](../agents.html)
 
 <!-- <footer> -->

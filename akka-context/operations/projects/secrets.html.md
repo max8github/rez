@@ -23,7 +23,7 @@ This allows you to group related credentials together (e.g., a database secret w
 
 ## <a href="about:blank#_quick_start_example"></a> Quick start example
 
-Here’s a common pattern for storing and using a single API key:
+Here is a common pattern for storing and using a single API key:
 
 ```command
 # 1. Create a secret with a single key-value pair
@@ -198,6 +198,61 @@ Then deploy with:
 akka service apply -f deployment.yaml
 ```
 
+## <a href="about:blank#_mounting_secrets_as_files"></a> Mounting secrets as files
+
+In addition to exposing secrets as environment variables, you can mount a secret as a directory of files inside the service container. Each key in the secret becomes a file in the mounted directory, with the file contents equal to the secret value.
+
+|  | Mounting secrets as files can only be configured using a service descriptor. There is no CLI flag for this. Use `akka service apply -f <descriptor-file>` to deploy. |
+Use the `volumeMounts` field in the service descriptor to specify where to mount the secret:
+
+```yaml
+name: my-service
+service:
+  image: my-image:latest
+  volumeMounts:
+  - mountPath: /secrets/my-secret        // (1)
+    secret:
+      secretName: my-secret              // (2)
+  env:
+  - name: MY_SECRET_VALUE
+    value: /secrets/my-secret/my-key     // (3)
+```
+
+| **1** | The path inside the container where the secret is mounted as a directory |
+| **2** | The name of the Akka secret to mount |
+| **3** | Each key in the secret becomes a file at this path; reference it via an environment variable or directly in your application code |
+
+### <a href="about:blank#_example_google_application_credentials"></a> Example: Google Application Credentials
+
+A common use case is mounting a JSON credentials file for the Google Cloud SDK, which expects the credentials to be provided as a file referenced by the `GOOGLE_APPLICATION_CREDENTIALS` environment variable.
+
+First, create the secret from the credentials file:
+
+```command
+akka secret create generic google-application-credentials \
+  --from-file credentials.json=/path/to/credentials.json
+```
+Then deploy using a service descriptor that mounts the secret and sets the environment variable:
+
+```yaml
+name: my-service
+service:
+  image: my-image:latest
+  volumeMounts:
+  - mountPath: /google-application-credentials-path
+    secret:
+      secretName: google-application-credentials
+  env:
+  - name: GOOGLE_APPLICATION_CREDENTIALS
+    value: /google-application-credentials-path/credentials.json
+```
+Apply the descriptor:
+
+```command
+akka service apply -f my-service.yaml
+```
+For a full description of all available fields for volume mounts, see [VolumeMount in the Service Descriptor reference](../../reference/descriptors/service-descriptor.html#_volumemount).
+
 ## <a href="about:blank#_display_secrets_as_environment_variables_for_a_service"></a> Display secrets as environment variables for a service
 
 To view how secrets are configured as environment variables for a service, you can use the Akka CLI or the Akka Console.
@@ -271,6 +326,7 @@ The `SECRET_NAME/KEY_NAME` pattern provides flexibility:
 ## <a href="about:blank#_see_also"></a> See also
 
 - <a href="../../reference/cli/akka-cli/akka_secrets.html#_see_also">`akka secrets` commands</a>
+- [VolumeMount in the Service Descriptor reference](../../reference/descriptors/service-descriptor.html#_volumemount)
 
 <!-- <footer> -->
 <!-- <nav> -->
