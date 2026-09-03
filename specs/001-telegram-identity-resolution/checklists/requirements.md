@@ -31,7 +31,18 @@
 
 ## Notes
 
-All items pass on first pass. No [NEEDS CLARIFICATION] markers were needed — this feature's scope
-was already narrowed through a prior discussion in-session (Telegram-first-contact mints an
-unlinked identity; explicit cross-product linking is a separate, out-of-scope flow), so the open
-questions that would normally surface here were already resolved before spec authoring began.
+First-pass draft (2026-09-03) had no [NEEDS CLARIFICATION] markers, but user review of that draft
+surfaced two real open forks the checklist itself didn't catch:
+
+1. Whether first-contact Telegram resolution should auto-mint an identity or require Google/Apple
+   verification first — resolved: auto-mint (User Story 1, FR-007), after discussing duplicate-
+   account risk and Telegram id spoofability.
+2. Whether the resolved identity should persist onto the Reservation record or just live
+   transiently in-request — resolved: persist (User Story 3, FR-004), since transient-only would
+   have made User Story 1's stated value (a durable per-person key) untrue.
+
+Spec revised 2026-09-03 to reflect both resolutions, narrow User Story 2/FR-003's fail-open claim
+to exactly the new HTTP call (not an implied payment-survives-outage guarantee), drop an unclear
+"shared chat" acceptance scenario, and add an explicit Out of Scope section (account merging,
+dedicated identity-query view, webhook secret-token hardening). All checklist items re-verified
+against the revised spec and still pass.
