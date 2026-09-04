@@ -2,7 +2,10 @@ package com.rezhub.reservation.agent;
 
 import akka.javasdk.agent.Agent;
 import akka.javasdk.annotations.Component;
+import akka.javasdk.client.ComponentClient;
+import com.rezhub.reservation.orchestration.BookingApplicationService;
 import com.rezhub.reservation.orchestration.OriginRequestContext;
+import com.rezhub.reservation.orchestration.ReservationGatewayAkka;
 
 /**
  * Conversational booking agent for Rez.
@@ -16,10 +19,16 @@ import com.rezhub.reservation.orchestration.OriginRequestContext;
 @Component(id = "booking-agent")
 public class BookingAgent extends Agent {
 
-    private final BookingTools bookingTools;
+    private final BookingApplicationService bookingService;
+    private final ReservationGatewayAkka reservationGateway;
+    private final ComponentClient componentClient;
 
-    public BookingAgent(BookingTools bookingTools) {
-        this.bookingTools = bookingTools;
+    public BookingAgent(BookingApplicationService bookingService,
+                        ReservationGatewayAkka reservationGateway,
+                        ComponentClient componentClient) {
+        this.bookingService = bookingService;
+        this.reservationGateway = reservationGateway;
+        this.componentClient = componentClient;
     }
 
     private static final String SYSTEM_MESSAGE = """
@@ -92,6 +101,8 @@ public class BookingAgent extends Agent {
         String resolvedPrefix = resolvedDateTime
             .map(dt -> " [resolvedDateTime:" + dt.format(java.time.format.DateTimeFormatter.ISO_LOCAL_DATE_TIME) + "]")
             .orElse("");
+
+        BookingTools bookingTools = new BookingTools(bookingService, reservationGateway, componentClient, origin);
 
         return effects()
             .systemMessage(systemMsg)

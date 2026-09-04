@@ -17,8 +17,8 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 class BookingServiceTest {
 
-    // Early-exit paths never reach service or componentClient, so nulls are safe.
-    private final BookingTools tools = new BookingTools(null, null, null);
+    // Early-exit paths never reach service, componentClient, or origin, so nulls are safe.
+    private final BookingTools tools = new BookingTools(null, null, null, null);
 
     @Test
     void bookCourt_invalidDateFormat_returnsErrorMessage() {

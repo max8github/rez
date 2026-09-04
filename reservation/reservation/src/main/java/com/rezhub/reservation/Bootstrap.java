@@ -5,7 +5,6 @@ import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
-import com.rezhub.reservation.agent.BookingTools;
 import com.rezhub.reservation.orchestration.BookingApplicationService;
 import com.rezhub.reservation.orchestration.BookingContextResolverAkka;
 import com.rezhub.reservation.orchestration.CourtBookingWorkflow;
@@ -59,13 +58,14 @@ public class Bootstrap implements ServiceSetup {
         var contextResolver = new BookingContextResolverAkka(componentClient);
         var courtWorkflow = new CourtBookingWorkflow(courtDirectory, reservationGateway, componentClient);
         var bookingService = new BookingApplicationService(contextResolver, courtWorkflow);
-        var bookingTools = new BookingTools(bookingService, reservationGateway, componentClient);
 
         return new DependencyProvider() {
             @Override
             public <T> T getDependency(Class<T> clazz) {
-                if (clazz == BookingTools.class) {
-                    return clazz.cast(bookingTools);
+                if (clazz == BookingApplicationService.class) {
+                    return clazz.cast(bookingService);
+                } else if (clazz == ReservationGatewayAkka.class) {
+                    return clazz.cast(reservationGateway);
                 } else if (clazz == NotificationSender.class) {
                     return clazz.cast(ServiceLoader.load(NotificationSender.class).iterator().next());
                 }
