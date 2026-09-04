@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.Map;
+import java.util.Optional;
 
 /**
  * HTTP endpoint called by the Matrix bot (bot.py) running on lurch/synapse.
@@ -54,7 +55,8 @@ public class MatrixEndpoint {
             msg.sender_name(),
             msg.facility_id(),
             sessionId,
-            Map.of("facilityId", msg.facility_id())
+            Map.of("facilityId", msg.facility_id()),
+            Optional.empty()
         );
 
         String reply = componentClient

@@ -4,7 +4,9 @@ import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.client.ComponentClient;
+import akka.javasdk.http.HttpClientProvider;
 import com.rezhub.reservation.agent.BookingAgent;
+import com.rezhub.reservation.infrastructure.IdentityClient;
 import com.rezhub.reservation.orchestration.OriginRequestContext;
 import com.rezhub.reservation.spi.NotificationSender;
 import com.rezhub.reservation.view.FacilityByBotTokenView;
@@ -33,10 +35,13 @@ public class TelegramEndpoint {
 
     private final ComponentClient componentClient;
     private final NotificationSender notificationSender;
+    private final IdentityClient identityClient;
 
-    public TelegramEndpoint(ComponentClient componentClient, NotificationSender notificationSender) {
+    public TelegramEndpoint(ComponentClient componentClient, NotificationSender notificationSender,
+                            HttpClientProvider httpClientProvider) {
         this.componentClient = componentClient;
         this.notificationSender = notificationSender;
+        this.identityClient = new IdentityClient(httpClientProvider);
     }
 
     public record Update(Message message) {}
@@ -79,13 +84,18 @@ public class TelegramEndpoint {
 
         log.info("Telegram message from {} (chat {}) for facility {}: {}", senderDisplayName, chatId, facilityId, msg.text());
 
+        Optional<String> identityUserId = senderExternalId.isBlank()
+            ? Optional.empty()
+            : identityClient.resolveOrCreate("TELEGRAM", senderExternalId, Optional.empty());
+
         OriginRequestContext origin = new OriginRequestContext(
             "telegram",
             senderExternalId,
             senderDisplayName,
             recipientId,
             conversationId,
-            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone)
+            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone),
+            identityUserId
         );
 
         componentClient

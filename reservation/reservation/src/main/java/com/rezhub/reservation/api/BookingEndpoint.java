@@ -14,6 +14,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -43,7 +44,8 @@ public class BookingEndpoint {
         var reservation = request.durationMinutes() != null
             ? new Reservation(request.emails(), request.dateTime(), request.durationMinutes())
             : new Reservation(request.emails(), request.dateTime());
-        var init = new ReservationEntity.Init(reservation, request.resourceIds(), request.recipientId(), request.originSystem());
+        var init = new ReservationEntity.Init(reservation, request.resourceIds(), request.recipientId(), request.originSystem(),
+            Optional.empty(), Optional.empty());
         componentClient
             .forEventSourcedEntity(request.reservationId())
             .method(ReservationEntity::init)

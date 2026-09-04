@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.COLLECTING;
@@ -28,7 +29,7 @@ class ReservationEntityTest {
     private EventSourcedTestKit<ReservationState, ReservationEvent, ReservationEntity> inCollecting(Set<String> resourceIds) {
         var kit = freshKit();
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
-        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1", null));
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1", null, Optional.empty(), Optional.empty()));
         return kit;
     }
 
@@ -45,7 +46,7 @@ class ReservationEntityTest {
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isFalse();
         assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
@@ -60,7 +61,7 @@ class ReservationEntityTest {
             .invoke(new ReservationEntity.Fulfill(RESOURCE_ID, RESERVATION_ID, reservation));
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isFalse();
         assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
@@ -73,7 +74,7 @@ class ReservationEntityTest {
         var differentReservation = new Reservation(List.of("someone-else@example.com"), SLOT.plusHours(1));
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID_2), "recipient-2", null));
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID_2), "recipient-2", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isTrue();
     }
@@ -87,7 +88,7 @@ class ReservationEntityTest {
 
         var differentReservation = new Reservation(List.of("amy@example.com"), SLOT.plusHours(1));
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isTrue();
     }
@@ -179,5 +180,78 @@ class ReservationEntityTest {
         assertThat(result.isError()).isFalse();
         assertThat(result.getNextEventOfType(ReservationEvent.SearchExhausted.class)).isNotNull();
         assertThat(kit.getState().state()).isEqualTo(UNAVAILABLE);
+    }
+
+    @Test
+    void init_withResolvedIdentity_persistsIdentityUserIdAndSenderExternalId() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.of("user-abc-123"), Optional.of("tg-98765")));
+
+        assertThat(kit.getState().identityUserId()).contains("user-abc-123");
+        assertThat(kit.getState().senderExternalId()).contains("tg-98765");
+    }
+
+    @Test
+    void init_withoutResolvedIdentity_persistsEmptyOptionals() {
+        var kit = inCollecting(Set.of(RESOURCE_ID));
+
+        assertThat(kit.getState().identityUserId()).isEmpty();
+        assertThat(kit.getState().senderExternalId()).isEmpty();
+    }
+
+    @Test
+    void init_replayWithDifferentResolvedIdentity_stillTreatedAsSafeReplay() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.empty(), Optional.of("tg-98765")));
+
+        // Simulates identity recovering mid-retry: same booking details, but this time resolution succeeded.
+        var result = kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.of("user-abc-123"), Optional.of("tg-98765")));
+
+        assertThat(result.isError()).isFalse();
+        assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
+        assertThat(kit.getState().state()).isEqualTo(COLLECTING);
+    }
+
+    @Test
+    void getReservation_separateLaterQuery_stillReturnsPersistedIdentity() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.of("user-abc-123"), Optional.of("tg-98765")));
+
+        // A separate, later command — not the original init() reply — proving the identity is durable,
+        // not just visible in the request that resolved it (spec.md User Story 3).
+        var state = kit.method(ReservationEntity::getReservation).invoke().getReply();
+
+        assertThat(state.identityUserId()).contains("user-abc-123");
+        assertThat(state.senderExternalId()).contains("tg-98765");
+    }
+
+    @Test
+    void getReservation_whenResolutionFailed_hasNoIdentityUserIdButStillHasSenderExternalId() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        // Resolution failed (e.g. identity unreachable), but the raw sender id was still captured — FR-008.
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.empty(), Optional.of("tg-98765")));
+
+        var state = kit.method(ReservationEntity::getReservation).invoke().getReply();
+
+        assertThat(state.identityUserId()).isEmpty();
+        assertThat(state.senderExternalId()).contains("tg-98765");
     }
 }

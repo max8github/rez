@@ -16,14 +16,21 @@ No single blocker currently tracked here.
 
 ### Payments, rescue refund, waiting list
 
-Design proposed, not started. See
-[payments-cancellation-waitlist-design.md](payments-cancellation-waitlist-design.md) for the full target
-design: a `PaymentEntity` + `PricingPolicy` payment core (Stripe destination charges, facility/Rez split)
-anchored to a per-reservation commitment cutoff rather than booking time, so one payment hold safely serves
-both ordinary capture and the rescue refund for late cancellations (voided if a rescue booker takes the slot
-before it resolves); and a waiting list (`WaitlistEntity` FIFO queue + active-offer exclusivity check in
-`CourtBookingWorkflow`, no changes to `ResourceEntity`). Open questions remain around commitment-window
-validation limits and waitlist confirmation timing — see the design doc's Open Questions section.
+Design proposed, not started. Three dependent phases, per the design doc's own Migration Sequence — each
+should become its own spec under `specs/` when its turn comes, not spec'd ahead of time:
+
+1. **Payment core** — a `PaymentEntity` + `PricingPolicy` (Stripe destination charges, facility/Rez split)
+   anchored to a per-reservation commitment cutoff rather than booking time, so one payment hold safely serves
+   both ordinary capture and the rescue refund for late cancellations. `PlayerPaymentProfile` keys off the
+   `identity` `userId` resolved by [specs/001-telegram-identity-resolution](../specs/001-telegram-identity-resolution/spec.md) — **blocked on that landing first.**
+2. **Rescue refund** — voids the payment core's hold if a rescue booker takes the slot before it resolves.
+   Depends on phase 1.
+3. **Waiting list** — `WaitlistEntity` FIFO queue + active-offer exclusivity check in `CourtBookingWorkflow`,
+   no changes to `ResourceEntity`. Depends on phase 2.
+
+See [payments-cancellation-waitlist-design.md](payments-cancellation-waitlist-design.md) for the full target
+design. Open questions remain around commitment-window validation limits and waitlist confirmation timing —
+see the design doc's Open Questions section.
 
 ### Make MatrixEndpoint fully async
 

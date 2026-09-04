@@ -86,13 +86,22 @@ public class BookingTools {
     private final BookingApplicationService bookingService;
     private final ReservationGatewayAkka reservationGateway;
     private final ComponentClient componentClient;
+    private final OriginRequestContext origin;
 
+    /**
+     * Constructed fresh per chat() invocation by BookingAgent (not a shared singleton) so that
+     * {@code origin} — including the resolved identityUserId/senderExternalId for this specific
+     * request — is available to tool methods without needing the LLM to shuttle identity data
+     * through function-call arguments. See spec 001-telegram-identity-resolution.
+     */
     public BookingTools(BookingApplicationService bookingService,
                         ReservationGatewayAkka reservationGateway,
-                        ComponentClient componentClient) {
+                        ComponentClient componentClient,
+                        OriginRequestContext origin) {
         this.bookingService = bookingService;
         this.reservationGateway = reservationGateway;
         this.componentClient = componentClient;
+        this.origin = origin;
     }
 
     @FunctionTool(description = """
@@ -114,7 +123,6 @@ public class BookingTools {
             return pastValidation;
         }
 
-        OriginRequestContext origin = directOrigin("", facilityId);
         // todo: durationMinutes hardcoded null (defaults to 60 downstream) — Rez now locks/checks
         // real per-booking durations; add a duration parameter here once callers want anything else.
         BookingIntent intent = new BookingIntent(
@@ -167,7 +175,6 @@ public class BookingTools {
             return pastValidation;
         }
 
-        OriginRequestContext origin = directOrigin(recipientId, facilityId);
         // todo: durationMinutes hardcoded null (defaults to 60 downstream) — same gap as checkAvailability above.
         BookingIntent intent = new BookingIntent(
             BookingIntent.BookingAction.BOOK,
@@ -186,7 +193,7 @@ public class BookingTools {
     public String cancelReservation(String reservationId) {
         log.info("cancelReservation: reservationId={}", reservationId);
         try {
-            bookingService.cancel(directOrigin("", ""), new CancelIntent(reservationId));
+            bookingService.cancel(origin, new CancelIntent(reservationId));
             return "Cancellation request submitted for reservation " + reservationId + ".";
         } catch (Exception e) {
             log.warn("Cancel failed for reservationId={}: {}", reservationId, e.getMessage());
@@ -244,11 +251,6 @@ public class BookingTools {
     }
 
     // --- helpers ---
-
-    private OriginRequestContext directOrigin(String recipientId, String facilityId) {
-        return new OriginRequestContext("direct", "", "", recipientId, facilityId,
-            Map.of("facilityId", facilityId));
-    }
 
     private String validateNotInPast(String facilityId, LocalDateTime requestedTime) {
         ZoneId zoneId = facilityZoneId(facilityId);

@@ -17,7 +17,6 @@ These are the stable, current-state architecture docs:
 - [Reservation Booking Flow](../reservation/reservation/docs/booking-flow.md)
 - [Reservation FSM](../reservation/reservation/docs/fsm.md)
 - [Conceptual Orchestration Overview](./conceptual-orchestration-overview.md)
-- [Payments, Cancellation Refunds, and Waiting Lists — Target Design](./payments-cancellation-waitlist-design.md) (target-state, not implemented yet)
 
 These documents should explain:
 
@@ -39,6 +38,25 @@ These are active, time-bound docs that track operations or upcoming changes:
 - [facility-provisioning-runbook.md](./facility-provisioning-runbook.md)
 - [quick-notes-runbook.md](./quick-notes-runbook.md)
 - [user-onboarding.md](./user-onboarding.md)
+- [Payments, Cancellation Refunds, and Waiting Lists — Target Design](./payments-cancellation-waitlist-design.md) — target-state, not implemented yet. Internally sequenced as three dependent phases (payment core → rescue refund → waiting list); see [Feature specs](#feature-specs) below for which of those have been formalized.
+
+## Feature specs
+
+Formal Spec-Driven Development features live under [`specs/`](../specs/) (one `specs/NNN-short-name/` directory
+per feature, containing `spec.md` and, once planned, `plan.md`/`tasks.md`). This is where requirement- and
+acceptance-criteria-level detail belongs; docs above stay high-level and should link out to a spec rather than
+duplicate it once one exists.
+
+- [001-telegram-identity-resolution](../specs/001-telegram-identity-resolution/spec.md) — Draft. Wires
+  `TelegramEndpoint`'s dropped sender id into the shared `identity` service. Prerequisite for payment core
+  below (`PlayerPaymentProfile` keys off the `userId` this resolves).
+
+Anticipated next, not yet specified (see the target design doc above — don't spec ahead of when work actually
+starts, per this project's own build discipline):
+
+- **Payment core** — `PlayerPaymentProfile`, Stripe hold anchored to commitment cutoff. Depends on 001.
+- **Rescue refund** — depends on Payment core.
+- **Waiting list with priority notify** — depends on Rescue refund.
 
 ## Archive docs
 
