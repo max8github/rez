@@ -264,7 +264,7 @@ implementation might still change them.
       contact; explicit linking — via Rez's future own sign-in, or a Hit-authenticated link — is a
       separate, still-not-built step for cross-product recognition), in
       `/Users/max/code/rez/docs/payments-cancellation-waitlist-design.md`
-- [ ] T026 Run `mvn -o verify` from `reservation/reservation/` to confirm all new and existing tests
+- [X] T026 Run `mvn -o verify` from `reservation/reservation/` to confirm all new and existing tests
       pass together
 - [ ] T027 Execute `quickstart.md`'s manual verification steps end-to-end against a locally running
       stack, per `specs/001-telegram-identity-resolution/quickstart.md`
