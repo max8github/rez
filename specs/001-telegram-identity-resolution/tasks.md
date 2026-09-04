@@ -236,7 +236,7 @@ later call — fetch the reservation's state directly and confirm `identityUserI
 
 ### Tests for User Story 3
 
-- [ ] T023 [US3] Add a test asserting that a separate, later `ReservationEntity::getReservation` query
+- [X] T023 [US3] Add a test asserting that a separate, later `ReservationEntity::getReservation` query
       (not the original request) returns the persisted `identityUserId`, and that a reservation created
       when resolution failed has no `identityUserId` but does have `senderExternalId` (FR-008), in
       `reservation/reservation/src/test/java/com/rezhub/reservation/reservation/ReservationEntityTest.java`
