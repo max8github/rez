@@ -266,9 +266,9 @@ implementation might still change them.
       `/Users/max/code/rez/docs/payments-cancellation-waitlist-design.md`
 - [X] T026 Run `mvn -o verify` from `reservation/reservation/` to confirm all new and existing tests
       pass together
-- [ ] T027 Execute `quickstart.md`'s manual verification steps end-to-end against a locally running
+- [X] T027 Execute `quickstart.md`'s manual verification steps end-to-end against a locally running
       stack, per `specs/001-telegram-identity-resolution/quickstart.md`
-- [ ] T028 Update `spec.md`'s Status field from `Draft` to a closed/complete status once T026 and T027
+- [X] T028 Update `spec.md`'s Status field from `Draft` to a closed/complete status once T026 and T027
       both pass, in `specs/001-telegram-identity-resolution/spec.md`
 
 ---

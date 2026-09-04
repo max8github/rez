@@ -70,3 +70,9 @@ but worth recording here since they shaped what got built:
 
 Neither changes any FR/SC in spec.md — both are implementation-level findings, recorded here and in
 tasks.md rather than as spec churn.
+
+**Closed 2026-09-04**: T027's manual verification (the one thing automated tests structurally couldn't
+cover, per point 2 above) passed against a real local stack — a genuine Telegram booking minted a real
+`identity` `userId` (`5d8b28c5-c37d-4a26-8a18-9677dff5542f`), and a second booking from the same
+Telegram account resolved to the same `userId` (`isNew: false`, confirmed via direct `identity` curl
+calls). All 28 tasks in tasks.md complete. spec.md's Status updated to CLOSED.

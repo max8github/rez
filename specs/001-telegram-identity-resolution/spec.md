@@ -2,7 +2,11 @@
 
 - **Feature Branch**: `001-telegram-identity-resolution`
 - **Created**: 2026-09-03
-- **Status**: Draft
+- **Status**: **CLOSED** (2026-09-04). Implemented (tasks.md T001–T028, all complete) and live-verified
+  against a real local `identity` + Telegram stack: first-contact resolution minted a real `identity`
+  `userId` for a genuine booking, and a second booking from the same Telegram account resolved to the
+  *same* `userId` (`isNew: false`) — confirming User Story 1's core claim end-to-end, not just in
+  automated tests. Not yet merged to `master`.
 - **Input**: User description: "Rez's TelegramEndpoint currently captures the real Telegram sender id (`senderExternalId`) but never uses it downstream — only the chat-scoped recipientId hash gets persisted. Fix this by wiring TelegramEndpoint to call the shared `identity` service's `resolveOrCreate` on every incoming message, and thread the resolved identity userId into `OriginRequestContext` as a new optional field so it's available to future consumers. First-contact resolution via Telegram alone mints a fresh, Telegram-only identity — it does not prove the sender is the same person as any existing Hit account. Cross-product recognition only happens after a separate, explicit one-time link flow (out of scope here). Fail-open throughout. Also reconcile hit-backend's cross-product-identity.md and Rez's payments-cancellation-waitlist-design.md, which currently describe two different, conflicting versions of this plan."
 
 ## User Scenarios & Testing *(mandatory)*
