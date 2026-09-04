@@ -253,12 +253,12 @@ design.
 shape is settled, per the decision made earlier in this session not to front-load doc edits before
 implementation might still change them.
 
-- [ ] T024 [P] Reconcile `hit-backend/docs/cross-product-identity.md`'s Open Items and Stage 3
+- [X] T024 [P] Reconcile `hit-backend/docs/cross-product-identity.md`'s Open Items and Stage 3
       description to reflect the final design (auto-mint via Telegram, persisted on the Reservation,
       raw-id-for-backfill), replacing the currently-stale "fix TelegramEndpoint, wire resolveOrCreate"
       framing with what was actually decided and built, in
       `/Users/max/code/hit/hit-backend/docs/cross-product-identity.md`
-- [ ] T025 [P] Reconcile `rez/docs/payments-cancellation-waitlist-design.md`'s `PlayerPaymentProfile`
+- [X] T025 [P] Reconcile `rez/docs/payments-cancellation-waitlist-design.md`'s `PlayerPaymentProfile`
       identity section, replacing commit `f5c2833`'s "Telegram drops out of the identity story
       entirely" framing with the resolved account (Telegram auto-mints an unlinked identity from first
       contact; explicit linking — via Rez's future own sign-in, or a Hit-authenticated link — is a
