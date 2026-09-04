@@ -5,6 +5,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.rezhub.reservation.dto.Reservation;
 import akka.javasdk.annotations.TypeName;
 
+import java.util.Optional;
 import java.util.Set;
 
 public sealed interface ReservationEvent {
@@ -12,15 +13,19 @@ public sealed interface ReservationEvent {
     @TypeName("reservation-initiated")
     record Inited(String reservationId, Reservation reservation,
                   Set<String> resourceIds, String recipientId,
-                  String originSystem) implements ReservationEvent {
+                  String originSystem, Optional<String> identityUserId,
+                  Optional<String> senderExternalId) implements ReservationEvent {
         @JsonCreator
         static Inited create(
                 @JsonProperty("reservationId") String reservationId,
                 @JsonProperty("reservation") Reservation reservation,
                 @JsonProperty("resourceIds") Set<String> resourceIds,
                 @JsonProperty("recipientId") String recipientId,
-                @JsonProperty("originSystem") String originSystem) {
-            return new Inited(reservationId, reservation, resourceIds, recipientId, originSystem);
+                @JsonProperty("originSystem") String originSystem,
+                @JsonProperty("identityUserId") Optional<String> identityUserId,
+                @JsonProperty("senderExternalId") Optional<String> senderExternalId) {
+            return new Inited(reservationId, reservation, resourceIds, recipientId, originSystem,
+                identityUserId, senderExternalId);
         }
     }
 

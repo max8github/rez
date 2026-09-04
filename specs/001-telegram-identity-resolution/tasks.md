@@ -24,7 +24,7 @@ not a gap.
 
 ## Phase 1: Setup
 
-- [ ] T001 Run `mvn -o test -Dtest=IdentityClientTest` from `reservation/reservation/` to confirm the
+- [X] T001 Run `mvn -o test -Dtest=IdentityClientTest` from `reservation/reservation/` to confirm the
       pre-existing `IdentityClient` groundwork (`reservation/reservation/src/main/java/com/rezhub/reservation/infrastructure/IdentityClient.java`)
       still compiles and passes before extending the chain that depends on it
 
@@ -36,40 +36,40 @@ not a gap.
 user-visible behavior change — every field defaults to empty until Phase 3 populates it. This phase
 must be complete and compiling before any story-specific work begins.
 
-- [ ] T002 Add `identityUserId: Optional<String>` field to `OriginRequestContext` in
+- [X] T002 Add `identityUserId: Optional<String>` field to `OriginRequestContext` in
       `reservation/reservation/src/main/java/com/rezhub/reservation/orchestration/OriginRequestContext.java`
-- [ ] T003 [P] Update `MatrixEndpoint`'s `OriginRequestContext` construction to pass `Optional.empty()`
+- [X] T003 [P] Update `MatrixEndpoint`'s `OriginRequestContext` construction to pass `Optional.empty()`
       for the new field in `reservation/reservation/src/main/java/com/rezhub/reservation/api/MatrixEndpoint.java`
-- [ ] T004 [P] Update `BookingTools.directOrigin`'s `OriginRequestContext` construction to pass
+- [X] T004 [P] Update `BookingTools.directOrigin`'s `OriginRequestContext` construction to pass
       `Optional.empty()` for the new field in
       `reservation/reservation/src/main/java/com/rezhub/reservation/agent/BookingTools.java`
-- [ ] T005 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to `ReservationState`;
+- [X] T005 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to `ReservationState`;
       default both to `Optional.empty()` in `initiate()`; add `withIdentityUserId(Optional<String>)` and
       `withSenderExternalId(Optional<String>)` builder methods; append the two new fields to every
       existing `with*` method's positional record reconstruction, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationState.java`
-- [ ] T006 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
+- [X] T006 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
       `ReservationEvent.Inited`, updating its `@JsonCreator`/`@JsonProperty` wiring to match, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEvent.java`
-- [ ] T007 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
+- [X] T007 Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
       `ReservationEntity.Init`; persist them into the `Inited` event inside `init()`; set them on state
       via the new `with*` methods in `applyEvent`'s `Inited` case, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java`
       (depends on T005, T006)
-- [ ] T008 In the same file, confirm `isReplayOfSameRequest()` does **not** compare
+- [X] T008 In the same file, confirm `isReplayOfSameRequest()` does **not** compare
       `identityUserId`/`senderExternalId`, and add a one-line comment explaining why (a retry whose
       resolved identity differs between attempts, e.g. because `identity` recovered mid-retry, must
       still count as a safe replay of the same booking — see plan.md's "deliberate correctness note"),
       in `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java`
       (depends on T007)
-- [ ] T009 [P] Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
+- [X] T009 [P] Add `identityUserId`/`senderExternalId` (`Optional<String>`) fields to
       `ReservationSubmission` in
       `reservation/reservation/src/main/java/com/rezhub/reservation/orchestration/ReservationSubmission.java`
-- [ ] T010 Update `CourtBookingWorkflow.book()` to populate the two new `ReservationSubmission` fields
+- [X] T010 Update `CourtBookingWorkflow.book()` to populate the two new `ReservationSubmission` fields
       from `origin.identityUserId()` and `origin.senderExternalId()` in
       `reservation/reservation/src/main/java/com/rezhub/reservation/orchestration/CourtBookingWorkflow.java`
       (depends on T002, T009)
-- [ ] T011 Update `ReservationGatewayAkka.submit()` to thread the two new `ReservationSubmission`
+- [X] T011 Update `ReservationGatewayAkka.submit()` to thread the two new `ReservationSubmission`
       fields into the `ReservationEntity.Init` command in
       `reservation/reservation/src/main/java/com/rezhub/reservation/orchestration/ReservationGatewayAkka.java`
       (depends on T007, T009)

@@ -2,6 +2,7 @@ package com.rezhub.reservation.orchestration;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 /**
@@ -16,5 +17,7 @@ public record ReservationSubmission(
     int durationMinutes,
     List<String> participants,
     Set<String> resourceIds,
-    String originSystem
+    String originSystem,
+    Optional<String> identityUserId,
+    Optional<String> senderExternalId
 ) {}

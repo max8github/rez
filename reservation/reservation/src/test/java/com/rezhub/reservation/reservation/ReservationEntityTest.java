@@ -6,6 +6,7 @@ import org.junit.jupiter.api.Test;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.Set;
 
 import static com.rezhub.reservation.reservation.ReservationState.State.COLLECTING;
@@ -28,7 +29,7 @@ class ReservationEntityTest {
     private EventSourcedTestKit<ReservationState, ReservationEvent, ReservationEntity> inCollecting(Set<String> resourceIds) {
         var kit = freshKit();
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
-        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1", null));
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(reservation, resourceIds, "recipient-1", null, Optional.empty(), Optional.empty()));
         return kit;
     }
 
@@ -45,7 +46,7 @@ class ReservationEntityTest {
         var reservation = new Reservation(List.of("amy@example.com"), SLOT);
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isFalse();
         assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
@@ -60,7 +61,7 @@ class ReservationEntityTest {
             .invoke(new ReservationEntity.Fulfill(RESOURCE_ID, RESERVATION_ID, reservation));
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(reservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isFalse();
         assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
@@ -73,7 +74,7 @@ class ReservationEntityTest {
         var differentReservation = new Reservation(List.of("someone-else@example.com"), SLOT.plusHours(1));
 
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID_2), "recipient-2", null));
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID_2), "recipient-2", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isTrue();
     }
@@ -87,7 +88,7 @@ class ReservationEntityTest {
 
         var differentReservation = new Reservation(List.of("amy@example.com"), SLOT.plusHours(1));
         var result = kit.method(ReservationEntity::init)
-            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID), "recipient-1", null));
+            .invoke(new ReservationEntity.Init(differentReservation, Set.of(RESOURCE_ID), "recipient-1", null, Optional.empty(), Optional.empty()));
 
         assertThat(result.isError()).isTrue();
     }

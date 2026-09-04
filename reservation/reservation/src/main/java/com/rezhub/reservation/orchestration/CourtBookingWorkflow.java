@@ -12,6 +12,7 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 
@@ -73,6 +74,8 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         log.info("book: facilityId={}, resources={}, dateTime={}", scope.facilityId(), scope.resourceIds().size(), intent.dateTime());
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+        Optional<String> senderExternalId = origin.senderExternalId() == null || origin.senderExternalId().isBlank()
+            ? Optional.empty() : Optional.of(origin.senderExternalId());
         ReservationSubmission submission = new ReservationSubmission(
             reservationId,
             origin.recipientId(),
@@ -81,7 +84,9 @@ public class CourtBookingWorkflow implements BookingWorkflow {
             effectiveDuration(intent),
             intent.participantNames(),
             Set.copyOf(scope.resourceIds()),
-            origin.origin()
+            origin.origin(),
+            origin.identityUserId(),
+            senderExternalId
         );
         return reservationGateway.submit(submission);
     }

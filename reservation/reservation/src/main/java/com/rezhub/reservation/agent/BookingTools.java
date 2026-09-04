@@ -247,7 +247,7 @@ public class BookingTools {
 
     private OriginRequestContext directOrigin(String recipientId, String facilityId) {
         return new OriginRequestContext("direct", "", "", recipientId, facilityId,
-            Map.of("facilityId", facilityId));
+            Map.of("facilityId", facilityId), Optional.empty());
     }
 
     private String validateNotInPast(String facilityId, LocalDateTime requestedTime) {

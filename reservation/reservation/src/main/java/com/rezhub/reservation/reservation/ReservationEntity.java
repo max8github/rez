@@ -48,7 +48,9 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                     .withDuration(reservation.durationMinutes())
                     .withEmails(reservation.emails())
                     .withRecipientId(e.recipientId())
-                    .withOriginSystem(e.originSystem());
+                    .withOriginSystem(e.originSystem())
+                    .withIdentityUserId(e.identityUserId())
+                    .withSenderExternalId(e.senderExternalId());
             }
             case ReservationEvent.AvailabilityReplied e -> {
                 ReservationState next = currentState().withPendingRemoved(e.resourceId());
@@ -100,7 +102,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 ? effects().reply(new ReservationId(id))
                 : effects().error("Reservation is processing selection: cannot be initialized");
             case INIT -> effects()
-                .persist(new ReservationEvent.Inited(id, command.reservation(), command.resourceIds(), command.recipientId(), command.originSystem()))
+                .persist(new ReservationEvent.Inited(id, command.reservation(), command.resourceIds(), command.recipientId(),
+                    command.originSystem(), command.identityUserId(), command.senderExternalId()))
                 .thenReply(newState -> new ReservationId(id));
         };
     }
@@ -112,6 +115,12 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
      * genuine reservationId collision with a materially different booking request, which must still error
      * rather than silently succeed against the wrong details. CANCELLED/UNAVAILABLE stay hard errors always —
      * a real state change happened since the first attempt, not something to paper over.
+     */
+    /**
+     * Deliberately does not compare identityUserId/senderExternalId: a retry whose resolved identity
+     * differs from the first attempt (e.g. the identity service was down on attempt 1, reachable on
+     * attempt 2) must still count as a safe replay of the same booking, not a rejected collision.
+     * Those two fields describe the requester, not what makes two booking attempts "the same booking."
      */
     private boolean isReplayOfSameRequest(ReservationState state, Init command) {
         Reservation r = command.reservation();
@@ -256,7 +265,8 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         }
     }
 
-    public record Init(Reservation reservation, Set<String> resourceIds, String recipientId, String originSystem) {}
+    public record Init(Reservation reservation, Set<String> resourceIds, String recipientId, String originSystem,
+                       Optional<String> identityUserId, Optional<String> senderExternalId) {}
     public record ReservationId(String reservationId) {}
 
     public record ReplyAvailability(String reservationId, String resourceId, boolean available) {}

@@ -85,7 +85,8 @@ public class TelegramEndpoint {
             senderDisplayName,
             recipientId,
             conversationId,
-            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone)
+            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone),
+            Optional.empty() // TODO(US1): resolved via IdentityClient.resolveOrCreate — wired in Phase 3
         );
 
         componentClient
