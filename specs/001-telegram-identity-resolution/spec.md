@@ -52,7 +52,7 @@ A reservation record gains the requester's resolved `identity` `userId` (when on
 **Acceptance Scenarios**:
 
 1. **Given** a resolved identity for an incoming Telegram message that results in a booking, **When** the reservation is created, **Then** the stored reservation includes that `identityUserId`.
-2. **Given** no identity could be resolved (resolution failed, or the sender had no identifiable Telegram `from`), **When** the reservation is created, **Then** it is stored successfully without an `identityUserId`, identical to today's behavior.
+2. **Given** no identity could be resolved (resolution failed, or the sender had no identifiable Telegram `from`), **When** the reservation is created, **Then** it is stored successfully without an `identityUserId` — but, when a sender was identifiable, still with their raw Telegram sender id, so the reservation is not permanently unrecoverable (see FR-008 and Out of Scope).
 
 ### Edge Cases
 
@@ -60,6 +60,7 @@ A reservation record gains the requester's resolved `identity` `userId` (when on
 - What happens when a Telegram update has no `from` field (e.g. a channel post) or an empty sender id? → No identity resolution call is made; existing behavior (ignore/log) is unchanged.
 - What happens on the very first message ever received by a freshly deployed Rez instance, before `identity` has ever seen this or any Telegram sender? → Same as any first-contact case: `identity` mints a new record; no special-casing needed.
 - What happens when someone already has a Hit account (an existing Google/Apple-linked `userId`) and messages Rez's bot without ever going through the explicit link flow? → They get a second, separate, Telegram-only `userId`; no automatic connection to their Hit account is made or attempted (see Out of Scope).
+- What happens to a reservation created while `identity` was unreachable? → It has no `identityUserId`, but it does retain the raw Telegram sender id it was resolved from, so it is not permanently unattributable — a future backfill process (not built here) could re-resolve it once `identity` is healthy again.
 
 ## Requirements *(mandatory)*
 
@@ -72,18 +73,20 @@ A reservation record gains the requester's resolved `identity` `userId` (when on
 - **FR-005**: A first-contact resolution for a given Telegram sender MUST NOT be treated, anywhere in documentation or behavior, as proof that the sender is the same person as any existing account in another product. Establishing that requires a separate, explicit linking step, which this feature does not implement.
 - **FR-006**: The two existing design documents that describe this identity-resolution story (hit-backend's cross-product identity design, and Rez's own payments/booking design doc) MUST be reconciled to describe one consistent account of what first-contact Telegram resolution does and does not establish, replacing their current conflicting accounts.
 - **FR-007**: System MUST create (not merely look up) a new identity via the shared `identity` service on a Telegram sender's first contact — no separate verification step (e.g. Google or Apple sign-in) is required before a reservation can carry that sender's resolved identity.
+- **FR-008**: The Telegram sender's raw external id MUST be persisted onto the resulting Reservation record unconditionally, whenever a sender was identifiable — regardless of whether identity resolution itself succeeded. This is what makes a reservation left without an `identityUserId` (due to a resolution failure) recoverable later by a future backfill process, rather than permanently unattributable. This feature persists the raw id for that purpose but does not implement the backfill process itself.
 
 ### Key Entities
 
 - **Resolved Identity**: The stable, cross-message identifier for a real person, obtained from the shared `identity` service for a given Telegram sender. Carries no proof of linkage to any other product's account on its own.
 - **Telegram Sender**: The real per-person identifier Telegram provides for the author of an incoming message, as distinct from the chat the message was sent in.
-- **Reservation**: Gains an optional resolved identity (`identityUserId`), alongside its existing chat-scoped `recipientId`, present whenever resolution succeeded at booking time.
+- **Reservation**: Gains an optional resolved identity (`identityUserId`), present whenever resolution succeeded at booking time, and the raw Telegram sender id it was resolved from, persisted unconditionally whenever a sender was identifiable — alongside its existing chat-scoped `recipientId`.
 
 ## Out of Scope
 
 - **Explicit cross-product account linking** — the bot sending a Hit-authenticated link, the person logging into Hit, and `identity` adding Telegram as a second auth method on their existing Hit identity. This feature's identities are designed to support that flow later; the flow itself is not built here.
 - **Account merging** — even once linked, no migration of a Telegram-only identity's existing reservations onto the linked Hit identity is designed or built. Someone who books under a Telegram-only identity before linking has that history left behind under the old `userId`. Accepted as a deferred gap given every product is still pre-launch.
 - **A dedicated "reservations by identity" query or view** — `identityUserId` is persisted on the Reservation record so it's queryable via existing data-access paths, but no new View is built until a concrete feature needs one.
+- **A backfill process for orphaned reservations** — reservations created while `identity` was unreachable retain the raw Telegram sender id specifically so a future process could re-resolve and fill in their `identityUserId` later. That process itself (whether a scheduled job, an on-demand trigger, or something else) is not designed or built here.
 - **Telegram webhook secret-token hardening** — using Telegram's `secret_token` mechanism to further authenticate webhook calls is a good idea, but a general webhook-security improvement unrelated to identity resolution specifically.
 
 ## Success Criteria *(mandatory)*
@@ -94,3 +97,4 @@ A reservation record gains the requester's resolved `identity` `userId` (when on
 - **SC-002**: 0% of Telegram booking conversations fail or visibly degrade when the identity-resolution dependency is unavailable — booking success rate with `identity` down is identical to booking success rate with `identity` healthy.
 - **SC-003**: 100% of the two existing design documents' descriptions of Telegram identity resolution agree with each other and with actual behavior after this change — no reviewer can find a contradiction between them.
 - **SC-004**: 100% of reservations booked while identity resolution succeeded have a durably queryable `identityUserId` attached, without requiring any new dedicated query or view to be built.
+- **SC-005**: 100% of reservations from an identifiable Telegram sender — whether or not identity resolution succeeded at the time — retain enough information to be attributed to an identity later, without needing to replay a lost Telegram message.

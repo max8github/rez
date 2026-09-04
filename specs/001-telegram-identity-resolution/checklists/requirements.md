@@ -46,3 +46,10 @@ to exactly the new HTTP call (not an implied payment-survives-outage guarantee),
 "shared chat" acceptance scenario, and add an explicit Out of Scope section (account merging,
 dedicated identity-query view, webhook secret-token hardening). All checklist items re-verified
 against the revised spec and still pass.
+
+Follow-up review (2026-09-04) walked through a concrete failure example and surfaced one more gap:
+a reservation created while `identity` is down had no way to be recovered later, since the raw
+Telegram sender id used to make the resolution call was discarded, not stored. Resolved by adding
+FR-008: persist the raw sender id on the Reservation unconditionally (whether or not resolution
+succeeded), so a future backfill process — not built here — could re-resolve it later. Added as a
+new Out of Scope item and SC-005. Re-verified: still passes all checklist items.
