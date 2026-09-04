@@ -181,4 +181,44 @@ class ReservationEntityTest {
         assertThat(result.getNextEventOfType(ReservationEvent.SearchExhausted.class)).isNotNull();
         assertThat(kit.getState().state()).isEqualTo(UNAVAILABLE);
     }
+
+    @Test
+    void init_withResolvedIdentity_persistsIdentityUserIdAndSenderExternalId() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.of("user-abc-123"), Optional.of("tg-98765")));
+
+        assertThat(kit.getState().identityUserId()).contains("user-abc-123");
+        assertThat(kit.getState().senderExternalId()).contains("tg-98765");
+    }
+
+    @Test
+    void init_withoutResolvedIdentity_persistsEmptyOptionals() {
+        var kit = inCollecting(Set.of(RESOURCE_ID));
+
+        assertThat(kit.getState().identityUserId()).isEmpty();
+        assertThat(kit.getState().senderExternalId()).isEmpty();
+    }
+
+    @Test
+    void init_replayWithDifferentResolvedIdentity_stillTreatedAsSafeReplay() {
+        var kit = freshKit();
+        var reservation = new Reservation(List.of("amy@example.com"), SLOT);
+
+        kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.empty(), Optional.of("tg-98765")));
+
+        // Simulates identity recovering mid-retry: same booking details, but this time resolution succeeded.
+        var result = kit.method(ReservationEntity::init).invoke(new ReservationEntity.Init(
+            reservation, Set.of(RESOURCE_ID), "recipient-1", "telegram",
+            Optional.of("user-abc-123"), Optional.of("tg-98765")));
+
+        assertThat(result.isError()).isFalse();
+        assertThat(result.getReply().reservationId()).isEqualTo(RESERVATION_ID);
+        assertThat(kit.getState().state()).isEqualTo(COLLECTING);
+    }
 }

@@ -53,3 +53,20 @@ Telegram sender id used to make the resolution call was discarded, not stored. R
 FR-008: persist the raw sender id on the Reservation unconditionally (whether or not resolution
 succeeded), so a future backfill process — not built here — could re-resolve it later. Added as a
 new Out of Scope item and SC-005. Re-verified: still passes all checklist items.
+
+Implementation (2026-09-04, Phases 1–4) surfaced two things the spec itself didn't need to change for,
+but worth recording here since they shaped what got built:
+
+1. An architectural gap the plan missed entirely: `BookingTools` was a shared singleton with no way to
+   see a request's resolved identity, so `TelegramEndpoint`'s resolution would have been silently
+   dropped before reaching a real `Reservation`. Fixed by making `BookingTools` per-request
+   (tasks.md Phase 2.5) — this was necessary for FR-004/FR-007 to actually hold, not optional polish.
+2. A real test-environment constraint: `TestKitSupport` has no reachable `identity` and this SDK
+   version can't mock `httpClientFor(...)` in-process, and this codebase's own convention (see
+   `BookingAgentIntegrationTest`) deliberately doesn't test tool-call execution via mocked LLM
+   responses. So "first contact mints an identity" (US1's strongest claim) is verified manually via
+   `quickstart.md`, not by an automated test — documented directly in `TelegramEndpointIntegrationTest`'s
+   own class doc comment rather than left implicit.
+
+Neither changes any FR/SC in spec.md — both are implementation-level findings, recorded here and in
+tasks.md rather than as spec churn.

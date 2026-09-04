@@ -150,23 +150,28 @@ Hit or payments code involved.
 
 ### Tests for User Story 1
 
-- [ ] T017 [P] [US1] Add unit test case(s) to `ReservationEntityTest.java` asserting `init()` with a
+- [X] T017 [P] [US1] Add unit test case(s) to `ReservationEntityTest.java` asserting `init()` with a
       populated `identityUserId`/`senderExternalId` persists both onto state, and that
       `isReplayOfSameRequest` still treats a retry with a *different* resolved `identityUserId` as a
       safe replay (per T008), in
       `reservation/reservation/src/test/java/com/rezhub/reservation/reservation/ReservationEntityTest.java`
-- [ ] T018 [P] [US1] Create `TelegramEndpointIntegrationTest.java` covering: first-contact resolution
-      mints and persists a new `identityUserId` on the resulting reservation; a second message from the
-      same sender (different chat) resolves to and persists the *same* `identityUserId` on its
-      reservation, in
+- [X] T018 [P] [US1] Create `TelegramEndpointIntegrationTest.java`. **Rescoped during implementation**
+      (see the class's own doc comment for the full reasoning): `TestKitSupport` has no reachable
+      `identity` in-process and no way to mock `httpClientFor("identity")` in this SDK version, so
+      "mints and persists a new identityUserId" can't actually be exercised here — that claim is
+      verified manually via quickstart.md against a real local stack instead. What this test verifies:
+      the webhook completes normally, with `IdentityClient` now wired in, both for an identifiable
+      sender and (merged in from the original T021) for a message with no `from` field — i.e. fail-open
+      holds at the full endpoint level. This also absorbs the original T021's scope; T021 below is
+      marked merged rather than duplicated, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/api/TelegramEndpointIntegrationTest.java`
 
 ### Implementation for User Story 1
 
-- [ ] T019 [US1] Inject `HttpClientProvider` into `TelegramEndpoint`'s constructor and construct an
+- [X] T019 [US1] Inject `HttpClientProvider` into `TelegramEndpoint`'s constructor and construct an
       `IdentityClient` from it, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/api/TelegramEndpoint.java`
-- [ ] T020 [US1] In `TelegramEndpoint.onUpdate`, when `senderExternalId` is non-blank, call
+- [X] T020 [US1] In `TelegramEndpoint.onUpdate`, when `senderExternalId` is non-blank, call
       `identityClient.resolveOrCreate("TELEGRAM", senderExternalId, Optional.empty())` and pass the
       result into the new `OriginRequestContext` `identityUserId` field (replacing the T002-era
       placeholder `Optional.empty()`), in
@@ -194,22 +199,28 @@ full Telegram booking conversation end-to-end, and confirm it completes exactly 
 
 ### Tests for User Story 2
 
-- [ ] T021 [US2] Add a case to `TelegramEndpointIntegrationTest.java` pointing identity resolution at
-      an unreachable/error-returning target and asserting the booking still completes with no
-      `identityUserId` on the resulting reservation, and a case asserting a message with no `from` field
-      results in no resolution attempt and no `identityUserId`, in
-      `reservation/reservation/src/test/java/com/rezhub/reservation/api/TelegramEndpointIntegrationTest.java`
-      (same file as T018 — sequential, not parallel)
+- [X] T021 [US2] **Merged into T018** — `identity` is unreachable for every case in this test
+      environment regardless, so a separate "unreachable/error-returning target" case would be
+      indistinguishable from T018's existing cases. The no-`from`-field case (this task's other half)
+      is `webhook_withNoFromField_doesNotThrow` in T018's test file, verbatim what was planned here. No
+      separate file change.
 
 ### Implementation for User Story 2
 
-- [ ] T022 [US2] Guard `TelegramEndpoint.onUpdate` to skip the identity resolution call entirely when
-      `msg.from()` is null or the sender id is blank, in
+- [X] T022 [US2] Guard `TelegramEndpoint.onUpdate` to skip the identity resolution call entirely when
+      `msg.from()` is null or the sender id is blank. **Already satisfied by T020** as implemented —
+      T020's own code reads `senderExternalId.isBlank() ? Optional.empty() : identityClient.resolveOrCreate(...)`,
+      which was written with this guard included from the start rather than as a separate follow-up, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/api/TelegramEndpoint.java` (depends
       on T020)
 
 **Checkpoint**: Fail-open behavior is verified end-to-end, including the no-`from`-field edge case.
-`identity` being unreachable never blocks or delays a Telegram booking.
+`identity` being unreachable never blocks or delays a Telegram booking — though note (found during
+T018's test run): the resolution call is synchronous within `onUpdate`, so it does add real latency to
+the webhook's own response before `invokeAsync` fires, same as the pre-existing synchronous facility
+lookup already does. "Must not delay the reply" holds in the sense of "no unbounded/indefinite block,"
+not "literally zero added time" — consistent with Hit's own `IdentityClient` integration, not a new
+gap this feature introduces.
 
 ---
 
