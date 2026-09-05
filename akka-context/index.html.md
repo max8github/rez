@@ -57,6 +57,15 @@ Akka is a full-stack platform for agentic AI: developer experience, runtime, and
 - [Deploy a service](operations/services/deploy-service.html)
 - [Observability and monitoring](operations/observability-and-monitoring/index.html)
 
+## [Inference](inference/index.html)
+
+**Run AI models** — serving models on hardware in your project and routing requests to a provider.
+
+- [Serving models](inference/serving/index.html)
+- [Deploying models](inference/serving/deploying-models.html)
+- [Routing requests to models](inference/routing/index.html)
+- [Routing on request meaning](inference/routing/request-meaning.html)
+
 ## [Reference](reference/index.html)
 
 **Look it up** — CLI, APIs, configuration, and release notes.

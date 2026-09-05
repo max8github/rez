@@ -104,7 +104,7 @@ public HttpResponse increaseMultiple(IncreaseAllThese increaseAllThese) throws E
 
 | **1** | Call `invokeAsync()` and collect each `CompletionStage<T>`. |
 | **2** | When all tasks have been started, wait for all tasks to complete. |
-| **3** | When all tasks have successfully completed, we can respond. |
+| **3** | When all tasks have successfully completed, respond. |
 
 #### <a href="about:blank#_synchronous_vs_asynchronous_component_invocation"></a> **Synchronous vs asynchronous component invocation**
 
@@ -134,7 +134,7 @@ of endpoints the service provides.
 
 The service is identified by the name it has been deployed with. Akka takes care of routing requests to the service and keeping the data safe by encrypting the connection and handling authentication for you.
 
-In the following snippet, we have an endpoint component that calls another service named `counter`. It makes use of SDK-provided `akka.javasdk.http.HttpClientProvider` which returns HTTP client instances for calling other Akka services.
+In the following snippet, an endpoint component calls another service named `counter`. It makes use of SDK-provided `akka.javasdk.http.HttpClientProvider` which returns HTTP client instances for calling other Akka services.
 
 In our delegating service implementation:
 
@@ -243,7 +243,7 @@ public class CallExternalServiceEndpoint {
 
 The service is identified by the name it has been deployed with. Akka takes care of routing requests to the service and keeping the data safe by encrypting the connection and handling authentication for you.
 
-In this sample we will implement a gRPC endpoint that delegates a call to a [gRPC endpoint](grpc-endpoints.html) of a customer registry service, deployed with the service name `customer-registry`.
+This sample implements a gRPC endpoint that delegates a call to a [gRPC endpoint](grpc-endpoints.html) of a customer registry service, deployed with the service name `customer-registry`.
 
 The SDK provides `akka.javasdk.grpc.GrpcClientProvider` which provides gRPC client instances for calling other services.
 

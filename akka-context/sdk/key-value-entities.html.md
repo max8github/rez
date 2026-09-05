@@ -9,14 +9,14 @@
 # Implementing key value entities
 
 ![Key value entity](../_images/key-value-entity.png)
-[Key Value Entities](../reference/glossary.html#key_value_entity) are entities that persist the full state on every change. Only the latest state is stored, so we do not have access to any of the history of changes, unlike the event sourced storage used by [Event Sourced Entities](event-sourced-entities.html).
+[Key Value Entities](../reference/glossary.html#key_value_entity) are entities that persist the full state on every change. Only the latest state is stored, so there is no access to the history of changes, unlike the event sourced storage used by [Event Sourced Entities](event-sourced-entities.html).
 
 
 Entity and Workflow sharding [Stateful components](../reference/glossary.html#stateful_component), such as Entities and Workflows, offer strong consistency guarantees. Each stateful component can have many instances, identified by [ID](../reference/glossary.html#id). Akka distributes them across every service instance in the cluster. We guarantee that there is only one stateful component instance in the whole service cluster. If a command arrives to a service instance not hosting that stateful component instance, the command is forwarded by the Akka Runtime to the one that hosts that particular component instance. This forwarding is done transparently via [Component Client](../reference/glossary.html#component_client) logic. Because each stateful component instance lives on exactly one service instance, messages can be handled sequentially. Hence, there are no concurrency concerns, each Entity or Workflow instance handles one message at a time.
 
 The state of the stateful component instance is kept in memory as long as it is active. This means it can serve read requests or command validation before updating without additional reads from the durable storage. There might not be room for all stateful component instances to be kept active in memory all the time and therefore least recently used instances can be passivated. When the stateful component is used again it recovers its state from durable storage and becomes an active with its system of record in memory, backed by consistent durable storage. This recovery process is also used in cases of rolling updates, rebalance, and abnormal crashes.
 
-Akka needs to serialize that data to send it to the underlying data store. However, we recommend that you do not persist your service’s public API messages. Persisting private API messages may introduce some overhead when converting from a public message to an internal one but it allows the logic of the service public interface to evolve independently of the data storage format, which should be private.
+Akka needs to serialize that data to send it to the underlying data store. As a recommendation, do not persist your service’s public API messages. Persisting private API messages may introduce some overhead when converting from a public message to an internal one but it allows the logic of the service public interface to evolve independently of the data storage format, which should be private.
 
 The steps necessary to implement a Key Value Entity include:
 
@@ -38,11 +38,11 @@ public record Counter(int value) {
 }
 ```
 
-|  | Above we are taking advantage of the Java `record` to reduce the amount of boilerplate code, but you can use regular classes so long as they can be serialized to JSON (e.g. using Jackson annotations). See [Serialization](serialization.html). |
+|  | The above uses the Java `record` to reduce boilerplate code, but regular classes work too as long as they can be serialized to JSON (e.g. using Jackson annotations). See [Serialization](serialization.html). |
 
 ## <a href="about:blank#_identifying_the_entity"></a> Identifying the Entity
 
-In order to interact with an Entity in Akka, we need to assign a **component id** and an instance **id**:
+To interact with an Entity in Akka, assign a **component id** and an instance **id**:
 
 - **component id** is a unique identifier for all entities of a given type. To define the component id, the entity class must be annotated with `@Component` and have a unique and stable identifier assigned.
 - **id**, on the other hand, is unique per instance. The entity id is used in the component client when calling the entity from for example an Endpoint.
@@ -64,7 +64,7 @@ For additional details, refer to [Declarative Effects](../concepts/declarative-e
 
 ## <a href="about:blank#entity-behavior"></a> Implementing behavior
 
-Now that we have our Entity state defined, the remaining steps can be summarized as follows:
+With the Entity state defined, the remaining steps are:
 
 - Declare your entity and pick a component id (it needs to be a unique identifier).
 - Initialize your entity state
@@ -92,7 +92,7 @@ public class CounterEntity extends KeyValueEntity<Counter> { // (2)
 
 | **1** | Every Entity must be annotated with `@Component` with a stable unique identifier for this entity type. |
 | **2** | The `CounterEntity` class should extend `akka.javasdk.keyvalueentity.KeyValueEntity`. |
-| **3** | Stores the `entityId` on an internal attribute so we can use it later. Alternatively, if inside a command handler, `commandContext().entityId()` also provides such information. |
+| **3** | Stores the `entityId` on an internal attribute for later use. Alternatively, if inside a command handler, `commandContext().entityId()` also provides such information. |
 | **4** | The initial state of each counter is defined with value 0. |
 
 |  | The `@Component` value `counter` is common for all instances of this entity but must be stable - cannot be changed after a production deploy - and unique across the different entity types in the service. |
@@ -127,7 +127,7 @@ public Effect<Counter> plusOne() {
 
 ### <a href="about:blank#_retrieving_state"></a> Retrieving state
 
-To have access to the current state of the entity we can use `currentState()` as you have probably noticed from the examples above. The following example shows the implementation of the read-only command handler `get` to retrieve the value for a specific counter:
+To access the current state of the entity, use `currentState()` as shown in the examples above. The following example shows the implementation of the read-only command handler `get` to retrieve the value for a specific counter:
 
 [CounterEntity.java](https://github.com/akka/akka-sdk/blob/main/samples/key-value-counter/src/main/java/com/example/application/CounterEntity.java)
 ```java
@@ -137,7 +137,7 @@ public ReadOnlyEffect<Counter> get() {
 ```
 
 | **1** | Reply with the current state. |
-What if this is the first command we are receiving for this entity? The initial state is provided by overriding `emptyState()`. We recommend always overriding `emptyState()` to return a sensible default. If not overridden, `currentState()` will return `null` until the first state update, which requires null checks in all command handlers.
+What if this is the first command received for this entity? The initial state is provided by overriding `emptyState()`. Always override `emptyState()` to return a sensible default. If not overridden, `currentState()` will return `null` until the first state update, which requires null checks in all command handlers.
 
 |  | We are returning the internal state directly back to the requester. In the endpoint, it is usually best to convert this internal domain model into a public model so the internal representation is free to evolve without breaking clients code. |
 

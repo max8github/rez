@@ -272,7 +272,7 @@ akka.javasdk {
 ```
 The `model-provider` property points to the name of another configuration section, in this case `akka.javasdk.agent.openai`. That configuration section contains the actual configuration for the model provider, according to the properties described in below [Reference configurations](about:blank#_reference_configurations).
 
-Another example where we have selected `anthropic` with `claude-sonnet-4` as the default model provider:
+Another example, with `anthropic` and `claude-sonnet-4` selected as the default model provider:
 
 src/main/resources/application.conf
 ```json

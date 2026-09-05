@@ -39,14 +39,6 @@ FROM products
 OFFSET page_token_offset(:pageToken)
 LIMIT 10
 ```
-Token-based pagination with sorting
-```sql
-SELECT * AS products, next_page_token() AS nextPageToken
-FROM products
-ORDER BY price DESC
-OFFSET page_token_offset(:pageToken)
-LIMIT 10
-```
 Complete pagination example with has_more check
 ```sql
 SELECT * AS products,
@@ -54,10 +46,11 @@ SELECT * AS products,
        has_more() AS hasMoreProducts
 FROM products
 WHERE category = :category
-ORDER BY price ASC
 OFFSET page_token_offset(:pageToken)
 LIMIT 10
 ```
+
+|  | `page_token_offset()` cannot be combined with `ORDER BY`. Results are implicitly ordered by the row’s position (id) so the paging cursor stays consistent between requests. For custom sorting, use count-based pagination (numeric `OFFSET` / `LIMIT`) instead. |
 
 ## <a href="about:blank#_usage_flow"></a> Usage Flow
 
@@ -94,6 +87,7 @@ if (response.nextPageToken().isEmpty()) {
 - When the last page is reached, an empty string is returned as the next page token
 - Tokens are specific to a particular query structure - changing the query conditions or sort order invalidates existing tokens
 - If no `LIMIT` is specified with `page_token_offset()`, a default page size of 100 is used
+- `page_token_offset()` cannot be combined with `ORDER BY`
 
 ## <a href="about:blank#_related_features"></a> Related Features
 

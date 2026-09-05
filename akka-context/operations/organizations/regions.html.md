@@ -57,7 +57,7 @@ By default organizations are limited to which regions they can use, particularly
 
 ## <a href="about:blank#_byoc_and_self_hosted_regions"></a> BYOC and self-hosted regions
 
-Akka also supports Bring Your Own Cloud (BYOC) meaning that we can run regions in your AWS, Azure, or Google Cloud account. These are not available to trial users.
+Akka also supports Bring Your Own Cloud (BYOC): Akka runs regions in your own AWS, Azure, or Google Cloud account. These are not available to trial users.
 
 These regions work just like any other regions and are exclusive to your workloads.
 

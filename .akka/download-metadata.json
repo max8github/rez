@@ -1,32 +1,32 @@
 {
   "agents_md": {
-    "etag": "W/\"9ec8-65a55d5b70fe6\"",
-    "last_modified": "Mon, 31 Aug 2026 11:09:24 GMT",
-    "downloaded_at": "2026-09-03T09:11:11Z",
+    "etag": "W/\"9ec8-65aaa33b4d89e\"",
+    "last_modified": "Fri, 04 Sep 2026 15:48:38 GMT",
+    "downloaded_at": "2026-09-05T10:55:53Z",
     "source_url": "https://doc.akka.io/_attachments/AGENTS.md"
   },
   "claude_md": {
-    "etag": "W/\"1299-65a55d5b70fe6\"",
-    "last_modified": "Mon, 31 Aug 2026 11:09:24 GMT",
-    "downloaded_at": "2026-09-03T09:11:10Z",
+    "etag": "W/\"1299-65aaa33b4dc86\"",
+    "last_modified": "Fri, 04 Sep 2026 15:48:38 GMT",
+    "downloaded_at": "2026-09-05T10:55:53Z",
     "source_url": "https://doc.akka.io/_attachments/CLAUDE.md"
   },
   "constitution": {
-    "etag": "W/\"f64-65a55d5b713ce\"",
-    "last_modified": "Mon, 31 Aug 2026 11:09:24 GMT",
-    "downloaded_at": "2026-09-03T09:11:11Z",
+    "etag": "W/\"f64-65aaa33b4dc86\"",
+    "last_modified": "Fri, 04 Sep 2026 15:48:38 GMT",
+    "downloaded_at": "2026-09-05T10:55:53Z",
     "source_url": "https://doc.akka.io/_attachments/constitution.md"
   },
   "context": {
-    "etag": "\"13929d-65a560480c5cb\"",
-    "last_modified": "Mon, 31 Aug 2026 11:22:29 GMT",
-    "downloaded_at": "2026-09-03T09:11:10Z",
+    "etag": "\"15711f-65aaa65a0b705\"",
+    "last_modified": "Fri, 04 Sep 2026 16:02:36 GMT",
+    "downloaded_at": "2026-09-05T10:55:52Z",
     "source_url": "https://doc.akka.io/java/_attachments/akka-docs-md.zip"
   },
   "marketplace": {
     "etag": "21c7dbe52f10fd356419c1378d5479c6f1086305",
     "last_modified": "",
-    "downloaded_at": "2026-09-03T09:11:09Z",
+    "downloaded_at": "2026-09-05T10:55:50Z",
     "source_url": "https://github.com/akka/ai-marketplace.git"
   }
 }

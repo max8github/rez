@@ -187,7 +187,7 @@ public static class CustomersUpdater extends TableUpdater<CustomerSummary> { // 
 }
 ```
 
-| **1** | Note we are adding a new handler to the existing table updater. |
+| **1** | Note the added handler on the existing table updater. |
 | **2** | Marks the method as a delete handler. |
 | **3** | Logical delete: use `effects().updateRow()` to keep the row but mark it as deleted by setting the `deleted` field to `true`. |
 | **4** | Hard delete: use `effects().deleteRow()` to physically remove the row.. |

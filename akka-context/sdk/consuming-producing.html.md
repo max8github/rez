@@ -11,7 +11,7 @@
 ![Consumer](../_images/consumer.png)
 Consuming or producing a stream of events is a common Microservices pattern. It allows stream-based interaction between Akka services and other systems. The source of events can be the journal of an Event Sourced Entity, state changes in a Key Value Entity, or a message broker topic.
 
-In this section, we will explore how you can use a Consumer component to:
+This section covers how to use a Consumer component to:
 
 - Consume events emitted by an Event Sourced Entity within the same service
 - Consume state changes emitted by a Key Value Entity within the same service
@@ -262,7 +262,7 @@ public class CounterEventsTopicConsumer extends Consumer {
 
 ### <a href="about:blank#_receiving_cloudevents"></a> Receiving CloudEvents
 
-This time instead of a single event handler, we have a handler for each message type. Consumer is able to match the payload type to the handler method based on the `ce-type` attribute of the CloudEvent message.
+This time instead of a single event handler, there is a handler for each message type. Consumer is able to match the payload type to the handler method based on the `ce-type` attribute of the CloudEvent message.
 
 Akka uses the [CloudEvents](https://cloudevents.io/) standard when receiving from and publishing to topics. The CloudEvents specification standardizes message metadata so that systems can integrate more easily.
 
@@ -385,7 +385,7 @@ In this example:
 
 - commands are consumed from an external topic `counter-commands` and forwarded to a `Counter` entity;
 - the `Counter` entity is an Event Sourced Entity and has its events published to another topic `counter-events`.
-To test this flow, we will take advantage of the TestKit to be able to push commands into the `counter-commands` topic and check what messages are produced to topic `counter-events`.
+To test this flow, use the TestKit to push commands into the `counter-commands` topic and check what messages are produced to topic `counter-events`.
 
 [CounterIntegrationTest.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterIntegrationTest.java)
 ```java

@@ -348,7 +348,7 @@ akka.javasdk {
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Observability descriptor](../descriptors/observability-descriptor.html) [CLI commands](../cli/akka-cli/index.html)
+[Routing ruleset](../descriptors/routing-ruleset.html) [Inference CLI commands](../inference-cli/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

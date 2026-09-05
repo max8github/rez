@@ -83,6 +83,8 @@ Some order operations may be rejected if they cannot be efficiently implemented 
 
 For example, if you filter with `WHERE category = :category`, ordering by `price` within that category would be allowed, but ordering by an unrelated field might not be supported.
 
+`ORDER BY` cannot be used together with token-based pagination (`next_page_token()` / `page_token_offset()`), since that form of pagination relies on a fixed, implicit ordering. It can be freely combined with count-based pagination (`OFFSET` / `LIMIT`) — see [Pagination](../concepts/pagination.html).
+
 ## <a href="about:blank#_related_features"></a> Related Features
 
 - [WHERE clause](where.html) - Filters results before sorting

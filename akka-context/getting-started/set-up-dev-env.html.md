@@ -26,11 +26,7 @@ Prerequisites
 
 Akka installs into your AI coding harness through that harness’s own plugin mechanism. Select your harness:
 
-- Claude Code
-- Gemini CLI
-- Codex CLI
-- Cursor, VS Code + Copilot
-
+Claude Code
 ```none
 /plugin marketplace add akka/ai-marketplace
 /plugin install akka@ai-marketplace
@@ -42,17 +38,19 @@ Can’t add the marketplace? Clone the repository and add it as a local marketpl
 git clone https://github.com/akka/ai-marketplace.git
 /plugin marketplace add /path/to/ai-marketplace
 ```
+Antigravity (agy) CLI `agy` (Antigravity CLI) has officially replaced Google’s Gemini CLI.
 
 ```none
-gemini extensions install https://github.com/akka/ai-marketplace
+agy plugin install https://github.com/akka/ai-marketplace
 ```
-
+Codex CLI
 ```none
 codex plugin marketplace add akka/ai-marketplace
 codex plugin add akka@akka
 ```
 Codex exposes the commands as skills. Where this documentation shows `/akka:specify`, use the `akka-specify` skill (`@akka-specify`, or ask Codex to run it).
 
+Cursor, VS Code + Copilot
 ```none
 akka specify init --agent cursor
 ```
@@ -67,7 +65,7 @@ Keep the Akka Specify Plugin up to date with the latest commands and fixes.
 Update the Akka Specify Plugin through that harness’s own plugin mechanism. Select your harness:
 
 - Claude Code
-- Gemini CLI
+- Antigravity (agy) CLI
 - Codex CLI
 - Cursor, VS Code + Copilot
 
@@ -77,7 +75,7 @@ Update the Akka Specify Plugin through that harness’s own plugin mechanism. Se
 ```
 
 ```none
-gemini extensions update ai-marketplace
+agy plugin update ai-marketplace
 ```
 
 ```none

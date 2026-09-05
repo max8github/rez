@@ -14,13 +14,13 @@ Running a service locally is helpful to test and debug. The following sections p
 
 In order to run your service locally, you will need to have the following prerequisites:
 
-- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25 — [Eclipse Adoptium](https://adoptium.net/marketplace/) recommended
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 
 ## <a href="about:blank#_starting_your_service"></a> Starting your service
 
-As an example, we will use the [Shopping Cart](../getting-started/shopping-cart/build-and-deploy-shopping-cart.html) sample.
+The examples use the [Shopping Cart](../getting-started/shopping-cart/build-and-deploy-shopping-cart.html) sample.
 
 To start your service locally, run the following command from the root of your project:
 
@@ -124,7 +124,7 @@ This port is configured in `akka.javasdk.dev-mode.http-port` property in the `sr
 ```xml
 akka.javasdk.dev-mode.http-port=9001
 ```
-With both services configured, we can start them independently by running `mvn compile exec:java` in two separate terminals.
+With both services configured, start them independently by running `mvn compile exec:java` in two separate terminals.
 
 ## <a href="about:blank#_invoking_cloud_based_services_from_local_services"></a> Invoking cloud based services from local services
 

@@ -126,7 +126,7 @@ public class HumanVsAiEvaluator extends Agent { // (1)
 | **5** | Instructions of how to evaluate |
 | **6** | The method with return type implementing `EvaluationResult` |
 | **7** | Transform the model result |
-In this example, we use one result representation from the model, and a slightly different as the response type. These could be the same, but the model might be more accurate when using text labels instead of boolean values. It’s also good to include validation in that transformation.
+In this example, one result representation comes from the model, and a slightly different one is used as the response type. These could be the same, but the model might be more accurate when using text labels instead of boolean values. It’s also good to include validation in that transformation.
 
 Since the evaluator is an ordinary `Agent` you can call it with the component client in the same way as any other agent. For example, from a Consumer that listens for task completions from an [Autonomous Agent](../autonomous-agents.html):
 

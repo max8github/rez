@@ -9,7 +9,7 @@
 
 # Testing the agent
 
-Testing agents built with Generative AI involves two complementary approaches: evaluating the quality of the non-deterministic model behavior and writing deterministic unit tests for the agent’s and surrounding components' logic. Evaluations is described in [LLM evaluation](llm_eval.html), and here we will cover the deterministic testing.
+Testing agents built with Generative AI involves two complementary approaches: evaluating the quality of the non-deterministic model behavior and writing deterministic unit tests for the agent’s and surrounding components' logic. Evaluations are described in [LLM evaluation](llm_eval.html); this page covers the deterministic testing.
 
 ## <a href="about:blank#_mocking_responses_from_the_model"></a> Mocking responses from the model
 

@@ -18,14 +18,14 @@ In this step of the guide to building the *Ask Akka* application, you will be cr
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25 — [Eclipse Adoptium](https://adoptium.net/marketplace/) recommended
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - [OpenAI API key](https://platform.openai.com/api-keys)
 
 ## <a href="about:blank#_unfamiliar_with_concepts_like_vectors_embeddings_or_rag"></a> Unfamiliar with concepts like vectors, embeddings or RAG?
 
-We recommend reviewing our [foundational explainer on AI concepts](../../concepts/ai-agents.html#_foundational_ai_concepts_video). It offers helpful background that will deepen your understanding of the technologies and patterns used throughout this tutorial.
+For helpful background on the technologies and patterns used throughout this tutorial, see the [foundational explainer on AI concepts](../../concepts/ai-agents.html#_foundational_ai_concepts_video).
 
 ## <a href="about:blank#_creating_the_knowledge_class"></a> Creating the Knowledge class
 

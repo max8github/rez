@@ -19,7 +19,7 @@ In this step in the shopping cart sample tour, we will be taking a look at the e
 
 ## <a href="about:blank#_prerequisites"></a> Prerequisites
 
-- Java 25, we recommend [Eclipse Adoptium](https://adoptium.net/marketplace/)
+- Java 25 — [Eclipse Adoptium](https://adoptium.net/marketplace/) recommended
 - [Apache Maven](https://maven.apache.org/install.html) version 3.9 or later
 - <a href="https://curl.se/download.html">`curl` command-line tool</a>
 - An [Akka account](https://console.akka.io/register)

@@ -58,7 +58,7 @@ Optionally, you can deploy your agentic services into [Akka Automated Operations
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Design considerations](../sdk/dev-best-practices.html) [Self-managed operations](configuring.html)
+[Signed evidence](../testing/red-teaming/attestation.html) [Self-managed operations](configuring.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

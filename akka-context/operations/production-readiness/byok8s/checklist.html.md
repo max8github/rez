@@ -561,7 +561,7 @@ The most commonly omitted requirement is a single named owner of the application
 
 <!-- <footer> -->
 <!-- <nav> -->
-[RACI](raci.html) [Reference](../../../reference/index.html)
+[RACI](raci.html) [Inference](../../../inference/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

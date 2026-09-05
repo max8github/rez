@@ -18,7 +18,7 @@ Some key benefits of using an AI coding assistant:
 - **Code comprehension:** Get an overview explanation of existing codebases or sample applications.
 - **Debugging:** Get assistance in identifying and resolving issues.
 - **Test generation:** Rapidly generate tests to ensure code correctness.
-In summary, we will look at the following:
+In summary, this page covers:
 
 1. Akka documentation in LLM-friendly format
 2. Configure your AI assistant (Cursor, Qodo, etc.) to use this documentation
@@ -113,19 +113,13 @@ It is important that you include the Akka documentation as context by enabling `
 
 Make sure that you download the latest documentation regularly to make use of documentation improvements and new features.
 
-### <a href="about:blank#_notes_about_gemini_cli"></a> Notes about Gemini CLI
-
-For Gemini CLI you can use `akka code init` and select Claude as coding assistant. Then rename the file `CLAUDE.md` to `GEMINI.md`.
-
-If Gemini CLI does not make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
-
 ### <a href="about:blank#_notes_about_openai_codex"></a> Notes about OpenAI Codex
 
 If Codex does not make use of the documentation in `akka-context` directory it can be because it is listed in `.gitignore`. Then you have to remove `akka-context` from `.gitignore`.
 
 ## <a href="about:blank#_verify_that_it_works"></a> Verify that it works
 
-To verify that the assistant now knows about Akka, we can ask the question again:
+To verify that the assistant now knows about Akka, ask the question again:
 
 ```none
 What are the core components of Akka?

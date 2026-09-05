@@ -171,7 +171,7 @@ This is particularly useful for "load more" patterns where you want to show a bu
 
 ### <a href="about:blank#_combining_with_sorting"></a> Combining with Sorting
 
-For consistent pagination results, always combine pagination with explicit sorting:
+For consistent results with count-based pagination, combine it with explicit sorting:
 
 ```sql
 SELECT * FROM products
@@ -179,6 +179,8 @@ ORDER BY name ASC
 OFFSET :offset LIMIT :pageSize
 ```
 Without explicit sorting, the order of results is not guaranteed, which can lead to unpredictable pagination behavior.
+
+|  | This only applies to count-based pagination. `ORDER BY` cannot be combined with token-based pagination (see [Token-based Pagination](about:blank#_token_based_pagination)) — the token cursor relies on a fixed, implicit ordering. |
 
 ## <a href="about:blank#_ui_pagination_patterns"></a> UI Pagination Patterns
 
@@ -232,7 +234,7 @@ boolean showLoadMore = !nextPageToken.isEmpty() || response.hasMore();
 ### <a href="about:blank#_performance_optimization"></a> Performance Optimization
 
 - Use reasonable page sizes (typically 10-50 items)
-- Always include `ORDER BY` with paginated queries
+- For count-based pagination, always include `ORDER BY` for predictable results; token-based pagination cannot use `ORDER BY`
 - Consider using `has_more()` instead of `total_count()` when the exact total is not needed
 - For large data sets, prefer token-based pagination
 

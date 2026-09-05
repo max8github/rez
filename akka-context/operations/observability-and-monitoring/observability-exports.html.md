@@ -325,7 +325,7 @@ Google Cloud is supported for exporting logs, metrics, and traces. The primary p
 - If exporting logs to Google Cloud, it must have the `roles/logging.logWriter` role.
 To create such a service account and key using the `gcloud` command, assuming you are logged in and have a Google project configured:
 
-1. Create a service account. In this example, we will call it `akka-exporter`.
+1. Create a service account. This example uses the name `akka-exporter`.
 
 ```shellscript
 gcloud iam service-accounts create akka-exporter
@@ -340,7 +340,7 @@ gcloud projects add-iam-policy-binding <gcp-project-id> \
     --member "serviceAccount:akka-exporter@<gcp-project-id>.iam.gserviceaccount.com" \
     --role "roles/logging.logWriter"
 ```
-3. Generate a key file for your service account, we will place it into a file called `key.json`.
+3. Generate a key file for your service account and save it as `key.json`.
 
 ```shellscript
 gcloud iam service-accounts keys create key.json \

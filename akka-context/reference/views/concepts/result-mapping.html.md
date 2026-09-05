@@ -120,6 +120,7 @@ SELECT * AS items,
        has_more() AS hasMore,
        total_count() AS totalCount
 FROM products
+OFFSET page_token_offset(:pageToken)
 LIMIT 10
 ```
 Maps to:

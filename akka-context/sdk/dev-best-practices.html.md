@@ -185,7 +185,7 @@ public class CounterByValueView extends View {
 
 | **1** | Handling `ValueIncreased` is not idempotent. |
 | **2** | Handling `ValueMultiplied` is not idempotent. |
-In such cases we can use a technique called *events enrichment*. The idea is to keep in the event not only a delta information but also other pre-calculated values that are (or will be) necessary for down stream consumers.
+In such cases, use a technique called *events enrichment*. The idea is to keep in the event not only delta information but also other pre-calculated values that are (or will be) necessary for downstream consumers.
 
 Events modelling is a key part of the system design. A consumer that have all the necessary information in the event can be more independent and less error-prone. Of course a balance must be found between the size of the event and simplicity of its processing.
 
@@ -238,7 +238,7 @@ For cases when events enrichment is not possible or not desired, a sequence numb
 |  | A monotonically increased sequence number is available only when consuming updates from Akka components like Event Sourced Entity, Key Value Entity, or another Akka service. The sequence number is **not globally unique**, but unique per entity instance. |
 
 |  | Akka View component has a built-in support for sequence number tracking. [CounterByValueViewTest](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterByValueViewTest.java) demonstrates how it can be verified. |
-Assume that we want to populate a view storage outside Akka ecosystem. To focus on the deduplication aspect, the following snippet shows the in-memory implementation of the `CounterStore`.
+Assume the goal is to populate a view storage outside the Akka ecosystem. To focus on the deduplication aspect, the following snippet shows the in-memory implementation of the `CounterStore`.
 
 [CounterStore.java](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/main/java/counter/application/CounterStore.java)
 ```java
@@ -329,7 +329,7 @@ public class CounterStoreUpdater extends Consumer {
 | **3** | When sequence number is lower or equal to the last processed one, the event is ignored. |
 | **4** | Otherwise, the event is processed and the last processed sequence number is updated. |
 | **5** | Updates are not idempotent, but the deduplication mechanism ensures that the view is correct in case of processing duplicates. |
-Keep in mind that the `CounterEntry` corresponds to a single entity instance, that is why we can use the sequence number as a deduplication token.
+Keep in mind that the `CounterEntry` corresponds to a single entity instance, which is why the sequence number works as a deduplication token.
 
 It is important to test your deduplication mechanism. The [CounterStoreUpdaterTest](https://github.com/akka/akka-sdk/blob/main/samples/event-sourced-counter-brokers/src/test/java/counter/application/CounterStoreUpdaterTest.java) demonstrates how it can be done with the `EventingTestKit`.
 
@@ -456,8 +456,8 @@ public record Wallet(String id, int balance, LinkedHashSet<String> commandIds) {
 
 | **1** | List of processed command IDs. |
 | **2** | Before we process the command we check if it was already processed. |
-| **3** | To rebuild the state we need to store the command ID in the event. |
-| **4** | To keep the collection size constrained we can remove old command IDs. |
+| **3** | To rebuild the state, store the command ID in the event. |
+| **4** | To keep the collection size constrained, remove old command IDs. |
 This simple solution reveals a few important limitations of the deduplication that are common across many distributed technologies. It is very expensive (and often not possible) to have a total deduplication of all incoming requests/commands. There will always be some constraints like:
 
 - the size of the collection, e.g. keep only last 1000 command IDs, like in the example above,
@@ -488,7 +488,7 @@ Use **orchestration** when steps are tightly coordinated and you need central vi
 
 <!-- <footer> -->
 <!-- <nav> -->
-[Run a local cluster](local-cluster.html) [Operating](../operations/index.html)
+[Run a local cluster](local-cluster.html) [Testing](../testing/index.html)
 <!-- </nav> -->
 
 <!-- </footer> -->

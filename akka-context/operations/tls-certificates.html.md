@@ -44,7 +44,7 @@ step certificate create client.acme.org my-client.crt my-client.key \
 
 ### <a href="about:blank#_configuring_client_ca_in_akka"></a> Configuring client CA in Akka
 
-Now that we have a CA certificate, we can configure it as a secret in Akka.
+With a CA certificate in hand, configure it as a secret in Akka.
 
 1. **Create a CA secret**: To use your CA certificate in Akka, configure it as a TLS CA secret:
 

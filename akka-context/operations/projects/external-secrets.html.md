@@ -41,12 +41,12 @@ Akka services running on AWS can access external secrets from AWS Secrets Manage
 
 ### <a href="about:blank#_setting_up"></a> Setting up
 
-Before you set up AWS external secrets, you will need the following information:
+Before you set up AWS external secrets, gather the following. The scripts below reference each value through an environment variable:
 
-- The account ID of your AWS account, which we will refer to in the scripts below using the environment variable `AWS_ACCOUNT_ID`.
-- The region for your AWS account, which we will refer to in the scripts below using the environment variable `AWS_REGION`.
-- The ID of the Akka project that you wish to access to the secrets, which we will refer to in the scripts below using the environment variable `AKKA_PROJECT_ID`. This is a UUID, and can be obtained using the `akka project get` command.
-- The name of the service that you wish to access the secrets, which we will refer to in the scripts below using the environment variable `AKKA_SERVICE_NAME`.
+- `AWS_ACCOUNT_ID` — your AWS account ID.
+- `AWS_REGION` — the region for your AWS account.
+- `AKKA_PROJECT_ID` — the ID of the Akka project that will access the secrets. This is a UUID; obtain it with the `akka project get` command.
+- `AKKA_SERVICE_NAME` — the name of the service that will access the secrets.
 The following script can set them:
 
 ```command
@@ -75,7 +75,7 @@ aws iam create-open-id-connect-provider --url $AKKA_OIDC_ISSUER \
   --client-id-list sts.amazonaws.com \
   --tags Key=akka-region,Value=akka-region-name
 ```
-AWS often refers to an OIDC provider via the issuer with the `https://` stripped off of it, so for convenience, we will also set that here:
+AWS often refers to an OIDC provider by the issuer with `https://` stripped off. Set that as a separate variable for convenience:
 
 ```command
 export AKKA_OIDC_PROVIDER=$(echo $AKKA_OIDC_ISSUER | sed -e "s/^https:\/\///")
@@ -132,7 +132,7 @@ aws iam attach-role-policy --role-name akka-service-role \
 ```
 Note the `klx-` prefix before the service name in the OIDC provider subject.
 
-Finally, we can tell Akka to assume this role for your service:
+Finally, tell Akka to assume this role for your service:
 
 ```command
 akka service deploy $AKKA_SERVICE_NAME \
@@ -177,11 +177,11 @@ Akka services running on Azure can access external secrets from Azure KeyVault.
 
 ### <a href="about:blank#_setting_up_2"></a> Setting up
 
-Before you set up Azure KeyVault, you will need the following information:
+Before you set up Azure KeyVault, gather the following. The scripts below reference each value through an environment variable:
 
-- The name of the Azure KeyVault that you wish to access, which we will refer to in the scripts below using the environment variable `KEYVAULT_NAME`.
-- The ID of the Akka project that you wish to access to the secrets, which we will refer to in the scripts below using the environment variable `AKKA_PROJECT_ID`. This is a UUID, and can be obtained using the `akka project get` command.
-- The name of the service that you wish to access the secrets, which we will refer to in the scripts below using the environment variable `AKKA_SERVICE_NAME`.
+- `KEYVAULT_NAME` — the name of the Azure KeyVault to access.
+- `AKKA_PROJECT_ID` — the ID of the Akka project that will access the secrets. This is a UUID; obtain it with the `akka project get` command.
+- `AKKA_SERVICE_NAME` — the name of the service that will access the secrets.
 The following script can set them:
 
 ```command
@@ -209,19 +209,19 @@ export APPLICATION_NAME="my-akka-service-application"
 az ad sp create-for-rbac --name "${APPLICATION_NAME}"
 export APPLICATION_CLIENT_ID=$(az ad sp list --display-name ${APPLICATION_NAME} --query '[0].appId' -otsv)
 ```
-Now we need to grant this application access to keys, secrets and certs in the KeyVault:
+Grant this application access to keys, secrets, and certificates in the KeyVault:
 
 ```command
 az keyvault set-policy -n $KEYVAULT_NAME --key-permissions get --spn ${APPLICATION_CLIENT_ID}
 az keyvault set-policy -n $KEYVAULT_NAME --secret-permissions get --spn ${APPLICATION_CLIENT_ID}
 az keyvault set-policy -n $KEYVAULT_NAME --certificate-permissions get --spn ${APPLICATION_CLIENT_ID}
 ```
-Now to federate the credentials, we need the application object id of the application:
+To federate the credentials, get the application object ID:
 
 ```command
 export APPLICATION_OBJECT_ID="$(az ad app show --id ${APPLICATION_CLIENT_ID} --query id -otsv)"
 ```
-Now we will create a JSON parameters file for federating the credentials:
+Create a JSON parameters file for federating the credentials:
 
 ```command
 cat <<EOF > params.json
@@ -288,7 +288,7 @@ Akka services running on GCP can access external secrets from GCP Secret Manager
 
 Before setting up GCP Secret Manager, you will need:
 
-- A GCP project with billing enabled, which we will refer to below using the environment variable `GCP_PROJECT_ID`.
+- `GCP_PROJECT_ID` — the ID of a GCP project with billing enabled.
 - The <a href="https://cloud.google.com/sdk/docs/install">Google Cloud CLI (`gcloud`)</a> installed and authenticated.
 - The Secret Manager API enabled in your GCP project.
 The following script can set up your environment:

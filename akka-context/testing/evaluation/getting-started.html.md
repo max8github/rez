@@ -1,0 +1,310 @@
+<!-- <nav> -->
+- [Akka](../../index.html)
+- [Testing](../index.html)
+- [Evaluation](index.html)
+- [Getting started](getting-started.html)
+
+<!-- </nav> -->
+
+# Getting started with evaluation
+
+Feature set: Evaluations Contact [our support](https://akka.io/contact) for access.
+*This functionality evolves quickly, the behavior and APIs might change between releases without further notice.* An evaluation suite is a set of JUnit tests that run a target service through a set of eval cases and score each reply against what the case expects.
+The suite lives alongside the project’s other tests under `src/test/java` and reads the same dependencies at test scope.
+An experiment is one class in the suite.
+Its outcome is a report the CI job reads for regressions.
+
+## <a href="about:blank#_overview"></a> Overview
+
+An evaluation experiment has four parts.
+The **target** is any implementation of `SystemUnderTest`.
+For a service on the Akka SDK, the implementation calls the service’s own `ComponentClient`.
+The **dataset** is a set of `EvalCase` records.
+Each names an eval setup, a graded turn, and the outcome the target is expected to reach.
+The **experiment** is a JUnit test class that assembles the dataset and the target, invokes `ExperimentRunner.run(…​)`, and asserts against the result.
+The **runner** in `evalkit` walks every eval case in parallel lanes and returns an `ExperimentRunner.Result` carrying what each attempt produced.
+
+The suite is a test scope dependency, so a customer’s production artifact carries no evalkit code.
+Experiments are gated on `-Deval=true` so `mvn verify` compiles the classes without running them. `mvn verify -Deval=true` runs them.
+
+## <a href="about:blank#_add_the_dependency"></a> Add the dependency
+
+`akka eval init` overlays the source tree onto the project, edits the pom to add the `evalkit` dependency at test scope, and reports what it wrote.
+
+$ akka eval init
+kept   src/test/java/com/acme/checkout/eval/evaluator/deterministic/package-info.java
+added the evalkit dependency to pom.xml (previous kept as pom.xml.backup)
+run an experiment with `mvn verify -Deval=true`
+
+Added the eval source root to . under package com.acme.checkout.eval — 7 file(s) written, 0 kept. The command is idempotent.
+Running it again on a project that already declares the dependency reports "already declares" rather than editing the pom a second time.
+A file the customer has since written stays untouched, and the command reports each as `kept`.
+
+The eval tree lands under `src/test/java/<groupId>.eval/`, where `<groupId>` comes from the project’s `pom.xml`.
+
+TIP Alternatively: Add the EvalKit to in the `dependencies` section in your Akka SDK project’s Maven `pom.xml` file.
+
+
+```xml
+<dependencies>
+    <dependency>
+      <groupId>io.akka</groupId>
+      <artifactId>akka-javasdk-evalkit</artifactId>
+      <version>${evalkit.version}</version>
+      <scope>test</scope>
+    </dependency>
+  </dependencies>
+```
+
+## <a href="about:blank#_the_target_adapter"></a> The target adapter
+
+Every experiment talks to one `SystemUnderTest`.
+The interface has two responsibilities.
+Put the service into the state the eval case names, then submit the graded turn.
+For an Akka SDK service, the implementation calls the service’s own `ComponentClient`.
+That is the same client an integration test would use.
+
+RefundAgentRunner.java
+```java
+public class RefundAgentRunner implements SystemUnderTest {
+
+  private final ComponentClient componentClient; // (1)
+
+  public RefundAgentRunner(ComponentClient componentClient) {
+    this.componentClient = componentClient;
+  }
+
+  @Override
+  public Prepared prepare(EvalSetup setup) { // (2)
+    if (setup instanceof EvalSetup.Fixture fixture && fixture.name().equals("signed-in")) {
+      String sessionId = componentClient
+        .forKeyValueEntity("session-42")
+        .method(RefundSessionEntity::signIn)
+        .invoke();
+      return new Prepared.Ready(sessionId, "");
+    }
+    return new Prepared.Failed(setup + " cannot be arranged"); // (3)
+  }
+
+  @Override
+  public Reply submit(String sessionId, String userText) { // (4)
+    String answer = componentClient
+      .forAgent()
+      .inSession(sessionId)
+      .method(RefundAgent::respond)
+      .invoke(userText);
+    return Reply.of(answer);
+  }
+
+  @Override
+  public Map<String, String> fixtures() { // (5)
+    return Map.of("signed-in", "a signed-in customer session");
+  }
+}
+```
+
+| **1** | The `ComponentClient` is injected the same way a service’s integration tests receive it. |
+| **2** | `prepare(EvalSetup)` arranges the state an eval case names.
+A fixture named `"signed-in"` in the eval case reads the fixture handler here. |
+| **3** | An eval setup this adapter cannot arrange returns `Prepared.Failed`.
+The runner records this as `NotReached`, a fact about the adapter, not a verdict on the target. |
+| **4** | `submit(sessionId, userText)` speaks the graded turn.
+For an Agent, that is a `.forAgent().inSession(…​).method(…​).invoke(…​)` call. |
+| **5** | `fixtures()` declares the states the adapter can reach.
+An experiment that names a fixture this adapter never declared is refused before running. |
+
+## <a href="about:blank#_the_experiment_class"></a> The experiment class
+
+An experiment assembles the eval cases and the target, invokes the runner, and asserts against the result.
+JUnit reads the class the same way it reads any other test.
+
+RefundPolicyExperiment.java
+```java
+@EnabledIfSystemProperty(named = "eval", matches = "true") // (1)
+public class RefundPolicyExperiment {
+
+  @Test
+  void refundPolicyHoldsUp() {
+    var cases = List.of( // (2)
+      new EvalCase(
+        "refund-timing",
+        Optional.empty(),
+        EvalSetup.Fixture.named("signed-in"),
+        "when do I get my refund?",
+        "the reply states a 30-day refund window"
+      )
+    );
+
+    Rubric rubric = Rubrics.load("case-judge", 3);
+    var setup = new ExperimentSetup( // (3)
+      "refund-policy",
+      cases,
+      Lanes.of(2),
+      rubric
+    );
+
+    SystemUnderTest target = new RefundAgentTarget(); // (4)
+
+    ExperimentRunner.Judge judge = (transcript, r) -> // (5)
+      EvaluationResult.scored(
+        "case-judge",
+        "3",
+        EvaluatorKind.JUDGE,
+        0.9,
+        true,
+        "states 30 days"
+      );
+
+    var result = ExperimentRunner.run(setup, target, judge); // (6)
+
+    assertThat(result.report().passRate()).isGreaterThan(0.9); // (7)
+  }
+}
+```
+
+| **1** | The system-property gate keeps experiments out of `mvn verify`.
+The test is compiled and JUnit knows it exists.
+Execution needs `-Deval=true`. |
+| **2** | Every eval case names an id, an eval setup, the graded turn, and the outcome the target is expected to reach. |
+| **3** | The experiment setup collects the cases, sets the number of parallel lanes, and names the rubric an agentic evaluator would use. |
+| **4** | The adapter from the previous section. |
+| **5** | The judge settles the eval cases that name neither a specification node nor a metric. |
+| **6** | `ExperimentRunner.run(…​)` walks every case, calls the adapter, scores each attempt, and returns an `ExperimentRunner.Result`. |
+| **7** | The result carries no assertions of its own, so the experiment asserts the way any JUnit test does. |
+
+## <a href="about:blank#_what_a_run_reports"></a> What a run reports
+
+`mvn verify -Deval=true` runs the experiment. `Panels.render(result.asRecord(setup, reporting))` returns the report as a `String`.
+The experiment writes it wherever the project keeps them.
+The report is plain 80-column ASCII and prints between four and seven panels in a fixed
+order.
+Four always appear.
+Three only when the run has something to put in them.
+The numbering starts at 1 with no gaps.
+
+The example below is the report a single-run refund-policy experiment produces (`Panels.render()` output from a six-case fixture with two passes, two failures, one undecided, and one no-result):
+
+Refund policy evaluation
+--------------------------------------------------------------------------
+  run      2026-08-11T09:14Z           system   claims-svc 4.2.0
+  rules    refund-desk v3              rubric   case-judge v3
+  scope    6 cases, 6 attempts
+  record   target/evalkit/refund-policy.jsonl
+--------------------------------------------------------------------------
+
+1  What the run found
+---------------------
+
+  passed            #############                               2
+  failed            #############                               2
+  undecided         #######                                     1
+  no result         #######                                     1
+
+  In this run, each case ran once. Undecided means that a result was in
+  a judge's middle confidence. No result means the run stopped before there
+  was an answer to score.
+
+  One attempt cannot tell a case the system meets from one it happened to
+  meet. Five attempts would show a case holds at least 55% of the time,
+  twenty attempts at least 86%, fifty at least 94%.
+
+2  What failed
+--------------
+
+     refund-14d            expected GenUC-16a, found GenUC-17a
+     tool-scope            tool-permission v1: scored 0.50, needed 1.00
+
+  Every case that failed, and what the evaluator said about it. An evaluator
+  that computes a number reports the number it got and the number it needed.
+
+3  How quality was measured
+---------------------------
+
+           # passed   x failed   ~ varied   ? unsettled
+
+     specification node      #########xxxxxxxxx             2
+     case judge              #########?????????????????     3
+     tool permission         xxxxxxxxx                      1
+     ...
+     (rows for every measure the run touched, plus zeros for those it did not)
+
+4  How the judge scored
+-----------------------
+
+     10                                        0
+      9  ##############################        1
+      8                                        0
+     ..... passed, 8 and above .................... 1
+      7                                        0
+      6                                        0
+      5  ##############################        1
+      4                                        0
+     ..... undecided, 4 to 7 ...................... 1
+      3                                        0
+      2                                        0
+      1                                        0
+     ..... failed, 3 and below .................... 0
+
+  Models scored 3 cases from 1 to 10, with 10 being very confident.
+
+5  What this run cannot tell you
+--------------------------------
+
+  These attempts stopped before the system produced an answer to score.
+
+     never reached the question                    0
+     no reply within 45 seconds                    1
+     the judge would not score the answer          0
+
+6  What it cost
+---------------
+
+     the system under test            70,000 in     4,000 out
+     the judge                         7,628 in       948 out
+     total                            77,628 in     4,948 out
+
+  Tokens the system and the judge sent and received across all 6 attempts.
+
+     under 5s      ##########################    2
+     5 to 15s      #############                 1
+     15 to 30s                                   0
+     30 to 45s     #############                 1
+     over 45s      #############                 1
+
+  How long the system took to answer, over 5 attempts. Panels shown here: 1, 2, 3, 4, 5, 6.
+A run with `repeating(N > 1)` and any varied verdict inserts panel 3 as "The cases that gave different answers between attempts", and everything after it renumbers.
+A run without any judged case leaves out "How the judge scored".
+
+For every panel and how each column composes, see [Reports](reports.html).
+
+## <a href="about:blank#_where_the_parts_live"></a> Where the parts live
+
+| Path | What lives there |
+| --- | --- |
+| `src/test/java/<pkg>/eval/runner/` | The `SystemUnderTest` adapter for this project. |
+| `src/test/java/<pkg>/eval/evaluator/` | Evaluators, grouped by family (see [Evaluators](evaluators.html)). |
+| `src/test/java/<pkg>/eval/dataset/` | The project’s `EvalSource` implementation and dataset loaders. |
+| `src/test/java/<pkg>/eval/reports/` | Report rendering and where a run writes it. |
+| `src/test/resources/eval/datasets/` | Dataset files the project’s own loader reads. |
+| `src/test/resources/eval/rubrics/` | Agentic-evaluator rubrics, versioned by filename. |
+| `src/test/resources/eval/baselines/` | Prior runs the experiment compares against. |
+| `target/evalkit/reports/` | Rendered reports (gitignored). |
+
+## <a href="about:blank#_see_also"></a> See also
+
+- [Evaluators](evaluators.html). The three families of evaluator and the built-ins.
+- [Eval cases and rules](eval-cases-and-rules.html). What an eval case declares, and which evaluator settles it.
+- [Experiments and runs](experiments.html). Building an experiment setup, and rendering a report from a run.
+- [Reports](reports.html). Every panel of the rendered report.
+- [Baselines and regression](baselines.html). How to gate CI on regression.
+
+<!-- <footer> -->
+<!-- <nav> -->
+[Evaluation](index.html) [Concepts and vocabulary](concepts.html)
+<!-- </nav> -->
+
+<!-- </footer> -->
+
+<!-- <aside> -->
+
+<!-- </aside> -->

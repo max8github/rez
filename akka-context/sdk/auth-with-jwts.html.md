@@ -117,7 +117,7 @@ public class HelloJwtEndpoint extends AbstractHttpEndpoint {
 ```
 
 | **1** | Access the claims from the request context. |
-| **2** | Note that while calling `Optional#get()` is generally a bad practice, here we know the claims must be present given the `@JWT` configuration. |
+| **2** | Note that while calling `Optional#get()` is generally a bad practice, here the claims must be present given the `@JWT` configuration. |
 
 ## <a href="about:blank#_running_locally_with_jwts_enabled"></a> Running locally with JWTs enabled
 

@@ -84,7 +84,7 @@ SELECT * AS products,
 FROM products
 LIMIT 10
 ```
-Complete pagination example
+Complete token-based pagination example
 ```sql
 SELECT * AS products,
        next_page_token() AS nextPageToken,
@@ -92,7 +92,7 @@ SELECT * AS products,
        total_count() AS totalCount
 FROM products
 WHERE category = :category
-ORDER BY price ASC
+OFFSET page_token_offset(:pageToken)
 LIMIT :pageSize
 ```
 

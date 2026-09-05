@@ -12,7 +12,7 @@ Akka is a framework, runtime, and memory store for autonomous, adaptive agentic 
 ![Akka Agentic Platform](_images/akka-agentic-platform.png)
 
 
-Developers create services built with *Akka components* that - when deployed - become agentic systems. Services can be tested locally or within a Continuous Integration/Continuous Delivery (CI/CD) practice using a *Testkit* that is available with each Akka component. Your services are compiled into a binary that includes the *Akka Runtime* which enables your services to self-cluster for scale and resilience. *Akka clusters* are able to execute on any infrastructure whether bare metal, Kubernetes, Docker or edge. Optionally, add *Akka Automated Operations* to gain multi-region failover, auto-elasticity, persistence oversight, multi-tenant services, and certificate rotation. *Akka Automated Operations* has two deployment options: our serverless cloud or your virtual private cloud (VPC).
+Developers create services built with *Akka components* that - when deployed - become agentic systems. Services can be tested locally or within a Continuous Integration/Continuous Delivery (CI/CD) practice using a *Testkit* that is available with each Akka component. Your services are compiled into a binary that includes the *Akka Runtime* which enables your services to self-cluster for scale and resilience. *Akka clusters* are able to execute on any infrastructure whether bare metal, Kubernetes, Docker or edge. Optionally, add *Akka Automated Operations* to gain multi-region failover, auto-elasticity, persistence oversight, multi-tenant services, and certificate rotation. *Akka Automated Operations* has two deployment options: Akka’s serverless cloud or your virtual private cloud (VPC).
 
 | Product | Where To Start |
 | --- | --- |
@@ -51,7 +51,7 @@ Components are composable: you can build a service from a single component or ma
 
 ## <a href="about:blank#_delegation_with_effects"></a> Delegation with effects
 
-In Akka, the behavior of your services is decoupled from the execution. This decoupling allows Akka to determine how a service is executed without being constrained by how your system’s behavior is defined. Delegation removes you from worrying about distributed systems, persistence, elasticity, or networking. With Akka’s hosted services, we use delegation to enable swapping out new, improved runtimes while your services are running without a recompilation or redeployment!
+In Akka, the behavior of your services is decoupled from the execution. This decoupling allows Akka to determine how a service is executed without being constrained by how your system’s behavior is defined. Delegation removes you from worrying about distributed systems, persistence, elasticity, or networking. With Akka’s hosted services, delegation lets Akka swap in new, improved runtimes while your services are running, with no recompilation or redeployment.
 
 In Akka, you specify *what* the system should do, while the Akka runtime decides *how* it should be executed. For example, you define an agent by specifying the model it uses, its session memory, and the user prompt. This represents the *what*. The Akka runtime then determines the *how* by managing processes, virtual threads, persistence, and actor-based concurrency.
 

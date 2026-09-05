@@ -12,7 +12,7 @@
 
 Akka connects to [Aiven](https://aiven.io/) 's Kafka service via TLS, using a CA certificate provided by Aiven for the service, authenticating using SASL (Simple Authentication and Security Layer) SCRAM.
 
-|  | In this guide we use the default `avnadmin` account, but you may want to create a specific service user to use for your Akka service connection. |
+|  | This guide uses the default `avnadmin` account. Consider creating a dedicated service user for the Akka connection instead. |
 
 ## <a href="about:blank#_steps_to_connect_to_an_aiven_kafka_service"></a> Steps to connect to an Aiven Kafka service
 
