@@ -185,3 +185,49 @@ booking").
 **Alternatives considered**: Gating inside `BookingTools.bookCourt()` only — rejected because
 `BookingEndpoint`'s direct `POST /bookings` path would then bypass both checks entirely, silently
 producing an unpayable reservation for any non-Telegram caller.
+
+**Correction (found during `/akka.analyze`, 2026-09-05)**: the reasoning above is still right about
+*why* to gate at a single chokepoint, but wrong about *which* chokepoint covers every path.
+`docs/reference/rez-system-overview.md`'s architecture diagram — and `BookingEndpoint.java` itself,
+read directly to confirm — show that `BookingEndpoint` does **not** go through
+`CourtBookingWorkflow.book()` at all; it calls `ReservationEntity::init` directly. Gating only inside
+`book()` leaves `BookingEndpoint` fully uncovered, which is exactly the failure mode this decision's
+own "Alternatives considered" paragraph warned against — just at one chokepoint further out than
+originally traced. See #10 below for the corrected design.
+
+## 10. Closing the `BookingEndpoint` gap: a shared `PaymentGate`, split by what each check actually needs
+
+**Decision**: Extract FR-005/FR-012's two checks into a small, stateless `PaymentGate`
+(`com.rezhub.reservation.payment.PaymentGate`) with two independent methods —
+`isPlayerPayable(Optional<String> identityUserId)` and `isFacilityPayable(String facilityId)` — and
+call both from `CourtBookingWorkflow.book()` (Telegram/agent path), but call only
+`isFacilityPayable` from `BookingEndpoint.book()` (direct HTTP path). `BookingEndpoint` does not call
+`isPlayerPayable` because `BookingRequest` has nothing to pass it — confirmed by reading
+`BookingEndpoint.java`: `Init` is constructed with `identityUserId` hardcoded to `Optional.empty()`
+already, predating this feature.
+
+**Rationale**: FR-012's check needs only a facility id, which `BookingEndpoint` can derive from its
+`resourceIds` (via the same `ResourcesByFacilityView` lookup `CourtDirectoryAkka` already uses) exactly
+as reliably as the Telegram path can — there's no reason to leave facility-onboarding unenforced there.
+FR-005's check needs a resolved player identity, which simply doesn't exist on this entry point's
+request shape; inventing one (e.g. requiring a `userId` field on `BookingRequest`) would be a new
+API-surface decision for `BookingEndpoint`'s existing non-AI callers, well beyond this feature's scope.
+Splitting the gate into two independently-callable checks, rather than one combined
+"is this booking payable" method, makes this asymmetry explicit in the code rather than requiring a
+caller to pass a fake/empty identity through a combined check.
+
+**Consequence for FR-010's failure path**: a `BookingEndpoint`-created reservation that fails to
+produce a hold at its commitment cutoff has no resolved identity to notify (FR-010's "notify the
+player" step has no channel). It still converges on cancellation once the grace window elapses — the
+notification step is simply a no-op for this path, not a different terminal outcome. No new FR needed;
+FR-010 already says "notify... and hold open for a bounded grace window... if that grace window also
+elapses without a successful hold, cancel" — the notify sub-step degrading to a no-op when there's
+no recipient doesn't change the cancellation guarantee.
+
+**Alternatives considered**: (1) Route `BookingEndpoint` through `BookingApplicationService`/
+`CourtBookingWorkflow` instead of calling `ReservationEntity::init` directly — rejected as a much
+larger architectural change (redesigning a working, documented external API's internal call path) than
+this feature should take on as a side effect of adding payments. (2) Add a player-identity field to
+`BookingRequest` so `BookingEndpoint` could also enforce FR-005 — rejected for the same reason: that's
+a real, separate API-design decision (who are `BookingEndpoint`'s non-AI callers, and what identity do
+they authenticate as?) that this feature shouldn't quietly make as a side effect.

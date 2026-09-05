@@ -1,8 +1,15 @@
 # Contracts: Payment Core
 
-New external HTTP interfaces this feature adds. Existing endpoints (`BookingEndpoint`,
-`TelegramEndpoint`, etc.) are unchanged in their request/response shape — only their internal behavior
-changes (FR-005/FR-012 gates inside `CourtBookingWorkflow.book()`).
+New external HTTP interfaces this feature adds. Existing endpoints (`TelegramEndpoint`, etc.) are
+unchanged in their request/response shape — only their internal behavior changes (FR-005/FR-012 gates
+inside `CourtBookingWorkflow.book()`).
+
+`BookingEndpoint`'s `POST /bookings` is the one exception with an observable response-shape change:
+unlike `CourtBookingWorkflow`'s path, it carries no player identity at all (see research.md #10), so it
+gains only the FR-012 facility-payability check, not FR-005's player-side check. A request targeting an
+unpayable facility (a `PricingPolicy` configured but Stripe onboarding incomplete) now returns `400 Bad
+Request` instead of `200`/`201` with a `COLLECTING` reservation that would later fail unrecoverably at
+its commitment cutoff with no one to notify.
 
 ## `POST /webhooks/stripe`
 

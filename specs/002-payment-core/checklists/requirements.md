@@ -54,6 +54,21 @@ the commitment cutoff" to "checked at booking time," mirroring the same pattern 
 the player-side card check. All four are recorded under spec.md's new `## Clarifications` section.
 Re-verified: all checklist items still pass after these edits.
 
+**`/akka.analyze` review (2026-09-05)**, run against spec.md/plan.md/tasks.md together, surfaced one
+CRITICAL finding: FR-005/FR-012's booking-time gates were planned only inside `CourtBookingWorkflow`,
+but `docs/reference/rez-system-overview.md`'s own architecture diagram shows `BookingEndpoint`'s direct
+`POST /bookings` path bypasses `CourtBookingWorkflow` entirely. Reading `BookingEndpoint.java` directly
+confirmed it further: `BookingRequest` carries no player-identity field at all (already hardcoded to
+`Optional.empty()` for `identityUserId`, predating this feature), though it does carry enough to derive
+a facility. Resolved by narrowing scope precisely rather than either ignoring the gap or overclaiming a
+fix: FR-005 (needs player identity) is now explicitly scoped to identity-bearing entry points only;
+FR-012 (needs only a facility, derivable either way) now explicitly applies to both entry points. A new
+Out of Scope item and Edge Case record `BookingEndpoint`'s missing payer-identity concept as a named,
+pre-existing limitation this feature surfaces but does not create or resolve. Also fixed in the same
+pass: FR-002's wording didn't match the resolved `paymentId`-timing decision already recorded in
+research.md #3 (paymentId is set when commitment-cutoff processing *begins*, not once a hold is
+successfully authorized) — spec text now matches. All re-verified: checklist items still pass.
+
 Two things mentioned in the source design doc are intentionally *not* restated as requirements here,
 per the task's explicit scoping instruction: the exact Stripe routing decision (destination charges,
 Rez as merchant of record) is treated as already-decided upstream (doc §1, "decided, not open") and
