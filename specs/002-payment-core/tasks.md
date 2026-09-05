@@ -175,28 +175,28 @@ player at either point.
 
 ### Tests for User Story 1
 
-- [ ] T025 [P] [US1] Add a test verifying that publishing `ReservationEvent.Fulfilled` causes
+- [X] T025 [P] [US1] Add a test verifying that publishing `ReservationEvent.Fulfilled` causes
       `PaymentSchedulingAction` to invoke `ReservationEntity::recordPaymentId` and schedule a
       commitment-cutoff Timer at `max(bookingTime, slotStart − commitmentWindow)`, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/PaymentSchedulingActionTest.java`
-- [ ] T026 [P] [US1] Add a test verifying `CommitmentCutoffTimedAction.attemptHold`'s happy path:
+- [X] T026 [P] [US1] Add a test verifying `CommitmentCutoffTimedAction.attemptHold`'s happy path:
       given a `PlayerPaymentProfile` with a payment method and a resolvable `PricingPolicy`, calling
       it results in `PaymentEntity` moving to `AUTHORIZED` and a resolution-point Timer being
       scheduled, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/CommitmentCutoffTimedActionTest.java`
-- [ ] T027 [P] [US1] Add a test verifying the resolution-point capture path: firing it against an
+- [X] T027 [P] [US1] Add a test verifying the resolution-point capture path: firing it against an
       `AUTHORIZED` `PaymentEntity` results in `CAPTURED` state and a `StripeService.createTransferFromCharge`
       call using the resolved `PricingPolicy`'s commission split, in the same test file as T026
       (depends on T026's test scaffolding)
-- [ ] T028 [P] [US1] Add a test verifying `CourtBookingWorkflow.book()`'s player-side gate: when
+- [X] T028 [P] [US1] Add a test verifying `CourtBookingWorkflow.book()`'s player-side gate: when
       `PaymentGate.isPlayerPayable(...)` is true, `book()` proceeds to `reservationGateway.submit()`
       exactly as it does today (no observable difference), in
       `reservation/reservation/src/test/java/com/rezhub/reservation/orchestration/CourtBookingWorkflowTest.java`
       (create if it doesn't yet exist)
-- [ ] T029 [P] [US1] Add a test verifying that cancelling a reservation before its commitment cutoff
+- [X] T029 [P] [US1] Add a test verifying that cancelling a reservation before its commitment cutoff
       never results in a `PaymentEntity` being created (SC-003), in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/PaymentSchedulingActionTest.java`
-- [ ] T030 [P] [US1] Add a test verifying FR-013: change a facility's `PricingPolicy` after a
+- [X] T030 [P] [US1] Add a test verifying FR-013: change a facility's `PricingPolicy` after a
       reservation is `FULFILLED` but before its commitment cutoff fires, then confirm
       `CommitmentCutoffTimedAction.attemptHold`'s resulting hold amount/commission reflects the *new*
       policy, not the one in effect at booking time, in
@@ -205,7 +205,7 @@ player at either point.
 
 ### Implementation for User Story 1
 
-- [ ] T031 [US1] Create `PaymentSchedulingAction` (Consumer, `@Consume.FromEventSourcedEntity(ReservationEntity.class)`),
+- [X] T031 [US1] Create `PaymentSchedulingAction` (Consumer, `@Consume.FromEventSourcedEntity(ReservationEntity.class)`),
       reacting to `Fulfilled`: resolve the effective `PricingPolicy` (resource override, else facility
       default — used here only to read `commitmentWindow` for scheduling; the price/commission
       themselves are re-resolved fresh at fire time per FR-013/T032), compute the commitment cutoff,
@@ -213,7 +213,7 @@ player at either point.
       `TimerScheduler` targeting `CommitmentCutoffTimedAction::attemptHold` with `attemptNumber=1`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PaymentSchedulingAction.java`
       (depends on T012, T017)
-- [ ] T032 [US1] Implement `CommitmentCutoffTimedAction.attemptHold(HoldAttempt command)` (happy path
+- [X] T032 [US1] Implement `CommitmentCutoffTimedAction.attemptHold(HoldAttempt command)` (happy path
       only — FR-016's retry/backoff branching is Phase 6/US4's job, but the method signature/skeleton
       must exist now): re-resolve the effective `PricingPolicy` fresh (FR-013 — this is what T030
       verifies), look up `PlayerPaymentProfile`, call `StripeService.createAndConfirmHold(...)`, and on
@@ -221,11 +221,11 @@ player at either point.
       `CommitmentCutoffTimedAction::captureHold`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/CommitmentCutoffTimedAction.java`
       (depends on T012, T014, T015)
-- [ ] T033 [US1] Implement `CommitmentCutoffTimedAction.captureHold(String reservationId)`: call
+- [X] T033 [US1] Implement `CommitmentCutoffTimedAction.captureHold(String reservationId)`: call
       `StripeService.capturePaymentIntent` then `createTransferFromCharge` using the resolved
       `PricingPolicy`'s commission split and the facility's `stripeConnectedAccountId`, then invoke
       `PaymentEntity::capture`, in the same file as T032 (depends on T032)
-- [ ] T034 [US1] Add a sealed `BookingHandle` result type (`Booked(ReservationHandle)` |
+- [X] T034 [US1] Add a sealed `BookingHandle` result type (`Booked(ReservationHandle)` |
       `CardSetupRequired(String checkoutUrl)` | `FacilityNotPayable`) and change
       `CourtBookingWorkflow.book()`'s return type to it (and `BookingWorkflow`'s interface signature to
       match), implementing the player-side FR-005 gate as the first check — call

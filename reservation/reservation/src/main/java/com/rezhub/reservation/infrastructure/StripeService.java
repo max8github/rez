@@ -168,6 +168,34 @@ public class StripeService {
         return customer.getId();
     }
 
+    /**
+     * Creates a Stripe-hosted Checkout Session in setup mode, so a first-time player can put a card
+     * on file without any native card form in Telegram (FR-005). {@code userId} travels in metadata
+     * so {@code StripeWebhookEndpoint} can resolve {@code setup_intent.succeeded} back to a
+     * {@code PlayerPaymentProfile} without the player having authenticated to anything Rez-side.
+     */
+    public String createCardSetupLink(String stripeCustomerIdOrNull, String userId, String returnUrl) throws StripeException {
+        if (!enabled) {
+            String mockUrl = "https://checkout.stripe.com/mock/setup/" + userId;
+            log.debug("NO-OP createCardSetupLink: returning {}", mockUrl);
+            return mockUrl;
+        }
+        com.stripe.param.checkout.SessionCreateParams.Builder builder = com.stripe.param.checkout.SessionCreateParams.builder()
+                .setMode(com.stripe.param.checkout.SessionCreateParams.Mode.SETUP)
+                .addPaymentMethodType(com.stripe.param.checkout.SessionCreateParams.PaymentMethodType.CARD)
+                .setSuccessUrl(returnUrl)
+                .setCancelUrl(returnUrl)
+                .putMetadata("userId", userId);
+        if (stripeCustomerIdOrNull != null && !stripeCustomerIdOrNull.isBlank()) {
+            builder.setCustomer(stripeCustomerIdOrNull);
+        } else {
+            builder.setCustomerCreation(com.stripe.param.checkout.SessionCreateParams.CustomerCreation.IF_REQUIRED);
+        }
+        com.stripe.model.checkout.Session session = com.stripe.model.checkout.Session.create(builder.build());
+        log.info("Created card-setup Checkout Session {} for user {}", session.getId(), userId);
+        return session.getUrl();
+    }
+
     // -------------------------------------------------------------------------
     // Connect — facility onboarding
     // -------------------------------------------------------------------------

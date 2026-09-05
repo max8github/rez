@@ -5,11 +5,13 @@ import akka.javasdk.ServiceSetup;
 import akka.javasdk.annotations.Acl;
 import akka.javasdk.annotations.Setup;
 import akka.javasdk.client.ComponentClient;
+import com.rezhub.reservation.infrastructure.StripeService;
 import com.rezhub.reservation.orchestration.BookingApplicationService;
 import com.rezhub.reservation.orchestration.BookingContextResolverAkka;
 import com.rezhub.reservation.orchestration.CourtBookingWorkflow;
 import com.rezhub.reservation.orchestration.CourtDirectoryAkka;
 import com.rezhub.reservation.orchestration.ReservationGatewayAkka;
+import com.rezhub.reservation.payment.PaymentGate;
 import com.rezhub.reservation.spi.NotificationSender;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -56,7 +58,9 @@ public class Bootstrap implements ServiceSetup {
         var reservationGateway = new ReservationGatewayAkka(componentClient);
         var courtDirectory = new CourtDirectoryAkka(componentClient);
         var contextResolver = new BookingContextResolverAkka(componentClient);
-        var courtWorkflow = new CourtBookingWorkflow(courtDirectory, reservationGateway, componentClient);
+        var stripeService = new StripeService();
+        var paymentGate = new PaymentGate(componentClient, stripeService);
+        var courtWorkflow = new CourtBookingWorkflow(courtDirectory, reservationGateway, componentClient, paymentGate, stripeService);
         var bookingService = new BookingApplicationService(contextResolver, courtWorkflow);
 
         return new DependencyProvider() {
@@ -68,6 +72,10 @@ public class Bootstrap implements ServiceSetup {
                     return clazz.cast(reservationGateway);
                 } else if (clazz == NotificationSender.class) {
                     return clazz.cast(ServiceLoader.load(NotificationSender.class).iterator().next());
+                } else if (clazz == PaymentGate.class) {
+                    return clazz.cast(paymentGate);
+                } else if (clazz == StripeService.class) {
+                    return clazz.cast(stripeService);
                 }
                 throw new RuntimeException("No dependency registered for: " + clazz);
             }
