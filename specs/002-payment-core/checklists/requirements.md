@@ -39,6 +39,21 @@ so documenting an assumption was preferred over blocking on a marker. These are 
 forks expected to surface during `/akka.clarify` review, per the task's framing — flagged here rather
 than silently decided so review can override any of them.
 
+**`/akka.clarify` review (2026-09-05)** surfaced one real fork the first pass got wrong: re-reading the
+design doc's Code Mapping section ("`CourtBookingWorkflow` gains a card-on-file check **before
+submitting** a booking") against the first draft's FR-009 (which assumed a reservation existed and
+needed a timeout/cancel) revealed a contradiction. Resolved: booking is deferred entirely until a
+first-time player has a card on file — nothing is ever locked, so FR-009 simplified from "cancel after
+grace period" to "no reservation is ever created for that attempt." This also simplified User Story 2
+and removed a whole class of cleanup logic Phase 1 doesn't actually need. Three more forks were
+resolved in the same pass: transient Stripe/network errors at the commitment cutoff get automatic
+retry with backoff before falling into the player-notification path (new FR-016); `PaymentEntity`'s
+`VOIDED`/`REFUNDED` states are declared but get no command handlers in Phase 1, since nothing calls
+them yet (new FR-017); and the Stripe-onboarding-completeness check (FR-012) moved from "checked at
+the commitment cutoff" to "checked at booking time," mirroring the same pattern just established for
+the player-side card check. All four are recorded under spec.md's new `## Clarifications` section.
+Re-verified: all checklist items still pass after these edits.
+
 Two things mentioned in the source design doc are intentionally *not* restated as requirements here,
 per the task's explicit scoping instruction: the exact Stripe routing decision (destination charges,
 Rez as merchant of record) is treated as already-decided upstream (doc §1, "decided, not open") and
