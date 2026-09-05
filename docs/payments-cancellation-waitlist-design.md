@@ -360,6 +360,10 @@ rules into orchestration.
 
 ### Phase 1: Payment core
 
+**Implemented** (2026-09-05, branch `002-payment-core`, not yet merged to `master`) — see
+`specs/002-payment-core/` for the full spec, plan, and task breakdown. Phases 2 (Rescue refund) and 3
+(Waiting list) below remain design-only.
+
 - `PaymentEntity`, `PricingPolicy` (price, commission %, commitment window) on `FacilityEntity`,
   Stripe connected-account onboarding
 - Destination charges (Rez as merchant of record) — decided, see §1 above
@@ -389,29 +393,37 @@ rules into orchestration.
 
 1. ~~Stripe Connect: destination charges vs. direct charges on the facility's account.~~ **Resolved** —
    destination charges, Rez as merchant of record. See §1 above.
-2. Resolution-point cutoff: capture exactly at slot start, or some facility-configurable buffer before it
-   (facilities may need prep-time certainty rather than a last-second cancellation-to-capture)? Applies
-   uniformly to every booking now (§1), not just late cancellations.
+2. ~~Resolution-point cutoff: capture exactly at slot start, or some facility-configurable buffer before it?~~
+   **Resolved for Phase 1** — exactly at `slotStart`, no configurable buffer. See spec `002-payment-core`
+   (implemented) Assumptions. A facility-configurable buffer remains a plausible future enhancement, not
+   required for Phase 1.
 3. Waitlist confirmation window length, whether a player can queue for multiple slots or multiple overlapping
    waitlists at once, and whether an active offer should ever go to more than one person simultaneously (this
    design assumes strictly one-at-a-time, front-of-queue-only — see §3).
 4. Does `BookingEndpoint`'s direct-HTTP cancel path (bypassing `BookingApplicationService` today) need any
    special handling, or does it just work unchanged now that cancellation doesn't touch the payment hold at
-   all (§2)?
-5. Who configures `PricingPolicy` per facility, and through what interface — is this an admin-only Telegram
-   command, or does it require a non-conversational admin surface?
+   all (§2)? **Partially resolved by `002-payment-core`**: that spec found `BookingEndpoint`'s *booking*
+   path (not cancel) also bypasses `CourtBookingWorkflow` and carries no player identity at all — the
+   FR-012 facility-payability gate now applies there too (via a shared `PaymentGate`), but FR-005's
+   player-side gate structurally cannot, since `BookingRequest` has no identity field. The *cancel* path
+   question above is still open, though likely low-risk given cancellation doesn't touch the hold (§2).
+5. ~~Who configures `PricingPolicy` per facility, and through what interface?~~ **Resolved for Phase 1** —
+   a direct admin-only HTTP API (`PUT /facility/{id}/pricing-policy`, `PUT
+   /resource/{id}/pricing-policy` for the override), not a conversational Telegram command. See spec
+   `002-payment-core` (implemented) Assumptions.
 6. ~~Could Phase 2 reuse Phase 1's hold instead of creating a second one?~~ **Resolved** — yes, by
    construction: anchoring the hold to the commitment cutoff (§1) rather than to booking time makes it the
    same hold Phase 2 needs, with no double-authorization risk. See §1/§2.
-7. Should `commitmentWindow` be hard-capped in `PricingPolicy` validation (e.g. reject anything over a
-   few days) to stay safely under Stripe's ~7-day authorization limit, or just documented as a guideline for
-   facility onboarding?
-8. Off-session hold-creation failure at the commitment cutoff (`authentication_required`, or the saved card
-   simply got declined/expired since it was put on file) — what's the fallback? Notify the player with a
-   re-authentication/new-card link and a grace window before the resolution point, most likely — but what
-   happens if that grace window also lapses? Force-cancel the reservation for free (not really the player's
-   fault their card needs rechecking), or let it fall through to the same unrescued-penalty outcome as an
-   ordinary late cancellation? Not designed yet.
+7. ~~Should `commitmentWindow` be hard-capped in `PricingPolicy` validation?~~ **Resolved for Phase 1** —
+   yes, a hard cap (5 days, comfortably under Stripe's ~7-day authorization limit), enforced in
+   `PricingPolicy.validate()`. See spec `002-payment-core` (implemented) FR-011.
+8. ~~Off-session hold-creation failure at the commitment cutoff — what's the fallback?~~ **Resolved for
+   Phase 1**: failures are classified transient (Stripe/network — retried automatically with bounded
+   exponential backoff, no player involvement) vs. card-specific (`authentication_required`, decline,
+   expired — notify the player with a re-authentication/new-card link and open a bounded grace window).
+   If the grace window elapses with no successful hold, the reservation is force-cancelled for free —
+   it does **not** fall through to the unrescued-penalty capture outcome, since no hold was ever
+   authorized to capture. See spec `002-payment-core` (implemented) FR-010/FR-016.
 
 ## Recommendation Summary
 

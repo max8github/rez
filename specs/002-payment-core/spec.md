@@ -2,7 +2,12 @@
 
 - **Feature Branch**: `002-payment-core`
 - **Created**: 2026-09-05
-- **Status**: Draft
+- **Status**: **Implemented** (2026-09-05). All 59 tasks (T001–T059) complete, `mvn verify` passes
+  (unit + integration tests, 29 test classes). Not yet merged to `master`. One caveat: T057's
+  quickstart.md walkthrough was only verified in Stripe no-op mode via the automated test suite —
+  the full manual pass against a real local stack with live Stripe test-mode credentials was not run
+  in this environment (no Stripe test account/credentials available here) and should be done before
+  this feature is considered production-ready.
 - **Input**: User description: "Start Rez's Payment core — and only Payment core (Phase 1 of rez/docs/payments-cancellation-waitlist-design.md): the Stripe hold anchored to commitment cutoff, PlayerPaymentProfile. Do not scope in Rescue refund or Waiting list — they're Phases 2 and 3 of the same doc, each explicitly sequenced after this one and dependent on it; don't spec or plan them yet. This is now unblocked: Stage 3 of cross-product identity is done — PlayerPaymentProfile can key off the real identity userId Rez's TelegramEndpoint already resolves on every message, no separate Rez sign-in needed."
 
 This spec covers **Phase 1 only** of `docs/payments-cancellation-waitlist-design.md` (§1 "Proposed Model" and "Migration Sequence → Phase 1"). Rescue refund (§2 / Phase 2) and the waiting list (§3 / Phase 3) are explicitly out of scope — both are sequenced after this feature and depend on it; this spec does not design them, beyond noting where Phase 1 must leave room for them (e.g. `SlotPaymentView` existing but having no consumer yet).

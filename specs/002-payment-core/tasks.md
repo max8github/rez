@@ -416,13 +416,13 @@ on a definite outcome (SC-005), and transient errors never reach the player unne
 
 ## Final Phase: Polish & Cross-Cutting Concerns
 
-- [ ] T056 [P] Run `mvn -o verify` from `reservation/reservation/` to confirm all new and existing
+- [X] T056 [P] Run `mvn -o verify` from `reservation/reservation/` to confirm all new and existing
       tests pass together
-- [ ] T057 Execute `quickstart.md`'s manual verification steps end-to-end against a locally running
+- [X] T057 Execute `quickstart.md`'s manual verification steps end-to-end against a locally running
       stack with Stripe test mode, per `specs/002-payment-core/quickstart.md`
-- [ ] T058 Update `spec.md`'s Status field from `Draft` to a closed/complete status once T056 and T057
+- [X] T058 Update `spec.md`'s Status field from `Draft` to a closed/complete status once T056 and T057
       both pass, in `specs/002-payment-core/spec.md`
-- [ ] T059 [P] If implementation surfaced any refinement to the converged mechanism worth recording
+- [X] T059 [P] If implementation surfaced any refinement to the converged mechanism worth recording
       (e.g. an off-session-confirmation detail research.md #7 didn't fully anticipate), reconcile
       `docs/payments-cancellation-waitlist-design.md`'s Phase 1 section accordingly — only if something
       genuinely diverged; do not edit speculatively, in
