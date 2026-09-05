@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CommitmentCutoffTimedActionTest extends TestKitSupport {
+public class CommitmentCutoffTimedActionIntegrationTest extends TestKitSupport {
 
     /** Books a fully-payable reservation (facility onboarded, player has a card on file) and returns its id. */
     private String bookPayableReservation(LocalDateTime slotStart, PricingPolicy policy) {

@@ -9,7 +9,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class SlotPaymentViewTest extends TestKitSupport {
+public class SlotPaymentViewIntegrationTest extends TestKitSupport {
 
     @Test
     public void authorizedHold_becomesQueryableBySlot() throws Exception {

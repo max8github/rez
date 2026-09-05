@@ -28,6 +28,14 @@ import java.util.Optional;
 public class PaymentSchedulingAction extends Consumer {
     private static final Logger log = LoggerFactory.getLogger(PaymentSchedulingAction.class);
 
+    /**
+     * Bounds Akka's own automatic retry-on-failure for this scheduled call (indefinite by default —
+     * see timed-actions.html.md "Failures and retries"). Without this, an unexpected exception from
+     * {@code attemptHold} (e.g. a redelivered-command idempotency rejection) would retry forever in
+     * the background with no operator-visible bound.
+     */
+    private static final int TIMER_MAX_RETRIES = 3;
+
     private final ComponentClient componentClient;
     private final TimerScheduler timerScheduler;
 
@@ -66,6 +74,7 @@ public class PaymentSchedulingAction extends Consumer {
         timerScheduler.createSingleTimer(
             "commitment-cutoff-" + reservationId,
             delay,
+            TIMER_MAX_RETRIES,
             componentClient.forTimedAction()
                 .method(CommitmentCutoffTimedAction::attemptHold)
                 .deferred(new CommitmentCutoffTimedAction.HoldAttempt(reservationId, resourceId, slotStart, 1)));

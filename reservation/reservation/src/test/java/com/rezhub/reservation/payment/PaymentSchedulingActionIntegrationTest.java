@@ -18,7 +18,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class PaymentSchedulingActionTest extends TestKitSupport {
+public class PaymentSchedulingActionIntegrationTest extends TestKitSupport {
 
     @Test
     public void fulfilledReservation_withPricingPolicy_recordsPaymentId() throws Exception {

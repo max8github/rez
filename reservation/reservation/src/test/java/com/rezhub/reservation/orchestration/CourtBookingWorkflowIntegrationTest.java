@@ -21,7 +21,7 @@ import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-public class CourtBookingWorkflowTest extends TestKitSupport {
+public class CourtBookingWorkflowIntegrationTest extends TestKitSupport {
 
     private CourtBookingWorkflow workflow() {
         var stripeService = new StripeService();

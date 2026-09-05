@@ -33,6 +33,14 @@ public class CommitmentCutoffTimedAction extends TimedAction {
     private static final int MAX_TRANSIENT_ATTEMPTS = 5;
     /** Bounded per FR-010 — likewise an operational parameter. */
     private static final Duration GRACE_WINDOW = Duration.ofMinutes(30);
+    /**
+     * Bounds Akka's own automatic retry-on-failure for these scheduled calls (indefinite by default —
+     * see timed-actions.html.md "Failures and retries"). Independent of MAX_TRANSIENT_ATTEMPTS, which
+     * governs this class's own hand-rolled FR-016 retry counter for Stripe-specific failures — this
+     * bounds the SDK's separate, lower-level retry of the scheduled call itself failing outright (e.g.
+     * an unhandled exception from a componentClient call this class doesn't already catch).
+     */
+    private static final int TIMER_MAX_RETRIES = 3;
 
     private final ComponentClient componentClient;
     private final TimerScheduler timerScheduler;
@@ -102,6 +110,7 @@ public class CommitmentCutoffTimedAction extends TimedAction {
                 timerScheduler.createSingleTimer(
                     "commitment-cutoff-" + reservationId + "-attempt-" + (command.attemptNumber() + 1),
                     backoff,
+                    TIMER_MAX_RETRIES,
                     componentClient.forTimedAction()
                         .method(CommitmentCutoffTimedAction::attemptHold)
                         .deferred(new HoldAttempt(reservationId, command.resourceId(), command.slotStart(), command.attemptNumber() + 1)));
@@ -128,6 +137,7 @@ public class CommitmentCutoffTimedAction extends TimedAction {
         timerScheduler.createSingleTimer(
             "resolution-point-" + reservationId,
             delay,
+            TIMER_MAX_RETRIES,
             componentClient.forTimedAction()
                 .method(CommitmentCutoffTimedAction::captureHold)
                 .deferred(reservationId));
@@ -201,6 +211,7 @@ public class CommitmentCutoffTimedAction extends TimedAction {
         timerScheduler.createSingleTimer(
             "grace-window-" + reservationId,
             grace,
+            TIMER_MAX_RETRIES,
             componentClient.forTimedAction()
                 .method(CommitmentCutoffTimedAction::onGraceWindowExpired)
                 .deferred(reservationId));

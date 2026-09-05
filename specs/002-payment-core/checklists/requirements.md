@@ -69,6 +69,35 @@ pass: FR-002's wording didn't match the resolved `paymentId`-timing decision alr
 research.md #3 (paymentId is set when commitment-cutoff processing *begins*, not once a hold is
 successfully authorized) — spec text now matches. All re-verified: checklist items still pass.
 
+**`/akka.review` (2026-09-05)**, run against the completed implementation, found no CRITICAL blockers
+but surfaced four real items, resolved as follows:
+
+1. **Fixed**: none of the 4 `TimerScheduler.createSingleTimer` calls (commitment-cutoff, its retry
+   reschedule, resolution-point, grace-window) bounded Akka's own automatic retry-on-failure, which is
+   indefinite by default. An unhandled exception from any `componentClient` call this class's own
+   FR-016 try/catch doesn't already cover (e.g. an idempotency-guard rejection from a redelivered
+   command) would have retried forever in the background with no operator-visible bound. Added an
+   explicit `maxRetries` (3) to all 4, independent of `MAX_TRANSIENT_ATTEMPTS`'s own hand-rolled
+   Stripe-failure counter.
+2. **Fixed**: 6 test classes that boot a full Akka runtime (`extends TestKitSupport`) were missing the
+   project's `*IntegrationTest` naming convention — renamed
+   (`CommitmentCutoffTimedActionIntegrationTest`, `PaymentSchedulingActionIntegrationTest`,
+   `CommitmentCutoffFailureIntegrationTest`, `SlotPaymentViewIntegrationTest`,
+   `PaymentGateIntegrationTest`, `CourtBookingWorkflowIntegrationTest`).
+3. **Deferred, by explicit user decision**: the new `PUT /pricing-policy` / `PUT
+   /stripe-connected-account` admin endpoints inherit `FacilityEndpoint`'s existing class-level
+   `Acl.Principal.ALL` — no per-method tightening. This matches every other method on that endpoint
+   today (not a regression), but these two are genuinely money-moving config. Left as-is rather than
+   risk breaking an unconfirmed external provisioning workflow (e.g. curl/Postman per the repo's own
+   provisioning runbook) — a real admin-auth layer is a separate, project-wide effort, not something to
+   improvise per-endpoint during this feature.
+4. **Tracked, not actioned**: `PaymentGate.isFacilityPayable` calls
+   `StripeService.isConnectAccountChargesEnabled` — a live, synchronous Stripe API call — on every
+   booking attempt at a priced facility, adding external-network latency to the player's hot path for a
+   status that changes rarely (around onboarding). Caching this (e.g. refreshed via the `account.updated`
+   webhook, which `hit-backend`'s own Connect flow already wires for the same purpose) is a reasonable
+   follow-up once real traffic volume is known, not a Phase 1 correctness concern.
+
 Two things mentioned in the source design doc are intentionally *not* restated as requirements here,
 per the task's explicit scoping instruction: the exact Stripe routing decision (destination charges,
 Rez as merchant of record) is treated as already-decided upstream (doc §1, "decided, not open") and

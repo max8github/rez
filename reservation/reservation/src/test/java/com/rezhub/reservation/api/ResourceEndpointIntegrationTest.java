@@ -34,7 +34,7 @@ public class ResourceEndpointIntegrationTest extends TestKitSupport {
 
     /**
      * The actual precedence resolution (override wins over facility default) is exercised end-to-end
-     * by CommitmentCutoffTimedActionTest's booking flow; this test verifies the endpoint's own
+     * by CommitmentCutoffTimedActionIntegrationTest's booking flow; this test verifies the endpoint's own
      * contribution — the override is set on the resource independently of the facility's default,
      * with both stored distinctly and retrievable via their respective GETs.
      */

@@ -39,7 +39,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  * concrete infrastructure classes — same "override a single method" pattern already used elsewhere in
  * this codebase (e.g. StripeWebhookEndpointIntegrationTest's fixed webhook secret).
  */
-public class CommitmentCutoffFailureTest extends TestKitSupport {
+public class CommitmentCutoffFailureIntegrationTest extends TestKitSupport {
 
     /**
      * Fails every createAndConfirmHold call with whichever exception was configured for that specific

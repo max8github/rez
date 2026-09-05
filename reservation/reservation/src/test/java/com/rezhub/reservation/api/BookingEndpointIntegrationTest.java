@@ -21,7 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 /**
  * User Story 3 (T044) — the FR-012 gate on BookingEndpoint's direct HTTP path, closing the gap
  * research.md #10 found: this path carries no player identity, so only the facility-side check
- * applies here (unlike CourtBookingWorkflowTest, which also covers FR-005).
+ * applies here (unlike CourtBookingWorkflowIntegrationTest, which also covers FR-005).
  */
 public class BookingEndpointIntegrationTest extends TestKitSupport {
 
