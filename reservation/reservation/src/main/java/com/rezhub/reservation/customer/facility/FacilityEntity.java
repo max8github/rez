@@ -108,8 +108,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
             .thenReply(newState -> "OK");
     }
 
-    /** Raw state accessor for internal callers (e.g. {@code PaymentGate}) that need fields the public
-     * {@link Facility} DTO doesn't (yet) expose, mirroring hit-backend's {@code PlayerEntity::getState}. */
+    /** Raw state accessor for internal callers (e.g. {@code PaymentGate}). */
     public ReadOnlyEffect<FacilityState> getState() {
         return effects().reply(currentState());
     }
@@ -117,6 +116,7 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
     public ReadOnlyEffect<Facility> getFacility() {
         FacilityState state = currentState();
         Address address = new Address(state.addressState().street(), state.addressState().city());
-        return effects().reply(new Facility(state.name(), address, state.timezone(), state.botToken(), state.adminUserIds()));
+        return effects().reply(new Facility(state.name(), address, state.timezone(), state.botToken(),
+            state.adminUserIds(), state.pricingPolicy(), state.stripeConnectedAccountId()));
     }
 }

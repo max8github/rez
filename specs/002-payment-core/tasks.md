@@ -307,21 +307,21 @@ Attempt a booking at a facility with `PricingPolicy` but no completed onboarding
 
 ### Tests for User Story 3
 
-- [ ] T041 [P] [US3] Add `FacilityEndpointIntegrationTest` cases for `PUT
+- [X] T041 [P] [US3] Add `FacilityEndpointIntegrationTest` cases for `PUT
       /facility/{facilityId}/pricing-policy` and `PUT /facility/{facilityId}/stripe-connected-account`,
       including a `commitmentWindow`-over-cap request returning `400`, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/api/FacilityEndpointIntegrationTest.java`
       (create if it doesn't yet exist)
-- [ ] T042 [P] [US3] Add `ResourceEndpointIntegrationTest` cases for `PUT
+- [X] T042 [P] [US3] Add `ResourceEndpointIntegrationTest` cases for `PUT
       /resource/{resourceId}/pricing-policy`, plus a booking-level test confirming a resource-level
       override takes precedence over its facility's default when resolving the effective policy, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/api/ResourceEndpointIntegrationTest.java`
       (create if it doesn't yet exist)
-- [ ] T043 [P] [US3] Add a test verifying `CourtBookingWorkflow.book()` returns `FacilityNotPayable`
+- [X] T043 [P] [US3] Add a test verifying `CourtBookingWorkflow.book()` returns `FacilityNotPayable`
       and submits no reservation when the target facility has a `PricingPolicy` but no completed
       Stripe connected-account onboarding (FR-012, SC-007), in the `CourtBookingWorkflowTest.java`
       from T028
-- [ ] T044 [P] [US3] Add a test verifying `BookingEndpoint.book()` rejects (returns `400`, submits no
+- [X] T044 [P] [US3] Add a test verifying `BookingEndpoint.book()` rejects (returns `400`, submits no
       `ReservationEntity::init` call) when the target facility (resolved from `resourceIds`) has a
       `PricingPolicy` but no completed onboarding — the FR-012 half of what T043 verifies on the agent
       path, exercised here on the direct HTTP path per research.md #10, in
@@ -330,27 +330,27 @@ Attempt a booking at a facility with `PricingPolicy` but no completed onboarding
 
 ### Implementation for User Story 3
 
-- [ ] T045 [US3] Add `PUT /pricing-policy` and `PUT /stripe-connected-account` methods to
+- [X] T045 [US3] Add `PUT /pricing-policy` and `PUT /stripe-connected-account` methods to
       `FacilityEndpoint`, invoking the T005 command handlers and returning `400` when
       `PricingPolicy.validate()` throws, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/api/FacilityEndpoint.java`
       (depends on T005)
-- [ ] T046 [US3] Add a `PUT /pricing-policy` method to `ResourceEndpoint`, invoking the T008 command
+- [X] T046 [US3] Add a `PUT /pricing-policy` method to `ResourceEndpoint`, invoking the T008 command
       handler, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/api/ResourceEndpoint.java`
       (depends on T008)
-- [ ] T047 [P] [US3] Extend the `Facility` and `Resource` API response DTOs with the new fields
+- [X] T047 [P] [US3] Extend the `Facility` and `Resource` API response DTOs with the new fields
       (`pricingPolicy`, `stripeConnectedAccountId` on `Facility`; `pricingPolicyOverride` on
       `Resource`), additive only, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/dto/Facility.java`
       and `reservation/reservation/src/main/java/com/rezhub/reservation/resource/dto/Resource.java`
       (depends on T005, T008)
-- [ ] T048 [US3] Implement the `FacilityNotPayable` branch in `CourtBookingWorkflow.book()`: call
+- [X] T048 [US3] Implement the `FacilityNotPayable` branch in `CourtBookingWorkflow.book()`: call
       `PaymentGate.isFacilityPayable(facilityId)` and reject when false (FR-012), extending the
       `BookingHandle` switch from T034, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/orchestration/CourtBookingWorkflow.java`
       (depends on T034, T016)
-- [ ] T049 [US3] Wire `BookingEndpoint.book()` to resolve the target facility from the request's
+- [X] T049 [US3] Wire `BookingEndpoint.book()` to resolve the target facility from the request's
       `resourceIds` (via `ResourcesByFacilityView`, same lookup `CourtDirectoryAkka` already uses) and
       call `PaymentGate.isFacilityPayable(facilityId)` before `ReservationEntity::init`, returning a
       `400 Bad Request` when false instead of submitting the reservation. Does **not** call

@@ -109,6 +109,27 @@ public class CourtBookingWorkflowTest extends TestKitSupport {
         assertThat(result).isInstanceOf(BookingHandle.Booked.class);
     }
 
+    @Test
+    public void book_facilityWithPricingPolicyButNoConnectedAccount_returnsFacilityNotPayable() throws Exception {
+        String userId = "user-" + shortId();
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke("cus_x");
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::setDefaultPaymentMethod).invoke("pm_x");
+        String facilityId = createFacilityAndResource();
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setPricingPolicy)
+            .invoke(new com.rezhub.reservation.payment.PricingPolicy(5000, "eur", 0.10, java.time.Duration.ofDays(1)));
+        // Deliberately no setStripeConnectedAccount call — onboarding incomplete.
+
+        var origin = new OriginRequestContext("telegram", "tg-4", "Dana", "recipient-4", "conv-4",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Dana"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.FacilityNotPayable.class);
+    }
+
     private <T> T eventually(CheckedSupplier<T> query, java.util.function.Predicate<T> until) throws Exception {
         T last = null;
         for (int i = 0; i < 100; i++) {
