@@ -254,26 +254,26 @@ normally.
 
 ### Tests for User Story 2
 
-- [ ] T035 [P] [US2] Add a test verifying `StripeWebhookEndpoint` handling `setup_intent.succeeded`
+- [X] T035 [P] [US2] Add a test verifying `StripeWebhookEndpoint` handling `setup_intent.succeeded`
       populates `PlayerPaymentProfile.stripeCustomerId`/`defaultPaymentMethodId` for the `userId` in
       the event's metadata, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/api/StripeWebhookEndpointIntegrationTest.java`
-- [ ] T036 [P] [US2] Add a test verifying webhook idempotency (FR-006, SC-006): deliver the same
+- [X] T036 [P] [US2] Add a test verifying webhook idempotency (FR-006, SC-006): deliver the same
       `payment_intent.succeeded` event twice (same Stripe event id/payload) against an already-`AUTHORIZED`
       `PaymentEntity` and confirm the second delivery is a no-op — `PaymentEntity` ends in a single
       correct state (`CAPTURED`, not corrupted or double-transitioned) and
       `StripeService.createTransferFromCharge` is invoked at most once, in the same test file as T035
-- [ ] T037 [P] [US2] Add a test verifying that when `PaymentGate.isPlayerPayable(...)` is false,
+- [X] T037 [P] [US2] Add a test verifying that when `PaymentGate.isPlayerPayable(...)` is false,
       `CourtBookingWorkflow.book()` returns `CardSetupRequired` and **no** `ReservationEntity` is ever
       initialized for that attempt, in the `CourtBookingWorkflowTest.java` created in T028 (depends on
       T028's scaffolding)
-- [ ] T038 [P] [US2] Add a test verifying that a player whose `PlayerPaymentProfile` already resolves
+- [X] T038 [P] [US2] Add a test verifying that a player whose `PlayerPaymentProfile` already resolves
       (e.g. via a pre-seeded profile simulating the Hit-link flow) skips the card-collection branch
       entirely on their very first Rez booking, in the same test file as T037
 
 ### Implementation for User Story 2
 
-- [ ] T039 [US2] Create `StripeWebhookEndpoint` (`POST /webhooks/stripe`), modeled on `hit-backend`'s
+- [X] T039 [US2] Create `StripeWebhookEndpoint` (`POST /webhooks/stripe`), modeled on `hit-backend`'s
       (signature verification via `Webhook.constructEvent`, raw-JSON parsing, `200 OK` in no-op mode):
       routes `setup_intent.succeeded`/`payment_method.attached` to `PlayerPaymentProfileEntity::linkCustomer`/`::setDefaultPaymentMethod`,
       and `payment_intent.succeeded`/`payment_intent.payment_failed` to idempotent
@@ -281,7 +281,7 @@ normally.
       data-model.md and T036), in
       `reservation/reservation/src/main/java/com/rezhub/reservation/api/StripeWebhookEndpoint.java`
       (depends on T012, T014)
-- [ ] T040 [US2] Add a `createCardSetupLink(String customerIdOrNull, String userId, String
+- [X] T040 [US2] Add a `createCardSetupLink(String customerIdOrNull, String userId, String
       returnUrl)` method to `StripeService` (Checkout Session in setup mode, or a Payment Link,
       carrying `userId` in metadata so the webhook in T039 can resolve it back), and wire
       `CourtBookingWorkflow`'s `CardSetupRequired` branch (from T034) to call it and surface the

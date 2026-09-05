@@ -72,6 +72,43 @@ public class CourtBookingWorkflowTest extends TestKitSupport {
         assertThat(state.reservationId()).isEqualTo(reservationId);
     }
 
+    @Test
+    public void book_playerWithNoProfile_returnsCardSetupRequired_noReservationCreated() throws Exception {
+        String userId = "user-" + shortId();
+        String facilityId = createFacilityAndResource();
+
+        var origin = new OriginRequestContext("telegram", "tg-2", "Bob", "recipient-2", "conv-2",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Bob"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.CardSetupRequired.class);
+        assertThat(((BookingHandle.CardSetupRequired) result).checkoutUrl()).isNotNull();
+    }
+
+    @Test
+    public void book_playerAlreadyLinkedViaHitFlow_skipsCardSetup() throws Exception {
+        // Simulates a player who already completed the explicit Hit-link flow before their first Rez
+        // booking (spec.md User Story 2, scenario 3) — PlayerPaymentProfile already resolves.
+        String userId = "user-" + shortId();
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke("cus_hit_linked");
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::setDefaultPaymentMethod).invoke("pm_hit_linked");
+        String facilityId = createFacilityAndResource();
+
+        var origin = new OriginRequestContext("telegram", "tg-3", "Carol", "recipient-3", "conv-3",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Carol"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.Booked.class);
+    }
+
     private <T> T eventually(CheckedSupplier<T> query, java.util.function.Predicate<T> until) throws Exception {
         T last = null;
         for (int i = 0; i < 100; i++) {
