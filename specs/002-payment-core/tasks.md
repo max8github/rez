@@ -377,26 +377,26 @@ if unresolved.
 
 ### Tests for User Story 4
 
-- [ ] T050 [P] [US4] Add a test verifying `CommitmentCutoffTimedAction.attemptHold` reschedules itself
+- [X] T050 [P] [US4] Add a test verifying `CommitmentCutoffTimedAction.attemptHold` reschedules itself
       with backoff and an incremented `attemptNumber` on a transient `StripeService` failure, sending
       no player notification, in `CommitmentCutoffTimedActionTest.java` (from T026)
-- [ ] T051 [P] [US4] Add a test verifying that a genuine card-specific failure (or exhausted retries)
+- [X] T051 [P] [US4] Add a test verifying that a genuine card-specific failure (or exhausted retries)
       triggers a player notification (re-authentication/new-card link) and schedules a grace-window
       Timer, in the same test file as T050
-- [ ] T052 [P] [US4] Add a test verifying that when the grace-window Timer fires with no successful
+- [X] T052 [P] [US4] Add a test verifying that when the grace-window Timer fires with no successful
       hold in the interim, `PaymentEntity::fail` and `ReservationEntity::cancelRequest` are both
       invoked, releasing the court, in the same test file as T050
 
 ### Implementation for User Story 4
 
-- [ ] T053 [US4] Implement FR-016 in `CommitmentCutoffTimedAction.attemptHold`: classify
+- [X] T053 [US4] Implement FR-016 in `CommitmentCutoffTimedAction.attemptHold`: classify
       `StripeService` exceptions as transient (network/API-availability) vs. card-specific
       (`authentication_required`, decline, expired card); on transient, reschedule via
       `TimerScheduler` with backoff and `attemptNumber + 1` up to a configured max; on card-specific,
       or once the max is reached, proceed to T054, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/CommitmentCutoffTimedAction.java`
       (depends on T032)
-- [ ] T054 [US4] Implement the FR-010 notification path: on the failure branch from T053, notify the
+- [X] T054 [US4] Implement the FR-010 notification path: on the failure branch from T053, notify the
       player via the existing `NotificationSender`/`telegramnotifier` SPI with a re-authentication/
       new-card link **when a resolved identity/notification channel exists** (a `BookingEndpoint`-
       originated reservation has none — see spec.md's Edge Cases; the notify step is then a no-op, not
@@ -404,7 +404,7 @@ if unresolved.
       `AUTHORIZED` holds alone here — T053 only reaches this path pre-`AUTHORIZED`), and schedule a
       grace-window Timer targeting a new `onGraceWindowExpired` method, in the same file as T053
       (depends on T053)
-- [ ] T055 [US4] Implement `onGraceWindowExpired(String reservationId)`: check whether a hold
+- [X] T055 [US4] Implement `onGraceWindowExpired(String reservationId)`: check whether a hold
       succeeded in the interim (re-query `PaymentEntity` state); if still not `AUTHORIZED`, invoke
       `PaymentEntity::fail` (if not already `FAILED`) and `ReservationEntity::cancelRequest`, in the
       same file as T053/T054 (depends on T054)
