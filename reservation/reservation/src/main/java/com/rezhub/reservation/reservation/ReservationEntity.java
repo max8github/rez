@@ -85,6 +85,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 log.info("Reservation was rejected, waiting for availability");
                 yield currentState().withRemoved(e.resourceId()).withResourceId("").withState(COLLECTING);
             }
+            case ReservationEvent.PaymentIdRecorded e -> currentState().withPaymentId(Optional.of(e.paymentId()));
         };
     }
 
@@ -184,6 +185,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
             case INIT, COLLECTING, FULFILLED, CANCELLED, UNAVAILABLE -> effects().reply("Resource cannot be booked");
         };
 
+    }
+
+    public Effect<String> recordPaymentId(String paymentId) {
+        return switch (currentState().state()) {
+            case FULFILLED -> effects()
+                .persist(new ReservationEvent.PaymentIdRecorded(entityId, paymentId))
+                .thenReply(newState -> "OK");
+            default -> effects().error("Reservation " + entityId + " must be FULFILLED to record a paymentId");
+        };
     }
 
     public ReadOnlyEffect<ReservationState> getReservation() {

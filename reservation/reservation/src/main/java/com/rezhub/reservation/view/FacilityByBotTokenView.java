@@ -32,6 +32,8 @@ public class FacilityByBotTokenView extends View {
                     e.botToken() == null || e.botToken().isBlank()
                         ? effects().deleteRow()
                         : effects().updateRow(new Entry(e.facilityId(), e.botToken(), e.timezone()));
+                case FacilityEvent.PricingPolicySet e -> effects().ignore();
+                case FacilityEvent.StripeConnectedAccountSet e -> effects().ignore();
             };
         }
     }

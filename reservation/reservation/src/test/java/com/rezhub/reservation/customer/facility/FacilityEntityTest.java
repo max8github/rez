@@ -3,8 +3,10 @@ package com.rezhub.reservation.customer.facility;
 import akka.javasdk.testkit.EventSourcedTestKit;
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.payment.PricingPolicy;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.Set;
 
@@ -49,6 +51,41 @@ public class FacilityEntityTest {
         assertThat(result.isError()).isFalse();
         assertThat(testKit.getState().timezone()).isNull();
         assertThat(testKit.getState().botToken()).isNull();
+    }
+
+    @Test
+    public void testSetPricingPolicy_storesPolicy() {
+        var testKit = EventSourcedTestKit.of("stub-facility-id", FacilityEntity::new);
+        testKit.method(FacilityEntity::create).invoke(new Facility("Tennis Club", ADDRESS, "Europe/Berlin", null, null));
+        var policy = new PricingPolicy(5000, "eur", 0.10, Duration.ofDays(2));
+
+        var result = testKit.method(FacilityEntity::setPricingPolicy).invoke(policy);
+
+        assertThat(result.isError()).isFalse();
+        assertThat(testKit.getState().pricingPolicy()).contains(policy);
+    }
+
+    @Test
+    public void testSetPricingPolicy_rejectsInvalidCommitmentWindow() {
+        var testKit = EventSourcedTestKit.of("stub-facility-id", FacilityEntity::new);
+        testKit.method(FacilityEntity::create).invoke(new Facility("Tennis Club", ADDRESS, "Europe/Berlin", null, null));
+        var invalidPolicy = new PricingPolicy(5000, "eur", 0.10, Duration.ofDays(30));
+
+        var result = testKit.method(FacilityEntity::setPricingPolicy).invoke(invalidPolicy);
+
+        assertThat(result.isError()).isTrue();
+        assertThat(testKit.getState().pricingPolicy()).isEmpty();
+    }
+
+    @Test
+    public void testSetStripeConnectedAccount_storesAccountId() {
+        var testKit = EventSourcedTestKit.of("stub-facility-id", FacilityEntity::new);
+        testKit.method(FacilityEntity::create).invoke(new Facility("Tennis Club", ADDRESS, "Europe/Berlin", null, null));
+
+        var result = testKit.method(FacilityEntity::setStripeConnectedAccount).invoke("acct_123");
+
+        assertThat(result.isError()).isFalse();
+        assertThat(testKit.getState().stripeConnectedAccountId()).contains("acct_123");
     }
 
     @Test

@@ -61,6 +61,7 @@ public class ReservationCalendarView extends View {
                 case ReservationEvent.Rejected ignored -> effects().ignore();
                 case ReservationEvent.AvailabilityReplied ignored -> effects().ignore();
                 case ReservationEvent.ResourceSelected ignored -> effects().ignore();
+                case ReservationEvent.PaymentIdRecorded ignored -> effects().ignore();
             };
         }
     }

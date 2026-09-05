@@ -30,7 +30,7 @@ test (US2), and a `PricingPolicy`-changed-mid-flight test (US1) — all previous
 
 ## Phase 1: Setup
 
-- [ ] T001 Add `com.stripe:stripe-java:27.1.0` dependency to
+- [X] T001 Add `com.stripe:stripe-java:27.1.0` dependency to
       `reservation/reservation/pom.xml`; bump the `reservation` module's own version per this
       project's Maven-versioning convention (fixed versions only, pom change committed separately
       from code — see `feedback_maven_versioning`); confirm `mvn -o compile` still succeeds from
@@ -44,63 +44,63 @@ test (US2), and a `PricingPolicy`-changed-mid-flight test (US1) — all previous
 Nothing here is itself user-visible — no component is wired into the booking flow yet. Must compile
 and pass its own unit tests before any story-specific work begins.
 
-- [ ] T002 [P] Create `PricingPolicy` domain record (`priceCents`, `currency`, `commissionFraction`,
+- [X] T002 [P] Create `PricingPolicy` domain record (`priceCents`, `currency`, `commissionFraction`,
       `commitmentWindow: Duration`) with a `validate()` method enforcing FR-011's Stripe-safe cap, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PricingPolicy.java`
-- [ ] T003 [P] Add `Optional<PricingPolicy> pricingPolicy` and `Optional<String>
+- [X] T003 [P] Add `Optional<PricingPolicy> pricingPolicy` and `Optional<String>
       stripeConnectedAccountId` fields to `FacilityState`, with `withPricingPolicy(...)` and
       `withStripeConnectedAccountId(...)` builder methods following the existing `with*` pattern, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/FacilityState.java`
       (depends on T002)
-- [ ] T004 Add `PricingPolicySet(String facilityId, PricingPolicy policy)` and
+- [X] T004 Add `PricingPolicySet(String facilityId, PricingPolicy policy)` and
       `StripeConnectedAccountSet(String facilityId, String accountId)` variants to `FacilityEvent`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/FacilityEvent.java`
       (depends on T002)
-- [ ] T005 Add `setPricingPolicy(PricingPolicy)` and `setStripeConnectedAccount(String)` command
+- [X] T005 Add `setPricingPolicy(PricingPolicy)` and `setStripeConnectedAccount(String)` command
       handlers to `FacilityEntity`, persisting the two new events and updating `applyEvent`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/customer/facility/FacilityEntity.java`
       (depends on T003, T004)
-- [ ] T006 [P] Add `Optional<PricingPolicy> pricingPolicyOverride` field to `ResourceState`, with a
+- [X] T006 [P] Add `Optional<PricingPolicy> pricingPolicyOverride` field to `ResourceState`, with a
       `withPricingPolicyOverride(...)` builder method following the existing `with*` pattern, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceState.java`
       (depends on T002)
-- [ ] T007 Add `PricingPolicyOverrideSet(String resourceId, PricingPolicy policy)` variant to
+- [X] T007 Add `PricingPolicyOverrideSet(String resourceId, PricingPolicy policy)` variant to
       `ResourceEvent`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEvent.java`
       (depends on T002)
-- [ ] T008 Add `setPricingPolicyOverride(PricingPolicy)` command handler to `ResourceEntity`,
+- [X] T008 Add `setPricingPolicyOverride(PricingPolicy)` command handler to `ResourceEntity`,
       persisting the new event and updating `applyEvent`, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/resource/ResourceEntity.java`
       (depends on T006, T007)
-- [ ] T009 [P] Add `Optional<String> paymentId` field to `ReservationState`, defaulting to
+- [X] T009 [P] Add `Optional<String> paymentId` field to `ReservationState`, defaulting to
       `Optional.empty()` in `initiate()`, with a `withPaymentId(Optional<String>)` builder method and
       the field appended to every existing `with*` method's positional reconstruction, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationState.java`
-- [ ] T010 Add a `PaymentIdRecorded(String paymentId)` event and a corresponding
+- [X] T010 Add a `PaymentIdRecorded(String paymentId)` event and a corresponding
       `recordPaymentId(String paymentId)` command handler to `ReservationEntity` (valid only from
       `FULFILLED`), applying it via the new `withPaymentId` builder — see plan.md's "deliberate design
       note" for why this is a separate command rather than a field on `Fulfilled` itself, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/reservation/ReservationEntity.java`
       and `.../ReservationEvent.java` (depends on T009)
-- [ ] T011 [P] Create `PaymentState` (record + `State` enum: `NONE, AUTHORIZED, CAPTURED, VOIDED,
+- [X] T011 [P] Create `PaymentState` (record + `State` enum: `NONE, AUTHORIZED, CAPTURED, VOIDED,
       REFUNDED, FAILED`) and `PaymentEvent` (sealed interface: `HoldAuthorized`, `HoldCaptured`,
       `HoldCreationFailed`, each `@TypeName`-annotated) per data-model.md, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PaymentState.java` and
       `.../PaymentEvent.java`
-- [ ] T012 Create `PaymentEntity` (Event Sourced) with `authorize(Authorize)`, `capture(Capture)`, and
+- [X] T012 Create `PaymentEntity` (Event Sourced) with `authorize(Authorize)`, `capture(Capture)`, and
       `fail(Fail)` command handlers per data-model.md's state-transition rules (each rejects from an
       invalid source state — see data-model.md's idempotency-guard note); **do not** add `void()` or
       `refund()` handlers (FR-017), in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PaymentEntity.java`
       (depends on T011)
-- [ ] T013 [P] Create `PlayerPaymentProfileState` record (`userId`, `Optional<String>
+- [X] T013 [P] Create `PlayerPaymentProfileState` record (`userId`, `Optional<String>
       stripeCustomerId`, `Optional<String> defaultPaymentMethodId`, `hasPaymentMethod()`), in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PlayerPaymentProfileState.java`
-- [ ] T014 Create `PlayerPaymentProfileEntity` (Key Value Entity) with `linkCustomer(String)` and
+- [X] T014 Create `PlayerPaymentProfileEntity` (Key Value Entity) with `linkCustomer(String)` and
       `setDefaultPaymentMethod(String)` command handlers, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PlayerPaymentProfileEntity.java`
       (depends on T013)
-- [ ] T015 [P] Create `StripeService` in
+- [X] T015 [P] Create `StripeService` in
       `reservation/reservation/src/main/java/com/rezhub/reservation/infrastructure/StripeService.java`,
       modeled on `hit-backend`'s (research.md #7): no-op mode when `STRIPE_SECRET_KEY` is absent,
       idempotency keys on every mutating call. Methods needed by this feature: off-session
@@ -109,7 +109,7 @@ and pass its own unit tests before any story-specific work begins.
       `createPaymentIntent`, this one sets `.setCustomer().setPaymentMethod().setOffSession(true).setConfirm(true)`
       in one call — see research.md #7), `capturePaymentIntent`, `createTransferFromCharge`,
       `createCustomer`, `createConnectAccount`, `isConnectAccountChargesEnabled` (depends on T001)
-- [ ] T016 Create `PaymentGate` (`com.rezhub.reservation.payment.PaymentGate`), a small stateless
+- [X] T016 Create `PaymentGate` (`com.rezhub.reservation.payment.PaymentGate`), a small stateless
       helper with two independent methods: `isPlayerPayable(Optional<String> identityUserId)` (queries
       `PlayerPaymentProfileEntity` — `Optional.empty()` in ⇒ not payable, matching "no identity, no
       profile to check") and `isFacilityPayable(String facilityId)` (queries `FacilityEntity` for a
@@ -119,39 +119,39 @@ and pass its own unit tests before any story-specific work begins.
       one — see research.md #10, in
       `reservation/reservation/src/main/java/com/rezhub/reservation/payment/PaymentGate.java` (depends
       on T005, T014, T015)
-- [ ] T017 Create `SlotPaymentView`, keyed by `resourceId + dateTime`, sourced from
+- [X] T017 Create `SlotPaymentView`, keyed by `resourceId + dateTime`, sourced from
       `PaymentEvent.HoldAuthorized`/`HoldCaptured`/`HoldCreationFailed` and
       `ReservationEvent.Fulfilled` (for the `resourceId + dateTime` key itself — see data-model.md),
       in `reservation/reservation/src/main/java/com/rezhub/reservation/payment/SlotPaymentView.java`
       (depends on T012)
-- [ ] T018 [P] Add `SlotPaymentViewTest` (`Awaitility`-based, matching this project's existing View-test
+- [X] T018 [P] Add `SlotPaymentViewTest` (`Awaitility`-based, matching this project's existing View-test
       convention): publish `Fulfilled` then `HoldAuthorized`/`HoldCaptured` events directly and assert
       the view becomes queryable by `resourceId + dateTime` with the expected payment state, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/SlotPaymentViewTest.java`
       (depends on T017)
-- [ ] T019 [P] Add `PaymentEntityTest` (EventSourcedTestKit) covering: `authorize` from `NONE`
+- [X] T019 [P] Add `PaymentEntityTest` (EventSourcedTestKit) covering: `authorize` from `NONE`
       succeeds; `capture` from `AUTHORIZED` succeeds; `fail` from `NONE` and from `AUTHORIZED` both
       succeed; `capture` from any state other than `AUTHORIZED` is rejected; `authorize` from a
       non-`NONE` state is rejected (idempotency guard against a duplicate Timer fire), in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/PaymentEntityTest.java`
       (depends on T012)
-- [ ] T020 [P] Add `PlayerPaymentProfileEntityTest` (KeyValueEntityTestKit) covering `linkCustomer`
+- [X] T020 [P] Add `PlayerPaymentProfileEntityTest` (KeyValueEntityTestKit) covering `linkCustomer`
       and `setDefaultPaymentMethod`, and `hasPaymentMethod()` before/after both are set, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/PlayerPaymentProfileEntityTest.java`
       (depends on T014)
-- [ ] T021 [P] Add a unit test for `PricingPolicy.validate()` asserting it rejects a
+- [X] T021 [P] Add a unit test for `PricingPolicy.validate()` asserting it rejects a
       `commitmentWindow` over the Stripe-safe cap and accepts one comfortably under it, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/payment/PricingPolicyTest.java`
       (depends on T002)
-- [ ] T022 [P] Add test cases to `FacilityEntityTest` (or create it if it doesn't yet exist) for
+- [X] T022 [P] Add test cases to `FacilityEntityTest` (or create it if it doesn't yet exist) for
       `setPricingPolicy`/`setStripeConnectedAccount`, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/customer/facility/FacilityEntityTest.java`
       (depends on T005)
-- [ ] T023 [P] Add a test case to `ResourceEntityTest` (or create it if it doesn't yet exist) for
+- [X] T023 [P] Add a test case to `ResourceEntityTest` (or create it if it doesn't yet exist) for
       `setPricingPolicyOverride`, in
       `reservation/reservation/src/test/java/com/rezhub/reservation/resource/ResourceEntityTest.java`
       (depends on T008)
-- [ ] T024 [P] Add `PaymentGateTest` covering both methods independently: `isPlayerPayable` true/false
+- [X] T024 [P] Add `PaymentGateTest` covering both methods independently: `isPlayerPayable` true/false
       based on `PlayerPaymentProfile.hasPaymentMethod()` (including the `Optional.empty()` identity
       case), and `isFacilityPayable` true/false based on `PricingPolicy` presence combined with
       connected-account charges-enabled status, in

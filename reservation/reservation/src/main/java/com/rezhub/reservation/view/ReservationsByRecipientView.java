@@ -91,6 +91,7 @@ public class ReservationsByRecipientView extends View {
                         ));
                 case ReservationEvent.CancelRequested ignored -> effects().ignore();
                 case ReservationEvent.AvailabilityReplied ignored -> effects().ignore();
+                case ReservationEvent.PaymentIdRecorded ignored -> effects().ignore();
             };
         }
     }
