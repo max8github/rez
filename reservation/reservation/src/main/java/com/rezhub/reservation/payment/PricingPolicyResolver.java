@@ -19,26 +19,30 @@ final class PricingPolicyResolver {
     private PricingPolicyResolver() {}
 
     static Optional<PricingPolicy> resolve(ComponentClient componentClient, String resourceId) {
-        ResourceState resourceState = componentClient.forEventSourcedEntity(resourceId)
-            .method(ResourceEntity::getResource)
-            .invoke();
-        if (resourceState.pricingPolicyOverride().isPresent()) {
-            return resourceState.pricingPolicyOverride();
-        }
-        String facilityId = resourceState.externalGroupRef();
-        if (facilityId == null || facilityId.isBlank()) {
-            return Optional.empty();
-        }
-        FacilityState facilityState = componentClient.forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::getState)
-            .invoke();
-        return facilityState.pricingPolicy();
+        return resolveAll(componentClient, resourceId).policy();
     }
 
     static String resolveFacilityId(ComponentClient componentClient, String resourceId) {
+        return resolveAll(componentClient, resourceId).facilityId();
+    }
+
+    /** Everything {@code CommitmentCutoffTimedAction} needs, behind a single {@code ResourceState}
+     * fetch — calling {@link #resolve} and {@link #resolveFacilityId} separately (as before) each
+     * re-fetches the same entity for overlapping data. */
+    record Resolution(Optional<PricingPolicy> policy, String facilityId, String resourceName) {}
+
+    static Resolution resolveAll(ComponentClient componentClient, String resourceId) {
         ResourceState resourceState = componentClient.forEventSourcedEntity(resourceId)
             .method(ResourceEntity::getResource)
             .invoke();
-        return resourceState.externalGroupRef();
+        String facilityId = resourceState.externalGroupRef();
+        Optional<PricingPolicy> policy = resourceState.pricingPolicyOverride();
+        if (policy.isEmpty() && facilityId != null && !facilityId.isBlank()) {
+            FacilityState facilityState = componentClient.forEventSourcedEntity(facilityId)
+                .method(FacilityEntity::getState)
+                .invoke();
+            policy = facilityState.pricingPolicy();
+        }
+        return new Resolution(policy, facilityId, resourceState.name());
     }
 }

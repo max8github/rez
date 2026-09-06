@@ -45,16 +45,7 @@ public class PaymentGate {
      * this gate only blocks the specific case of "configured to charge, but not able to collect."
      */
     public boolean isFacilityPayable(String facilityId) {
-        FacilityState state = componentClient
-            .forEventSourcedEntity(facilityId)
-            .method(FacilityEntity::getState)
-            .invoke();
-        if (state.pricingPolicy().isEmpty()) {
-            return true;
-        }
-        return state.stripeConnectedAccountId()
-            .map(stripeService::isConnectAccountChargesEnabled)
-            .orElse(false);
+        return checkFacility(facilityId).isPayable();
     }
 
     /**
@@ -63,10 +54,26 @@ public class PaymentGate {
      * charged and no reason to demand a payment method on file before booking.
      */
     public boolean facilityRequiresPayment(String facilityId) {
+        return checkFacility(facilityId).requiresPayment();
+    }
+
+    public record FacilityPayability(boolean requiresPayment, boolean isPayable) {}
+
+    /**
+     * Combines {@link #isFacilityPayable} and {@link #facilityRequiresPayment} behind a single
+     * {@code FacilityState} fetch — callers needing both (e.g. {@code CourtBookingWorkflow.book()})
+     * should use this instead of calling both methods separately, which would read the same entity
+     * twice for overlapping data.
+     */
+    public FacilityPayability checkFacility(String facilityId) {
         FacilityState state = componentClient
             .forEventSourcedEntity(facilityId)
             .method(FacilityEntity::getState)
             .invoke();
-        return state.pricingPolicy().isPresent();
+        boolean requiresPayment = state.pricingPolicy().isPresent();
+        boolean isPayable = !requiresPayment || state.stripeConnectedAccountId()
+            .map(stripeService::isConnectAccountChargesEnabled)
+            .orElse(false);
+        return new FacilityPayability(requiresPayment, isPayable);
     }
 }

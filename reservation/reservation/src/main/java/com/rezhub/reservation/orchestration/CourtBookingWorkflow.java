@@ -83,8 +83,12 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         CourtBookingScope scope = courtDirectory.resolveScope(context);
         log.info("book: facilityId={}, resources={}, dateTime={}", scope.facilityId(), scope.resourceIds().size(), intent.dateTime());
 
+        // FR-012/FR-005: one FacilityState fetch covers both gates below — isFacilityPayable and
+        // facilityRequiresPayment would otherwise each independently re-fetch the same entity.
+        PaymentGate.FacilityPayability facilityPayability = paymentGate.checkFacility(scope.facilityId());
+
         // FR-012: facility-side gate — needs no player identity, applies uniformly (research.md #10).
-        if (!paymentGate.isFacilityPayable(scope.facilityId())) {
+        if (!facilityPayability.isPayable()) {
             log.info("book: rejecting — facility {} has a PricingPolicy but incomplete Stripe onboarding", scope.facilityId());
             return new BookingHandle.FacilityNotPayable();
         }
@@ -92,7 +96,7 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         // FR-005: player-side gate — only meaningful when a resolved identity exists, and only when
         // the facility actually charges at all (a free facility has nothing to collect on, so there's
         // no reason to demand a card on file).
-        if (paymentGate.facilityRequiresPayment(scope.facilityId()) && !paymentGate.isPlayerPayable(origin.identityUserId())) {
+        if (facilityPayability.requiresPayment() && !paymentGate.isPlayerPayable(origin.identityUserId())) {
             String returnUrl = origin.attributes().getOrDefault("returnUrl", "https://t.me/");
             String checkoutUrl = createCardSetupLinkOrNull(origin.identityUserId(), returnUrl);
             log.info("book: rejecting — no payment method on file for identity {}", origin.identityUserId());

@@ -60,12 +60,14 @@ public class CommitmentCutoffTimedAction extends TimedAction {
 
     public Effect attemptHold(HoldAttempt command) {
         String reservationId = command.reservationId();
-        Optional<PricingPolicy> effectivePolicy = PricingPolicyResolver.resolve(componentClient, command.resourceId());
-        if (effectivePolicy.isEmpty()) {
+        // Single ResourceState fetch covers the policy, facilityId, and court name — resolve()
+        // and resolveFacilityId() each used to re-fetch it separately.
+        PricingPolicyResolver.Resolution resolution = PricingPolicyResolver.resolveAll(componentClient, command.resourceId());
+        if (resolution.policy().isEmpty()) {
             log.warn("No PricingPolicy resolvable for reservation {} at commitment cutoff — skipping hold creation", reservationId);
             return effects().done();
         }
-        PricingPolicy policy = effectivePolicy.get();
+        PricingPolicy policy = resolution.policy().get();
 
         ReservationState reservation = componentClient.forEventSourcedEntity(reservationId)
             .method(ReservationEntity::getReservation)
@@ -78,7 +80,7 @@ public class CommitmentCutoffTimedAction extends TimedAction {
                 .invoke())
             .orElse(null);
 
-        String facilityId = PricingPolicyResolver.resolveFacilityId(componentClient, command.resourceId());
+        String facilityId = resolution.facilityId();
         String connectedAccountId = null;
         if (facilityId != null && !facilityId.isBlank()) {
             FacilityState facilityState = componentClient.forEventSourcedEntity(facilityId)
@@ -98,11 +100,7 @@ public class CommitmentCutoffTimedAction extends TimedAction {
         long amountCents = policy.priceCents();
         long applicationFeeCents = Math.round(amountCents * policy.commissionFraction());
 
-        String courtName = componentClient.forEventSourcedEntity(command.resourceId())
-            .method(ResourceEntity::getResource)
-            .invoke()
-            .name();
-        String description = "%s booking on %s (reservation %s)".formatted(courtName, command.slotStart(), reservationId);
+        String description = "%s booking on %s (reservation %s)".formatted(resolution.resourceName(), command.slotStart(), reservationId);
 
         StripeService.HoldResult hold;
         try {
