@@ -43,6 +43,11 @@ the late-cancellation rescue refund and the waiting list — build on that payme
   `ResourceEntity` emits `ReservationCanceled`, which `ResourceAction` uses to call `ReservationEntity.cancel()`,
   finally persisting `ReservationCancelled`. No price, payment, or penalty field exists on the reservation DTO
   (`emails`, `dateTime`, `durationMinutes`, `resourceId(s)`, `recipientId`, `originSystem` only).
+  `cancelRequest()` also rejects a reservation whose slot has already fully ended
+  (`ReservationState.hasEnded()`, `dateTime + durationMinutes` vs. now) — found and fixed while live-testing
+  payment-core cancellation interactions (2026-09-06); a reservation could previously be "cancelled" any time
+  after it was already fully consumed. Orthogonal to the rescue-refund mechanic below: that's about
+  cancelling *within* the commitment window, before the slot has ended.
 - Orchestration (`orchestration/*`): `BookingApplicationService` → `BookingContextResolverAkka` →
   `BookingWorkflow` (`CourtBookingWorkflow`) → `ReservationGatewayAkka` → `ReservationEntity`. Cancellation is
   routed through this chain from `BookingTools.cancelReservation` (agent path); `BookingEndpoint.cancelBooking`
