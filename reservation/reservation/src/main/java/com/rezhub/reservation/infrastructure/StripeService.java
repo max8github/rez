@@ -170,9 +170,11 @@ public class StripeService {
 
     /**
      * Creates a Stripe-hosted Checkout Session in setup mode, so a first-time player can put a card
-     * on file without any native card form in Telegram (FR-005). {@code userId} travels in metadata
-     * so {@code StripeWebhookEndpoint} can resolve {@code setup_intent.succeeded} back to a
-     * {@code PlayerPaymentProfile} without the player having authenticated to anything Rez-side.
+     * on file without any native card form in Telegram (FR-005). {@code userId} travels in
+     * {@code setup_intent_data.metadata} — not just the Checkout Session's own metadata, which Stripe
+     * does not propagate onto the SetupIntent it creates — so {@code StripeWebhookEndpoint} can
+     * resolve {@code setup_intent.succeeded} back to a {@code PlayerPaymentProfile} without the player
+     * having authenticated to anything Rez-side.
      */
     public String createCardSetupLink(String stripeCustomerIdOrNull, String userId, String returnUrl) throws StripeException {
         if (!enabled) {
@@ -185,7 +187,10 @@ public class StripeService {
                 .addPaymentMethodType(com.stripe.param.checkout.SessionCreateParams.PaymentMethodType.CARD)
                 .setSuccessUrl(returnUrl)
                 .setCancelUrl(returnUrl)
-                .putMetadata("userId", userId);
+                .putMetadata("userId", userId)
+                .setSetupIntentData(com.stripe.param.checkout.SessionCreateParams.SetupIntentData.builder()
+                        .putMetadata("userId", userId)
+                        .build());
         if (stripeCustomerIdOrNull != null && !stripeCustomerIdOrNull.isBlank()) {
             builder.setCustomer(stripeCustomerIdOrNull);
         } else {
