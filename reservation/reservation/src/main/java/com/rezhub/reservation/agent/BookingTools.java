@@ -187,7 +187,8 @@ public class BookingTools {
                 yield "BOOKING_SUBMITTED:" + booked.handle().reservationId();
             }
             case BookingHandle.CardSetupRequired cardSetup -> cardSetup.checkoutUrl() != null
-                ? "Before I can book this court, please set up a payment method: " + cardSetup.checkoutUrl()
+                ? "Before I can book this court, please set up a payment method: "
+                    + "<a href=\"" + cardSetup.checkoutUrl() + "\">tap here to add a card</a>."
                     + "\nOnce that's done, just ask me to book again."
                 : "Before I can book this court, you'll need a payment method on file. Please try again shortly.";
             case BookingHandle.FacilityNotPayable ignored ->
