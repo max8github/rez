@@ -4,6 +4,8 @@ import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.dto.Reservation;
 import com.rezhub.reservation.infrastructure.StripeService;
 import com.rezhub.reservation.payment.PaymentGate;
+import com.rezhub.reservation.payment.PlayerPaymentProfileEntity;
+import com.rezhub.reservation.payment.PlayerPaymentProfileState;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
 import com.rezhub.reservation.resource.dto.Resource;
@@ -91,7 +93,8 @@ public class CourtBookingWorkflow implements BookingWorkflow {
         // the facility actually charges at all (a free facility has nothing to collect on, so there's
         // no reason to demand a card on file).
         if (paymentGate.facilityRequiresPayment(scope.facilityId()) && !paymentGate.isPlayerPayable(origin.identityUserId())) {
-            String checkoutUrl = createCardSetupLinkOrNull(origin.identityUserId());
+            String returnUrl = origin.attributes().getOrDefault("returnUrl", "https://t.me/");
+            String checkoutUrl = createCardSetupLinkOrNull(origin.identityUserId(), returnUrl);
             log.info("book: rejecting — no payment method on file for identity {}", origin.identityUserId());
             return new BookingHandle.CardSetupRequired(checkoutUrl);
         }
@@ -118,15 +121,33 @@ public class CourtBookingWorkflow implements BookingWorkflow {
      * FR-005's card-collection link. {@code identityUserId} is only absent when the requester has no
      * resolved identity at all (e.g. a message with no identifiable Telegram sender) — in that case
      * there's no {@code PlayerPaymentProfile} to eventually populate, so no link is offered either.
+     *
+     * <p>A Checkout Session in setup mode does not create a Stripe Customer on its own — confirmed
+     * against a live test event, where both the resulting SetupIntent's and the completed session's
+     * {@code customer} field came back {@code null}. Without a customer, the collected payment method
+     * is never attached to anything {@code PlayerPaymentProfile} can reference, so a card-setup link
+     * needs an already-existing customer passed in explicitly. Reuse one from a prior (possibly
+     * incomplete) attempt if {@code PlayerPaymentProfile} already has it; otherwise create one now and
+     * persist it immediately, so a retry after a failed/abandoned checkout reuses the same customer.
      */
-    private String createCardSetupLinkOrNull(Optional<String> identityUserId) {
+    private String createCardSetupLinkOrNull(Optional<String> identityUserId, String returnUrl) {
         if (identityUserId.isEmpty()) {
             return null;
         }
+        String userId = identityUserId.get();
         try {
-            return stripeService.createCardSetupLink(null, identityUserId.get(), "https://t.me/");
+            PlayerPaymentProfileState profile = componentClient
+                .forKeyValueEntity(userId)
+                .method(PlayerPaymentProfileEntity::getProfile)
+                .invoke();
+            String stripeCustomerId = profile.stripeCustomerId().orElse(null);
+            if (stripeCustomerId == null) {
+                stripeCustomerId = stripeService.createCustomer(userId, null);
+                componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke(stripeCustomerId);
+            }
+            return stripeService.createCardSetupLink(stripeCustomerId, userId, returnUrl);
         } catch (Exception e) {
-            log.error("Failed to create card-setup link for identity {}: {}", identityUserId.get(), e.getMessage());
+            log.error("Failed to create card-setup link for identity {}: {}", userId, e.getMessage());
             return null;
         }
     }
