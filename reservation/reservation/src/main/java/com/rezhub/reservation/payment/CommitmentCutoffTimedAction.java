@@ -9,6 +9,7 @@ import com.rezhub.reservation.customer.facility.FacilityState;
 import com.rezhub.reservation.infrastructure.StripeService;
 import com.rezhub.reservation.reservation.ReservationEntity;
 import com.rezhub.reservation.reservation.ReservationState;
+import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.spi.NotificationSender;
 import com.stripe.exception.ApiConnectionException;
 import com.stripe.exception.ApiException;
@@ -97,11 +98,17 @@ public class CommitmentCutoffTimedAction extends TimedAction {
         long amountCents = policy.priceCents();
         long applicationFeeCents = Math.round(amountCents * policy.commissionFraction());
 
+        String courtName = componentClient.forEventSourcedEntity(command.resourceId())
+            .method(ResourceEntity::getResource)
+            .invoke()
+            .name();
+        String description = "%s booking on %s (reservation %s)".formatted(courtName, command.slotStart(), reservationId);
+
         StripeService.HoldResult hold;
         try {
             hold = stripeService.createAndConfirmHold(amountCents, policy.currency(),
                 profile.stripeCustomerId().orElseThrow(), profile.defaultPaymentMethodId().orElseThrow(),
-                reservationId);
+                reservationId, description);
         } catch (Exception e) {
             if (isTransient(e) && command.attemptNumber() < MAX_TRANSIENT_ATTEMPTS) {
                 Duration backoff = Duration.ofSeconds((long) Math.pow(2, command.attemptNumber()));
@@ -158,9 +165,15 @@ public class CommitmentCutoffTimedAction extends TimedAction {
         double facilityFraction = payment.amountCents() == 0 ? 0
             : 1.0 - (double) payment.applicationFeeCents() / payment.amountCents();
 
+        String courtName = payment.resourceId()
+            .map(resourceId -> componentClient.forEventSourcedEntity(resourceId).method(ResourceEntity::getResource).invoke().name())
+            .orElse(reservationId);
+        String description = "%s payout for reservation %s on %s".formatted(
+            courtName, reservationId, payment.dateTime().map(Object::toString).orElse("unknown date"));
+
         try {
             String chargeId = stripeService.capturePaymentIntent(payment.stripePaymentIntentId().orElseThrow(), reservationId);
-            stripeService.createTransferFromCharge(chargeId, facilityFraction, connectedAccountId, reservationId);
+            stripeService.createTransferFromCharge(chargeId, facilityFraction, connectedAccountId, reservationId, description);
             componentClient.forEventSourcedEntity(reservationId)
                 .method(PaymentEntity::capture)
                 .invoke(new PaymentEntity.Capture(chargeId));

@@ -74,7 +74,7 @@ public class StripeService {
      * the player's saved payment method — fully unattended, no client confirmation step (FR-007).
      */
     public HoldResult createAndConfirmHold(long amountCents, String currency, String stripeCustomerId,
-                                           String paymentMethodId, String idempotencyKey) throws StripeException {
+                                           String paymentMethodId, String idempotencyKey, String description) throws StripeException {
         if (!enabled) {
             String mockId = "pi_mock_" + idempotencyKey;
             mockPaymentIntentAmounts.put(mockId, amountCents);
@@ -89,6 +89,7 @@ public class StripeService {
                 .setCaptureMethod(PaymentIntentCreateParams.CaptureMethod.MANUAL)
                 .setOffSession(true)
                 .setConfirm(true)
+                .setDescription(description)
                 .putMetadata("reservationId", idempotencyKey)
                 .build();
         RequestOptions opts = RequestOptions.builder()
@@ -126,7 +127,7 @@ public class StripeService {
      * different payee.
      */
     public void createTransferFromCharge(String chargeId, double facilityFraction,
-                                         String destinationConnectAccountId, String idempotencyKey) throws StripeException {
+                                         String destinationConnectAccountId, String idempotencyKey, String description) throws StripeException {
         if (!enabled) {
             log.debug("NO-OP createTransferFromCharge: {}% to {}", (int) (facilityFraction * 100), destinationConnectAccountId);
             return;
@@ -141,6 +142,7 @@ public class StripeService {
                 .setCurrency(currency)
                 .setDestination(destinationConnectAccountId)
                 .setSourceTransaction(chargeId)
+                .setDescription(description)
                 .putMetadata("reservationId", idempotencyKey)
                 .build();
         Transfer.create(params, RequestOptions.builder().setIdempotencyKey("transfer-" + idempotencyKey).build());

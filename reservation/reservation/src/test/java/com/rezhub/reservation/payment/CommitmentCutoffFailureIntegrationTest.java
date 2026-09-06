@@ -60,7 +60,7 @@ public class CommitmentCutoffFailureIntegrationTest extends TestKitSupport {
 
         @Override
         public HoldResult createAndConfirmHold(long amountCents, String currency, String customerId,
-                                               String paymentMethodId, String idempotencyKey) throws com.stripe.exception.StripeException {
+                                               String paymentMethodId, String idempotencyKey, String description) throws com.stripe.exception.StripeException {
             callCountsByReservation.computeIfAbsent(idempotencyKey, r -> new AtomicInteger(0)).incrementAndGet();
             Exception e = exceptionsByReservation.get(idempotencyKey).get();
             if (e instanceof com.stripe.exception.StripeException se) {
