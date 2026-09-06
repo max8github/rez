@@ -1,6 +1,7 @@
 package com.rezhub.reservation.resource;
 
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.payment.PricingPolicy;
 import akka.javasdk.annotations.TypeName;
 
 import java.time.DayOfWeek;
@@ -33,4 +34,6 @@ public sealed interface ResourceEvent {
     record ExternalRefSet(String resourceId, String externalRef, String externalGroupRef) implements ResourceEvent {}
     @TypeName("resource-deleted")
     record ResourceDeleted(String resourceId) implements ResourceEvent {}
+    @TypeName("pricing-policy-override-set")
+    record PricingPolicyOverrideSet(String resourceId, PricingPolicy policy) implements ResourceEvent {}
 }

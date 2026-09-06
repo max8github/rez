@@ -6,12 +6,12 @@ import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
 import com.rezhub.reservation.orchestration.AvailabilityResult;
 import com.rezhub.reservation.orchestration.BookingApplicationService;
+import com.rezhub.reservation.orchestration.BookingHandle;
 import com.rezhub.reservation.orchestration.BookingIntent;
 import com.rezhub.reservation.orchestration.CancelIntent;
 import com.rezhub.reservation.orchestration.OriginRequestContext;
 import com.rezhub.reservation.orchestration.ReservationDetails;
 import com.rezhub.reservation.orchestration.ReservationGatewayAkka;
-import com.rezhub.reservation.orchestration.ReservationHandle;
 import com.rezhub.reservation.resource.ResourceV;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -180,10 +180,20 @@ public class BookingTools {
             BookingIntent.BookingAction.BOOK,
             dateTime, null, players, List.of(), null, Map.of());
 
-        ReservationHandle handle = bookingService.book(origin, intent);
-
-        log.info("Booking initiated, reservationId={}", handle.reservationId());
-        return "BOOKING_SUBMITTED:" + handle.reservationId();
+        BookingHandle result = bookingService.book(origin, intent);
+        return switch (result) {
+            case BookingHandle.Booked booked -> {
+                log.info("Booking initiated, reservationId={}", booked.handle().reservationId());
+                yield "BOOKING_SUBMITTED:" + booked.handle().reservationId();
+            }
+            case BookingHandle.CardSetupRequired cardSetup -> cardSetup.checkoutUrl() != null
+                ? "Before I can book this court, please set up a payment method: "
+                    + "<a href=\"" + cardSetup.checkoutUrl() + "\">tap here to add a card</a>."
+                    + "\nOnce that's done, just ask me to book again."
+                : "Before I can book this court, you'll need a payment method on file. Please try again shortly.";
+            case BookingHandle.FacilityNotPayable ignored ->
+                "This facility isn't able to accept payments right now. Please contact the facility or try again later.";
+        };
     }
 
     @FunctionTool(description = """

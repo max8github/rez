@@ -2,9 +2,11 @@ package com.rezhub.reservation.resource;
 
 import akka.javasdk.testkit.EventSourcedTestKit;
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.payment.PricingPolicy;
 import com.rezhub.reservation.resource.dto.Resource;
 import org.junit.jupiter.api.Test;
 
+import java.time.Duration;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -146,6 +148,30 @@ class ResourceEntityTest {
         var checkResult = testKit.method(ResourceEntity::checkAvailability)
             .invoke(new ResourceEntity.CheckAvailability("rez-2", reservation));
         assertThat(checkResult.getNextEventOfType(ResourceEvent.AvalabilityChecked.class).available()).isTrue();
+    }
+
+    @Test
+    void setPricingPolicyOverride_storesOverride() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create).invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+        var policy = new PricingPolicy(7500, "eur", 0.15, Duration.ofDays(1));
+
+        var result = testKit.method(ResourceEntity::setPricingPolicyOverride).invoke(policy);
+
+        assertThat(result.isError()).isFalse();
+        assertThat(testKit.getState().pricingPolicyOverride()).contains(policy);
+    }
+
+    @Test
+    void setPricingPolicyOverride_rejectsInvalidCommitmentWindow() {
+        var testKit = EventSourcedTestKit.of(RESOURCE_ID, ResourceEntity::new);
+        testKit.method(ResourceEntity::create).invoke(new Resource(RESOURCE_ID, "Court 1", CALENDAR_ID));
+        var invalidPolicy = new PricingPolicy(7500, "eur", 0.15, Duration.ofDays(30));
+
+        var result = testKit.method(ResourceEntity::setPricingPolicyOverride).invoke(invalidPolicy);
+
+        assertThat(result.isError()).isTrue();
+        assertThat(testKit.getState().pricingPolicyOverride()).isEmpty();
     }
 
     private static LocalDateTime nextMonday() {

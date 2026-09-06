@@ -7,6 +7,7 @@ import akka.javasdk.client.ComponentClient;
 import akka.javasdk.http.HttpClientProvider;
 import com.rezhub.reservation.agent.BookingAgent;
 import com.rezhub.reservation.infrastructure.IdentityClient;
+import com.rezhub.reservation.infrastructure.TelegramClient;
 import com.rezhub.reservation.orchestration.OriginRequestContext;
 import com.rezhub.reservation.spi.NotificationSender;
 import com.rezhub.reservation.view.FacilityByBotTokenView;
@@ -36,12 +37,14 @@ public class TelegramEndpoint {
     private final ComponentClient componentClient;
     private final NotificationSender notificationSender;
     private final IdentityClient identityClient;
+    private final TelegramClient telegramClient;
 
     public TelegramEndpoint(ComponentClient componentClient, NotificationSender notificationSender,
                             HttpClientProvider httpClientProvider) {
         this.componentClient = componentClient;
         this.notificationSender = notificationSender;
         this.identityClient = new IdentityClient(httpClientProvider);
+        this.telegramClient = new TelegramClient(httpClientProvider);
     }
 
     public record Update(Message message) {}
@@ -88,13 +91,20 @@ public class TelegramEndpoint {
             ? Optional.empty()
             : identityClient.resolveOrCreate("TELEGRAM", senderExternalId, Optional.empty());
 
+        // A bot-specific deep link (https://t.me/<username>) gives the OS something concrete to hand
+        // off to once an external flow (e.g. Stripe Checkout) redirects back — the generic
+        // https://t.me/ homepage doesn't. Falls back to the generic link if getMe fails.
+        String returnUrl = telegramClient.resolveUsername(botToken)
+            .map(username -> "https://t.me/" + username)
+            .orElse("https://t.me/");
+
         OriginRequestContext origin = new OriginRequestContext(
             "telegram",
             senderExternalId,
             senderDisplayName,
             recipientId,
             conversationId,
-            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone),
+            Map.of("botToken", botToken, "facilityId", facilityId, "timezone", timezone, "returnUrl", returnUrl),
             identityUserId
         );
 

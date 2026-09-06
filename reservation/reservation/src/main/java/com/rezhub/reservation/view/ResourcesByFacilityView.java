@@ -43,6 +43,7 @@ public class ResourcesByFacilityView extends View {
                 case ResourceEvent.BookingGranularitySet e -> effects().ignore();
                 case ResourceEvent.ResourceTypeSet e -> effects().ignore();
                 case ResourceEvent.ResourceDeleted e -> effects().deleteRow();
+                case ResourceEvent.PricingPolicyOverrideSet e -> effects().ignore();
             };
         }
     }

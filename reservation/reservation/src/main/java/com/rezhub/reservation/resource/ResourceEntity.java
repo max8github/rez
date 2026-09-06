@@ -1,6 +1,7 @@
 package com.rezhub.reservation.resource;
 
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.payment.PricingPolicy;
 import com.rezhub.reservation.resource.dto.Resource;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
@@ -46,6 +47,7 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
             case ResourceEvent.ResourceTypeSet e -> currentState().withResourceType(e.resourceType());
             case ResourceEvent.ExternalRefSet e -> currentState().withExternalRef(e.externalRef(), e.externalGroupRef());
             case ResourceEvent.ResourceDeleted e -> currentState();
+            case ResourceEvent.PricingPolicyOverrideSet e -> currentState().withPricingPolicyOverride(e.policy());
         };
     }
 
@@ -155,6 +157,18 @@ public class ResourceEntity extends EventSourcedEntity<ResourceState, ResourceEv
         log.info("Resource {} setting externalRef={} externalGroupRef={}", entityId, command.externalRef(), command.externalGroupRef());
         return effects()
             .persist(new ResourceEvent.ExternalRefSet(entityId, command.externalRef(), command.externalGroupRef()))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> setPricingPolicyOverride(PricingPolicy policy) {
+        try {
+            policy.validate();
+        } catch (IllegalArgumentException e) {
+            return effects().error("Invalid pricing policy: " + e.getMessage());
+        }
+        log.info("Resource {} setting pricingPolicyOverride", entityId);
+        return effects()
+            .persist(new ResourceEvent.PricingPolicyOverrideSet(entityId, policy))
             .thenReply(newState -> "OK");
     }
 

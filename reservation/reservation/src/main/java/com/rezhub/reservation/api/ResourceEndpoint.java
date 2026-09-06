@@ -7,6 +7,7 @@ import akka.javasdk.annotations.http.HttpEndpoint;
 import akka.javasdk.annotations.http.Post;
 import akka.javasdk.annotations.http.Put;
 import akka.javasdk.client.ComponentClient;
+import com.rezhub.reservation.payment.PricingPolicy;
 import com.rezhub.reservation.resource.ResourceEntity;
 import com.rezhub.reservation.resource.ResourceState;
 import com.rezhub.reservation.resource.dto.Resource;
@@ -136,4 +137,17 @@ public class ResourceEndpoint {
     }
 
     public record BookingGranularityRequest(int minutes) {}
+
+    /**
+     * Set a per-resource PricingPolicy override (FR-003), taking precedence over the facility's
+     * default. The call fails (surfaced to the caller as an error) if the policy's commitmentWindow
+     * exceeds the FR-011 safety cap.
+     */
+    @Put("/{resourceId}/pricing-policy")
+    public String setPricingPolicy(String resourceId, PricingPolicy policy) {
+        return componentClient
+            .forEventSourcedEntity(resourceId)
+            .method(ResourceEntity::setPricingPolicyOverride)
+            .invoke(policy);
+    }
 }

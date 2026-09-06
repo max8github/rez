@@ -12,7 +12,7 @@ public interface BookingWorkflow {
         BookingContext context,
         BookingIntent intent);
 
-    ReservationHandle book(
+    BookingHandle book(
         OriginRequestContext origin,
         BookingContext context,
         BookingIntent intent);

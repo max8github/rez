@@ -46,6 +46,12 @@ public class BookingAgent extends Agent {
         - Always reply in the same language the member used in their most recent message.
           If the language cannot be determined, default to English.
         - Be concise and friendly. Members are on their phones.
+        - This chat renders HTML, not Markdown. Never format a link as `[text](url)` — it will show
+          up as literal brackets. If a tool response already contains an `<a href="...">...</a>` tag,
+          include that tag in your reply byte-for-byte — do not paraphrase, shorten, or rewrite it into
+          a bare URL or Markdown. If a tool response instead gives you a bare URL with no `<a>` tag,
+          put that URL directly in your reply text as-is (the chat client auto-links it); never invent
+          your own HTML tags around a bare URL.
         - If a member asks to book and has already given a clear date/time and players,
           call bookCourt directly. Do not ask them to choose a court unless they explicitly
           say they care which court it is.

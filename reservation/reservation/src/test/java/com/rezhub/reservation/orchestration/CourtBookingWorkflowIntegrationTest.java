@@ -1,0 +1,159 @@
+package com.rezhub.reservation.orchestration;
+
+import akka.javasdk.testkit.TestKitSupport;
+import com.rezhub.reservation.customer.dto.Address;
+import com.rezhub.reservation.customer.facility.FacilityEntity;
+import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.infrastructure.StripeService;
+import com.rezhub.reservation.payment.PaymentGate;
+import com.rezhub.reservation.payment.PlayerPaymentProfileEntity;
+import com.rezhub.reservation.reservation.ReservationEntity;
+import com.rezhub.reservation.resource.ResourceEntity;
+import com.rezhub.reservation.resource.dto.Resource;
+import com.rezhub.reservation.view.ResourcesByFacilityView;
+import org.junit.jupiter.api.Test;
+
+import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.UUID;
+
+import static org.assertj.core.api.Assertions.assertThat;
+
+public class CourtBookingWorkflowIntegrationTest extends TestKitSupport {
+
+    private CourtBookingWorkflow workflow() {
+        var stripeService = new StripeService();
+        var paymentGate = new PaymentGate(componentClient, stripeService);
+        var courtDirectory = new CourtDirectoryAkka(componentClient);
+        var reservationGateway = new ReservationGatewayAkka(componentClient);
+        return new CourtBookingWorkflow(courtDirectory, reservationGateway, componentClient, paymentGate, stripeService);
+    }
+
+    private String createFacilityAndResource() throws Exception {
+        String facilityId = "f_" + shortId();
+        String resourceId = "court-" + shortId();
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::create)
+            .invoke(new Facility("Club", new Address("St", "City"), "Europe/Rome", null, null));
+        componentClient.forEventSourcedEntity(resourceId).method(ResourceEntity::create)
+            .invoke(new Resource(resourceId, "Court 1", null));
+        componentClient.forEventSourcedEntity(resourceId).method(ResourceEntity::setExternalRef)
+            .invoke(new ResourceEntity.SetExternalRef(resourceId, facilityId));
+
+        eventually(() -> componentClient.forView()
+                .method(ResourcesByFacilityView::getByFacilityId)
+                .invoke(facilityId),
+            rows -> !rows.entries().isEmpty());
+
+        return facilityId;
+    }
+
+    @Test
+    public void book_playerWithPaymentMethod_proceedsUnchanged() throws Exception {
+        String userId = "user-" + shortId();
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke("cus_1");
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::setDefaultPaymentMethod).invoke("pm_1");
+        String facilityId = createFacilityAndResource();
+
+        var origin = new OriginRequestContext("telegram", "tg-1", "Alice", "recipient-1", "conv-1",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Alice"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.Booked.class);
+        String reservationId = ((BookingHandle.Booked) result).handle().reservationId();
+        var state = eventually(() ->
+                componentClient.forEventSourcedEntity(reservationId).method(ReservationEntity::getReservation).invoke(),
+            s -> s.state() != com.rezhub.reservation.reservation.ReservationState.State.INIT);
+        assertThat(state.reservationId()).isEqualTo(reservationId);
+    }
+
+    @Test
+    public void book_playerWithNoProfile_returnsCardSetupRequired_noReservationCreated() throws Exception {
+        String userId = "user-" + shortId();
+        String facilityId = createFacilityAndResource();
+        // The card-setup gate only applies when the facility actually charges — give it a payable
+        // PricingPolicy so this test still exercises the player-side gate.
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setPricingPolicy)
+            .invoke(new com.rezhub.reservation.payment.PricingPolicy(5000, "eur", 0.10, java.time.Duration.ofDays(1)));
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setStripeConnectedAccount)
+            .invoke("acct_test_active");
+
+        var origin = new OriginRequestContext("telegram", "tg-2", "Bob", "recipient-2", "conv-2",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Bob"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.CardSetupRequired.class);
+        assertThat(((BookingHandle.CardSetupRequired) result).checkoutUrl()).isNotNull();
+    }
+
+    @Test
+    public void book_playerAlreadyLinkedViaHitFlow_skipsCardSetup() throws Exception {
+        // Simulates a player who already completed the explicit Hit-link flow before their first Rez
+        // booking (spec.md User Story 2, scenario 3) — PlayerPaymentProfile already resolves.
+        String userId = "user-" + shortId();
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke("cus_hit_linked");
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::setDefaultPaymentMethod).invoke("pm_hit_linked");
+        String facilityId = createFacilityAndResource();
+
+        var origin = new OriginRequestContext("telegram", "tg-3", "Carol", "recipient-3", "conv-3",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Carol"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.Booked.class);
+    }
+
+    @Test
+    public void book_facilityWithPricingPolicyButNoConnectedAccount_returnsFacilityNotPayable() throws Exception {
+        String userId = "user-" + shortId();
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke("cus_x");
+        componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::setDefaultPaymentMethod).invoke("pm_x");
+        String facilityId = createFacilityAndResource();
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setPricingPolicy)
+            .invoke(new com.rezhub.reservation.payment.PricingPolicy(5000, "eur", 0.10, java.time.Duration.ofDays(1)));
+        // Deliberately no setStripeConnectedAccount call — onboarding incomplete.
+
+        var origin = new OriginRequestContext("telegram", "tg-4", "Dana", "recipient-4", "conv-4",
+            Map.of(), Optional.of(userId));
+        var context = new BookingContext("courts", facilityId, "Europe/Rome", Map.of());
+        var intent = new BookingIntent(BookingIntent.BookingAction.BOOK, LocalDateTime.now().plusDays(1),
+            60, List.of("Dana"), List.of(), null, Map.of());
+
+        BookingHandle result = workflow().book(origin, context, intent);
+
+        assertThat(result).isInstanceOf(BookingHandle.FacilityNotPayable.class);
+    }
+
+    private <T> T eventually(CheckedSupplier<T> query, java.util.function.Predicate<T> until) throws Exception {
+        T last = null;
+        for (int i = 0; i < 100; i++) {
+            last = query.get();
+            if (until.test(last)) {
+                return last;
+            }
+            Thread.sleep(50);
+        }
+        throw new AssertionError("Condition not met after 5s. Last value: " + last);
+    }
+
+    @FunctionalInterface
+    interface CheckedSupplier<T> {
+        T get() throws Exception;
+    }
+
+    private static String shortId() {
+        return UUID.randomUUID().toString().replace("-", "").substring(0, 8);
+    }
+}

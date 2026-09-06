@@ -73,4 +73,7 @@ public sealed interface ReservationEvent {
             return new Fulfilled(resourceId, reservationId, reservation, resourceIds, recipientId, originSystem);
         }
     }
+
+    @TypeName("payment-id-recorded")
+    record PaymentIdRecorded(String reservationId, String paymentId) implements ReservationEvent {}
 }

@@ -23,7 +23,7 @@ public class BookingApplicationService {
         return workflow.checkAvailability(origin, context, intent);
     }
 
-    public ReservationHandle book(OriginRequestContext origin, BookingIntent intent) {
+    public BookingHandle book(OriginRequestContext origin, BookingIntent intent) {
         BookingContext context = contextResolver.resolve(origin);
         BookingWorkflow workflow = workflowFor(context);
         return workflow.book(origin, context, intent);

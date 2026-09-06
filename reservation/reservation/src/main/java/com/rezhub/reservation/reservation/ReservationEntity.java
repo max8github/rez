@@ -85,6 +85,7 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
                 log.info("Reservation was rejected, waiting for availability");
                 yield currentState().withRemoved(e.resourceId()).withResourceId("").withState(COLLECTING);
             }
+            case ReservationEvent.PaymentIdRecorded e -> currentState().withPaymentId(Optional.of(e.paymentId()));
         };
     }
 
@@ -186,6 +187,15 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
 
     }
 
+    public Effect<String> recordPaymentId(String paymentId) {
+        return switch (currentState().state()) {
+            case FULFILLED -> effects()
+                .persist(new ReservationEvent.PaymentIdRecorded(entityId, paymentId))
+                .thenReply(newState -> "OK");
+            default -> effects().error("Reservation " + entityId + " must be FULFILLED to record a paymentId");
+        };
+    }
+
     public ReadOnlyEffect<ReservationState> getReservation() {
         return effects().reply(currentState());
     }
@@ -194,6 +204,9 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         log.info("Cancelling reservation {} requested", entityId);
         return switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
+                if (currentState().hasEnded()) {
+                    yield effects().error("Reservation " + entityId + " has already ended and can no longer be cancelled");
+                }
                 String resourceId = getResourceIdFromState();
                 yield effects()
                     .persist(new ReservationEvent.CancelRequested(entityId, resourceId))

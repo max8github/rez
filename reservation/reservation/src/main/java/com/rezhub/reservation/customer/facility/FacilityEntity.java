@@ -2,6 +2,7 @@ package com.rezhub.reservation.customer.facility;
 
 import com.rezhub.reservation.customer.dto.Address;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.payment.PricingPolicy;
 import com.rezhub.reservation.resource.dto.Resource;
 import akka.javasdk.annotations.Component;
 import akka.javasdk.eventsourcedentity.EventSourcedEntity;
@@ -47,6 +48,8 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
                 yield currentState().withAddressState(new AddressState(addressState.street(), addressState.city()));
             }
             case FacilityEvent.BotTokenUpdated e -> currentState().withBotToken(e.botToken());
+            case FacilityEvent.PricingPolicySet e -> currentState().withPricingPolicy(e.policy());
+            case FacilityEvent.StripeConnectedAccountSet e -> currentState().withStripeConnectedAccountId(e.accountId());
         };
     }
 
@@ -79,15 +82,41 @@ public class FacilityEntity extends EventSourcedEntity<FacilityState, FacilityEv
             .thenReply(newState -> "OK");
     }
 
+    public Effect<String> setPricingPolicy(PricingPolicy policy) {
+        try {
+            policy.validate();
+        } catch (IllegalArgumentException e) {
+            return effects().error("Invalid pricing policy: " + e.getMessage());
+        }
+        return effects()
+            .persist(new FacilityEvent.PricingPolicySet(commandContext().entityId(), policy))
+            .thenReply(newState -> "OK");
+    }
+
+    public Effect<String> setStripeConnectedAccount(String accountId) {
+        if (accountId == null || accountId.isBlank()) {
+            return effects().error("accountId must not be blank");
+        }
+        return effects()
+            .persist(new FacilityEvent.StripeConnectedAccountSet(commandContext().entityId(), accountId))
+            .thenReply(newState -> "OK");
+    }
+
     public Effect<String> clearBotToken() {
         return effects()
             .persist(new FacilityEvent.BotTokenUpdated(currentState().facilityId(), null, currentState().timezone()))
             .thenReply(newState -> "OK");
     }
 
+    /** Raw state accessor for internal callers (e.g. {@code PaymentGate}). */
+    public ReadOnlyEffect<FacilityState> getState() {
+        return effects().reply(currentState());
+    }
+
     public ReadOnlyEffect<Facility> getFacility() {
         FacilityState state = currentState();
         Address address = new Address(state.addressState().street(), state.addressState().city());
-        return effects().reply(new Facility(state.name(), address, state.timezone(), state.botToken(), state.adminUserIds()));
+        return effects().reply(new Facility(state.name(), address, state.timezone(), state.botToken(),
+            state.adminUserIds(), state.pricingPolicy(), state.stripeConnectedAccountId()));
     }
 }

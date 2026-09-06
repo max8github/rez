@@ -26,6 +26,8 @@ public class FacilityByNameView extends View {
                     effects().updateRow(rowState().withName(e.newName()));
                 case FacilityEvent.AddressChanged e -> effects().ignore();
                 case FacilityEvent.BotTokenUpdated e -> effects().ignore();
+                case FacilityEvent.PricingPolicySet e -> effects().ignore();
+                case FacilityEvent.StripeConnectedAccountSet e -> effects().ignore();
             };
         }
     }

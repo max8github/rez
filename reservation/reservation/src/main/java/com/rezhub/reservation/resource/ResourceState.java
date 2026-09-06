@@ -1,5 +1,6 @@
 package com.rezhub.reservation.resource;
 
+import com.rezhub.reservation.payment.PricingPolicy;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -65,7 +66,8 @@ public record ResourceState(
     int bookingGranularityMinutes,
     String resourceType,
     String externalRef,
-    String externalGroupRef
+    String externalGroupRef,
+    Optional<PricingPolicy> pricingPolicyOverride
 ) {
     private static final Logger log = LoggerFactory.getLogger(ResourceState.class);
 
@@ -76,7 +78,7 @@ public record ResourceState(
 
     public static ResourceState initialize(String name, String calendarId) {
         return new ResourceState(name, calendarId, new TreeMap<>(), Period.ofMonths(3),
-            new HashMap<>(), DEFAULT_BOOKING_GRANULARITY_MINUTES, "", "", "");
+            new HashMap<>(), DEFAULT_BOOKING_GRANULARITY_MINUTES, "", "", "", Optional.empty());
     }
 
     public ResourceState set(LocalDateTime start, LocalDateTime end, String reservationId) {
@@ -120,19 +122,23 @@ public record ResourceState(
     }
 
     public ResourceState withWeeklySchedule(Map<DayOfWeek, Set<LocalTime>> schedule) {
-        return new ResourceState(name, calendarId, timeWindow, period, schedule, bookingGranularityMinutes, resourceType, externalRef, externalGroupRef);
+        return new ResourceState(name, calendarId, timeWindow, period, schedule, bookingGranularityMinutes, resourceType, externalRef, externalGroupRef, pricingPolicyOverride);
     }
 
     public ResourceState withBookingGranularityMinutes(int minutes) {
-        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, minutes, resourceType, externalRef, externalGroupRef);
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, minutes, resourceType, externalRef, externalGroupRef, pricingPolicyOverride);
     }
 
     public ResourceState withResourceType(String type) {
-        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, bookingGranularityMinutes, type, externalRef, externalGroupRef);
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, bookingGranularityMinutes, type, externalRef, externalGroupRef, pricingPolicyOverride);
     }
 
     public ResourceState withExternalRef(String ref, String groupRef) {
-        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, bookingGranularityMinutes, resourceType, ref, groupRef);
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, bookingGranularityMinutes, resourceType, ref, groupRef, pricingPolicyOverride);
+    }
+
+    public ResourceState withPricingPolicyOverride(PricingPolicy policy) {
+        return new ResourceState(name, calendarId, timeWindow, period, weeklySchedule, bookingGranularityMinutes, resourceType, externalRef, externalGroupRef, Optional.of(policy));
     }
 
     @Override

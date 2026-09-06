@@ -11,68 +11,74 @@ public record ReservationState(State state, String reservationId, List<String> e
                                Set<String> availableResources, Set<String> resourceIds,
                                Set<String> pendingResourceIds,
                                LocalDateTime dateTime, int durationMinutes, String resourceId, String recipientId,
-                               String originSystem, Optional<String> identityUserId, Optional<String> senderExternalId) {
+                               String originSystem, Optional<String> identityUserId, Optional<String> senderExternalId,
+                               Optional<String> paymentId) {
 
     public static ReservationState initiate(String entityId) {
         List<String> empty = new ArrayList<>();
         return new ReservationState(INIT, entityId, empty, new HashSet<>(), new HashSet<>(), new HashSet<>(),
             LocalDateTime.now(), Reservation.DEFAULT_DURATION_MINUTES, "", "", null,
-            Optional.empty(), Optional.empty());
+            Optional.empty(), Optional.empty(), Optional.empty());
     }
 
     public ReservationState withState(State state) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withResourceId(String resourceId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withEmails(List<String> emails) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withResourceIds(Set<String> resourceIds) {
         return new ReservationState(state, reservationId, emails, availableResources, new HashSet<>(resourceIds), pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withPendingResourceIds(Set<String> pendingResourceIds) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, new HashSet<>(pendingResourceIds),
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withDateTime(LocalDateTime dateTime) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withDuration(int durationMinutes) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withRecipientId(String recipientId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withOriginSystem(String originSystem) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withIdentityUserId(Optional<String> identityUserId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withSenderExternalId(Optional<String> senderExternalId) {
         return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
-            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId);
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
+    }
+
+    public ReservationState withPaymentId(Optional<String> paymentId) {
+        return new ReservationState(state, reservationId, emails, availableResources, resourceIds, pendingResourceIds,
+            dateTime, durationMinutes, resourceId, recipientId, originSystem, identityUserId, senderExternalId, paymentId);
     }
 
     public ReservationState withAdded(String resourceId) {
@@ -107,6 +113,15 @@ public record ReservationState(State state, String reservationId, List<String> e
         Iterator<String> iterator = this.availableResources.iterator();
         if(iterator.hasNext()) return iterator.next();
         else return "";
+    }
+
+    /**
+     * True once the slot's own end time has passed — the resource has already been fully consumed, so
+     * there is nothing left to free up by cancelling. A reservation that has started but not yet ended
+     * is still cancellable (releases the remaining time); one that has already ended is not.
+     */
+    public boolean hasEnded() {
+        return dateTime.plusMinutes(durationMinutes).isBefore(LocalDateTime.now());
     }
 
     public enum State {

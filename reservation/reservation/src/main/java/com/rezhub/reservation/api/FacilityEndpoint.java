@@ -10,6 +10,7 @@ import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.customer.facility.AddressState;
 import com.rezhub.reservation.customer.facility.FacilityEntity;
 import com.rezhub.reservation.customer.facility.dto.Facility;
+import com.rezhub.reservation.payment.PricingPolicy;
 import com.rezhub.reservation.view.FacilityByBotTokenView;
 
 import java.util.List;
@@ -80,6 +81,31 @@ public class FacilityEndpoint {
             .method(FacilityEntity::clearBotToken)
             .invoke();
     }
+
+    /**
+     * Set the facility-level PricingPolicy default (FR-003). The call fails (surfaced to the caller
+     * as an error) if the policy's commitmentWindow exceeds the FR-011 safety cap.
+     */
+    @Put("/{facilityId}/pricing-policy")
+    public String setPricingPolicy(String facilityId, PricingPolicy policy) {
+        return componentClient
+            .forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::setPricingPolicy)
+            .invoke(policy);
+    }
+
+    /**
+     * Set the facility's Stripe connected-account id, once Connect onboarding completes (FR-012).
+     */
+    @Put("/{facilityId}/stripe-connected-account")
+    public String setStripeConnectedAccount(String facilityId, StripeConnectedAccountRequest request) {
+        return componentClient
+            .forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::setStripeConnectedAccount)
+            .invoke(request.connectedAccountId());
+    }
+
+    public record StripeConnectedAccountRequest(String connectedAccountId) {}
 
     public record RenameRequest(String name) {}
 

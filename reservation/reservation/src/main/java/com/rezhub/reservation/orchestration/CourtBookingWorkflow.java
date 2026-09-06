@@ -2,6 +2,10 @@ package com.rezhub.reservation.orchestration;
 
 import akka.javasdk.client.ComponentClient;
 import com.rezhub.reservation.dto.Reservation;
+import com.rezhub.reservation.infrastructure.StripeService;
+import com.rezhub.reservation.payment.PaymentGate;
+import com.rezhub.reservation.payment.PlayerPaymentProfileEntity;
+import com.rezhub.reservation.payment.PlayerPaymentProfileState;
 import com.rezhub.reservation.resource.ResourceV;
 import com.rezhub.reservation.resource.ResourceView;
 import com.rezhub.reservation.resource.dto.Resource;
@@ -24,13 +28,19 @@ public class CourtBookingWorkflow implements BookingWorkflow {
     private final CourtDirectoryAkka courtDirectory;
     private final ReservationGatewayAkka reservationGateway;
     private final ComponentClient componentClient;
+    private final PaymentGate paymentGate;
+    private final StripeService stripeService;
 
     public CourtBookingWorkflow(CourtDirectoryAkka courtDirectory,
                                 ReservationGatewayAkka reservationGateway,
-                                ComponentClient componentClient) {
+                                ComponentClient componentClient,
+                                PaymentGate paymentGate,
+                                StripeService stripeService) {
         this.courtDirectory = courtDirectory;
         this.reservationGateway = reservationGateway;
         this.componentClient = componentClient;
+        this.paymentGate = paymentGate;
+        this.stripeService = stripeService;
     }
 
     @Override
@@ -69,9 +79,29 @@ public class CourtBookingWorkflow implements BookingWorkflow {
     }
 
     @Override
-    public ReservationHandle book(OriginRequestContext origin, BookingContext context, BookingIntent intent) {
+    public BookingHandle book(OriginRequestContext origin, BookingContext context, BookingIntent intent) {
         CourtBookingScope scope = courtDirectory.resolveScope(context);
         log.info("book: facilityId={}, resources={}, dateTime={}", scope.facilityId(), scope.resourceIds().size(), intent.dateTime());
+
+        // FR-012/FR-005: one FacilityState fetch covers both gates below — isFacilityPayable and
+        // facilityRequiresPayment would otherwise each independently re-fetch the same entity.
+        PaymentGate.FacilityPayability facilityPayability = paymentGate.checkFacility(scope.facilityId());
+
+        // FR-012: facility-side gate — needs no player identity, applies uniformly (research.md #10).
+        if (!facilityPayability.isPayable()) {
+            log.info("book: rejecting — facility {} has a PricingPolicy but incomplete Stripe onboarding", scope.facilityId());
+            return new BookingHandle.FacilityNotPayable();
+        }
+
+        // FR-005: player-side gate — only meaningful when a resolved identity exists, and only when
+        // the facility actually charges at all (a free facility has nothing to collect on, so there's
+        // no reason to demand a card on file).
+        if (facilityPayability.requiresPayment() && !paymentGate.isPlayerPayable(origin.identityUserId())) {
+            String returnUrl = origin.attributes().getOrDefault("returnUrl", "https://t.me/");
+            String checkoutUrl = createCardSetupLinkOrNull(origin.identityUserId(), returnUrl);
+            log.info("book: rejecting — no payment method on file for identity {}", origin.identityUserId());
+            return new BookingHandle.CardSetupRequired(checkoutUrl);
+        }
 
         String reservationId = UUID.randomUUID().toString().replace("-", "").substring(0, 8);
         Optional<String> senderExternalId = origin.senderExternalId() == null || origin.senderExternalId().isBlank()
@@ -88,7 +118,42 @@ public class CourtBookingWorkflow implements BookingWorkflow {
             origin.identityUserId(),
             senderExternalId
         );
-        return reservationGateway.submit(submission);
+        return new BookingHandle.Booked(reservationGateway.submit(submission));
+    }
+
+    /**
+     * FR-005's card-collection link. {@code identityUserId} is only absent when the requester has no
+     * resolved identity at all (e.g. a message with no identifiable Telegram sender) — in that case
+     * there's no {@code PlayerPaymentProfile} to eventually populate, so no link is offered either.
+     *
+     * <p>A Checkout Session in setup mode does not create a Stripe Customer on its own — confirmed
+     * against a live test event, where both the resulting SetupIntent's and the completed session's
+     * {@code customer} field came back {@code null}. Without a customer, the collected payment method
+     * is never attached to anything {@code PlayerPaymentProfile} can reference, so a card-setup link
+     * needs an already-existing customer passed in explicitly. Reuse one from a prior (possibly
+     * incomplete) attempt if {@code PlayerPaymentProfile} already has it; otherwise create one now and
+     * persist it immediately, so a retry after a failed/abandoned checkout reuses the same customer.
+     */
+    private String createCardSetupLinkOrNull(Optional<String> identityUserId, String returnUrl) {
+        if (identityUserId.isEmpty()) {
+            return null;
+        }
+        String userId = identityUserId.get();
+        try {
+            PlayerPaymentProfileState profile = componentClient
+                .forKeyValueEntity(userId)
+                .method(PlayerPaymentProfileEntity::getProfile)
+                .invoke();
+            String stripeCustomerId = profile.stripeCustomerId().orElse(null);
+            if (stripeCustomerId == null) {
+                stripeCustomerId = stripeService.createCustomer(userId, null);
+                componentClient.forKeyValueEntity(userId).method(PlayerPaymentProfileEntity::linkCustomer).invoke(stripeCustomerId);
+            }
+            return stripeService.createCardSetupLink(stripeCustomerId, userId, returnUrl);
+        } catch (Exception e) {
+            log.error("Failed to create card-setup link for identity {}: {}", userId, e.getMessage());
+            return null;
+        }
     }
 
     @Override
