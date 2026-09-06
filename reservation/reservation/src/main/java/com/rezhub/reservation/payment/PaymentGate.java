@@ -56,4 +56,17 @@ public class PaymentGate {
             .map(stripeService::isConnectAccountChargesEnabled)
             .orElse(false);
     }
+
+    /**
+     * True if the facility has a {@code PricingPolicy} configured at all — i.e. session fees actually
+     * apply here. A facility with none is free-to-book, so there is nothing for a player to ever be
+     * charged and no reason to demand a payment method on file before booking.
+     */
+    public boolean facilityRequiresPayment(String facilityId) {
+        FacilityState state = componentClient
+            .forEventSourcedEntity(facilityId)
+            .method(FacilityEntity::getState)
+            .invoke();
+        return state.pricingPolicy().isPresent();
+    }
 }

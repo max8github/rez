@@ -87,8 +87,10 @@ public class CourtBookingWorkflow implements BookingWorkflow {
             return new BookingHandle.FacilityNotPayable();
         }
 
-        // FR-005: player-side gate — only meaningful when a resolved identity exists.
-        if (!paymentGate.isPlayerPayable(origin.identityUserId())) {
+        // FR-005: player-side gate — only meaningful when a resolved identity exists, and only when
+        // the facility actually charges at all (a free facility has nothing to collect on, so there's
+        // no reason to demand a card on file).
+        if (paymentGate.facilityRequiresPayment(scope.facilityId()) && !paymentGate.isPlayerPayable(origin.identityUserId())) {
             String checkoutUrl = createCardSetupLinkOrNull(origin.identityUserId());
             log.info("book: rejecting — no payment method on file for identity {}", origin.identityUserId());
             return new BookingHandle.CardSetupRequired(checkoutUrl);

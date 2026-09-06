@@ -76,6 +76,12 @@ public class CourtBookingWorkflowIntegrationTest extends TestKitSupport {
     public void book_playerWithNoProfile_returnsCardSetupRequired_noReservationCreated() throws Exception {
         String userId = "user-" + shortId();
         String facilityId = createFacilityAndResource();
+        // The card-setup gate only applies when the facility actually charges — give it a payable
+        // PricingPolicy so this test still exercises the player-side gate.
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setPricingPolicy)
+            .invoke(new com.rezhub.reservation.payment.PricingPolicy(5000, "eur", 0.10, java.time.Duration.ofDays(1)));
+        componentClient.forEventSourcedEntity(facilityId).method(FacilityEntity::setStripeConnectedAccount)
+            .invoke("acct_test_active");
 
         var origin = new OriginRequestContext("telegram", "tg-2", "Bob", "recipient-2", "conv-2",
             Map.of(), Optional.of(userId));
