@@ -115,6 +115,15 @@ public record ReservationState(State state, String reservationId, List<String> e
         else return "";
     }
 
+    /**
+     * True once the slot's own end time has passed — the resource has already been fully consumed, so
+     * there is nothing left to free up by cancelling. A reservation that has started but not yet ended
+     * is still cancellable (releases the remaining time); one that has already ended is not.
+     */
+    public boolean hasEnded() {
+        return dateTime.plusMinutes(durationMinutes).isBefore(LocalDateTime.now());
+    }
+
     public enum State {
         INIT, COLLECTING, SELECTING, FULFILLED, CANCELLED, UNAVAILABLE
     }

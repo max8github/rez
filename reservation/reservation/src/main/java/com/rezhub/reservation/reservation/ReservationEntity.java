@@ -204,6 +204,9 @@ public class ReservationEntity extends EventSourcedEntity<ReservationState, Rese
         log.info("Cancelling reservation {} requested", entityId);
         return switch (currentState().state()) {
             case FULFILLED, COLLECTING -> {
+                if (currentState().hasEnded()) {
+                    yield effects().error("Reservation " + entityId + " has already ended and can no longer be cancelled");
+                }
                 String resourceId = getResourceIdFromState();
                 yield effects()
                     .persist(new ReservationEvent.CancelRequested(entityId, resourceId))
